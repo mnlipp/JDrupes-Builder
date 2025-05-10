@@ -1,4 +1,4 @@
-package jdb;
+package jdbld;
 
 import org.jdrupes.builder.core.FileSet;
 
@@ -8,11 +8,11 @@ import org.jdrupes.builder.api.Project;
 import org.jdrupes.builder.core.DefaultProject;
 import org.jdrupes.builder.java.CompileJava;
 
-public class Java extends DefaultProject {
+public class Core extends DefaultProject {
 
-    public Java(Project parent) {
-        super(parent, "java");
-        new Core(this);
+    public Core(Project parent) {
+        super(parent, "core");
+        new Api(this);
         provider(new CompileJava(this)
             .addSources(new FileSet(this, Path.of("src"), "**/*.java")));
     }
