@@ -23,11 +23,11 @@ import org.jdrupes.builder.core.FileSet;
 import org.jdrupes.builder.core.ResourceSet;
 import org.jdrupes.builder.core.AbstractTask;
 
-public class CompileJava extends AbstractTask {
+public class CompileJava extends AbstractTask<FileSet> {
 
     private List<FileSet> sources = new ArrayList<>();
 
-    public CompileJava(Project project) {
+    public CompileJava(Project<?> project) {
         super(project);
     }
 
@@ -54,7 +54,7 @@ public class CompileJava extends AbstractTask {
 
     @Override
     @SuppressWarnings("PMD.AvoidCatchingGenericException")
-    public Resources<? extends Resource> provide(Resource resource) {
+    public Resources<FileSet> provide(Resource resource) {
         var destDir = project().buildDirectory().resolve("classes");
         log.fine(() -> "Getting classpath in " + project().name());
         var classpath = classpath(resource);

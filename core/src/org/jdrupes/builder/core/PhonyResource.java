@@ -1,7 +1,6 @@
 package org.jdrupes.builder.core;
 
 import java.util.Objects;
-
 import org.jdrupes.builder.api.Resource;
 
 public class PhonyResource implements Resource {

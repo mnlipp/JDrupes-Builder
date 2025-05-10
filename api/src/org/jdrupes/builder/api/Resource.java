@@ -20,8 +20,14 @@ package org.jdrupes.builder.api;
 
 import java.time.Instant;
 
+/// Represents a resource.
+///
 public interface Resource {
 
+    /// The instant at which this resource was created or last modified.
+    ///
+    /// @return the instant
+    ///
     default Instant asOf() {
         return Instant.MIN;
     }

@@ -18,10 +18,24 @@
 
 package org.jdrupes.builder.api;
 
-public interface Task extends Provider {
+/// Models a task from a project.
+///
+/// @param <T> the type of resource in the [Resources] container that
+/// this task provides
+///
+@SuppressWarnings("PMD.ShortClassName")
+public interface Task<T extends Resource> extends Provider<T> {
 
+    /// Returns the task's name'.
+    ///
+    /// @return the string
+    ///
     String name();
 
-    Project project();
+    /// Returns the project that this task belongs to.
+    ///
+    /// @return the project
+    ///
+    Project<?> project();
 
 }

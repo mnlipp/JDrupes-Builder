@@ -15,6 +15,7 @@
  * You should have received a copy of the GNU Affero General Public License
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
+
 package org.jdrupes.builder.core;
 
 import java.io.IOException;
@@ -24,22 +25,21 @@ import java.nio.file.FileVisitResult;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.PathMatcher;
-import java.nio.file.Paths;
 import java.nio.file.SimpleFileVisitor;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.time.Instant;
-import java.util.logging.Logger;
 import java.util.stream.Stream;
 import org.jdrupes.builder.api.BuildException;
 import org.jdrupes.builder.api.Project;
-import org.jdrupes.builder.api.Resources;
 
+/// The representation of a file set.
+///
 public class FileSet extends ResourceSet<FileResource> {
 
     private Instant newestFile = Instant.MIN;
-    private Project project;
-    private Path root;
-    private String pattern;
+    private final Project<?> project;
+    private final Path root;
+    private final String pattern;
     private boolean filled;
 
     /// Instantiates a new file set. The file set includes all files
@@ -52,12 +52,18 @@ public class FileSet extends ResourceSet<FileResource> {
     /// `pattern`
     /// @param pattern the pattern
     ///
-    public FileSet(Project project, Path root, String pattern) {
+    public FileSet(Project<?> project, Path root, String pattern) {
         this.project = project;
         this.root = project.directory().resolve(root);
         this.pattern = pattern;
     }
 
+    /// Returns the root of the file tree searched for files.
+    ///
+    /// @param relativize whether to return a path relative to the project's
+    /// directory
+    /// @return the path
+    ///
     public Path root(boolean relativize) {
         if (relativize) {
             return project.directory().relativize(root);
@@ -65,6 +71,11 @@ public class FileSet extends ResourceSet<FileResource> {
         return root;
     }
 
+    /// Returns the root of the file tree searched for files
+    /// as an absolute path.
+    ///
+    /// @return the path
+    ///
     public Path root() {
         return root(false);
     }
@@ -76,8 +87,8 @@ public class FileSet extends ResourceSet<FileResource> {
         try {
             find(root, pattern);
         } catch (IOException e) {
-            log.log(java.util.logging.Level.SEVERE,
-                "Problem scanning files: " + e.getMessage(), e);
+            log.log(java.util.logging.Level.SEVERE, e,
+                () -> "Problem scanning files: " + e.getMessage());
             throw new BuildException(e);
         }
         filled = true;
@@ -89,7 +100,7 @@ public class FileSet extends ResourceSet<FileResource> {
         return newestFile;
     }
 
-    public final void find(Path root, String pattern)
+    private void find(Path root, String pattern)
             throws IOException {
         final PathMatcher pathMatcher = FileSystems.getDefault()
             .getPathMatcher("glob:" + pattern);

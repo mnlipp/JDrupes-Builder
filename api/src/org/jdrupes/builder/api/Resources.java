@@ -22,21 +22,44 @@ import java.util.function.Supplier;
 import java.util.stream.Collector;
 import java.util.stream.Stream;
 
-/// Represents a set of resources.
+/// Represents a container for a collection of resources.
 ///
-public interface Resources<R extends Resource> extends Resource {
+/// @param <T> the contained resource type
+///
+public interface Resources<T extends Resource> extends Resource {
 
-    Resources<R> add(R resource);
+    /// Adds the given resource.
+    ///
+    /// @param resource the resource
+    /// @return the resources
+    ///
+    Resources<T> add(T resource);
 
-    default Resources<R> addAll(Resources<R> resources) {
+    /// Adds all resources from the given collection.
+    ///
+    /// @param resources the resources to add
+    /// @return the resources
+    ///
+    default Resources<T> addAll(Resources<T> resources) {
         resources.stream().forEach(this::add);
         return this;
     }
 
-    Stream<R> stream();
+    /// Retrieves the resources as a stream.
+    ///
+    /// @return the stream
+    ///
+    Stream<T> stream();
 
-    static <R extends Resource> Collector<R, Resources<R>, Resources<R>>
-            into(Supplier<Resources<R>> containerSupplier) {
+    /// Returns a [Collector] that accumulates resources into a new
+    /// [Resources] container.
+    ///
+    /// @param <T> the contained resource type
+    /// @param containerSupplier the container supplier
+    /// @return the collector
+    ///
+    static <T extends Resource> Collector<T, Resources<T>, Resources<T>>
+            into(Supplier<Resources<T>> containerSupplier) {
         return Collector.of(containerSupplier, Resources::add,
             Resources::addAll, Collector.Characteristics.UNORDERED);
     }

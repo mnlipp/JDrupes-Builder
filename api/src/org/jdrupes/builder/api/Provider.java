@@ -18,7 +18,19 @@
 
 package org.jdrupes.builder.api;
 
-public interface Provider<R extends Resource> {
+/// A provider of resources. This interface is intended to be implemented
+/// by providers. Requests should always be made against the [Builder]
+/// (see [Builder#provide]).
+///
+/// @param <T> the provided type of [Resource]
+///
+@SuppressWarnings("PMD.ImplicitFunctionalInterface")
+public interface Provider<T extends Resource> {
 
-    Resources<R> provide(Resource requested);
+    /// Provide the resources for the given requested resource.
+    ///
+    /// @param requested the requested
+    /// @return the resources
+    ///
+    Resources<T> provide(Resource requested);
 }

@@ -7,6 +7,7 @@
 /// The state of a [Provider] is updated by adding it to a [Build]. In
 /// addition to collecting providers, the [Build] also provides a
 /// [Context] that influences how a [Provider] evaluates the [Resources].
+
 package org.jdrupes.builder.core;
 
 import org.jdrupes.builder.api.Project;

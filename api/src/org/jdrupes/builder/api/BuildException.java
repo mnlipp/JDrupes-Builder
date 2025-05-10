@@ -18,24 +18,45 @@
 
 package org.jdrupes.builder.api;
 
+/// Represents an exception that occurs during the build. Terminated the
+/// current build when thrown.
+///
+@SuppressWarnings("serial")
 public class BuildException extends RuntimeException {
 
-    public BuildException() {
-    }
-
+    /// Instantiates a new build exception.
+    ///
+    /// @param message the message
+    /// @param cause the cause
+    /// @param enableSuppression the enable suppression
+    /// @param writableStackTrace the writable stack trace
+    ///
     public BuildException(String message, Throwable cause,
             boolean enableSuppression, boolean writableStackTrace) {
         super(message, cause, enableSuppression, writableStackTrace);
     }
 
+    /// Instantiates a new build exception.
+    ///
+    /// @param message the message
+    /// @param cause the cause
+    ///
     public BuildException(String message, Throwable cause) {
         super(message, cause);
     }
 
+    /// Instantiates a new build exception.
+    ///
+    /// @param message the message
+    ///
     public BuildException(String message) {
         super(message);
     }
 
+    /// Instantiates a new build exception.
+    ///
+    /// @param cause the cause
+    ///
     public BuildException(Throwable cause) {
         super(cause);
     }

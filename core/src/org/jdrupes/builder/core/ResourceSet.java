@@ -36,23 +36,33 @@ public class ResourceSet<R extends Resource> implements Resources<R> {
 
     protected final Set<R> content;
 
+    /// Instantiates a new resource set.
+    ///
     public ResourceSet() {
         content = new HashSet<>();
     }
 
+    /// Instantiates a new resource set.
+    ///
+    /// @param content the content
+    ///
     public ResourceSet(Collection<R> content) {
         this.content = new HashSet<>(content);
     }
 
+    /// Creates a new resource set.
+    ///
+    /// @param <R> the generic type
+    /// @param resources the resources
+    /// @return the resources
+    ///
     @SafeVarargs
+    @SuppressWarnings("PMD.ShortMethodName")
     public static <R extends Resource> Resources<R> of(R... resources) {
         return new ResourceSet<>(Arrays.asList(resources));
     }
 
-    /// Returns when the resources were last modified.
-    /// 
-    /// @return the instant
-    ///
+    @Override
     public Instant asOf() {
         return Instant.MIN;
     }

@@ -31,10 +31,20 @@ import org.jdrupes.builder.api.Provider;
 import org.jdrupes.builder.api.Resource;
 import org.jdrupes.builder.api.Resources;
 
+/// The Class FutureResources.
+///
+/// @param <T> the contained resource type
+///
 public class FutureResources<R extends Resource> implements Resources<R> {
 
     private final Future<Resources<R>> source;
 
+    /// Instantiates a new future resources.
+    ///
+    /// @param executor the executor
+    /// @param provider the provider
+    /// @param requested the requested
+    ///
     public FutureResources(ExecutorService executor, Provider<R> provider,
             Resource requested) {
         source = executor.submit(() -> provider.provide(requested));
