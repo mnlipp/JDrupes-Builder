@@ -55,8 +55,7 @@ public class CompileJava extends AbstractTask {
     @Override
     @SuppressWarnings("PMD.AvoidCatchingGenericException")
     public Resources<? extends Resource> provide(Resource resource) {
-        var destDir = project().rootProject().buildDirectory()
-            .resolve(project().name(), "classes");
+        var destDir = project().buildDirectory().resolve("classes");
         log.fine(() -> "Getting classpath in " + project().name());
         var classpath = classpath(resource);
 
