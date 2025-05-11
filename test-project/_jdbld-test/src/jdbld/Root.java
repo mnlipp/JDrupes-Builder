@@ -9,8 +9,7 @@ public class Root extends DefaultProject {
 
     public Root() {
         super(null, Path.of("."));
-        new Base1(this);
-        new Base2(this);
+        dependency(App::new);
     }
 
     public static void main(String[] args) {

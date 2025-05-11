@@ -24,7 +24,7 @@ package org.jdrupes.builder.api;
 /// this task provides
 ///
 @SuppressWarnings("PMD.ShortClassName")
-public interface Task<T extends Resource> extends Provider<T> {
+public interface Task<T extends Resource> extends ResourcesProvider<T> {
 
     /// Returns the task's name'.
     ///

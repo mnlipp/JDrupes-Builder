@@ -27,7 +27,7 @@ import java.util.Optional;
 import java.util.stream.Stream;
 import org.jdrupes.builder.api.Build;
 import org.jdrupes.builder.api.Project;
-import org.jdrupes.builder.api.Provider;
+import org.jdrupes.builder.api.ResourcesProvider;
 import org.jdrupes.builder.api.Resource;
 import org.jdrupes.builder.api.Resources;
 
@@ -38,8 +38,8 @@ public class DefaultProject implements Project {
     private final Project parent;
     private final String name;
     private final Path directory;
-    private final List<Provider<?>> providers = new ArrayList<>();
-    private final List<Provider<?>> dependencies = new ArrayList<>();
+    private final List<ResourcesProvider<?>> providers = new ArrayList<>();
+    private final List<ResourcesProvider<?>> dependencies = new ArrayList<>();
     private Build build;
 
     /// Instantiates a new default project.
@@ -123,20 +123,20 @@ public class DefaultProject implements Project {
     }
 
     @Override
-    public Project provider(Provider<?> provider) {
+    public Project provider(ResourcesProvider<?> provider) {
         providers.add(provider);
         return this;
     }
 
     @Override
-    public Project providers(List<Provider<?>> providers) {
+    public Project providers(List<ResourcesProvider<?>> providers) {
         this.providers.clear();
         this.providers.addAll(providers);
         return this;
     }
 
     @Override
-    public Project dependency(Provider<?> provider) {
+    public Project dependency(ResourcesProvider<?> provider) {
         if (!dependencies.contains(provider)) {
             dependencies.add(provider);
         }
@@ -144,7 +144,7 @@ public class DefaultProject implements Project {
     }
 
     @Override
-    public Project dependencies(List<Provider<?>> providers) {
+    public Project dependencies(List<ResourcesProvider<?>> providers) {
         this.dependencies.clear();
         this.dependencies.addAll(providers);
         return this;

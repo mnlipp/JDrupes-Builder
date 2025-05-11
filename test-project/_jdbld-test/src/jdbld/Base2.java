@@ -12,8 +12,8 @@ public class Base2 extends DefaultProject {
 
     public Base2(Project parent) {
         super(parent, "base2");
-        provider(new CompileJava(this)
-            .addSources(new FileSet(this, Path.of("src"), "**/*.java")));
+        provider(CompileJava::new)
+            .addSources(new FileSet(this, Path.of("src"), "**/*.java"));
     }
 
 }

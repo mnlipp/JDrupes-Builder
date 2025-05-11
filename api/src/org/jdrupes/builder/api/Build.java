@@ -25,7 +25,7 @@ import org.jdrupes.builder.api.Build.Cache.Key;
 /// A build is the collection of all data related to building all projects.
 /// In particular, it holds the global configuration information for the
 /// build, as well as a cache of all resources that have been requested
-/// from the [Provider]s during the build.
+/// from the [ResourcesProvider]s during the build.
 /// 
 public interface Build {
 
@@ -33,10 +33,10 @@ public interface Build {
     ///
     interface Cache {
 
-        /// Resources are identified by a [Provider] and the 
+        /// Resources are identified by a [ResourcesProvider] and the 
         /// requested [Resource].
         ///
-        record Key<T extends Resource>(Provider<T> provider,
+        record Key<T extends Resource>(ResourcesProvider<T> provider,
                 Resource requested) {
         }
 
@@ -104,7 +104,7 @@ public interface Build {
     /// @param requested the requested
     /// @return the resources
     ///
-    default <T extends Resource> Resources<T> provide(Provider<T> provider,
+    default <T extends Resource> Resources<T> provide(ResourcesProvider<T> provider,
             Resource requested) {
         return provide(new Key<>(provider, requested));
     }

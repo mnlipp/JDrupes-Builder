@@ -21,12 +21,13 @@ package org.jdrupes.builder.api;
 import java.nio.file.Path;
 import java.util.List;
 import java.util.Optional;
+import java.util.function.Function;
 
 /// Defines the API for the builder's model of a project.
 ///
 /// Projects form a hierarchy with a single root.
 ///
-public interface Project extends Provider<Resource> {
+public interface Project extends ResourcesProvider<Resource> {
 
     /// Returns the parent project unless this is the root project.
     ///
@@ -64,7 +65,20 @@ public interface Project extends Provider<Resource> {
     /// @param provider the provider
     /// @return the project
     ///
-    Project provider(Provider<?> provider);
+    Project provider(ResourcesProvider<?> provider);
+
+    /// Uses the supplier to create a provider, passing this project as 
+    /// argument and adds the result as a provider to this project.
+    ///
+    /// @param supplier the supplier
+    /// @return the project
+    ///
+    default <T extends ResourcesProvider<R>, R extends Resource> T
+            provider(Function<Project, T> supplier) {
+        var provider = supplier.apply(this);
+        provider(provider);
+        return provider;
+    }
 
     /// Sets the providers associated with the project. Clears all
     /// already existing providers.
@@ -72,7 +86,7 @@ public interface Project extends Provider<Resource> {
     /// @param providers the providers
     /// @return the project
     ///
-    Project providers(List<Provider<?>> providers);
+    Project providers(List<ResourcesProvider<?>> providers);
 
     /// Adds a provider as a dependency. Resources provided by dependencies
     /// can be used by tasks as input in addition to resources provided
@@ -81,7 +95,22 @@ public interface Project extends Provider<Resource> {
     /// @param provider the provider
     /// @return the project
     ///
-    Project dependency(Provider<?> provider);
+    Project dependency(ResourcesProvider<?> provider);
+
+    /// Uses the supplier to create a provider, passing this project as 
+    /// argument and adds the result as a dependency to this project.
+    ///
+    /// This method is typically used to add subproject.
+    ///
+    /// @param supplier the supplier
+    /// @return the project
+    ///
+    default <T extends ResourcesProvider<R>, R extends Resource> T
+            dependency(Function<Project, T> supplier) {
+        var dependency = supplier.apply(this);
+        dependency(dependency);
+        return dependency;
+    }
 
     /// Sets the dependencies of the project. Clears all already existing
     /// dependencies.
@@ -89,7 +118,7 @@ public interface Project extends Provider<Resource> {
     /// @param providers the providers
     /// @return the project
     ///
-    Project dependencies(List<Provider<?>> providers);
+    Project dependencies(List<ResourcesProvider<?>> providers);
 
     /// Returns the resources provided to the project by its dependencies.
     ///
