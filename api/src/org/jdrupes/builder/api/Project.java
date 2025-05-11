@@ -53,8 +53,8 @@ public interface Project extends ResourcesProvider<Resource> {
     ///
     Path directory();
 
-    /// Returns the directory where the project's tasks should create
-    /// the artifacts.
+    /// Returns the directory where the project's [Generator]s should
+    /// create the artifacts.
     ///
     /// @return the path
     ///
@@ -89,8 +89,8 @@ public interface Project extends ResourcesProvider<Resource> {
     Project providers(List<ResourcesProvider<?>> providers);
 
     /// Adds a provider as a dependency. Resources provided by dependencies
-    /// can be used by tasks as input in addition to resources provided
-    /// to tasks directly.
+    /// can be used by [Generator]s as input in addition to resources
+    /// provided to [Generator]s directly.
     ///
     /// @param provider the provider
     /// @return the project

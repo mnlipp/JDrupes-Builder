@@ -18,21 +18,22 @@
 
 package org.jdrupes.builder.api;
 
-/// Models a task from a project.
+/// Models a [ResourcesProvider] that is associated with a project
+/// and generates new Resources (artifacts).
 ///
 /// @param <T> the type of resource in the [Resources] container that
-/// this task provides
+/// this generator provides
 ///
 @SuppressWarnings("PMD.ShortClassName")
-public interface Task<T extends Resource> extends ResourcesProvider<T> {
+public interface Generator<T extends Resource> extends ResourcesProvider<T> {
 
-    /// Returns the task's name'.
+    /// Returns the generator's name.
     ///
     /// @return the string
     ///
     String name();
 
-    /// Returns the project that this task belongs to.
+    /// Returns the project that this generator belongs to.
     ///
     /// @return the project
     ///

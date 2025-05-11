@@ -19,43 +19,44 @@
 package org.jdrupes.builder.core;
 
 import java.util.logging.Logger;
+import org.jdrupes.builder.api.Generator;
 import org.jdrupes.builder.api.Project;
 import org.jdrupes.builder.api.Resource;
 import org.jdrupes.builder.api.Resources;
-import org.jdrupes.builder.api.Task;
 
-/// A base implementation of a [Task].
+/// A base implementation of a [Generator].
 ///
 /// @param <T> the type of resource in the [Resources] container that
-/// this task provides
+/// this generator provides
 ///
-public abstract class AbstractTask<R extends Resource> implements Task<R> {
+public abstract class AbstractGenerator<T extends Resource>
+        implements Generator<T> {
 
     protected final Logger log = Logger.getLogger(getClass().getName());
 
     private final Project project;
     private final String name;
 
-    /// Instantiates a new abstract task.
+    /// Instantiates a new abstract generator.
     ///
     /// @param project the project
     /// @param name the name
     ///
-    public AbstractTask(Project project, String name) {
+    public AbstractGenerator(Project project, String name) {
         this.project = project;
         this.name = name;
     }
 
-    /// Instantiates a new abstract task.
+    /// Instantiates a new abstract generator.
     ///
     /// @param project the project
     ///
-    public AbstractTask(Project project) {
+    public AbstractGenerator(Project project) {
         this.project = project;
         name = getClass().getSimpleName();
     }
 
-    /// Name.
+    /// Returns the generator's name.
     ///
     /// @return the string
     ///
@@ -64,7 +65,7 @@ public abstract class AbstractTask<R extends Resource> implements Task<R> {
         return name;
     }
 
-    /// Project.
+    /// Return the project that this generator belongs to.
     ///
     /// @return the project
     ///

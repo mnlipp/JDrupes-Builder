@@ -2,7 +2,7 @@
 /// [Resources] typically bases its provisioning on specialized nested
 /// [ResourcesProvider]s that handle the provisioning in a particular scope such
 /// as a [Project] or by transforming existing [Resources] to new
-/// [Resources] by executing a [AbstractTask].
+/// [Resources] by executing a [AbstractGenerator].
 /// 
 /// The state of a [ResourcesProvider] is updated by adding it to a [Build]. In
 /// addition to collecting providers, the [Build] also provides a

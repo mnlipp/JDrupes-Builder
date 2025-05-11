@@ -21,9 +21,9 @@ import org.jdrupes.builder.api.Resources;
 import org.jdrupes.builder.core.FileResource;
 import org.jdrupes.builder.core.FileSet;
 import org.jdrupes.builder.core.ResourceSet;
-import org.jdrupes.builder.core.AbstractTask;
+import org.jdrupes.builder.core.AbstractGenerator;
 
-public class JavaCompiler extends AbstractTask<FileSet> {
+public class JavaCompiler extends AbstractGenerator<FileSet> {
 
     private List<FileSet> sources = new ArrayList<>();
 
