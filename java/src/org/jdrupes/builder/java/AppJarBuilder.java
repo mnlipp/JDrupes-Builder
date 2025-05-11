@@ -7,9 +7,9 @@ import org.jdrupes.builder.core.AbstractTask;
 import org.jdrupes.builder.core.AnyResource;
 import org.jdrupes.builder.core.FileSet;
 
-public class AppJar extends AbstractTask<FileSet> {
+public class AppJarBuilder extends AbstractTask<FileSet> {
 
-    public AppJar(Project project) {
+    public AppJarBuilder(Project project) {
         super(project);
     }
 

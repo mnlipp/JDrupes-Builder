@@ -23,15 +23,15 @@ import org.jdrupes.builder.core.FileSet;
 import org.jdrupes.builder.core.ResourceSet;
 import org.jdrupes.builder.core.AbstractTask;
 
-public class CompileJava extends AbstractTask<FileSet> {
+public class JavaCompiler extends AbstractTask<FileSet> {
 
     private List<FileSet> sources = new ArrayList<>();
 
-    public CompileJava(Project project) {
+    public JavaCompiler(Project project) {
         super(project);
     }
 
-    public CompileJava addSources(FileSet sources) {
+    public JavaCompiler addSources(FileSet sources) {
         this.sources.add(sources);
         return this;
     }

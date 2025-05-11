@@ -5,13 +5,13 @@ import org.jdrupes.builder.core.FileSet;
 import java.nio.file.Path;
 import org.jdrupes.builder.api.Project;
 import org.jdrupes.builder.core.DefaultProject;
-import org.jdrupes.builder.java.CompileJava;
+import org.jdrupes.builder.java.JavaCompiler;
 
 public class Base1 extends DefaultProject {
 
     public Base1(Project parent) {
         super(parent, "base1");
-        provider(CompileJava::new)
+        provider(JavaCompiler::new)
             .addSources(new FileSet(this, Path.of("src"), "**/*.java"));
     }
 
