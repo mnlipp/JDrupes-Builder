@@ -25,6 +25,7 @@ import java.nio.file.Path;
 import java.util.logging.LogManager;
 import org.jdrupes.builder.api.Launcher;
 import org.jdrupes.builder.api.Project;
+import org.jdrupes.builder.api.Resource;
 
 /// A default implementation of a [Launcher].
 ///
@@ -56,7 +57,9 @@ public class DefaultLauncher implements Launcher {
         } catch (SecurityException | IOException e) {
             e.printStackTrace();
         }
-        rootProject.provide(new PhonyResource("compile"));
+
+        // Start building
+        rootProject.provide(AnyResource.of(Resource.KIND_CLASSES));
     }
 
 }

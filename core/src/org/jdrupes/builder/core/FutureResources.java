@@ -91,4 +91,17 @@ public class FutureResources<R extends Resource> implements Resources<R> {
             }, false);
     }
 
+    @Override
+    @SuppressWarnings("PMD.EmptyCatchBlock")
+    public String toString() {
+        if (source.isDone()) {
+            try {
+                return source.get().toString();
+            } catch (InterruptedException | ExecutionException e) {
+                // fall through
+            }
+        }
+        return "Future resource of kind " + KIND_UNKNOWN;
+    }
+
 }

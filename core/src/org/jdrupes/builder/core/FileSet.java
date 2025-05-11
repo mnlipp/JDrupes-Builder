@@ -36,6 +36,7 @@ import org.jdrupes.builder.api.Project;
 ///
 public class FileSet extends ResourceSet<FileResource> {
 
+    private String kind = KIND_UNKNOWN;
     private Instant newestFile = Instant.MIN;
     private final Project project;
     private final Path root;
@@ -56,6 +57,21 @@ public class FileSet extends ResourceSet<FileResource> {
         this.project = project;
         this.root = project.directory().resolve(root);
         this.pattern = pattern;
+    }
+
+    /// Returns the kind of this file set (as resource).
+    ///
+    /// @param kind the kind
+    /// @return the file set
+    ///
+    public FileSet kind(String kind) {
+        this.kind = kind;
+        return this;
+    }
+
+    @Override
+    public String kind() {
+        return kind;
     }
 
     /// Returns the root of the file tree searched for files.

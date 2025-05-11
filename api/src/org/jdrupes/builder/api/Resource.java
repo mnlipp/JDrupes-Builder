@@ -24,6 +24,21 @@ import java.time.Instant;
 ///
 public interface Resource {
 
+    /// The kind unknown.
+    String KIND_UNKNOWN = "unknown";
+
+    /// The kind jvm class.
+    String KIND_CLASS = "class";
+
+    /// The kind class directory.
+    String KIND_CLASSES = "class directory";
+
+    /// The kind library jar.
+    String KIND_LIB_JAR = "library jar";
+
+    /// The kind application jar.
+    String KIND_APP_JAR = "application jar";
+
     /// The instant at which this resource was created or last modified.
     ///
     /// @return the instant
@@ -32,4 +47,11 @@ public interface Resource {
         return Instant.MIN;
     }
 
+    /// Returns the kind of this resource.
+    ///
+    /// @return the kind
+    ///
+    default String kind() {
+        return KIND_UNKNOWN;
+    }
 }

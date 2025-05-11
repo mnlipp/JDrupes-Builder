@@ -28,6 +28,29 @@ import java.util.stream.Stream;
 ///
 public interface Resources<T extends Resource> extends Resource {
 
+    Resources<?> EMPTY = new Resources<>() {
+
+        @Override
+        public Resources<Resource> add(Resource resource) {
+            throw new UnsupportedOperationException();
+        }
+
+        @Override
+        public Stream<Resource> stream() {
+            return Stream.empty();
+        }
+
+        @Override
+        public String toString() {
+            return "Empty resources";
+        }
+    };
+
+    @SuppressWarnings("unchecked")
+    static <R extends Resource> Resources<R> empty() {
+        return (Resources<R>) EMPTY;
+    }
+
     /// Adds the given resource.
     ///
     /// @param resource the resource

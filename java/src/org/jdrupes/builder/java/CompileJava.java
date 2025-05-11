@@ -55,6 +55,10 @@ public class CompileJava extends AbstractTask<FileSet> {
     @Override
     @SuppressWarnings("PMD.AvoidCatchingGenericException")
     public Resources<FileSet> provide(Resource resource) {
+        if (!Resource.KIND_CLASSES.equals(resource.kind())) {
+            return Resources.empty();
+        }
+
         var destDir = project().buildDirectory().resolve("classes");
         log.fine(() -> "Getting classpath in " + project().name());
         var classpath = classpath(resource);
@@ -85,7 +89,8 @@ public class CompileJava extends AbstractTask<FileSet> {
             }
         }
 
-        return ResourceSet.of(new FileSet(project(), destDir, "**/*"));
+        return ResourceSet.of(new FileSet(project(), destDir, "**/*")
+            .kind(Resource.KIND_CLASSES));
     }
 
 }
