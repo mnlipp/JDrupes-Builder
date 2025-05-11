@@ -1,7 +1,6 @@
 package jdbld;
 
 import java.nio.file.Path;
-import java.util.List;
 
 import org.jdrupes.builder.core.DefaultLauncher;
 import org.jdrupes.builder.core.DefaultProject;

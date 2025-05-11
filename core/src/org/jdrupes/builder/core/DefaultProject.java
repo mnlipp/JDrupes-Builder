@@ -33,11 +33,9 @@ import org.jdrupes.builder.api.Resources;
 
 /// A default implementation of a [Project].
 ///
-/// @param <T> the type of resource for the project's role as [Provider]
-///
-public class DefaultProject<T extends Resource> implements Project<T> {
+public class DefaultProject implements Project {
 
-    private final Project<?> parent;
+    private final Project parent;
     private final String name;
     private final Path directory;
     private final List<Provider<?>> providers = new ArrayList<>();
@@ -50,7 +48,7 @@ public class DefaultProject<T extends Resource> implements Project<T> {
     /// @param name the name
     /// @param directory the directory
     ///
-    public DefaultProject(Project<?> parent, String name, Path directory) {
+    public DefaultProject(Project parent, String name, Path directory) {
         this.parent = parent;
         if (name == null) {
             name = getClass().getSimpleName();
@@ -75,7 +73,7 @@ public class DefaultProject<T extends Resource> implements Project<T> {
     /// @param parent the parent
     /// @param name the name
     ///
-    public DefaultProject(Project<?> parent, String name) {
+    public DefaultProject(Project parent, String name) {
         this(parent, name, null);
     }
 
@@ -84,7 +82,7 @@ public class DefaultProject<T extends Resource> implements Project<T> {
     /// @param parent the parent
     /// @param directory the directory
     ///
-    public DefaultProject(Project<?> parent, Path directory) {
+    public DefaultProject(Project parent, Path directory) {
         this(parent, null, directory);
     }
 
@@ -92,17 +90,17 @@ public class DefaultProject<T extends Resource> implements Project<T> {
     ///
     /// @param parent the parent
     ///
-    public DefaultProject(Project<?> parent) {
+    public DefaultProject(Project parent) {
         this(parent, null, null);
     }
 
     @Override
-    public Optional<Project<?>> parent() {
+    public Optional<Project> parent() {
         return Optional.ofNullable(parent);
     }
 
     @Override
-    public Project<?> rootProject() {
+    public Project rootProject() {
         if (parent == null) {
             return this;
         }
@@ -125,20 +123,20 @@ public class DefaultProject<T extends Resource> implements Project<T> {
     }
 
     @Override
-    public Project<T> provider(Provider<?> provider) {
+    public Project provider(Provider<?> provider) {
         providers.add(provider);
         return this;
     }
 
     @Override
-    public Project<T> providers(List<Provider<?>> providers) {
+    public Project providers(List<Provider<?>> providers) {
         this.providers.clear();
         this.providers.addAll(providers);
         return this;
     }
 
     @Override
-    public Project<T> dependency(Provider<?> provider) {
+    public Project dependency(Provider<?> provider) {
         if (!dependencies.contains(provider)) {
             dependencies.add(provider);
         }
@@ -146,7 +144,7 @@ public class DefaultProject<T extends Resource> implements Project<T> {
     }
 
     @Override
-    public Project<T> dependencies(List<Provider<?>> providers) {
+    public Project dependencies(List<Provider<?>> providers) {
         this.dependencies.clear();
         this.dependencies.addAll(providers);
         return this;
@@ -161,8 +159,8 @@ public class DefaultProject<T extends Resource> implements Project<T> {
 
     @Override
     @SuppressWarnings("unchecked")
-    public Resources<T> provide(Resource resource) {
-        return (Resources<T>) Stream.concat(
+    public Resources<Resource> provide(Resource resource) {
+        return (Resources<Resource>) Stream.concat(
             dependencies.stream().map(p -> build().provide(p, resource)),
             providers.stream().map(p -> build().provide(p, resource)))
             .toList().stream()

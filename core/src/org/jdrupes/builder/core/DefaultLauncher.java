@@ -30,13 +30,13 @@ import org.jdrupes.builder.api.Project;
 ///
 public class DefaultLauncher implements Launcher {
 
-    private final Project<?> rootProject;
+    private final Project rootProject;
 
     /// Instantiates a new default launcher.
     ///
     /// @param project the project
     ///
-    public DefaultLauncher(Project<?> project) {
+    public DefaultLauncher(Project project) {
         rootProject = project;
     }
 

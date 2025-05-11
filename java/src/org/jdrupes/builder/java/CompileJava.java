@@ -27,7 +27,7 @@ public class CompileJava extends AbstractTask<FileSet> {
 
     private List<FileSet> sources = new ArrayList<>();
 
-    public CompileJava(Project<?> project) {
+    public CompileJava(Project project) {
         super(project);
     }
 

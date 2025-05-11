@@ -26,19 +26,19 @@ import java.util.Optional;
 ///
 /// Projects form a hierarchy with a single root.
 ///
-public interface Project<T extends Resource> extends Provider<T> {
+public interface Project extends Provider<Resource> {
 
     /// Returns the parent project unless this is the root project.
     ///
     /// @return the (optional) parent project
     ///
-    Optional<Project<?>> parent();
+    Optional<Project> parent();
 
     /// Returns the root project.
     ///
     /// @return the project
     ///
-    Project<?> rootProject();
+    Project rootProject();
 
     /// Returns the project's name.
     ///
@@ -64,7 +64,7 @@ public interface Project<T extends Resource> extends Provider<T> {
     /// @param provider the provider
     /// @return the project
     ///
-    Project<T> provider(Provider<?> provider);
+    Project provider(Provider<?> provider);
 
     /// Sets the providers associated with the project. Clears all
     /// already existing providers.
@@ -72,7 +72,7 @@ public interface Project<T extends Resource> extends Provider<T> {
     /// @param providers the providers
     /// @return the project
     ///
-    Project<T> providers(List<Provider<?>> providers);
+    Project providers(List<Provider<?>> providers);
 
     /// Adds a provider as a dependency. Resources provided by dependencies
     /// can be used by tasks as input in addition to resources provided
@@ -81,7 +81,7 @@ public interface Project<T extends Resource> extends Provider<T> {
     /// @param provider the provider
     /// @return the project
     ///
-    Project<T> dependency(Provider<?> provider);
+    Project dependency(Provider<?> provider);
 
     /// Sets the dependencies of the project. Clears all already existing
     /// dependencies.
@@ -89,7 +89,7 @@ public interface Project<T extends Resource> extends Provider<T> {
     /// @param providers the providers
     /// @return the project
     ///
-    Project<T> dependencies(List<Provider<?>> providers);
+    Project dependencies(List<Provider<?>> providers);
 
     /// Returns the resources provided to the project by its dependencies.
     ///

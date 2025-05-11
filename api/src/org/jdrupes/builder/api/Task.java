@@ -36,6 +36,6 @@ public interface Task<T extends Resource> extends Provider<T> {
     ///
     /// @return the project
     ///
-    Project<?> project();
+    Project project();
 
 }

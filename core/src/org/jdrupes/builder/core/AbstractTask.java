@@ -33,7 +33,7 @@ public abstract class AbstractTask<R extends Resource> implements Task<R> {
 
     protected final Logger log = Logger.getLogger(getClass().getName());
 
-    private final Project<?> project;
+    private final Project project;
     private final String name;
 
     /// Instantiates a new abstract task.
@@ -41,7 +41,7 @@ public abstract class AbstractTask<R extends Resource> implements Task<R> {
     /// @param project the project
     /// @param name the name
     ///
-    public AbstractTask(Project<?> project, String name) {
+    public AbstractTask(Project project, String name) {
         this.project = project;
         this.name = name;
     }
@@ -50,7 +50,7 @@ public abstract class AbstractTask<R extends Resource> implements Task<R> {
     ///
     /// @param project the project
     ///
-    public AbstractTask(Project<?> project) {
+    public AbstractTask(Project project) {
         this.project = project;
         name = getClass().getSimpleName();
     }
@@ -69,7 +69,7 @@ public abstract class AbstractTask<R extends Resource> implements Task<R> {
     /// @return the project
     ///
     @Override
-    public Project<?> project() {
+    public Project project() {
         return project;
     }
 }

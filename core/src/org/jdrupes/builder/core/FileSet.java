@@ -37,7 +37,7 @@ import org.jdrupes.builder.api.Project;
 public class FileSet extends ResourceSet<FileResource> {
 
     private Instant newestFile = Instant.MIN;
-    private final Project<?> project;
+    private final Project project;
     private final Path root;
     private final String pattern;
     private boolean filled;
@@ -52,7 +52,7 @@ public class FileSet extends ResourceSet<FileResource> {
     /// `pattern`
     /// @param pattern the pattern
     ///
-    public FileSet(Project<?> project, Path root, String pattern) {
+    public FileSet(Project project, Path root, String pattern) {
         this.project = project;
         this.root = project.directory().resolve(root);
         this.pattern = pattern;

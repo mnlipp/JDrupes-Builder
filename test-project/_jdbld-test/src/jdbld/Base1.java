@@ -3,7 +3,6 @@ package jdbld;
 import org.jdrupes.builder.core.FileSet;
 
 import java.nio.file.Path;
-
 import org.jdrupes.builder.api.Project;
 import org.jdrupes.builder.core.DefaultProject;
 import org.jdrupes.builder.java.CompileJava;
