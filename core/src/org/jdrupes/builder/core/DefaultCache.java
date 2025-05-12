@@ -21,40 +21,45 @@ package org.jdrupes.builder.core;
 import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.Future;
 import java.util.function.Function;
 import org.jdrupes.builder.api.Build;
 import org.jdrupes.builder.api.Resource;
-import org.jdrupes.builder.api.Resources;
 
 /// A default implementation of a [Cache].
 ///
 public class DefaultCache implements Build.Cache {
 
     private final Map<Key<? extends Resource>,
-            Resources<? extends Resource>> cache = new ConcurrentHashMap<>();
+            Future<Optional<? extends Resource>>> cache
+                = new ConcurrentHashMap<>();
 
     @Override
-    public <R extends Resource> void put(Key<R> key, Resources<R> value) {
-        cache.put(key, value);
+    @SuppressWarnings("unchecked")
+    public <R extends Resource> void put(Key<R> key,
+            Future<Optional<R>> value) {
+        cache.put(key, (Future<Optional<? extends Resource>>) (Object) value);
     }
 
     @Override
     @SuppressWarnings("unchecked")
-    public <R extends Resource> Optional<Resources<R>> get(Key<R> key) {
+    public <T extends Resource> Optional<Future<Optional<T>>>
+            get(Key<T> key) {
         // This is actually type-safe, because the methods for entering
         // key value pairs allow only values typed according to the cast
-        return Optional.ofNullable((Resources<R>) cache.get(key));
+        return Optional
+            .ofNullable((Future<Optional<T>>) (Object) cache.get(key));
     }
 
     @Override
     @SuppressWarnings("unchecked")
-    public <R extends Resource> Resources<R> computeIfAbsent(Key<R> key,
-            Function<Key<R>, Resources<R>> supplier) {
+    public <T extends Resource> Future<Optional<T>> computeIfAbsent(Key<T> key,
+            Function<Key<T>, Future<Optional<T>>> supplier) {
         // This is actually type-safe, because the methods for entering
         // key value pairs allow only values typed according to the casts
-        return (Resources<R>) cache.computeIfAbsent(key,
+        return (Future<Optional<T>>) (Object) cache.computeIfAbsent(key,
             (Function<Key<? extends Resource>,
-                    Resources<? extends Resource>>) (Object) supplier);
+                    Future<Optional<? extends Resource>>>) (Object) supplier);
     }
 
     @Override

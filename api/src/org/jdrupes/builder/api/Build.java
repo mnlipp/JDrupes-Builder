@@ -19,6 +19,7 @@
 package org.jdrupes.builder.api;
 
 import java.util.Optional;
+import java.util.concurrent.Future;
 import java.util.function.Function;
 import org.jdrupes.builder.api.Build.Cache.Key;
 
@@ -29,12 +30,12 @@ import org.jdrupes.builder.api.Build.Cache.Key;
 /// 
 public interface Build {
 
-    /// Defines a cache of resources.
+    /// Defines a cache of resources (as [Future]s).
     ///
     interface Cache {
 
-        /// Resources are identified by a [ResourceProvider] and the 
-        /// requested [Resource].
+        /// Provided resources are identified by the [ResourceProvider]
+        /// and the requested [Resource].
         ///
         record Key<T extends Resource>(ResourceProvider<T> provider,
                 Resource requested) {
@@ -42,30 +43,30 @@ public interface Build {
 
         /// Puts a key-value pair into the cache.
         ///
-        /// @param <T> the generic type
+        /// @param <T> the type of resource
         /// @param key the key
         /// @param value the value
         ///
-        <T extends Resource> void put(Key<T> key, Resources<T> value);
+        <T extends Resource> void put(Key<T> key, Future<Optional<T>> value);
 
         /// Gets the value for the given key from the cache.
         ///
-        /// @param <T> the generic type
+        /// @param <T> the type of resource
         /// @param key the key
         /// @return the associated value
         ///
-        <T extends Resource> Optional<Resources<T>> get(Key<T> key);
+        <T extends Resource> Optional<Future<Optional<T>>> get(Key<T> key);
 
         /// Attempts to compute a value for the given key if it is not
         /// already present in the cache.
         ///
-        /// @param <T> the generic type
+        /// @param <T> the type of resource
         /// @param key the key
         /// @param supplier the supplier
-        /// @return the resources
+        /// @return the resource
         ///
-        <T extends Resource> Resources<T> computeIfAbsent(Key<T> key,
-                Function<Key<T>, Resources<T>> supplier);
+        <T extends Resource> Future<Optional<T>> computeIfAbsent(Key<T> key,
+                Function<Key<T>, Future<Optional<T>>> supplier);
 
         /// Removes the entry with the given key.
         ///
@@ -85,27 +86,23 @@ public interface Build {
     ///
     Cache cache();
 
-    /// Provides the resources for the given key from the given provider.
-    /// The result from invoking the provider is evaluated asynchronously
-    /// and cached. Only when [Resources#asOf] is called or the stream
-    /// from [Resources#stream] is terminated will the invocation block
-    /// until the result from the provider becomes available.
+    /// Start the asynchronous evaluation of the requested resource.
     ///
-    /// @param <T> the generic type
+    /// @param <T> the type of resource
     /// @param key the key
-    /// @return the resources
+    /// @return the resource
     ///
-    <T extends Resource> Resources<T> provide(Key<T> key);
+    <T extends Resource> Future<Optional<T>> provide(Key<T> key);
 
     /// Short for `provide(new Key<>(provider, requested))`.
     ///
-    /// @param <T> the generic type
+    /// @param <T> the type of resource
     /// @param provider the provider
     /// @param requested the requested
-    /// @return the resources
+    /// @return the resource
     ///
-    default <T extends Resource> Resources<T> provide(ResourceProvider<T> provider,
-            Resource requested) {
+    default <T extends Resource> Future<Optional<T>> provide(
+            ResourceProvider<T> provider, Resource requested) {
         return provide(new Key<>(provider, requested));
     }
 }

@@ -18,7 +18,9 @@
 
 package org.jdrupes.builder.api;
 
-/// A provider of resources. This interface is intended to be implemented
+import java.util.Optional;
+
+/// A provider of a resource. This interface is intended to be implemented
 /// by providers. Requests should always be made against the [Builder]
 /// (see [Builder#provide]).
 ///
@@ -27,10 +29,12 @@ package org.jdrupes.builder.api;
 @SuppressWarnings("PMD.ImplicitFunctionalInterface")
 public interface ResourceProvider<T extends Resource> {
 
-    /// Provide the resources for the given requested resource.
+    /// Provide the resource for the given requested resource.
+    /// Note that this can also be used to provide several resources
+    /// because [Resources] implements [Resource].
     ///
     /// @param requested the requested resource
     /// @return the provided resource
     ///
-    Resources<T> provide(Resource requested);
+    Optional<T> provide(Resource requested);
 }

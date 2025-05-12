@@ -24,11 +24,13 @@ import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import java.util.concurrent.ExecutionException;
 import java.util.stream.Stream;
 import org.jdrupes.builder.api.Build;
+import org.jdrupes.builder.api.BuildException;
 import org.jdrupes.builder.api.Project;
-import org.jdrupes.builder.api.ResourceProvider;
 import org.jdrupes.builder.api.Resource;
+import org.jdrupes.builder.api.ResourceProvider;
 import org.jdrupes.builder.api.Resources;
 
 /// A default implementation of a [Project].
@@ -153,20 +155,31 @@ public class DefaultProject implements Project {
     @Override
     public Resources<?> provided(Resource resource) {
         return dependencies.stream().map(p -> build().provide(p, resource))
-            .toList().stream()
-            .map(Resources::stream).flatMap(r -> r)
+            // Terminate stream to start all tasks for evaluating the futures
+            .toList().stream().map(t -> {
+                try {
+                    return t.get();
+                } catch (InterruptedException | ExecutionException e) {
+                    throw new BuildException(e);
+                }
+            }).filter(Optional::isPresent).map(Optional::get)
             .collect(Resources.into(ResourceSet::new));
     }
 
     @Override
-    @SuppressWarnings("unchecked")
-    public Resources<Resource> provide(Resource resource) {
-        return (Resources<Resource>) Stream.concat(
+    public Optional<Resources<?>> provide(Resource resource) {
+        return Optional.of(Stream.concat(
             dependencies.stream().map(p -> build().provide(p, resource)),
             providers.stream().map(p -> build().provide(p, resource)))
-            .toList().stream()
-            .map(Resources::stream).flatMap(r -> r)
-            .collect(Resources.into(ResourceSet::new));
+            // Terminate stream to start all tasks for evaluating the futures
+            .toList().stream().map(t -> {
+                try {
+                    return t.get();
+                } catch (InterruptedException | ExecutionException e) {
+                    throw new BuildException(e);
+                }
+            }).filter(Optional::isPresent).map(Optional::get)
+            .collect(Resources.into(ResourceSet::new)));
     }
 
     @Override

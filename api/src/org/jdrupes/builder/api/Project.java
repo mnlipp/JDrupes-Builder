@@ -27,7 +27,7 @@ import java.util.function.Function;
 ///
 /// Projects form a hierarchy with a single root.
 ///
-public interface Project extends ResourceProvider<Resource> {
+public interface Project extends ResourceProvider<Resources<?>> {
 
     /// Returns the parent project unless this is the root project.
     ///
@@ -125,7 +125,7 @@ public interface Project extends ResourceProvider<Resource> {
     /// @param resource the resource
     /// @return the resources<? extends resource>
     ///
-    Resources<? extends Resource> provided(Resource resource);
+    Resources<?> provided(Resource resource);
 
     /// Short for `directory().relativize(other)`.
     ///

@@ -6,6 +6,7 @@ import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+import java.util.Optional;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
@@ -54,9 +55,9 @@ public class JavaCompiler extends AbstractGenerator<FileSet> {
 
     @Override
     @SuppressWarnings("PMD.AvoidCatchingGenericException")
-    public Resources<FileSet> provide(Resource resource) {
+    public Optional<FileSet> provide(Resource resource) {
         if (!Resource.KIND_CLASSES.equals(resource.kind())) {
-            return Resources.empty();
+            return Optional.empty();
         }
 
         var destDir = project().buildDirectory().resolve("classes");
@@ -89,7 +90,7 @@ public class JavaCompiler extends AbstractGenerator<FileSet> {
             }
         }
 
-        return ResourceSet.of(new FileSet(project(), destDir, "**/*")
+        return Optional.of(new FileSet(project(), destDir, "**/*")
             .kind(Resource.KIND_CLASSES));
     }
 

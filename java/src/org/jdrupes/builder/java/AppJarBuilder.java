@@ -3,6 +3,7 @@ package org.jdrupes.builder.java;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
+import java.util.Optional;
 import java.util.jar.Attributes;
 import java.util.jar.JarOutputStream;
 import java.util.jar.Manifest;
@@ -16,7 +17,7 @@ import org.jdrupes.builder.core.AllResources;
 import org.jdrupes.builder.core.FileResource;
 import org.jdrupes.builder.core.FileSet;
 
-public class AppJarBuilder extends AbstractGenerator<FileSet> {
+public class AppJarBuilder extends AbstractGenerator<FileResource> {
 
     public AppJarBuilder(Project project) {
         super(project);
@@ -24,9 +25,9 @@ public class AppJarBuilder extends AbstractGenerator<FileSet> {
 
     @Override
     @SuppressWarnings("PMD.AvoidCatchingGenericException")
-    public Resources<FileSet> provide(Resource resource) {
+    public Optional<FileResource> provide(Resource resource) {
         if (!Resource.KIND_APP_JAR.equals(resource.kind())) {
-            return Resources.empty();
+            return Optional.empty();
         }
 
         log.info(() -> "Building application jar in " + project().name());
@@ -60,7 +61,7 @@ public class AppJarBuilder extends AbstractGenerator<FileSet> {
             throw new BuildException(e);
         }
 
-        return Resources.empty();
+        return Optional.empty();
     }
 
 //    private static void addClassFile(JarOutputStream jos, String classFilePath)
