@@ -9,6 +9,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.function.Function;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import javax.tools.DiagnosticCollector;
 import javax.tools.JavaFileObject;
@@ -44,20 +45,19 @@ public class JavaCompiler extends AbstractGenerator<FileSet> {
     }
 
     private String classpath(Resource resource) {
-        return project().provided(resource).stream()
-            .<Path> mapMulti((r, sink) -> {
-                if (r instanceof FileSet fileSet) {
-                    sink.accept(fileSet.root());
-                }
-            }).map(Path::toString)
+        return project().provided(resource).<Path> mapMulti((r, sink) -> {
+            if (r instanceof FileSet fileSet) {
+                sink.accept(fileSet.root());
+            }
+        }).map(Path::toString)
             .collect(Collectors.joining(File.pathSeparator));
     }
 
     @Override
     @SuppressWarnings("PMD.AvoidCatchingGenericException")
-    public Optional<FileSet> provide(Resource resource) {
+    public Stream<FileSet> provide(Resource resource) {
         if (!Resource.KIND_CLASSES.equals(resource.kind())) {
-            return Optional.empty();
+            return Stream.empty();
         }
 
         var destDir = project().buildDirectory().resolve("classes");
@@ -90,7 +90,7 @@ public class JavaCompiler extends AbstractGenerator<FileSet> {
             }
         }
 
-        return Optional.of(new FileSet(project(), destDir, "**/*")
+        return Stream.of(new FileSet(project(), destDir, "**/*")
             .kind(Resource.KIND_CLASSES));
     }
 

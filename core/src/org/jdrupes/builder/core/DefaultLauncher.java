@@ -59,7 +59,7 @@ public class DefaultLauncher implements Launcher {
         }
 
         // Start building
-        rootProject.provide(AllResources.of(Resource.KIND_APP_JAR)).stream()
+        rootProject.provide(AllResources.of(Resource.KIND_APP_JAR))
             .forEach(r -> {
                 System.out.println(r);
             });

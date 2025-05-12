@@ -18,7 +18,7 @@
 
 package org.jdrupes.builder.api;
 
-import java.util.Optional;
+import java.util.stream.Stream;
 
 /// A provider of a resource. This interface is intended to be implemented
 /// by providers. Requests should always be made against the [Builder]
@@ -30,11 +30,9 @@ import java.util.Optional;
 public interface ResourceProvider<T extends Resource> {
 
     /// Provide the resource for the given requested resource.
-    /// Note that this can also be used to provide several resources
-    /// because [Resources] implements [Resource].
     ///
     /// @param requested the requested resource
-    /// @return the provided resource
+    /// @return the provided resource(s) as stream
     ///
-    Optional<T> provide(Resource requested);
+    Stream<T> provide(Resource requested);
 }

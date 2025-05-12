@@ -22,12 +22,13 @@ import java.nio.file.Path;
 import java.util.List;
 import java.util.Optional;
 import java.util.function.Function;
+import java.util.stream.Stream;
 
 /// Defines the API for the builder's model of a project.
 ///
 /// Projects form a hierarchy with a single root.
 ///
-public interface Project extends ResourceProvider<Resources<?>> {
+public interface Project extends ResourceProvider<Resource> {
 
     /// Returns the parent project unless this is the root project.
     ///
@@ -125,7 +126,7 @@ public interface Project extends ResourceProvider<Resources<?>> {
     /// @param resource the resource
     /// @return the resources<? extends resource>
     ///
-    Resources<?> provided(Resource resource);
+    Stream<? extends Resource> provided(Resource resource);
 
     /// Short for `directory().relativize(other)`.
     ///

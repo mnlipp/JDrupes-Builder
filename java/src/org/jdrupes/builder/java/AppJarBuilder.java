@@ -7,7 +7,7 @@ import java.util.Optional;
 import java.util.jar.Attributes;
 import java.util.jar.JarOutputStream;
 import java.util.jar.Manifest;
-
+import java.util.stream.Stream;
 import org.jdrupes.builder.api.BuildException;
 import org.jdrupes.builder.api.Project;
 import org.jdrupes.builder.api.Resource;
@@ -25,16 +25,16 @@ public class AppJarBuilder extends AbstractGenerator<FileResource> {
 
     @Override
     @SuppressWarnings("PMD.AvoidCatchingGenericException")
-    public Optional<FileResource> provide(Resource resource) {
+    public Stream<FileResource> provide(Resource resource) {
         if (!Resource.KIND_APP_JAR.equals(resource.kind())) {
-            return Optional.empty();
+            return Stream.empty();
         }
 
-        log.info(() -> "Building application jar in " + project().name());
         log.fine(() -> "Getting app jar content for " + project().name());
         var classSets
             = project().provided(AllResources.of(Resource.KIND_CLASSES));
 
+        log.info(() -> "Building application jar in " + project().name());
         var destDir = project().buildDirectory().resolve("app");
         if (!destDir.toFile().exists()) {
             if (!destDir.toFile().mkdirs()) {
@@ -49,7 +49,7 @@ public class AppJarBuilder extends AbstractGenerator<FileResource> {
         attributes.put(Attributes.Name.MANIFEST_VERSION, "1.0");
         try (JarOutputStream jos
             = new JarOutputStream(Files.newOutputStream(jarPath), manifest)) {
-            classSets.stream().forEach(classSet -> {
+            classSets.forEach(classSet -> {
                 if (Resource.KIND_CLASSES.equals(classSet.kind())) {
                     var d = (Resources<FileResource>) classSet;
                 }
@@ -61,7 +61,7 @@ public class AppJarBuilder extends AbstractGenerator<FileResource> {
             throw new BuildException(e);
         }
 
-        return Optional.empty();
+        return Stream.empty();
     }
 
 //    private static void addClassFile(JarOutputStream jos, String classFilePath)

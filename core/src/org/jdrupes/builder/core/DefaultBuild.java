@@ -18,19 +18,20 @@
 
 package org.jdrupes.builder.core;
 
-import java.util.Optional;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-import java.util.concurrent.Future;
+import java.util.stream.Stream;
+
 import org.jdrupes.builder.api.Build;
-import org.jdrupes.builder.api.Build.Cache.Key;
 import org.jdrupes.builder.api.Resource;
+import org.jdrupes.builder.api.ResourceProvider;
+import org.jdrupes.builder.core.FutureStreamCache.Key;
 
 /// A default implementation of a [Build].
 ///
 public class DefaultBuild implements Build {
 
-    private final Cache cache;
+    private final FutureStreamCache cache;
     private ExecutorService executor
         = Executors.newVirtualThreadPerTaskExecutor();
 
@@ -38,7 +39,7 @@ public class DefaultBuild implements Build {
     /// a virtual thread per task executor.
     ///
     public DefaultBuild() {
-        this.cache = new DefaultCache();
+        cache = new FutureStreamCache();
     }
 
     /// Returns the executor service used by this build to create futures.
@@ -58,14 +59,11 @@ public class DefaultBuild implements Build {
     }
 
     @Override
-    public Build.Cache cache() {
-        return cache;
-    }
-
-    @Override
-    public <R extends Resource> Future<Optional<R>> provide(Key<R> key) {
-        return cache.computeIfAbsent(key,
-            k -> executor.submit(() -> k.provider().provide(k.requested())));
+    public <T extends Resource> Stream<T> provide(ResourceProvider<T> provider,
+            Resource requested) {
+        return cache.computeIfAbsent(new Key<>(provider, requested),
+            k -> new FutureStream<T>(executor, k.provider(), k.requested()))
+            .stream();
     }
 
 }

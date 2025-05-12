@@ -153,33 +153,19 @@ public class DefaultProject implements Project {
     }
 
     @Override
-    public Resources<?> provided(Resource resource) {
+    public Stream<Resource> provided(Resource resource) {
         return dependencies.stream().map(p -> build().provide(p, resource))
             // Terminate stream to start all tasks for evaluating the futures
-            .toList().stream().map(t -> {
-                try {
-                    return t.get();
-                } catch (InterruptedException | ExecutionException e) {
-                    throw new BuildException(e);
-                }
-            }).filter(Optional::isPresent).map(Optional::get)
-            .collect(Resources.into(ResourceSet::new));
+            .toList().stream().flatMap(r -> r);
     }
 
     @Override
-    public Optional<Resources<?>> provide(Resource resource) {
-        return Optional.of(Stream.concat(
+    public Stream<Resource> provide(Resource resource) {
+        return Stream.concat(
             dependencies.stream().map(p -> build().provide(p, resource)),
             providers.stream().map(p -> build().provide(p, resource)))
             // Terminate stream to start all tasks for evaluating the futures
-            .toList().stream().map(t -> {
-                try {
-                    return t.get();
-                } catch (InterruptedException | ExecutionException e) {
-                    throw new BuildException(e);
-                }
-            }).filter(Optional::isPresent).map(Optional::get)
-            .collect(Resources.into(ResourceSet::new)));
+            .toList().stream().flatMap(r -> r);
     }
 
     @Override
