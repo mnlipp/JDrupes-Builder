@@ -18,14 +18,14 @@
 
 package org.jdrupes.builder.api;
 
-/// Models a [ResourcesProvider] that is associated with a project
+/// Models a [ResourceProvider] that is associated with a project
 /// and generates new Resources (artifacts).
 ///
 /// @param <T> the type of resource in the [Resources] container that
 /// this generator provides
 ///
 @SuppressWarnings("PMD.ShortClassName")
-public interface Generator<T extends Resource> extends ResourcesProvider<T> {
+public interface Generator<T extends Resource> extends ResourceProvider<T> {
 
     /// Returns the generator's name.
     ///

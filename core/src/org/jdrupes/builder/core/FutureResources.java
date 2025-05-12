@@ -27,8 +27,8 @@ import java.util.function.Consumer;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 import org.jdrupes.builder.api.BuildException;
-import org.jdrupes.builder.api.ResourcesProvider;
 import org.jdrupes.builder.api.Resource;
+import org.jdrupes.builder.api.ResourceProvider;
 import org.jdrupes.builder.api.Resources;
 
 /// The Class FutureResources.
@@ -45,7 +45,8 @@ public class FutureResources<R extends Resource> implements Resources<R> {
     /// @param provider the provider
     /// @param requested the requested
     ///
-    public FutureResources(ExecutorService executor, ResourcesProvider<R> provider,
+    public FutureResources(ExecutorService executor,
+            ResourceProvider<R> provider,
             Resource requested) {
         source = executor.submit(() -> provider.provide(requested));
     }

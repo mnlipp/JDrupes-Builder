@@ -27,7 +27,7 @@ import java.util.Optional;
 import java.util.stream.Stream;
 import org.jdrupes.builder.api.Build;
 import org.jdrupes.builder.api.Project;
-import org.jdrupes.builder.api.ResourcesProvider;
+import org.jdrupes.builder.api.ResourceProvider;
 import org.jdrupes.builder.api.Resource;
 import org.jdrupes.builder.api.Resources;
 
@@ -38,8 +38,8 @@ public class DefaultProject implements Project {
     private final Project parent;
     private final String name;
     private final Path directory;
-    private final List<ResourcesProvider<?>> providers = new ArrayList<>();
-    private final List<ResourcesProvider<?>> dependencies = new ArrayList<>();
+    private final List<ResourceProvider<?>> providers = new ArrayList<>();
+    private final List<ResourceProvider<?>> dependencies = new ArrayList<>();
     private Build build;
 
     /// Instantiates a new default project.
@@ -123,20 +123,20 @@ public class DefaultProject implements Project {
     }
 
     @Override
-    public Project provider(ResourcesProvider<?> provider) {
+    public Project provider(ResourceProvider<?> provider) {
         providers.add(provider);
         return this;
     }
 
     @Override
-    public Project providers(List<ResourcesProvider<?>> providers) {
+    public Project providers(List<ResourceProvider<?>> providers) {
         this.providers.clear();
         this.providers.addAll(providers);
         return this;
     }
 
     @Override
-    public Project dependency(ResourcesProvider<?> provider) {
+    public Project dependency(ResourceProvider<?> provider) {
         if (!dependencies.contains(provider)) {
             dependencies.add(provider);
         }
@@ -144,7 +144,7 @@ public class DefaultProject implements Project {
     }
 
     @Override
-    public Project dependencies(List<ResourcesProvider<?>> providers) {
+    public Project dependencies(List<ResourceProvider<?>> providers) {
         this.dependencies.clear();
         this.dependencies.addAll(providers);
         return this;
@@ -153,6 +153,7 @@ public class DefaultProject implements Project {
     @Override
     public Resources<?> provided(Resource resource) {
         return dependencies.stream().map(p -> build().provide(p, resource))
+            .toList().stream()
             .map(Resources::stream).flatMap(r -> r)
             .collect(Resources.into(ResourceSet::new));
     }

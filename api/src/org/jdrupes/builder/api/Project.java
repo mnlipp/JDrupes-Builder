@@ -27,7 +27,7 @@ import java.util.function.Function;
 ///
 /// Projects form a hierarchy with a single root.
 ///
-public interface Project extends ResourcesProvider<Resource> {
+public interface Project extends ResourceProvider<Resource> {
 
     /// Returns the parent project unless this is the root project.
     ///
@@ -65,7 +65,7 @@ public interface Project extends ResourcesProvider<Resource> {
     /// @param provider the provider
     /// @return the project
     ///
-    Project provider(ResourcesProvider<?> provider);
+    Project provider(ResourceProvider<?> provider);
 
     /// Uses the supplier to create a provider, passing this project as 
     /// argument and adds the result as a provider to this project.
@@ -73,7 +73,7 @@ public interface Project extends ResourcesProvider<Resource> {
     /// @param supplier the supplier
     /// @return the project
     ///
-    default <T extends ResourcesProvider<R>, R extends Resource> T
+    default <T extends ResourceProvider<R>, R extends Resource> T
             provider(Function<Project, T> supplier) {
         var provider = supplier.apply(this);
         provider(provider);
@@ -86,7 +86,7 @@ public interface Project extends ResourcesProvider<Resource> {
     /// @param providers the providers
     /// @return the project
     ///
-    Project providers(List<ResourcesProvider<?>> providers);
+    Project providers(List<ResourceProvider<?>> providers);
 
     /// Adds a provider as a dependency. Resources provided by dependencies
     /// can be used by [Generator]s as input in addition to resources
@@ -95,7 +95,7 @@ public interface Project extends ResourcesProvider<Resource> {
     /// @param provider the provider
     /// @return the project
     ///
-    Project dependency(ResourcesProvider<?> provider);
+    Project dependency(ResourceProvider<?> provider);
 
     /// Uses the supplier to create a provider, passing this project as 
     /// argument and adds the result as a dependency to this project.
@@ -105,7 +105,7 @@ public interface Project extends ResourcesProvider<Resource> {
     /// @param supplier the supplier
     /// @return the project
     ///
-    default <T extends ResourcesProvider<R>, R extends Resource> T
+    default <T extends ResourceProvider<R>, R extends Resource> T
             dependency(Function<Project, T> supplier) {
         var dependency = supplier.apply(this);
         dependency(dependency);
@@ -118,7 +118,7 @@ public interface Project extends ResourcesProvider<Resource> {
     /// @param providers the providers
     /// @return the project
     ///
-    Project dependencies(List<ResourcesProvider<?>> providers);
+    Project dependencies(List<ResourceProvider<?>> providers);
 
     /// Returns the resources provided to the project by its dependencies.
     ///

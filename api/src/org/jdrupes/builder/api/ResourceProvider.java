@@ -25,12 +25,12 @@ package org.jdrupes.builder.api;
 /// @param <T> the provided type of [Resource]
 ///
 @SuppressWarnings("PMD.ImplicitFunctionalInterface")
-public interface ResourcesProvider<T extends Resource> {
+public interface ResourceProvider<T extends Resource> {
 
     /// Provide the resources for the given requested resource.
     ///
-    /// @param requested the requested
-    /// @return the resources
+    /// @param requested the requested resource
+    /// @return the provided resource
     ///
     Resources<T> provide(Resource requested);
 }

@@ -17,6 +17,6 @@ public class App extends DefaultProject {
         dependency(Base2::new);
         provider(JavaCompiler::new)
             .addSources(new FileSet(this, Path.of("src"), "**/*.java"));
-        provider(new AppJarBuilder(this));
+        provider(AppJarBuilder::new);
     }
 }

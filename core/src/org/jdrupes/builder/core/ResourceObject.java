@@ -22,19 +22,19 @@ import org.jdrupes.builder.api.Resource;
 
 /// A base class for [Resource]s.
 ///
-public class AnyResource implements Resource {
+public class ResourceObject implements Resource {
 
     private String kind = KIND_UNKNOWN;
 
     /// Create a new instance
     ///
-    protected AnyResource() {
+    protected ResourceObject() {
         // kind is already set
     }
 
     /// Create a new instance with the given kind
     ///
-    protected AnyResource(String kind) {
+    protected ResourceObject(String kind) {
         this.kind = kind;
     }
 
@@ -45,7 +45,7 @@ public class AnyResource implements Resource {
     ///
     @SuppressWarnings("PMD.ShortMethodName")
     public static Resource of(String kind) {
-        return new AnyResource(kind);
+        return new AllResources(kind);
     }
 
     @Override

@@ -155,7 +155,8 @@ public class FileSet extends ResourceSet<FileResource> {
     @Override
     public String toString() {
         fill();
-        return "FileSet from " + project.rootProject().relativize(root())
+        return "FileSet (kind " + kind() + ") from "
+            + project.rootProject().relativize(root())
             + " with " + content.size() + " files, newest: " + newestFile;
     }
 }

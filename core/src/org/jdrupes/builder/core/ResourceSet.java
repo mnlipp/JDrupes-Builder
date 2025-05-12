@@ -30,7 +30,7 @@ import org.jdrupes.builder.api.Resources;
 
 /// Represents a set of resources.
 ///
-public class ResourceSet<R extends Resource> extends AnyResource
+public class ResourceSet<R extends Resource> extends ResourceObject
         implements Resources<R> {
 
     protected final Logger log = Logger.getLogger(getClass().getName());
