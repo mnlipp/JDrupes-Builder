@@ -72,6 +72,7 @@ public class FileResource implements Resource {
 
     @Override
     public String toString() {
-        return "File: " + path.toString() + " (" + asOf() + ")";
+        var relPath = Path.of("").toAbsolutePath().relativize(path);
+        return "File: " + relPath.toString() + " (" + asOf() + ")";
     }
 }
