@@ -126,7 +126,7 @@ public interface Project extends ResourceProvider<Resource> {
     /// @param resource the resource
     /// @return the resources<? extends resource>
     ///
-    Stream<? extends Resource> provided(Resource resource);
+    Stream<Resource> provided(Resource resource);
 
     /// Short for `directory().relativize(other)`.
     ///
