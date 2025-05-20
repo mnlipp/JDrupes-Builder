@@ -23,6 +23,8 @@ import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.logging.LogManager;
+import java.util.logging.Logger;
+import org.jdrupes.builder.api.BuildException;
 import org.jdrupes.builder.api.Launcher;
 import org.jdrupes.builder.api.Project;
 import org.jdrupes.builder.api.Resource;
@@ -30,6 +32,8 @@ import org.jdrupes.builder.api.Resource;
 /// A default implementation of a [Launcher].
 ///
 public class DefaultLauncher implements Launcher {
+
+    protected final Logger log = Logger.getLogger(getClass().getName());
 
     private final Project rootProject;
 
@@ -42,7 +46,8 @@ public class DefaultLauncher implements Launcher {
     }
 
     @Override
-    @SuppressWarnings("PMD.AvoidPrintStackTrace")
+    @SuppressWarnings({ "PMD.AvoidPrintStackTrace",
+        "PMD.AvoidReassigningCatchVariables", "PMD.DoNotTerminateVM" })
     public void start(String[] args) {
         InputStream props;
         try {
@@ -59,10 +64,23 @@ public class DefaultLauncher implements Launcher {
         }
 
         // Start building
-        rootProject.provide(AllResources.of(Resource.KIND_APP_JAR))
-            .forEach(r -> {
-                System.out.println(r);
-            });
+        try {
+            rootProject.provide(AllResources.of(Resource.KIND_APP_JAR))
+                .forEach(r -> {
+                    System.out.println(r);
+                });
+        } catch (BuildException e) {
+            var cause = e.getCause();
+            while (cause != null) {
+                if (cause instanceof BuildException nbe) {
+                    e = nbe;
+                }
+                cause = cause.getCause();
+            }
+            final var rootCase = e;
+            log.severe(() -> "Build failed: " + rootCase.getMessage());
+            System.exit(1);
+        }
     }
 
 }
