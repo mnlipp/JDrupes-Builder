@@ -35,17 +35,7 @@ public abstract class AbstractGenerator<T extends Resource>
     protected final Logger log = Logger.getLogger(getClass().getName());
 
     private final Project project;
-    private final String name;
-
-    /// Instantiates a new abstract generator.
-    ///
-    /// @param project the project
-    /// @param name the name
-    ///
-    public AbstractGenerator(Project project, String name) {
-        this.project = project;
-        this.name = name;
-    }
+    private String name;
 
     /// Instantiates a new abstract generator.
     ///
@@ -54,6 +44,18 @@ public abstract class AbstractGenerator<T extends Resource>
     public AbstractGenerator(Project project) {
         this.project = project;
         name = getClass().getSimpleName();
+    }
+
+    /// Sets the name of the generator.
+    ///
+    /// @param <G> the generator's type
+    /// @param name the name
+    /// @return the generator
+    ///
+    @SuppressWarnings("unchecked")
+    public <G extends AbstractGenerator<T>> G name(String name) {
+        this.name = name;
+        return (G) this;
     }
 
     /// Returns the generator's name.
