@@ -1,17 +1,20 @@
 package org.jdrupes.builder.java;
 
-import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
-import java.util.Optional;
+import java.nio.file.Path;
+import java.util.SortedMap;
+import java.util.TreeMap;
 import java.util.jar.Attributes;
+import java.util.jar.JarEntry;
 import java.util.jar.JarOutputStream;
 import java.util.jar.Manifest;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
+import java.util.stream.StreamSupport;
 import org.jdrupes.builder.api.BuildException;
 import org.jdrupes.builder.api.Project;
 import org.jdrupes.builder.api.Resource;
-import org.jdrupes.builder.api.Resources;
 import org.jdrupes.builder.core.AbstractGenerator;
 import org.jdrupes.builder.core.AllResources;
 import org.jdrupes.builder.core.FileResource;
@@ -24,16 +27,22 @@ public class AppJarBuilder extends AbstractGenerator<FileResource> {
     }
 
     @Override
-    @SuppressWarnings("PMD.AvoidCatchingGenericException")
+    @SuppressWarnings({ "PMD.AvoidCatchingGenericException",
+        "PMD.CollapsibleIfStatements" })
     public Stream<FileResource> provide(Resource resource) {
         if (!Resource.KIND_APP_JAR.equals(resource.kind())) {
             return Stream.empty();
         }
 
+        // Get all content.
         log.fine(() -> "Getting app jar content for " + project().name());
-        var classSets
-            = project().provided(AllResources.of(Resource.KIND_CLASSES));
+        var entries = new TreeMap<Path, Path>();
+        addEntries(entries,
+            project().provide(AllResources.of(Resource.KIND_CLASSES)));
+        addEntries(entries,
+            project().provide(AllResources.of(Resource.KIND_RESOURCES)));
 
+        // Prepare jar file
         log.info(() -> "Building application jar in " + project().name());
         var destDir = project().buildDirectory().resolve("app");
         if (!destDir.toFile().exists()) {
@@ -43,50 +52,54 @@ public class AppJarBuilder extends AbstractGenerator<FileResource> {
         }
         var jarPath = destDir.resolve(project().name() + ".jar");
 
+        // Add content to jar
         Manifest manifest = new Manifest();
         @SuppressWarnings("PMD.LooseCoupling")
         Attributes attributes = manifest.getMainAttributes();
         attributes.put(Attributes.Name.MANIFEST_VERSION, "1.0");
         try (JarOutputStream jos
             = new JarOutputStream(Files.newOutputStream(jarPath), manifest)) {
-            classSets.forEach(classSet -> {
-                if (Resource.KIND_CLASSES.equals(classSet.kind())) {
-                    var d = (Resources<FileResource>) classSet;
+            for (var entry : entries.entrySet()) {
+                var path = entry.getValue().resolve(entry.getKey());
+                var entryName
+                    = StreamSupport.stream(entry.getKey().spliterator(), false)
+                        .map(Path::toString).collect(Collectors.joining("/"));
+                @SuppressWarnings("PMD.AvoidInstantiatingObjectsInLoops")
+                JarEntry jarEntry = new JarEntry(entryName);
+                jarEntry.setTime(path.toFile().lastModified());
+                jos.putNextEntry(jarEntry);
+                try (var input = Files
+                    .newInputStream(entry.getValue().resolve(entry.getKey()))) {
+                    input.transferTo(jos);
                 }
-            });
-//            for (int i = 2; i < args.length; i++) {
-//                addClassFile(jos, args[i]);
-//            }
+            }
         } catch (IOException e) {
             throw new BuildException(e);
         }
 
-        return Stream.empty();
+        // The result is the jar.
+        return Stream.of(new FileResource(jarPath));
     }
 
-//    private static void addClassFile(JarOutputStream jos, String classFilePath)
-//            throws IOException {
-//        File classFile = new File(classFilePath);
-//        if (!classFile.exists()) {
-//            throw new FileNotFoundException(
-//                "Class file not found: " + classFilePath);
-//        }
-//
-//        // Create JAR entry (use / separators even on Windows)
-//        String entryName = classFile.getName().replace("\\", "/");
-//        JarEntry entry = new JarEntry(entryName);
-//        entry.setTime(classFile.lastModified());
-//        jos.putNextEntry(entry);
-//
-//        // Write class file contents
-//        try (FileInputStream fis = new FileInputStream(classFile)) {
-//            byte[] buffer = new byte[1024];
-//            int bytesRead;
-//            while ((bytesRead = fis.read(buffer)) != -1) {
-//                jos.write(buffer, 0, bytesRead);
-//            }
-//        }
-//
-//        jos.closeEntry();
-//    }
+    private void addEntries(SortedMap<Path, Path> entries,
+            Stream<Resource> fileSets) {
+        fileSets.filter(fs -> fs instanceof FileSet).map(fs -> (FileSet) fs)
+            .forEach(fs -> {
+                fs.stream().forEach(file -> {
+                    var relPath = fs.root().relativize(file.path());
+                    var existing = entries.get(relPath);
+                    if (existing != null && !existing.equals(fs.root())) {
+                        log.warning(() -> "Entry " + relPath
+                            + " from file set with root "
+                            + project().rootProject().relativize(fs.root())
+                            + " duplicates entry from "
+                            + project().rootProject().relativize(existing)
+                            + " and is skipped.");
+                    } else {
+                        entries.put(relPath, fs.root());
+                    }
+                });
+            });
+    }
+
 }

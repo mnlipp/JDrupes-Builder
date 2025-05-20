@@ -21,7 +21,6 @@ package org.jdrupes.builder.core;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.stream.Stream;
-
 import org.jdrupes.builder.api.Build;
 import org.jdrupes.builder.api.Resource;
 import org.jdrupes.builder.api.ResourceProvider;
