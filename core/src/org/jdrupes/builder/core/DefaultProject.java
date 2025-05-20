@@ -24,14 +24,11 @@ import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
-import java.util.concurrent.ExecutionException;
 import java.util.stream.Stream;
 import org.jdrupes.builder.api.Build;
-import org.jdrupes.builder.api.BuildException;
 import org.jdrupes.builder.api.Project;
 import org.jdrupes.builder.api.Resource;
 import org.jdrupes.builder.api.ResourceProvider;
-import org.jdrupes.builder.api.Resources;
 
 /// A default implementation of a [Project].
 ///
