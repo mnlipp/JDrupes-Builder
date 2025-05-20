@@ -27,6 +27,12 @@ public interface Resource {
     /// The kind unknown.
     String KIND_UNKNOWN = "unknown";
 
+    /// The kind resource.
+    String KIND_RESOURCE = "resource";
+
+    /// The kind resource.
+    String KIND_RESOURCES = "resource directory";
+
     /// The kind jvm class.
     String KIND_CLASS = "class";
 
