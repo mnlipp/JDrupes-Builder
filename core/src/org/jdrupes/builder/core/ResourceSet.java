@@ -22,13 +22,17 @@ import java.time.Instant;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashSet;
+import java.util.LinkedHashSet;
 import java.util.Set;
 import java.util.logging.Logger;
 import java.util.stream.Stream;
 import org.jdrupes.builder.api.Resource;
 import org.jdrupes.builder.api.Resources;
 
-/// Represents a set of resources.
+/// Represents a set of resources. Resources are added by [add].
+/// The [stream] method returns a stream of the added resources.
+/// The [stream] method preserves the order in which the resources
+/// were added.
 ///
 public class ResourceSet<R extends Resource> extends ResourceObject
         implements Resources<R> {
@@ -40,7 +44,7 @@ public class ResourceSet<R extends Resource> extends ResourceObject
     /// Instantiates a new resource set.
     ///
     public ResourceSet() {
-        content = new HashSet<>();
+        content = new LinkedHashSet<>();
     }
 
     /// Instantiates a new resource set.
