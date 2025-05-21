@@ -61,6 +61,8 @@ public class JavaCompiler extends AbstractGenerator<FileSet> {
         }
 
         var destDir = project().buildDirectory().resolve("classes");
+        var classSet = new FileSet(project(), destDir, "**/*")
+            .kind(Resource.KIND_CLASSES).delete();
         log.fine(() -> "Getting classpath in " + project().name());
         var classpath = classpath(resource);
 
@@ -90,8 +92,7 @@ public class JavaCompiler extends AbstractGenerator<FileSet> {
             }
         }
 
-        return Stream.of(new FileSet(project(), destDir, "**/*")
-            .kind(Resource.KIND_CLASSES));
+        return Stream.of(classSet);
     }
 
 }
