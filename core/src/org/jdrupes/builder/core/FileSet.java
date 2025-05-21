@@ -191,7 +191,7 @@ public class FileSet extends ResourceSet<FileResource> {
     /// empty after deletion of the files (expect for root, which is
     /// not deleted).
     ///
-    public void delete() {
+    public FileSet delete() {
         final PathMatcher pathMatcher = FileSystems.getDefault()
             .getPathMatcher("glob:" + pattern);
         try {
@@ -235,6 +235,7 @@ public class FileSet extends ResourceSet<FileResource> {
             throw new BuildException(e);
         }
         filled = false;
+        return this;
     }
 
     /// To string.
