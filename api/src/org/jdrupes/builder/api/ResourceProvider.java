@@ -29,14 +29,17 @@ import java.util.stream.Stream;
 @SuppressWarnings("PMD.ImplicitFunctionalInterface")
 public interface ResourceProvider<T extends Resource> {
 
-    /// Provide the resource for the given requested resource.
+    /// Provide the requested resource. Most providers will only
+    /// evaluate the requested resource kind and return resources
+    /// of the requested kind.
     ///
     /// The restriction imposed on the returned values by `T` isn't
     /// very strong. Therefore the following rules apply:
     ///
-    /// | `requested`'s kind | Returned values' type        |
-    /// |--------------------|------------------------------|
-    /// | `KIND_CLASSES`     | [Resources]<[FileResource]>  |
+    /// | `requested`'s kind | Returned values' type  |
+    /// |--------------------|------------------------|
+    /// | `KIND_CLASSES`     | [FileTree]             |
+    /// | `KIND_RESOURCES`   | [FileTree]             |
     ///
     /// @param requested the requested resource
     /// @return the provided resource(s) as stream
