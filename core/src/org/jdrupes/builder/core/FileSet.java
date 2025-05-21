@@ -32,7 +32,10 @@ import java.util.stream.Stream;
 import org.jdrupes.builder.api.BuildException;
 import org.jdrupes.builder.api.Project;
 
+// TODO: Auto-generated Javadoc
 /// The representation of a file set.
+/// The Class FileSet.
+///
 ///
 public class FileSet extends ResourceSet<FileResource> {
 
@@ -52,6 +55,12 @@ public class FileSet extends ResourceSet<FileResource> {
     /// @param root the root of the file tree to search for files matching
     /// `pattern`
     /// @param pattern the pattern
+    /// Instantiates a new file set.
+    ///
+    /// @param project the project
+    /// @param root the root
+    /// @param pattern the pattern
+    ///
     ///
     public FileSet(Project project, Path root, String pattern) {
         this.project = project;
@@ -63,12 +72,21 @@ public class FileSet extends ResourceSet<FileResource> {
     ///
     /// @param kind the kind
     /// @return the file set
+    /// Kind.
+    ///
+    /// @param kind the kind
+    /// @return the file set
+    ///
     ///
     public FileSet kind(String kind) {
         this.kind = kind;
         return this;
     }
 
+    /// Kind.
+    ///
+    /// @return the string
+    ///
     @Override
     public String kind() {
         return kind;
@@ -79,6 +97,11 @@ public class FileSet extends ResourceSet<FileResource> {
     /// @param relativize whether to return a path relative to the project's
     /// directory
     /// @return the path
+    /// Root.
+    ///
+    /// @param relativize the relativize
+    /// @return the path
+    ///
     ///
     public Path root(boolean relativize) {
         if (relativize) {
@@ -91,6 +114,10 @@ public class FileSet extends ResourceSet<FileResource> {
     /// as an absolute path.
     ///
     /// @return the path
+    /// Root.
+    ///
+    /// @return the path
+    ///
     ///
     public Path root() {
         return root(false);
@@ -110,6 +137,10 @@ public class FileSet extends ResourceSet<FileResource> {
         filled = true;
     }
 
+    /// As of.
+    ///
+    /// @return the instant
+    ///
     @Override
     public Instant asOf() {
         fill();
@@ -146,12 +177,68 @@ public class FileSet extends ResourceSet<FileResource> {
         });
     }
 
+    /// Stream.
+    ///
+    /// @return the stream
+    ///
     @Override
     public Stream<FileResource> stream() {
         fill();
         return super.stream();
     }
 
+    /// Deletes all files in this file set and directories that are
+    /// empty after deletion of the files.
+    ///
+    public void delete() {
+        final PathMatcher pathMatcher = FileSystems.getDefault()
+            .getPathMatcher("glob:" + pattern);
+        try {
+            Files.walkFileTree(root, new SimpleFileVisitor<>() {
+
+                @Override
+                public FileVisitResult visitFile(Path path,
+                        BasicFileAttributes attrs) throws IOException {
+                    if (pathMatcher.matches(path)) {
+                        Files.delete(path);
+                    }
+                    return FileVisitResult.CONTINUE;
+                }
+
+                @Override
+                public FileVisitResult postVisitDirectory(Path dir,
+                        IOException exc) throws IOException {
+                    if (exc != null) {
+                        return FileVisitResult.CONTINUE;
+                    }
+                    if (Files.list(dir).findFirst().isEmpty()) {
+                        Files.delete(dir);
+                    }
+                    return FileVisitResult.CONTINUE;
+                }
+
+                @Override
+                public FileVisitResult visitFileFailed(Path file,
+                        IOException exc)
+                        throws IOException {
+                    if (exc instanceof AccessDeniedException) {
+                        return FileVisitResult.SKIP_SUBTREE;
+                    }
+                    return FileVisitResult.CONTINUE;
+                }
+            });
+        } catch (IOException e) {
+            log.log(java.util.logging.Level.SEVERE, e,
+                () -> "Problem scanning files: " + e.getMessage());
+            throw new BuildException(e);
+        }
+        filled = false;
+    }
+
+    /// To string.
+    ///
+    /// @return the string
+    ///
     @Override
     public String toString() {
         fill();
