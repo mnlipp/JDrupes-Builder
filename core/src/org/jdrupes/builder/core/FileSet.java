@@ -188,7 +188,8 @@ public class FileSet extends ResourceSet<FileResource> {
     }
 
     /// Deletes all files in this file set and directories that are
-    /// empty after deletion of the files.
+    /// empty after deletion of the files (expect for root, which is
+    /// not deleted).
     ///
     public void delete() {
         final PathMatcher pathMatcher = FileSystems.getDefault()
@@ -211,7 +212,8 @@ public class FileSet extends ResourceSet<FileResource> {
                     if (exc != null) {
                         return FileVisitResult.CONTINUE;
                     }
-                    if (Files.list(dir).findFirst().isEmpty()) {
+                    if (!dir.equals(root)
+                        && Files.list(dir).findFirst().isEmpty()) {
                         Files.delete(dir);
                     }
                     return FileVisitResult.CONTINUE;
