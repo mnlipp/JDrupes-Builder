@@ -133,11 +133,7 @@ public class JavaCompiler extends AbstractGenerator<FileTree> {
 
         return Stream.concat(Stream.of(classSet),
             project().provided(resource, EnumSet.of(Intend.Expose))
-                .mapMulti((r, sink) -> {
-                    if (r instanceof FileTree fileSet) {
-                        sink.accept(fileSet);
-                    }
-                }));
+                .map(r -> (FileTree) r));
     }
 
 }
