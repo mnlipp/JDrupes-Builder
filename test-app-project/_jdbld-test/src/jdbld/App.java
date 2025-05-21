@@ -1,10 +1,8 @@
 package jdbld;
 
 import org.jdrupes.builder.core.FileSet;
-
 import java.nio.file.Path;
-
-import org.jdrupes.builder.api.Dependency;
+import static org.jdrupes.builder.api.Dependency.Intend.Consume;
 import org.jdrupes.builder.api.Project;
 import org.jdrupes.builder.core.DefaultProject;
 import org.jdrupes.builder.java.AppJarBuilder;
@@ -14,8 +12,8 @@ public class App extends DefaultProject {
 
     public App(Project parent) {
         super(parent, "app");
-        dependency(Base1::new, Dependency.Type.Consume);
-        dependency(Base2::new, Dependency.Type.Consume);
+        dependency(Base1::new, Consume);
+        dependency(Base2::new, Consume);
         provider(JavaCompiler::new)
             .addSources(new FileSet(this, Path.of("src"), "**/*.java"));
         provider(AppJarBuilder::new);

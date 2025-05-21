@@ -10,7 +10,7 @@ public class Root extends DefaultProject {
 
     public Root() {
         super(null, Path.of("."));
-        dependency(App::new, Dependency.Type.Build);
+        dependency(App::new, Dependency.Intend.Build);
     }
 
     public static void main(String[] args) {

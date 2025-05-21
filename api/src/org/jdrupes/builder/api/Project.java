@@ -98,7 +98,7 @@ public interface Project extends ResourceProvider<Resource> {
     /// @param type the dependency type
     /// @return the project
     ///
-    Project dependency(ResourceProvider<?> provider, Dependency.Type type);
+    Project dependency(ResourceProvider<?> provider, Dependency.Intend type);
 
     /// Uses the supplier to create a provider, passing this project as 
     /// argument and adds the result as a dependency to this project.
@@ -110,7 +110,7 @@ public interface Project extends ResourceProvider<Resource> {
     /// @return the project
     ///
     default <T extends ResourceProvider<R>, R extends Resource> T
-            dependency(Function<Project, T> supplier, Dependency.Type type) {
+            dependency(Function<Project, T> supplier, Dependency.Intend type) {
         var dependency = supplier.apply(this);
         dependency(dependency, type);
         return dependency;
@@ -123,7 +123,7 @@ public interface Project extends ResourceProvider<Resource> {
     /// @return the resources<? extends resource>
     ///
     Stream<Resource> provided(Resource resource,
-            Set<Dependency.Type> dependencyTypes);
+            Set<Dependency.Intend> dependencyTypes);
 
     /// Short for `directory().relativize(other)`.
     ///

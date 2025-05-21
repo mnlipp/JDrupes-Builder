@@ -32,7 +32,7 @@ import javax.tools.DiagnosticCollector;
 import javax.tools.JavaFileObject;
 import javax.tools.ToolProvider;
 import org.jdrupes.builder.api.BuildException;
-import org.jdrupes.builder.api.Dependency;
+import org.jdrupes.builder.api.Dependency.Intend;
 import org.jdrupes.builder.api.Project;
 import org.jdrupes.builder.api.Resource;
 import org.jdrupes.builder.api.Resources;
@@ -44,8 +44,8 @@ import org.jdrupes.builder.core.FileSet;
 ///
 public class JavaCompiler extends AbstractGenerator<FileSet> {
 
-    private static Set<Dependency.Type> forCompilation
-        = EnumSet.of(Dependency.Type.Consume, Dependency.Type.Expose);
+    private static Set<Intend> forCompilation
+        = EnumSet.of(Intend.Consume, Intend.Expose);
     private final List<FileSet> sources = new ArrayList<>();
 
     /// Instantiates a new java compiler.

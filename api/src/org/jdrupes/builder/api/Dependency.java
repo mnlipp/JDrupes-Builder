@@ -18,14 +18,14 @@
 
 package org.jdrupes.builder.api;
 
-/// The Interface Dependency.
+/// Attributed dependency relationship between a [Project] and a [Provider].
 ///
-public record Dependency(ResourceProvider<?> provider, Type type) {
+public record Dependency(ResourceProvider<?> provider, Intend type) {
 
-    /// The types of dependencies.
+    /// Defines how resources from the dependent project are to be used.
     ///
     @SuppressWarnings("PMD.FieldNamingConventions")
-    public enum Type {
+    public enum Intend {
         
         /// Requests for resources are forwarded, but the results are
         /// not used. This is the default relationship between a project

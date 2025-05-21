@@ -30,6 +30,7 @@ import java.util.Set;
 import java.util.stream.Stream;
 import org.jdrupes.builder.api.Build;
 import org.jdrupes.builder.api.Dependency;
+import static org.jdrupes.builder.api.Dependency.Intend.*;
 import org.jdrupes.builder.api.Project;
 import org.jdrupes.builder.api.Resource;
 import org.jdrupes.builder.api.ResourceProvider;
@@ -69,7 +70,7 @@ public class DefaultProject implements Project {
                 "Invalid project path: " + directory);
         }
         if (parent != null) {
-            parent.dependency(this, Dependency.Type.Build);
+            parent.dependency(this, Build);
         }
     }
 
@@ -142,14 +143,14 @@ public class DefaultProject implements Project {
 
     @Override
     public Project dependency(ResourceProvider<?> provider,
-            Dependency.Type type) {
+            Dependency.Intend type) {
         dependencies.put(provider, new Dependency(provider, type));
         return this;
     }
 
     @Override
     public Stream<Resource> provided(Resource resource,
-            Set<Dependency.Type> types) {
+            Set<Dependency.Intend> types) {
         return dependencies.values().stream()
             .filter(d -> types.contains(d.type()))
             .map(d -> build().provide(d.provider(), resource))
