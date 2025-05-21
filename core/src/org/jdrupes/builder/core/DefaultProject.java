@@ -22,10 +22,14 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 import java.util.stream.Stream;
 import org.jdrupes.builder.api.Build;
+import org.jdrupes.builder.api.Dependency;
 import org.jdrupes.builder.api.Project;
 import org.jdrupes.builder.api.Resource;
 import org.jdrupes.builder.api.ResourceProvider;
@@ -38,7 +42,9 @@ public class DefaultProject implements Project {
     private final String name;
     private final Path directory;
     private final List<ResourceProvider<?>> providers = new ArrayList<>();
-    private final List<ResourceProvider<?>> dependencies = new ArrayList<>();
+    @SuppressWarnings("PMD.UseConcurrentHashMap")
+    private final Map<ResourceProvider<?>, Dependency> dependencies
+        = new LinkedHashMap<>();
     private Build build;
 
     /// Instantiates a new default project.
@@ -63,7 +69,7 @@ public class DefaultProject implements Project {
                 "Invalid project path: " + directory);
         }
         if (parent != null) {
-            parent.dependency(this);
+            parent.dependency(this, Dependency.Type.Build);
         }
     }
 
@@ -135,23 +141,18 @@ public class DefaultProject implements Project {
     }
 
     @Override
-    public Project dependency(ResourceProvider<?> provider) {
-        if (!dependencies.contains(provider)) {
-            dependencies.add(provider);
-        }
+    public Project dependency(ResourceProvider<?> provider,
+            Dependency.Type type) {
+        dependencies.put(provider, new Dependency(provider, type));
         return this;
     }
 
     @Override
-    public Project dependencies(List<ResourceProvider<?>> providers) {
-        this.dependencies.clear();
-        this.dependencies.addAll(providers);
-        return this;
-    }
-
-    @Override
-    public Stream<Resource> provided(Resource resource) {
-        return dependencies.stream().map(p -> build().provide(p, resource))
+    public Stream<Resource> provided(Resource resource,
+            Set<Dependency.Type> types) {
+        return dependencies.values().stream()
+            .filter(d -> types.contains(d.type()))
+            .map(d -> build().provide(d.provider(), resource))
             // Terminate stream to start all tasks for evaluating the futures
             .toList().stream().flatMap(r -> r);
     }
@@ -159,7 +160,8 @@ public class DefaultProject implements Project {
     @Override
     public Stream<Resource> provide(Resource resource) {
         return Stream.concat(
-            dependencies.stream().map(p -> build().provide(p, resource)),
+            dependencies.values().stream()
+                .map(d -> build().provide(d.provider(), resource)),
             providers.stream().map(p -> build().provide(p, resource)))
             // Terminate stream to start all tasks for evaluating the futures
             .toList().stream().flatMap(r -> r);

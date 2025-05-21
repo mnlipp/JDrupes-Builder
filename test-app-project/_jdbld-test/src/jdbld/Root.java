@@ -2,6 +2,7 @@ package jdbld;
 
 import java.nio.file.Path;
 
+import org.jdrupes.builder.api.Dependency;
 import org.jdrupes.builder.core.DefaultLauncher;
 import org.jdrupes.builder.core.DefaultProject;
 
@@ -9,7 +10,7 @@ public class Root extends DefaultProject {
 
     public Root() {
         super(null, Path.of("."));
-        dependency(App::new);
+        dependency(App::new, Dependency.Type.Build);
     }
 
     public static void main(String[] args) {

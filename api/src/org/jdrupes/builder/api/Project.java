@@ -21,6 +21,7 @@ package org.jdrupes.builder.api;
 import java.nio.file.Path;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Stream;
 
@@ -94,9 +95,10 @@ public interface Project extends ResourceProvider<Resource> {
     /// provided to [Generator]s directly.
     ///
     /// @param provider the provider
+    /// @param type the dependency type
     /// @return the project
     ///
-    Project dependency(ResourceProvider<?> provider);
+    Project dependency(ResourceProvider<?> provider, Dependency.Type type);
 
     /// Uses the supplier to create a provider, passing this project as 
     /// argument and adds the result as a dependency to this project.
@@ -104,29 +106,24 @@ public interface Project extends ResourceProvider<Resource> {
     /// This method is typically used to add subproject.
     ///
     /// @param supplier the supplier
+    /// @param type the dependency type
     /// @return the project
     ///
     default <T extends ResourceProvider<R>, R extends Resource> T
-            dependency(Function<Project, T> supplier) {
+            dependency(Function<Project, T> supplier, Dependency.Type type) {
         var dependency = supplier.apply(this);
-        dependency(dependency);
+        dependency(dependency, type);
         return dependency;
     }
 
-    /// Sets the dependencies of the project. Clears all already existing
-    /// dependencies.
-    ///
-    /// @param providers the providers
-    /// @return the project
-    ///
-    Project dependencies(List<ResourceProvider<?>> providers);
-
     /// Returns the resources provided to the project by its dependencies.
     ///
-    /// @param resource the resource
+    /// @param resource the requested resource
+    /// @param dependencyTypes the type of dependencies considered
     /// @return the resources<? extends resource>
     ///
-    Stream<Resource> provided(Resource resource);
+    Stream<Resource> provided(Resource resource,
+            Set<Dependency.Type> dependencyTypes);
 
     /// Short for `directory().relativize(other)`.
     ///
