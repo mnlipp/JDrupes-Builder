@@ -3,8 +3,8 @@ package org.jdrupes.builder.java;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.SortedMap;
-import java.util.TreeMap;
+import java.util.LinkedHashMap;
+import java.util.Map;
 import java.util.jar.Attributes;
 import java.util.jar.JarEntry;
 import java.util.jar.JarOutputStream;
@@ -36,7 +36,7 @@ public class AppJarBuilder extends AbstractGenerator<FileResource> {
 
         // Get all content.
         log.fine(() -> "Getting app jar content for " + project().name());
-        var entries = new TreeMap<Path, Path>();
+        var entries = new LinkedHashMap<Path, Path>();
         addEntries(entries,
             project().provide(AllResources.of(Resource.KIND_CLASSES)));
         addEntries(entries,
@@ -81,7 +81,7 @@ public class AppJarBuilder extends AbstractGenerator<FileResource> {
         return Stream.of(new FileResource(jarPath));
     }
 
-    private void addEntries(SortedMap<Path, Path> entries,
+    private void addEntries(Map<Path, Path> entries,
             Stream<Resource> fileSets) {
         fileSets.filter(fs -> fs instanceof FileSet).map(fs -> (FileSet) fs)
             .forEach(fs -> {
