@@ -27,6 +27,9 @@ import java.util.stream.Stream;
 
 /// Defines the API for the builder's model of a project.
 ///
+/// As a convenience, the interface defines factory methods
+/// for objects used for defining the project.
+///
 /// Projects form a hierarchy with a single root.
 ///
 public interface Project extends ResourceProvider<Resource> {
@@ -144,4 +147,30 @@ public interface Project extends ResourceProvider<Resource> {
     /// @return the builds the
     ///
     Build build();
+
+    /// Returns a new file tree. The file tree includes all files
+    /// matching `pattern` in the tree starting at `root`. `root`
+    /// may be specified as absolute path or as path relative to the
+    /// `project`'s directory (see [Project#directory]).
+    ///
+    /// @param project the project
+    /// @param root the root of the file tree to search for files matching
+    /// `pattern`
+    /// @param pattern the pattern
+    ///
+    FileTree newFileTree(Project project, Path root, String pattern);
+
+    /// Returns a new file tree. The file tree includes all files
+    /// matching `pattern` in the tree starting at `root`. `root`
+    /// may be specified as absolute path or as path relative to the
+    /// `project`'s directory (see [Project#directory]).
+    ///
+    /// @param project the project
+    /// @param root the root of the file tree to search for files matching
+    /// `pattern`
+    /// @param pattern the pattern
+    /// @param kind the file tree's kind
+    ///
+    FileTree newFileTree(Project project, Path root, String pattern,
+            String kind);
 }

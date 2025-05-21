@@ -30,6 +30,8 @@ import java.util.Set;
 import java.util.stream.Stream;
 import org.jdrupes.builder.api.Build;
 import org.jdrupes.builder.api.Dependency;
+import org.jdrupes.builder.api.FileTree;
+
 import static org.jdrupes.builder.api.Dependency.Intend.*;
 import org.jdrupes.builder.api.Project;
 import org.jdrupes.builder.api.Resource;
@@ -178,4 +180,16 @@ public class DefaultProject implements Project {
         }
         return build = new DefaultBuild();
     }
+
+    @Override
+    public FileTree newFileTree(Project project, Path root, String pattern) {
+        return new DefaultFileTree(project, root, pattern);
+    }
+
+    @Override
+    public FileTree newFileTree(Project project, Path root, String pattern,
+            String kind) {
+        return new DefaultFileTree(project, root, pattern).kind(kind);
+    }
+
 }

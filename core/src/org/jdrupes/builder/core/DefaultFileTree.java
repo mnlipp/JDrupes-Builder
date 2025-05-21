@@ -30,14 +30,14 @@ import java.nio.file.attribute.BasicFileAttributes;
 import java.time.Instant;
 import java.util.stream.Stream;
 import org.jdrupes.builder.api.BuildException;
+import org.jdrupes.builder.api.FileResource;
+import org.jdrupes.builder.api.FileTree;
 import org.jdrupes.builder.api.Project;
 
-// TODO: Auto-generated Javadoc
-/// The representation of a file set.
-/// The Class FileSet.
+/// The default implementation of a [FileTree].
 ///
-///
-public class FileSet extends ResourceSet<FileResource> {
+public class DefaultFileTree extends ResourceSet<FileResource>
+        implements FileTree {
 
     private String kind = KIND_UNKNOWN;
     private Instant newestFile = Instant.MIN;
@@ -46,7 +46,7 @@ public class FileSet extends ResourceSet<FileResource> {
     private final String pattern;
     private boolean filled;
 
-    /// Instantiates a new file set. The file set includes all files
+    /// Returns a new file tree. The file tree includes all files
     /// matching `pattern` in the tree starting at `root`. `root`
     /// may be specified as absolute path or as path relative to the
     /// `project`'s directory (see [Project#directory]).
@@ -55,38 +55,23 @@ public class FileSet extends ResourceSet<FileResource> {
     /// @param root the root of the file tree to search for files matching
     /// `pattern`
     /// @param pattern the pattern
-    /// Instantiates a new file set.
     ///
-    /// @param project the project
-    /// @param root the root
-    /// @param pattern the pattern
-    ///
-    ///
-    public FileSet(Project project, Path root, String pattern) {
+    public DefaultFileTree(Project project, Path root, String pattern) {
         this.project = project;
         this.root = project.directory().resolve(root);
         this.pattern = pattern;
     }
 
-    /// Returns the kind of this file set (as resource).
-    ///
-    /// @param kind the kind
-    /// @return the file set
-    /// Kind.
+    /// Sets the kind of this file set (as resource).
     ///
     /// @param kind the kind
     /// @return the file set
     ///
-    ///
-    public FileSet kind(String kind) {
+    public FileTree kind(String kind) {
         this.kind = kind;
         return this;
     }
 
-    /// Kind.
-    ///
-    /// @return the string
-    ///
     @Override
     public String kind() {
         return kind;
@@ -97,12 +82,8 @@ public class FileSet extends ResourceSet<FileResource> {
     /// @param relativize whether to return a path relative to the project's
     /// directory
     /// @return the path
-    /// Root.
     ///
-    /// @param relativize the relativize
-    /// @return the path
-    ///
-    ///
+    @Override
     public Path root(boolean relativize) {
         if (relativize) {
             return project.directory().relativize(root);
@@ -110,15 +91,7 @@ public class FileSet extends ResourceSet<FileResource> {
         return root;
     }
 
-    /// Returns the root of the file tree searched for files
-    /// as an absolute path.
-    ///
-    /// @return the path
-    /// Root.
-    ///
-    /// @return the path
-    ///
-    ///
+    @Override
     public Path root() {
         return root(false);
     }
@@ -137,10 +110,6 @@ public class FileSet extends ResourceSet<FileResource> {
         filled = true;
     }
 
-    /// As of.
-    ///
-    /// @return the instant
-    ///
     @Override
     public Instant asOf() {
         fill();
@@ -157,8 +126,8 @@ public class FileSet extends ResourceSet<FileResource> {
             public FileVisitResult visitFile(Path path,
                     BasicFileAttributes attrs) throws IOException {
                 if (pathMatcher.matches(path)) {
-                    var resource = new FileResource(path);
-                    FileSet.this.add(resource);
+                    var resource = new DefaultFileResource(path);
+                    DefaultFileTree.this.add(resource);
                     if (resource.asOf().isAfter(newestFile)) {
                         newestFile = resource.asOf();
                     }
@@ -177,21 +146,14 @@ public class FileSet extends ResourceSet<FileResource> {
         });
     }
 
-    /// Stream.
-    ///
-    /// @return the stream
-    ///
     @Override
     public Stream<FileResource> stream() {
         fill();
         return super.stream();
     }
 
-    /// Deletes all files in this file set and directories that are
-    /// empty after deletion of the files (expect for root, which is
-    /// not deleted).
-    ///
-    public FileSet delete() {
+    @Override
+    public FileTree delete() {
         final PathMatcher pathMatcher = FileSystems.getDefault()
             .getPathMatcher("glob:" + pattern);
         try {

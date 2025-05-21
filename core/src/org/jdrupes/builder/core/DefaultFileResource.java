@@ -21,11 +21,13 @@ package org.jdrupes.builder.core;
 import java.nio.file.Path;
 import java.time.Instant;
 import java.util.Objects;
+
+import org.jdrupes.builder.api.FileResource;
 import org.jdrupes.builder.api.Resource;
 
 /// A resource that represents a file.
 ///
-public class FileResource implements Resource {
+public class DefaultFileResource implements Resource, FileResource {
 
     private final Path path;
 
@@ -33,7 +35,7 @@ public class FileResource implements Resource {
     ///
     /// @param path the path
     ///
-    public FileResource(Path path) {
+    public DefaultFileResource(Path path) {
         this.path = path;
     }
 
@@ -41,6 +43,7 @@ public class FileResource implements Resource {
     ///
     /// @return the path
     ///
+    @Override
     public Path path() {
         return path;
     }
@@ -63,11 +66,11 @@ public class FileResource implements Resource {
         if (obj == null) {
             return false;
         }
-        if (getClass() != obj.getClass()) {
+        if (!(obj instanceof FileResource)) {
             return false;
         }
         FileResource other = (FileResource) obj;
-        return Objects.equals(path, other.path);
+        return Objects.equals(path, other.path());
     }
 
     @Override

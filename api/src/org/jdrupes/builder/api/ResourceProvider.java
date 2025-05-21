@@ -21,8 +21,8 @@ package org.jdrupes.builder.api;
 import java.util.stream.Stream;
 
 /// A provider of a resource. This interface is intended to be implemented
-/// by providers. Requests should always be made against the [Builder]
-/// (see [Builder#provide]).
+/// by providers. Requests should always be made against the [Build]
+/// (see [Build#provide]).
 ///
 /// @param <T> the provided type of [Resource]
 ///
@@ -30,6 +30,13 @@ import java.util.stream.Stream;
 public interface ResourceProvider<T extends Resource> {
 
     /// Provide the resource for the given requested resource.
+    ///
+    /// The restriction imposed on the returned values by `T` isn't
+    /// very strong. Therefore the following rules apply:
+    ///
+    /// | `requested`'s kind | Returned values' type        |
+    /// |--------------------|------------------------------|
+    /// | `KIND_CLASSES`     | [Resources]<[FileResource]>  |
     ///
     /// @param requested the requested resource
     /// @return the provided resource(s) as stream

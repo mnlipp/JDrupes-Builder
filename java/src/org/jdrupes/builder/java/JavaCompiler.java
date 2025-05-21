@@ -33,20 +33,20 @@ import javax.tools.JavaFileObject;
 import javax.tools.ToolProvider;
 import org.jdrupes.builder.api.BuildException;
 import org.jdrupes.builder.api.Dependency.Intend;
+import org.jdrupes.builder.api.FileResource;
+import org.jdrupes.builder.api.FileTree;
 import org.jdrupes.builder.api.Project;
 import org.jdrupes.builder.api.Resource;
 import org.jdrupes.builder.api.Resources;
 import org.jdrupes.builder.core.AbstractGenerator;
-import org.jdrupes.builder.core.FileResource;
-import org.jdrupes.builder.core.FileSet;
 
 /// The Class JavaCompiler.
 ///
-public class JavaCompiler extends AbstractGenerator<FileSet> {
+public class JavaCompiler extends AbstractGenerator<FileTree> {
 
     private static Set<Intend> forCompilation
         = EnumSet.of(Intend.Consume, Intend.Expose);
-    private final List<FileSet> sources = new ArrayList<>();
+    private final List<FileTree> sources = new ArrayList<>();
 
     /// Instantiates a new java compiler.
     ///
@@ -61,7 +61,7 @@ public class JavaCompiler extends AbstractGenerator<FileSet> {
     /// @param sources the sources
     /// @return the java compiler
     ///
-    public JavaCompiler addSources(FileSet sources) {
+    public JavaCompiler addSources(FileTree sources) {
         this.sources.add(sources);
         return this;
     }
@@ -79,7 +79,7 @@ public class JavaCompiler extends AbstractGenerator<FileSet> {
     private String classpath(Resource resource) {
         return project()
             .provided(resource, forCompilation).<Path> mapMulti((r, sink) -> {
-                if (r instanceof FileSet fileSet) {
+                if (r instanceof FileTree fileSet) {
                     sink.accept(fileSet.root());
                 }
             }).map(Path::toString)
@@ -94,14 +94,14 @@ public class JavaCompiler extends AbstractGenerator<FileSet> {
     @Override
     @SuppressWarnings({ "PMD.AvoidCatchingGenericException",
         "PMD.ExceptionAsFlowControl" })
-    public Stream<FileSet> provide(Resource resource) {
+    public Stream<FileTree> provide(Resource resource) {
         if (!Resource.KIND_CLASSES.equals(resource.kind())) {
             return Stream.empty();
         }
 
         var destDir = project().buildDirectory().resolve("classes");
-        final var classSet = new FileSet(project(), destDir, "**/*")
-            .kind(Resource.KIND_CLASSES).delete();
+        final var classSet = project().newFileTree(
+            project(), destDir, "**/*", Resource.KIND_CLASSES).delete();
         log.fine(() -> "Getting classpath in " + project().name());
         var classpath = classpath(resource);
 
@@ -131,7 +131,13 @@ public class JavaCompiler extends AbstractGenerator<FileSet> {
             }
         }
 
-        return Stream.of(classSet);
+        return Stream.concat(Stream.of(classSet),
+            project().provided(resource, EnumSet.of(Intend.Expose))
+                .mapMulti((r, sink) -> {
+                    if (r instanceof FileTree fileSet) {
+                        sink.accept(fileSet);
+                    }
+                }));
     }
 
 }

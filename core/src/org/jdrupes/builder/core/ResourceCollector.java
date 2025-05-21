@@ -21,26 +21,28 @@ package org.jdrupes.builder.core;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Stream;
+
+import org.jdrupes.builder.api.FileTree;
 import org.jdrupes.builder.api.Project;
 import org.jdrupes.builder.api.Resource;
 
 /// The Class ResourceCollector.
 ///
-public class ResourceCollector extends AbstractGenerator<FileSet> {
+public class ResourceCollector extends AbstractGenerator<FileTree> {
 
-    private List<FileSet> fileSets = new ArrayList<>();
+    private List<FileTree> fileSets = new ArrayList<>();
 
     public ResourceCollector(Project project) {
         super(project);
     }
 
-    public ResourceCollector add(FileSet fileSet) {
+    public ResourceCollector add(FileTree fileSet) {
         fileSets.add(fileSet);
         return this;
     }
 
     @Override
-    public Stream<FileSet> provide(Resource requested) {
+    public Stream<FileTree> provide(Resource requested) {
         if (!Resource.KIND_RESOURCES.equals(requested.kind())) {
             return Stream.empty();
         }

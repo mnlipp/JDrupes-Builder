@@ -13,14 +13,14 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 import org.jdrupes.builder.api.BuildException;
+import org.jdrupes.builder.api.FileTree;
 import org.jdrupes.builder.api.Project;
 import org.jdrupes.builder.api.Resource;
 import org.jdrupes.builder.core.AbstractGenerator;
 import org.jdrupes.builder.core.AllResources;
-import org.jdrupes.builder.core.FileResource;
-import org.jdrupes.builder.core.FileSet;
+import org.jdrupes.builder.core.DefaultFileResource;
 
-public class AppJarBuilder extends AbstractGenerator<FileResource> {
+public class AppJarBuilder extends AbstractGenerator<DefaultFileResource> {
 
     public AppJarBuilder(Project project) {
         super(project);
@@ -29,7 +29,7 @@ public class AppJarBuilder extends AbstractGenerator<FileResource> {
     @Override
     @SuppressWarnings({ "PMD.AvoidCatchingGenericException",
         "PMD.CollapsibleIfStatements" })
-    public Stream<FileResource> provide(Resource resource) {
+    public Stream<DefaultFileResource> provide(Resource resource) {
         if (!Resource.KIND_APP_JAR.equals(resource.kind())) {
             return Stream.empty();
         }
@@ -78,12 +78,12 @@ public class AppJarBuilder extends AbstractGenerator<FileResource> {
         }
 
         // The result is the jar.
-        return Stream.of(new FileResource(jarPath));
+        return Stream.of(new DefaultFileResource(jarPath));
     }
 
     private void addEntries(Map<Path, Path> entries,
             Stream<Resource> fileSets) {
-        fileSets.filter(fs -> fs instanceof FileSet).map(fs -> (FileSet) fs)
+        fileSets.filter(fs -> fs instanceof FileTree).map(fs -> (FileTree) fs)
             .forEach(fs -> {
                 fs.stream().forEach(file -> {
                     var relPath = fs.root().relativize(file.path());
