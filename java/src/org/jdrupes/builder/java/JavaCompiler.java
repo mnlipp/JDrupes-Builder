@@ -132,8 +132,7 @@ public class JavaCompiler extends AbstractGenerator<FileTree> {
         }
 
         return Stream.concat(Stream.of(classSet),
-            project().provided(resource, EnumSet.of(Intend.Expose))
-                .map(r -> (FileTree) r));
+            project().provided(resource, EnumSet.of(Intend.Expose)));
     }
 
 }

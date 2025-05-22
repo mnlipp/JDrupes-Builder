@@ -125,7 +125,7 @@ public interface Project extends ResourceProvider<Resource> {
     /// @param dependencyTypes the type of dependencies considered
     /// @return the resources<? extends resource>
     ///
-    Stream<Resource> provided(Resource resource,
+    <T extends Resource> Stream<T> provided(Resource resource,
             Set<Dependency.Intend> dependencyTypes);
 
     /// Short for `directory().relativize(other)`.
