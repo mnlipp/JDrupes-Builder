@@ -18,14 +18,15 @@
 
 package org.jdrupes.builder.core;
 
-import java.nio.file.Files;
+import java.lang.reflect.InvocationTargetException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Stream;
 import org.jdrupes.builder.api.Build;
@@ -38,72 +39,42 @@ import org.jdrupes.builder.api.ResourceProvider;
 
 /// A default implementation of a [Project].
 ///
-public class DefaultProject implements Project {
+public abstract class AbstractProject implements Project {
 
+    private Map<Class<? extends Project>, Project> projects;
+    private static ThreadLocal<Project> projectInstantiator
+        = new ThreadLocal<>();
     private final Project parent;
-    private final String name;
-    private final Path directory;
+    private String name;
+    private Path directory;
     private final List<ResourceProvider<?>> providers = new ArrayList<>();
     @SuppressWarnings("PMD.UseConcurrentHashMap")
     private final Map<ResourceProvider<?>, Dependency> dependencies
         = new LinkedHashMap<>();
     private Build build;
 
-    /// Instantiates a new default project.
+    /// Base class constructor for all projects except the root project.
+    /// Automatically adds a [Build] dependency between the root project
+    /// and the new project.
     ///
-    /// @param parent the parent
-    /// @param name the name
-    /// @param directory the directory
-    ///
-    public DefaultProject(Project parent, String name, Path directory) {
-        this.parent = parent;
-        if (name == null) {
-            name = getClass().getSimpleName();
-        }
-        this.name = name;
-        if (directory == null) {
-            directory = Paths.get("").toAbsolutePath().getParent().resolve(name)
-                .toAbsolutePath();
-        }
-        this.directory = directory.toAbsolutePath();
-        if (!Files.exists(directory)) {
-            throw new IllegalStateException(
-                "Invalid project path: " + directory);
-        }
-        if (parent != null) {
-            parent.dependency(this, Build);
-        }
+    protected AbstractProject() {
+        parent = projectInstantiator.get();
+        parent.dependency(this, Build);
     }
 
-    /// Instantiates a new default project.
+    /// Base class constructor for the root project.
     ///
-    /// @param parent the parent
-    /// @param name the name
+    /// @param subprojects the sub projects
     ///
-    public DefaultProject(Project parent, String name) {
-        this(parent, name, null);
-    }
-
-    /// Instantiates a new default project.
-    ///
-    /// @param parent the parent
-    /// @param directory the directory
-    ///
-    public DefaultProject(Project parent, Path directory) {
-        this(parent, null, directory);
-    }
-
-    /// Instantiates a new default project.
-    ///
-    /// @param parent the parent
-    ///
-    public DefaultProject(Project parent) {
-        this(parent, null, null);
-    }
-
-    @Override
-    public Optional<Project> parent() {
-        return Optional.ofNullable(parent);
+    @SuppressWarnings("PMD.UseVarargs")
+    protected AbstractProject(Class<Project>[] subprojects) {
+        parent = null;
+        // ConcurrentHashMap does not support null values.
+        projects = Collections.synchronizedMap(new HashMap<>());
+        projects.put(getClass(), this);
+        for (var sub : subprojects) {
+            projects.put(sub, null);
+        }
     }
 
     @Override
@@ -115,18 +86,77 @@ public class DefaultProject implements Project {
     }
 
     @Override
+    public Project project(Class<? extends Project> project) {
+        if (parent != null) {
+            return parent.project(project);
+        }
+        return projects.compute(project, (k, v) -> {
+            if (v != null) {
+                return v;
+            }
+            try {
+                projectInstantiator.set(this);
+                return k.getConstructor().newInstance();
+            } catch (NoSuchMethodException | SecurityException
+                    | InstantiationException | IllegalAccessException
+                    | IllegalArgumentException | InvocationTargetException e) {
+                throw new IllegalArgumentException(e);
+            }
+        });
+    }
+
+    /// Sets the project's name.
+    ///
+    /// @param name the name
+    /// @return the project
+    ///
+    public AbstractProject name(String name) {
+        this.name = name;
+        return this;
+    }
+
+    /// Returns the project's name. Returns the simple name of the project's
+    /// class, if no name has been set explicitly. 
+    ///
+    /// @return the string
+    ///
+    @Override
     public String name() {
+        if (name == null) {
+            return getClass().getSimpleName();
+        }
         return name;
     }
 
+    /// Sets the project's directory.
+    ///
+    /// @param path the directory
+    /// @return the project
+    ///
+    public AbstractProject directory(Path path) {
+        directory = path;
+        return this;
+    }
+
+    /// Returns the project's directory. Returns the result of resolving
+    /// the project's name against the parent project's directory, if
+    /// no directory has been set explicitly. 
+    ///
+    /// @return the path
+    ///
     @Override
     public Path directory() {
+        if (directory == null) {
+            return Paths.get("").toAbsolutePath().getParent().resolve(name())
+                .toAbsolutePath();
+
+        }
         return directory;
     }
 
     @Override
     public Path buildDirectory() {
-        return directory.resolve("build");
+        return directory().resolve("build");
     }
 
     @Override

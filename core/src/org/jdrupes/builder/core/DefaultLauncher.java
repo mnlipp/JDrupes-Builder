@@ -20,8 +20,11 @@ package org.jdrupes.builder.core;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.lang.reflect.Array;
+import java.lang.reflect.InvocationTargetException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.Arrays;
 import java.util.logging.LogManager;
 import java.util.logging.Logger;
 import org.jdrupes.builder.api.BuildException;
@@ -37,12 +40,19 @@ public class DefaultLauncher implements Launcher {
 
     private final Project rootProject;
 
-    /// Instantiates a new default launcher.
-    ///
-    /// @param project the project
-    ///
-    public DefaultLauncher(Project project) {
-        rootProject = project;
+    @SafeVarargs
+    public DefaultLauncher(Class<? extends Project>... projects) {
+        try {
+            var cls = projects[0];
+            rootProject = cls.getConstructor(Class[].class)
+                .newInstance((Object) Arrays.copyOfRange(projects, 1,
+                    projects.length));
+        } catch (NoSuchMethodException | SecurityException
+                | NegativeArraySizeException | InstantiationException
+                | IllegalAccessException | IllegalArgumentException
+                | InvocationTargetException e) {
+            throw new IllegalArgumentException(e);
+        }
     }
 
     @Override

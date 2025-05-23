@@ -2,18 +2,20 @@ package jdbld;
 
 import java.nio.file.Path;
 
+import org.jdrupes.builder.api.Project;
 import org.jdrupes.builder.core.DefaultLauncher;
-import org.jdrupes.builder.core.DefaultProject;
+import org.jdrupes.builder.core.AbstractProject;
 
-public class Root extends DefaultProject {
+public class Root extends AbstractProject {
 
-    public Root() {
-        super(null, Path.of("."));
-        new Java(this);
+    public Root(Class<Project>[] subprojects) {
+        super(subprojects);
+        directory(Path.of("."));
     }
 
     public static void main(String[] args) {
-        new DefaultLauncher(new Root()).start(args);
+        new DefaultLauncher(Root.class, Api.class, Core.class, Java.class)
+            .start(args);
     }
 
 }

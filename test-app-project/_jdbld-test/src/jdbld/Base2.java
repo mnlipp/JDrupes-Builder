@@ -2,15 +2,13 @@ package jdbld;
 
 import java.nio.file.Path;
 
-import org.jdrupes.builder.api.FileTree;
-import org.jdrupes.builder.api.Project;
-import org.jdrupes.builder.core.DefaultProject;
+import org.jdrupes.builder.core.AbstractProject;
 import org.jdrupes.builder.java.JavaCompiler;
 
-public class Base2 extends DefaultProject {
+public class Base2 extends AbstractProject {
 
-    public Base2(Project parent) {
-        super(parent, "base2");
+    public Base2() {
+        name("base2");
         provider(JavaCompiler::new)
             .addSources(newFileTree(this, Path.of("src"), "**/*.java"));
     }

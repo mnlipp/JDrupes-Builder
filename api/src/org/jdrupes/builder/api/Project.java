@@ -20,25 +20,18 @@ package org.jdrupes.builder.api;
 
 import java.nio.file.Path;
 import java.util.List;
-import java.util.Optional;
 import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Stream;
 
-/// Defines the API for the builder's model of a project.
+/// Defines the API for a project.
 ///
-/// As a convenience, the interface defines factory methods
+/// As a convenience, the interface provides factory methods
 /// for objects used for defining the project.
 ///
 /// Projects form a hierarchy with a single root.
 ///
 public interface Project extends ResourceProvider<Resource> {
-
-    /// Returns the parent project unless this is the root project.
-    ///
-    /// @return the (optional) parent project
-    ///
-    Optional<Project> parent();
 
     /// Returns the root project.
     ///
@@ -46,7 +39,13 @@ public interface Project extends ResourceProvider<Resource> {
     ///
     Project rootProject();
 
-    /// Returns the project's name.
+    /// Returns the instance of the given project.
+    ///
+    /// @return the project
+    ///
+    Project project(Class<? extends Project> project);
+
+    /// Returns the project's name. 
     ///
     /// @return the string
     ///
@@ -102,22 +101,6 @@ public interface Project extends ResourceProvider<Resource> {
     /// @return the project
     ///
     Project dependency(ResourceProvider<?> provider, Dependency.Intend type);
-
-    /// Uses the supplier to create a provider, passing this project as 
-    /// argument and adds the result as a dependency to this project.
-    ///
-    /// This method is typically used to add subproject.
-    ///
-    /// @param supplier the supplier
-    /// @param type the dependency type
-    /// @return the project
-    ///
-    default <T extends ResourceProvider<R>, R extends Resource> T
-            dependency(Function<Project, T> supplier, Dependency.Intend type) {
-        var dependency = supplier.apply(this);
-        dependency(dependency, type);
-        return dependency;
-    }
 
     /// Returns the resources provided to the project by its dependencies.
     ///
