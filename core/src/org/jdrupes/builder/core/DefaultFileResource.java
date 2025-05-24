@@ -21,7 +21,6 @@ package org.jdrupes.builder.core;
 import java.nio.file.Path;
 import java.time.Instant;
 import java.util.Objects;
-
 import org.jdrupes.builder.api.FileResource;
 import org.jdrupes.builder.api.Resource;
 
@@ -76,6 +75,6 @@ public class DefaultFileResource implements Resource, FileResource {
     @Override
     public String toString() {
         var relPath = Path.of("").toAbsolutePath().relativize(path);
-        return "File: " + relPath.toString() + " (" + asOf() + ")";
+        return "File: " + relPath.toString() + " (" + asOfLocalized() + ")";
     }
 }
