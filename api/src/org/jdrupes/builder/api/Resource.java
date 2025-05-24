@@ -19,6 +19,9 @@
 package org.jdrupes.builder.api;
 
 import java.time.Instant;
+import java.time.ZoneId;
+import java.time.format.DateTimeFormatter;
+import java.time.format.FormatStyle;
 
 /// Represents a resource.
 ///
@@ -59,5 +62,16 @@ public interface Resource {
     ///
     default String kind() {
         return KIND_UNKNOWN;
+    }
+
+    /// Returns a localized string representation of the instant
+    /// at which this resource was created or last modified.
+    ///
+    /// @return the string
+    ///
+    default String asOfLocalized() {
+        return DateTimeFormatter
+            .ofLocalizedDateTime(FormatStyle.MEDIUM)
+            .format(asOf().atZone(ZoneId.systemDefault()));
     }
 }
