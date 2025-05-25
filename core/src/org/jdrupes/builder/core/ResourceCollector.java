@@ -21,7 +21,6 @@ package org.jdrupes.builder.core;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Stream;
-
 import org.jdrupes.builder.api.FileTree;
 import org.jdrupes.builder.api.Project;
 import org.jdrupes.builder.api.Resource;
@@ -30,7 +29,7 @@ import org.jdrupes.builder.api.Resource;
 ///
 public class ResourceCollector extends AbstractGenerator<FileTree> {
 
-    private List<FileTree> fileSets = new ArrayList<>();
+    private final List<FileTree> fileSets = new ArrayList<>();
 
     public ResourceCollector(Project project) {
         super(project);

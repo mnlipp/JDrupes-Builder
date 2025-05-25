@@ -31,6 +31,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.logging.LogManager;
 import java.util.logging.Logger;
+import org.jdrupes.builder.api.AllResources;
 import org.jdrupes.builder.api.BuildException;
 import org.jdrupes.builder.api.FileTree;
 import org.jdrupes.builder.api.Launcher;

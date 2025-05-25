@@ -75,7 +75,7 @@ public abstract class AbstractProject implements Project {
     protected AbstractProject() {
         if (this instanceof RootProject) {
             initRootProject((Class<? extends Project>[]) detectedSubprojects
-                .get().toArray(new Class[0]));
+                .get().toArray(new Class<?>[0]));
             return;
         }
         parent = projectInstantiator.get();

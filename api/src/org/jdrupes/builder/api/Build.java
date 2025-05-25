@@ -31,8 +31,8 @@ public interface Build {
 
     /// Provides the resource stream for the given resource from the
     /// given provider. The result from invoking the provider is
-    /// evaluated asynchronously and cached. Only when the stream
-    /// returned is terminated will the invocation block until the
+    /// evaluated asynchronously and cached. Only when the returned
+    /// stream is terminated will the invocation block until the
     /// result from the provider becomes available.
     ///
     /// @param <T> the requested resource type

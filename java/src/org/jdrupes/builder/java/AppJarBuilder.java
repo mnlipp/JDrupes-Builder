@@ -12,12 +12,12 @@ import java.util.jar.Manifest;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
+import org.jdrupes.builder.api.AllResources;
 import org.jdrupes.builder.api.BuildException;
 import org.jdrupes.builder.api.FileTree;
 import org.jdrupes.builder.api.Project;
 import org.jdrupes.builder.api.Resource;
 import org.jdrupes.builder.core.AbstractGenerator;
-import org.jdrupes.builder.core.AllResources;
 import org.jdrupes.builder.core.DefaultFileResource;
 
 public class AppJarBuilder extends AbstractGenerator<DefaultFileResource> {

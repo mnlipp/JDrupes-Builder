@@ -18,13 +18,10 @@
 
 package org.jdrupes.builder.core;
 
-import java.nio.file.Path;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.stream.Stream;
 import org.jdrupes.builder.api.Build;
-import org.jdrupes.builder.api.FileTree;
-import org.jdrupes.builder.api.Project;
 import org.jdrupes.builder.api.Resource;
 import org.jdrupes.builder.api.ResourceProvider;
 import org.jdrupes.builder.core.FutureStreamCache.Key;

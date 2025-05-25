@@ -16,26 +16,23 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package org.jdrupes.builder.core;
+package org.jdrupes.builder.api;
 
-import org.jdrupes.builder.api.Resource;
-
-/// A base class for [Resource]s.
+/// A class for requesting the [Resource]s of a given kind that are
+/// owned (generated) by a provider.
 ///
-public class ResourceObject implements Resource {
-
-    private String kind = KIND_UNKNOWN;
+public class OwnResources extends ResourceObject {
 
     /// Create a new instance
     ///
-    protected ResourceObject() {
+    protected OwnResources() {
         // kind is already set
     }
 
     /// Create a new instance with the given kind
     ///
-    protected ResourceObject(String kind) {
-        this.kind = kind;
+    protected OwnResources(String kind) {
+        super(kind);
     }
 
     /// Create a new instance with the given kind
@@ -45,16 +42,11 @@ public class ResourceObject implements Resource {
     ///
     @SuppressWarnings("PMD.ShortMethodName")
     public static Resource of(String kind) {
-        return new AllResources(kind);
-    }
-
-    @Override
-    public String kind() {
-        return kind;
+        return new OwnResources(kind);
     }
 
     @Override
     public String toString() {
-        return "Resource of kind " + kind;
+        return "Own of kind " + kind();
     }
 }

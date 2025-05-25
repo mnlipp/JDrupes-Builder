@@ -31,10 +31,12 @@ import java.util.stream.Stream;
 import javax.tools.DiagnosticCollector;
 import javax.tools.JavaFileObject;
 import javax.tools.ToolProvider;
+import org.jdrupes.builder.api.AllResources;
 import org.jdrupes.builder.api.BuildException;
 import org.jdrupes.builder.api.Dependency.Intend;
 import org.jdrupes.builder.api.FileResource;
 import org.jdrupes.builder.api.FileTree;
+import org.jdrupes.builder.api.OwnResources;
 import org.jdrupes.builder.api.Project;
 import org.jdrupes.builder.api.Resource;
 import org.jdrupes.builder.api.Resources;
@@ -98,7 +100,14 @@ public class JavaCompiler extends AbstractGenerator<FileTree> {
         if (!Resource.KIND_CLASSES.equals(resource.kind())) {
             return Stream.empty();
         }
+        if (resource instanceof AllResources) {
+            var own = project().build().provide(this,
+                OwnResources.of(Resource.KIND_CLASSES));
+            return Stream.concat(own,
+                project().provided(resource, EnumSet.of(Intend.Expose)));
+        }
 
+        // Get this project's classes
         var destDir = project().buildDirectory().resolve("classes");
         final var classSet = project().newFileTree(
             project(), destDir, "**/*", Resource.KIND_CLASSES).delete();
@@ -114,7 +123,8 @@ public class JavaCompiler extends AbstractGenerator<FileTree> {
                 = fileManager.getJavaFileObjectsFromPaths(sourcePaths());
             if (!javac.getTask(null, fileManager, null,
                 List.of("-d", destDir.toString(),
-                    "-cp", classpath),
+                    "-cp", classpath,
+                    "-Xlint:unchecked"),
                 null, compilationUnits).call()) {
                 throw new BuildException("Compilation failed");
             }
@@ -130,9 +140,7 @@ public class JavaCompiler extends AbstractGenerator<FileTree> {
                     diagnostic.getSource().toUri()));
             }
         }
-
-        return Stream.concat(Stream.of(classSet),
-            project().provided(resource, EnumSet.of(Intend.Expose)));
+        return Stream.of(classSet);
     }
 
 }

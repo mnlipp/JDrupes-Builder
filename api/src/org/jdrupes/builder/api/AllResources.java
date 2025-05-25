@@ -16,15 +16,14 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package org.jdrupes.builder.core;
+package org.jdrupes.builder.api;
 
-import org.jdrupes.builder.api.Resource;
-
-/// A class for requesting [Resource]s.
+/// A class for requesting all provided [Resource]s of a given kind.
+/// The result of the request must include the resources generated
+/// by the provider itself as well as the resources provided by
+/// the providers's dependencies.
 ///
-public class AllResources implements Resource {
-
-    private String kind = KIND_UNKNOWN;
+public class AllResources extends ResourceObject {
 
     /// Create a new instance
     ///
@@ -35,7 +34,7 @@ public class AllResources implements Resource {
     /// Create a new instance with the given kind
     ///
     protected AllResources(String kind) {
-        this.kind = kind;
+        super(kind);
     }
 
     /// Create a new instance with the given kind
@@ -49,12 +48,7 @@ public class AllResources implements Resource {
     }
 
     @Override
-    public String kind() {
-        return kind;
-    }
-
-    @Override
     public String toString() {
-        return "Resource of kind " + kind;
+        return "Allo of kind " + kind();
     }
 }

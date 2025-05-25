@@ -44,5 +44,5 @@ public interface ResourceProvider<T extends Resource> {
     /// @param requested the requested resource
     /// @return the provided resource(s) as stream
     ///
-    <R extends T> Stream<R> provide(Resource requested);
+    Stream<T> provide(Resource requested);
 }
