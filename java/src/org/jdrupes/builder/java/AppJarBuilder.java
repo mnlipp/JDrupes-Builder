@@ -3,6 +3,7 @@ package org.jdrupes.builder.java;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.EnumSet;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.jar.Attributes;
@@ -14,7 +15,9 @@ import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 import org.jdrupes.builder.api.AllResources;
 import org.jdrupes.builder.api.BuildException;
+import org.jdrupes.builder.api.Dependency.Intend;
 import org.jdrupes.builder.api.FileTree;
+import org.jdrupes.builder.api.OwnResources;
 import org.jdrupes.builder.api.Project;
 import org.jdrupes.builder.api.Resource;
 import org.jdrupes.builder.core.AbstractGenerator;
@@ -37,10 +40,16 @@ public class AppJarBuilder extends AbstractGenerator<DefaultFileResource> {
         // Get all content.
         log.fine(() -> "Getting app jar content for " + project().name());
         var entries = new LinkedHashMap<Path, Path>();
-        addEntries(entries,
-            project().provide(AllResources.of(Resource.KIND_CLASSES)));
-        addEntries(entries,
-            project().provide(AllResources.of(Resource.KIND_RESOURCES)));
+        addEntries(entries, project().build().provide(this,
+            OwnResources.of(Resource.KIND_CLASSES)));
+        addEntries(entries, project().build().provide(this,
+            OwnResources.of(Resource.KIND_RESOURCES)));
+        addEntries(entries, project().provided(
+            OwnResources.of(Resource.KIND_CLASSES),
+            EnumSet.of(Intend.Expose, Intend.Consume, Intend.Runtime)));
+        addEntries(entries, project().provided(
+            OwnResources.of(Resource.KIND_RESOURCES),
+            EnumSet.of(Intend.Expose, Intend.Consume, Intend.Runtime)));
 
         // Prepare jar file
         log.info(() -> "Building application jar in " + project().name());
@@ -82,7 +91,7 @@ public class AppJarBuilder extends AbstractGenerator<DefaultFileResource> {
     }
 
     private void addEntries(Map<Path, Path> entries,
-            Stream<Resource> fileSets) {
+            Stream<? extends Resource> fileSets) {
         fileSets.filter(fs -> fs instanceof FileTree).map(fs -> (FileTree) fs)
             .forEach(fs -> {
                 fs.stream().forEach(file -> {
