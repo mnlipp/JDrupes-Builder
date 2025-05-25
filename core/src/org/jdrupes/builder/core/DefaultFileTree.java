@@ -62,6 +62,20 @@ public class DefaultFileTree extends ResourceSet<FileResource>
         this.pattern = pattern;
     }
 
+    /// Returns a new file tree. The file tree includes all files
+    /// matching `pattern` in the tree starting at `root`. `root`
+    /// may must specified as absolute path.
+    ///
+    /// @param root the root of the file tree to search for files matching
+    /// `pattern`
+    /// @param pattern the pattern
+    ///
+    public DefaultFileTree(Path root, String pattern) {
+        project = null;
+        this.root = root.toAbsolutePath();
+        this.pattern = pattern;
+    }
+
     /// Sets the kind of this file set (as resource).
     ///
     /// @param kind the kind
@@ -85,7 +99,7 @@ public class DefaultFileTree extends ResourceSet<FileResource>
     ///
     @Override
     public Path root(boolean relativize) {
-        if (relativize) {
+        if (relativize && project != null) {
             return project.directory().relativize(root);
         }
         return root;
@@ -200,6 +214,11 @@ public class DefaultFileTree extends ResourceSet<FileResource>
         return this;
     }
 
+    @Override
+    public Stream<Path> entries() {
+        return stream().map(fr -> root().relativize(fr.path()));
+    }
+
     /// To string.
     ///
     /// @return the string
@@ -207,8 +226,7 @@ public class DefaultFileTree extends ResourceSet<FileResource>
     @Override
     public String toString() {
         fill();
-        return "FileSet (kind " + kind() + ") from "
-            + project.rootProject().relativize(root())
+        return "FileSet (kind " + kind() + ") from " + root(true)
             + " with " + content.size() + " files, newest: " + newestFile;
     }
 }

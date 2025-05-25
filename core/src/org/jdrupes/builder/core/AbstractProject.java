@@ -36,15 +36,20 @@ import org.jdrupes.builder.api.FileTree;
 import org.jdrupes.builder.api.Project;
 import org.jdrupes.builder.api.Resource;
 import org.jdrupes.builder.api.ResourceProvider;
+import org.jdrupes.builder.api.RootProject;
 
 /// A default implementation of a [Project].
 ///
 public abstract class AbstractProject implements Project {
 
     private Map<Class<? extends Project>, Project> projects;
+    @SuppressWarnings("PMD.FieldNamingConventions")
+    private static final ThreadLocal<
+            List<Class<? extends Project>>> detectedSubprojects
+                = new ThreadLocal<>();
     private static ThreadLocal<Project> projectInstantiator
         = new ThreadLocal<>();
-    private final Project parent;
+    private Project parent;
     private String name;
     private Path directory;
     private final List<ResourceProvider<?>> providers = new ArrayList<>();
@@ -53,11 +58,25 @@ public abstract class AbstractProject implements Project {
         = new LinkedHashMap<>();
     private Build build;
 
-    /// Base class constructor for all projects except the root project.
-    /// Automatically adds a [Build] dependency between the root project
-    /// and the new project.
+    /* default */
+    static void detectedSubprojects(List<Class<? extends Project>> subClasses) {
+        detectedSubprojects.set(subClasses);
+    }
+
+    /// Base class constructor for sub projects. Automatically adds a
+    /// [Build] dependency between the root project and the new project.
     ///
+    /// This constructor may be used by root projects if there are no
+    /// sub projects or if detection of projects from the classpath is
+    /// is used (see [DefaultLauncher#DefaultLauncher()]).
+    ///
+    @SuppressWarnings({ "unchecked", "PMD.ClassCastExceptionWithToArray" })
     protected AbstractProject() {
+        if (this instanceof RootProject) {
+            initRootProject((Class<? extends Project>[]) detectedSubprojects
+                .get().toArray(new Class[0]));
+            return;
+        }
         parent = projectInstantiator.get();
         parent.dependency(this, Build);
     }
@@ -66,8 +85,13 @@ public abstract class AbstractProject implements Project {
     ///
     /// @param subprojects the sub projects
     ///
+    @SafeVarargs
+    protected AbstractProject(Class<? extends Project>... subprojects) {
+        initRootProject(subprojects);
+    }
+
     @SuppressWarnings("PMD.UseVarargs")
-    protected AbstractProject(Class<Project>[] subprojects) {
+    private void initRootProject(Class<? extends Project>[] subprojects) {
         parent = null;
         // ConcurrentHashMap does not support null values.
         projects = Collections.synchronizedMap(new HashMap<>());
@@ -75,6 +99,9 @@ public abstract class AbstractProject implements Project {
         for (var sub : subprojects) {
             projects.put(sub, null);
         }
+
+        // Create all projects
+        projects.keySet().stream().forEach(this::project);
     }
 
     @Override

@@ -19,6 +19,7 @@
 package org.jdrupes.builder.api;
 
 import java.nio.file.Path;
+import java.util.stream.Stream;
 
 /// The representation of a file tree.
 ///
@@ -40,6 +41,11 @@ public interface FileTree extends Resources<FileResource> {
     default Path root() {
         return root(false);
     }
+
+    /// Returns the paths of the files in this file tree relative to
+    /// its root.
+    ///
+    Stream<Path> entries();
 
     /// Deletes all files in this file tree and directories that are
     /// empty after deletion of the files (expect for root, which is
