@@ -168,6 +168,10 @@ public class DefaultLauncher implements Launcher {
 
         // Start building
         unwrapBuildException(() -> {
+            // Finish project creation
+            ((AbstractProject) rootProject).createProjects();
+
+            // Provide requested resource
             rootProject.provide(AllResources.of(Resource.KIND_APP_JAR))
                 .forEach(r -> {
                     System.out.println(r);
@@ -175,4 +179,7 @@ public class DefaultLauncher implements Launcher {
         });
     }
 
+    public static void main(String[] args) {
+        new DefaultLauncher().start(args);
+    }
 }

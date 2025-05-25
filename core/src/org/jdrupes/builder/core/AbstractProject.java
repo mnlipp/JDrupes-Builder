@@ -27,6 +27,7 @@ import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Stream;
 import org.jdrupes.builder.api.Build;
@@ -99,8 +100,9 @@ public abstract class AbstractProject implements Project {
         for (var sub : subprojects) {
             projects.put(sub, null);
         }
+    }
 
-        // Create all projects
+    /* default */ void createProjects() {
         projects.keySet().stream().forEach(this::project);
     }
 
@@ -155,30 +157,35 @@ public abstract class AbstractProject implements Project {
         return name;
     }
 
-    /// Sets the project's directory.
+    /// Sets the project's directory. The path is resolved against the
+    /// parent project's directory. If the project is the root project,
+    /// the path is resolved against the current working directory.
     ///
     /// @param path the directory
     /// @return the project
     ///
     public AbstractProject directory(Path path) {
-        directory = path;
+        if (parent == null) {
+            directory = Paths.get("").toAbsolutePath().resolve(path);
+        } else {
+            directory = path;
+        }
         return this;
     }
 
-    /// Returns the project's directory. Returns the result of resolving
-    /// the project's name against the parent project's directory, if
-    /// no directory has been set explicitly. 
+    /// Returns the project's directory. If no directory has been set
+    /// explicitly, returns the result of resolving the project's name
+    /// against the parent project's directory, 
     ///
     /// @return the path
     ///
     @Override
     public Path directory() {
-        if (directory == null) {
-            return Paths.get("").toAbsolutePath().getParent().resolve(name())
-                .toAbsolutePath();
-
-        }
-        return directory;
+        return // parent's directory or own directory (if root project) ...
+        Optional.ofNullable(parent).map(Project::directory)
+            .orElse(directory)
+            // ... used to resolve explicitly set directory or name.
+            .resolve(Optional.ofNullable(directory).orElse(Path.of(name())));
     }
 
     @Override
