@@ -40,7 +40,7 @@ public class DefaultFileTree extends ResourceSet<FileResource>
         implements FileTree {
 
     private String kind = KIND_UNKNOWN;
-    private Instant newestFile = Instant.MIN;
+    private Instant latestChange = Instant.MIN;
     private final Project project;
     private final Path root;
     private final String pattern;
@@ -127,7 +127,7 @@ public class DefaultFileTree extends ResourceSet<FileResource>
     @Override
     public Instant asOf() {
         fill();
-        return newestFile;
+        return latestChange;
     }
 
     private void find(Path root, String pattern)
@@ -142,9 +142,19 @@ public class DefaultFileTree extends ResourceSet<FileResource>
                 if (pathMatcher.matches(path)) {
                     var resource = new DefaultFileResource(path);
                     DefaultFileTree.this.add(resource);
-                    if (resource.asOf().isAfter(newestFile)) {
-                        newestFile = resource.asOf();
+                    if (resource.asOf().isAfter(latestChange)) {
+                        latestChange = resource.asOf();
                     }
+                }
+                return FileVisitResult.CONTINUE;
+            }
+
+            @Override
+            public FileVisitResult postVisitDirectory(Path dir, IOException exc)
+                    throws IOException {
+                var dirMod = Instant.ofEpochMilli(dir.toFile().lastModified());
+                if (dirMod.isAfter(latestChange)) {
+                    latestChange = dirMod;
                 }
                 return FileVisitResult.CONTINUE;
             }
@@ -227,6 +237,6 @@ public class DefaultFileTree extends ResourceSet<FileResource>
     public String toString() {
         fill();
         return "FileSet (kind " + kind() + ") from " + root(true)
-            + " with " + content.size() + " files, newest: " + newestFile;
+            + " with " + content.size() + " files, newest: " + latestChange;
     }
 }
