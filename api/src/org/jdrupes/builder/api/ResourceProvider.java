@@ -30,7 +30,7 @@ import java.util.stream.Stream;
 public interface ResourceProvider<T extends Resource> {
 
     /// Provide the requested resource. Most providers will only
-    /// evaluate the requested resource kind and return resources
+    /// evaluate the requested resource kind and return all resources
     /// of the requested kind.
     ///
     /// The restriction imposed on the returned values by `T` isn't
@@ -40,6 +40,13 @@ public interface ResourceProvider<T extends Resource> {
     /// |--------------------|------------------------|
     /// | `KIND_CLASSES`     | [FileTree]             |
     /// | `KIND_RESOURCES`   | [FileTree]             |
+    ///
+    /// This method is never invoked concurrently for the same requested
+    /// resource. It may, however, be invoked concurrently for different
+    /// requested resources. Providers that evaluate all resources anyway
+    /// should invoke themselves through [Build#provide] with a request
+    /// of [AllResources] to avoid concurrency and only filter the result
+    /// in the original thread.
     ///
     /// @param requested the requested resource
     /// @return the provided resource(s) as stream
