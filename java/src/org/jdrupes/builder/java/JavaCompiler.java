@@ -29,9 +29,7 @@ import java.util.stream.Stream;
 import javax.tools.DiagnosticCollector;
 import javax.tools.JavaFileObject;
 import javax.tools.ToolProvider;
-
 import org.jdrupes.builder.api.AccessibleResources;
-import org.jdrupes.builder.api.AllResources;
 import org.jdrupes.builder.api.BuildException;
 import org.jdrupes.builder.api.Dependency.Intend;
 import org.jdrupes.builder.api.FileResource;
