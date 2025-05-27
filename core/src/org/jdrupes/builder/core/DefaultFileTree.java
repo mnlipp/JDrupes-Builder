@@ -23,7 +23,6 @@ import java.nio.file.AccessDeniedException;
 import java.nio.file.FileSystems;
 import java.nio.file.FileVisitResult;
 import java.nio.file.Files;
-import java.nio.file.NoSuchFileException;
 import java.nio.file.Path;
 import java.nio.file.PathMatcher;
 import java.nio.file.SimpleFileVisitor;
@@ -166,11 +165,7 @@ public class DefaultFileTree extends DefaultResources<FileResource>
                 public FileVisitResult visitFile(Path path,
                         BasicFileAttributes attrs) throws IOException {
                     if (pathMatcher.matches(path)) {
-                        try {
-                            Files.delete(path);
-                        } catch (NoSuchFileException e) { // NOPMD
-                            // Can safely be ignored.
-                        }
+                        Files.delete(path);
                     }
                     return FileVisitResult.CONTINUE;
                 }
@@ -183,11 +178,7 @@ public class DefaultFileTree extends DefaultResources<FileResource>
                     }
                     if (!dir.equals(root)
                         && Files.list(dir).findFirst().isEmpty()) {
-                        try {
-                            Files.delete(dir);
-                        } catch (NoSuchFileException e) { // NOPMD
-                            // Can safely be ignored.
-                        }
+                        Files.delete(dir);
                     }
                     return FileVisitResult.CONTINUE;
                 }

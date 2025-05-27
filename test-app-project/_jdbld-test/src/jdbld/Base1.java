@@ -1,6 +1,6 @@
 package jdbld;
 
-import org.jdrupes.builder.core.ResourceCollector;
+import org.jdrupes.builder.core.ResourcesCollector;
 
 import java.nio.file.Path;
 
@@ -13,7 +13,7 @@ public class Base1 extends AbstractProject {
         name("base1");
         provider(JavaCompiler::new)
             .addSources(newFileTree(this, Path.of("src"), "**/*.java"));
-        provider(ResourceCollector::new)
+        provider(ResourcesCollector::new)
             .add(newFileTree(this, Path.of("resources"), "**/*"));
     }
 

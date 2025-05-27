@@ -21,6 +21,7 @@ package org.jdrupes.builder.core;
 import java.nio.file.Path;
 import java.time.Instant;
 import java.util.Objects;
+import org.jdrupes.builder.api.BuildException;
 import org.jdrupes.builder.api.FileResource;
 
 /// A resource that represents a file.
@@ -35,7 +36,7 @@ public class DefaultFileResource implements FileResource {
     ///
     /* default */ DefaultFileResource(Path path) {
         if (!path.isAbsolute()) {
-            throw new IllegalArgumentException("Path must be absolute");
+            throw new BuildException("Path must be absolute, is " + path);
         }
         this.path = path;
     }
@@ -51,6 +52,9 @@ public class DefaultFileResource implements FileResource {
 
     @Override
     public Instant asOf() {
+        if (!path.toFile().exists()) {
+            return Instant.MIN;
+        }
         return Instant.ofEpochMilli(path.toFile().lastModified());
     }
 

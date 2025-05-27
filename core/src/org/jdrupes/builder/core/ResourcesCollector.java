@@ -27,15 +27,15 @@ import org.jdrupes.builder.api.Resource;
 
 /// The Class ResourceCollector.
 ///
-public class ResourceCollector extends AbstractGenerator<FileTree> {
+public class ResourcesCollector extends AbstractGenerator<FileTree> {
 
     private final List<FileTree> fileSets = new ArrayList<>();
 
-    public ResourceCollector(Project project) {
+    public ResourcesCollector(Project project) {
         super(project);
     }
 
-    public ResourceCollector add(FileTree fileSet) {
+    public ResourcesCollector add(FileTree fileSet) {
         fileSets.add(fileSet);
         return this;
     }

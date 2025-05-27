@@ -22,6 +22,7 @@ import org.jdrupes.builder.api.FileTree;
 import org.jdrupes.builder.api.Project;
 import org.jdrupes.builder.api.Resource;
 import org.jdrupes.builder.api.ResourceProvider;
+import org.jdrupes.builder.api.Resources;
 import org.jdrupes.builder.core.AbstractGenerator;
 
 public class AppJarBuilder extends AbstractGenerator<FileResource> {
@@ -39,7 +40,7 @@ public class AppJarBuilder extends AbstractGenerator<FileResource> {
 
     @Override
     @SuppressWarnings({ "PMD.AvoidCatchingGenericException",
-        "PMD.CollapsibleIfStatements" })
+        "PMD.CollapsibleIfStatements", "unchecked" })
     public Stream<FileResource> provide(Resource resource) {
         if (!Resource.KIND_APP_JAR.equals(resource.kind())) {
             return Stream.empty();
@@ -47,31 +48,41 @@ public class AppJarBuilder extends AbstractGenerator<FileResource> {
 
         // Get all content.
         log.fine(() -> "Getting app jar content for " + project().name());
-        var entries = new LinkedHashMap<Path, Path>();
+        Resources<FileTree> fileTrees = project().newResources();
         for (var provider : providers) {
-            addEntries(entries, project().build().provide(provider,
+            fileTrees.addAll(project().build().provide(
+                (ResourceProvider<FileTree>) provider,
                 AllResources.of(Resource.KIND_CLASSES)));
-            addEntries(entries, project().build().provide(provider,
-                AllResources.of(Resource.KIND_RESOURCE)));
+            fileTrees.addAll(project().build().provide(
+                (ResourceProvider<FileTree>) provider,
+                AllResources.of(Resource.KIND_RESOURCES)));
         }
 
         // Prepare jar file
-        log.info(() -> "Building application jar in " + project().name());
         var destDir = project().buildDirectory().resolve("app");
         if (!destDir.toFile().exists()) {
             if (!destDir.toFile().mkdirs()) {
                 throw new BuildException("Cannot create directory " + destDir);
             }
         }
-        var jarPath = destDir.resolve(project().name() + ".jar");
+        var jarResource = project()
+            .newFileResource(destDir.resolve(project().name() + ".jar"));
+        if (jarResource.asOf().isAfter(fileTrees.asOf())) {
+            return Stream.of(jarResource);
+        }
+
+        // Build jar
+        log.info(() -> "Building application jar in " + project().name());
+        var entries = new LinkedHashMap<Path, Path>();
+        addEntries(entries, fileTrees.stream());
 
         // Add content to jar
         Manifest manifest = new Manifest();
         @SuppressWarnings("PMD.LooseCoupling")
         Attributes attributes = manifest.getMainAttributes();
         attributes.put(Attributes.Name.MANIFEST_VERSION, "1.0");
-        try (JarOutputStream jos
-            = new JarOutputStream(Files.newOutputStream(jarPath), manifest)) {
+        try (JarOutputStream jos = new JarOutputStream(
+            Files.newOutputStream(jarResource.path()), manifest)) {
             for (var entry : entries.entrySet()) {
                 var path = entry.getValue().resolve(entry.getKey());
                 var entryName
@@ -91,7 +102,7 @@ public class AppJarBuilder extends AbstractGenerator<FileResource> {
         }
 
         // The result is the jar.
-        return Stream.of(project().newFileResource(jarPath));
+        return Stream.of(jarResource);
     }
 
     private void addEntries(Map<Path, Path> entries,
