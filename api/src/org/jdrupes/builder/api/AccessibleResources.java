@@ -18,20 +18,22 @@
 
 package org.jdrupes.builder.api;
 
-/// A class for requesting the [Resource]s of a given kind that are
-/// owned (generated) by a provider.
+/// A class for requesting all provided [Resource]s of a given kind.
+/// The result of the request must include the resources generated
+/// by the provider itself as well as the resources provided by
+/// the providers's dependencies.
 ///
-public class OwnResources extends ResourceObject {
+public class AccessibleResources extends ResourceObject {
 
     /// Create a new instance
     ///
-    protected OwnResources() {
+    protected AccessibleResources() {
         // kind is already set
     }
 
     /// Create a new instance with the given kind
     ///
-    protected OwnResources(String kind) {
+    protected AccessibleResources(String kind) {
         super(kind);
     }
 
@@ -42,11 +44,11 @@ public class OwnResources extends ResourceObject {
     ///
     @SuppressWarnings("PMD.ShortMethodName")
     public static Resource of(String kind) {
-        return new OwnResources(kind);
+        return new AccessibleResources(kind);
     }
 
     @Override
     public String toString() {
-        return "Own of kind " + kind();
+        return "Accessible of kind " + kind();
     }
 }

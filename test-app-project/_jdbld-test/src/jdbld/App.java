@@ -15,6 +15,6 @@ public class App extends AbstractProject {
         dependency(project(Base2.class), Consume);
         provider(JavaCompiler::new)
             .addSources(newFileTree(this, Path.of("src"), "**/*.java"));
-        provider(AppJarBuilder::new);
+        provider(AppJarBuilder::new).add(this);
     }
 }

@@ -34,6 +34,9 @@ public class DefaultFileResource implements FileResource {
     /// @param path the path
     ///
     /* default */ DefaultFileResource(Path path) {
+        if (!path.isAbsolute()) {
+            throw new IllegalArgumentException("Path must be absolute");
+        }
         this.path = path;
     }
 

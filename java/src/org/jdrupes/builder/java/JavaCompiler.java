@@ -29,6 +29,8 @@ import java.util.stream.Stream;
 import javax.tools.DiagnosticCollector;
 import javax.tools.JavaFileObject;
 import javax.tools.ToolProvider;
+
+import org.jdrupes.builder.api.AccessibleResources;
 import org.jdrupes.builder.api.AllResources;
 import org.jdrupes.builder.api.BuildException;
 import org.jdrupes.builder.api.Dependency.Intend;
@@ -91,10 +93,9 @@ public class JavaCompiler extends AbstractGenerator<FileTree> {
 
         // (Re-)compile only if necessary
         log.fine(() -> "Getting classpath for " + project());
-        var tmp = project().provided(EnumSet.of(Intend.Consume, Intend.Expose),
-            AllResources.of(Resource.KIND_CLASSES)).toList();
         var cpResources = project().newResources().addAll(
-            tmp.stream());
+            project().provided(EnumSet.of(Intend.Consume, Intend.Expose),
+                AccessibleResources.of(Resource.KIND_CLASSES)));
         log.finest(() -> project() + " uses classpath: " + cpResources.stream()
             .map(Resource::toString).collect(Collectors.joining(", ")));
 

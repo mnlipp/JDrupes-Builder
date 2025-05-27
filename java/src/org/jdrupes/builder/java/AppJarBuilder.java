@@ -3,8 +3,10 @@ package org.jdrupes.builder.java;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.EnumSet;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.jar.Attributes;
 import java.util.jar.JarEntry;
@@ -13,21 +15,26 @@ import java.util.jar.Manifest;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
-
 import org.jdrupes.builder.api.AllResources;
 import org.jdrupes.builder.api.BuildException;
-import org.jdrupes.builder.api.Dependency.Intend;
 import org.jdrupes.builder.api.FileResource;
 import org.jdrupes.builder.api.FileTree;
-import org.jdrupes.builder.api.OwnResources;
 import org.jdrupes.builder.api.Project;
 import org.jdrupes.builder.api.Resource;
+import org.jdrupes.builder.api.ResourceProvider;
 import org.jdrupes.builder.core.AbstractGenerator;
 
 public class AppJarBuilder extends AbstractGenerator<FileResource> {
 
+    private List<ResourceProvider<?>> providers = new ArrayList<>();
+
     public AppJarBuilder(Project project) {
         super(project);
+    }
+
+    public AppJarBuilder add(ResourceProvider<?>... providers) {
+        this.providers.addAll(Arrays.asList(providers));
+        return this;
     }
 
     @Override
@@ -41,16 +48,12 @@ public class AppJarBuilder extends AbstractGenerator<FileResource> {
         // Get all content.
         log.fine(() -> "Getting app jar content for " + project().name());
         var entries = new LinkedHashMap<Path, Path>();
-        addEntries(entries, project().build().provide(this,
-            OwnResources.of(Resource.KIND_CLASSES)));
-        addEntries(entries, project().build().provide(this,
-            OwnResources.of(Resource.KIND_RESOURCES)));
-        addEntries(entries, project().provided(
-            EnumSet.of(Intend.Expose, Intend.Consume, Intend.Runtime),
-            AllResources.of(Resource.KIND_CLASSES)));
-        addEntries(entries, project().provided(
-            EnumSet.of(Intend.Expose, Intend.Consume, Intend.Runtime),
-            AllResources.of(Resource.KIND_RESOURCES)));
+        for (var provider : providers) {
+            addEntries(entries, project().build().provide(provider,
+                AllResources.of(Resource.KIND_CLASSES)));
+            addEntries(entries, project().build().provide(provider,
+                AllResources.of(Resource.KIND_RESOURCE)));
+        }
 
         // Prepare jar file
         log.info(() -> "Building application jar in " + project().name());
