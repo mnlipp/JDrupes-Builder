@@ -49,6 +49,6 @@ public class AllResources extends ResourceObject {
 
     @Override
     public String toString() {
-        return "Allo of kind " + kind();
+        return "All of kind " + kind();
     }
 }

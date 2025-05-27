@@ -104,12 +104,12 @@ public interface Project extends ResourceProvider<Resource> {
 
     /// Returns the resources provided to the project by its dependencies.
     ///
-    /// @param resource the requested resource
     /// @param dependencyTypes the type of dependencies considered
+    /// @param resource the requested resource
     /// @return the resources<? extends resource>
     ///
-    <T extends Resource> Stream<T> provided(Resource resource,
-            Set<Dependency.Intend> dependencyTypes);
+    <T extends Resource> Stream<T> provided(
+            Set<Dependency.Intend> dependencyTypes, Resource resource);
 
     /// Short for `directory().relativize(other)`.
     ///
@@ -156,4 +156,20 @@ public interface Project extends ResourceProvider<Resource> {
     ///
     FileTree newFileTree(Project project, Path root, String pattern,
             String kind);
+
+    /// Returns a new file resource.
+    ///
+    /// @param path the path
+    ///
+    FileResource newFileResource(Path path);
+
+    /// Returns a new resource container with content kind "unknown".
+    ///
+    <T extends Resource> Resources<T> newResources();
+
+    /// Returns a new resource container.
+    ///
+    /// @param kind the kind of the contained resources
+    ///
+    <T extends Resource> Resources<T> newResources(String kind);
 }

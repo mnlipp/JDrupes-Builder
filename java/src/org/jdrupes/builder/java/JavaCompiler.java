@@ -20,11 +20,9 @@ package org.jdrupes.builder.java;
 
 import java.io.File;
 import java.nio.file.Path;
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.EnumSet;
 import java.util.List;
-import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -36,7 +34,6 @@ import org.jdrupes.builder.api.BuildException;
 import org.jdrupes.builder.api.Dependency.Intend;
 import org.jdrupes.builder.api.FileResource;
 import org.jdrupes.builder.api.FileTree;
-import org.jdrupes.builder.api.OwnResources;
 import org.jdrupes.builder.api.Project;
 import org.jdrupes.builder.api.Resource;
 import org.jdrupes.builder.api.Resources;
@@ -46,9 +43,7 @@ import org.jdrupes.builder.core.AbstractGenerator;
 ///
 public class JavaCompiler extends AbstractGenerator<FileTree> {
 
-    private static Set<Intend> forCompilation
-        = EnumSet.of(Intend.Consume, Intend.Expose);
-    private final List<FileTree> sources = new ArrayList<>();
+    private final Resources<FileTree> sources = project().newResources();
 
     /// Instantiates a new java compiler.
     ///
@@ -78,43 +73,51 @@ public class JavaCompiler extends AbstractGenerator<FileTree> {
             .collect(Collectors.toList());
     }
 
-    private String classpath(Resource resource) {
-        return project()
-            .provided(resource, forCompilation).<Path> mapMulti((r, sink) -> {
-                if (r instanceof FileTree fileSet) {
-                    sink.accept(fileSet.root());
-                }
-            }).map(Path::toString)
-            .collect(Collectors.joining(File.pathSeparator));
-    }
-
     /// Provide.
     ///
     /// @param resource the resource
     /// @return the stream
     ///
     @Override
-    @SuppressWarnings({ "PMD.AvoidCatchingGenericException",
-        "PMD.ExceptionAsFlowControl" })
     public Stream<FileTree> provide(Resource resource) {
         if (!Resource.KIND_CLASSES.equals(resource.kind())) {
             return Stream.empty();
         }
-        if (resource instanceof AllResources) {
-            var own = project().build().provide(this,
-                OwnResources.of(Resource.KIND_CLASSES));
-            return Stream.concat(own,
-                project().provided(resource, EnumSet.of(Intend.Expose)));
-        }
 
-        // Get this project's classes
+        // Get this project's previously generated classes (for checking)
         var destDir = project().buildDirectory().resolve("classes");
         final var classSet = project().newFileTree(
-            project(), destDir, "**/*", Resource.KIND_CLASSES).delete();
-        log.fine(() -> "Getting classpath in " + project().name());
-        var classpath = classpath(resource);
+            project(), destDir, "**/*", Resource.KIND_CLASSES);
 
+        // (Re-)compile only if necessary
+        log.fine(() -> "Getting classpath for " + project());
+        var tmp = project().provided(EnumSet.of(Intend.Consume, Intend.Expose),
+            AllResources.of(Resource.KIND_CLASSES)).toList();
+        var cpResources = project().newResources().addAll(
+            tmp.stream());
+        log.finest(() -> project() + " uses classpath: " + cpResources.stream()
+            .map(Resource::toString).collect(Collectors.joining(", ")));
+
+        var classesAsOf = classSet.asOf();
+        if (sources.asOf().isAfter(classesAsOf)
+            || cpResources.asOf().isAfter(classesAsOf)
+            || classSet.stream().count() < sources.stream()
+                .flatMap(Resources::stream).count()) {
+            classSet.delete();
+            compile(cpResources, destDir);
+        }
+        return Stream.of(classSet);
+    }
+
+    @SuppressWarnings({ "PMD.AvoidCatchingGenericException",
+        "PMD.ExceptionAsFlowControl" })
+    private void compile(Resources<Resource> cpResources, Path destDir) {
         log.info(() -> "Compiling Java in " + project().name());
+        var classpath = cpResources.stream().<Path> mapMulti((r, sink) -> {
+            if (r instanceof FileTree fileSet) {
+                sink.accept(fileSet.root());
+            }
+        }).map(Path::toString).collect(Collectors.joining(File.pathSeparator));
         var javac = ToolProvider.getSystemJavaCompiler();
         var diagnostics = new DiagnosticCollector<JavaFileObject>();
         try (var fileManager
@@ -123,8 +126,7 @@ public class JavaCompiler extends AbstractGenerator<FileTree> {
                 = fileManager.getJavaFileObjectsFromPaths(sourcePaths());
             if (!javac.getTask(null, fileManager, null,
                 List.of("-d", destDir.toString(),
-                    "-cp", classpath,
-                    "-Xlint:unchecked"),
+                    "-cp", classpath),
                 null, compilationUnits).call()) {
                 throw new BuildException("Compilation failed");
             }
@@ -140,7 +142,6 @@ public class JavaCompiler extends AbstractGenerator<FileTree> {
                     diagnostic.getSource().toUri()));
             }
         }
-        return Stream.of(classSet);
     }
 
 }

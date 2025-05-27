@@ -22,11 +22,10 @@ import java.nio.file.Path;
 import java.time.Instant;
 import java.util.Objects;
 import org.jdrupes.builder.api.FileResource;
-import org.jdrupes.builder.api.Resource;
 
 /// A resource that represents a file.
 ///
-public class DefaultFileResource implements Resource, FileResource {
+public class DefaultFileResource implements FileResource {
 
     private final Path path;
 
@@ -34,7 +33,7 @@ public class DefaultFileResource implements Resource, FileResource {
     ///
     /// @param path the path
     ///
-    public DefaultFileResource(Path path) {
+    /* default */ DefaultFileResource(Path path) {
         this.path = path;
     }
 

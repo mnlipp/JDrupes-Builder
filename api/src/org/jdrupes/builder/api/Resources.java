@@ -18,11 +18,14 @@
 
 package org.jdrupes.builder.api;
 
+import java.time.Instant;
 import java.util.function.Supplier;
 import java.util.stream.Collector;
 import java.util.stream.Stream;
 
-/// Represents a container for a collection of resources.
+/// Represents a container for a collection of resources. Implementations
+/// must behave as sets (no duplicate entries) and must maintain insertion
+/// order.
 ///
 /// @param <T> the contained resource type
 ///
@@ -64,8 +67,23 @@ public interface Resources<T extends Resource> extends Resource {
     /// @return the resources
     ///
     default Resources<T> addAll(Resources<T> resources) {
-        resources.stream().forEach(this::add);
+        return addAll(resources.stream());
+    }
+
+    /// Adds all resources from the given stream.
+    ///
+    /// @param resources the resources to add
+    /// @return the resources
+    ///
+    default Resources<T> addAll(Stream<T> resources) {
+        resources.forEach(this::add);
         return this;
+    }
+
+    @Override
+    default Instant asOf() {
+        return stream().map(Resource::asOf).reduce(Instant.MIN, (latest,
+                next) -> next.isAfter(latest) ? next : latest);
     }
 
     /// Retrieves the resources as a stream.

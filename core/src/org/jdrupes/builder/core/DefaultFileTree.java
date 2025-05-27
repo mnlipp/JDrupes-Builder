@@ -28,6 +28,7 @@ import java.nio.file.PathMatcher;
 import java.nio.file.SimpleFileVisitor;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.time.Instant;
+import java.util.Objects;
 import java.util.stream.Stream;
 import org.jdrupes.builder.api.BuildException;
 import org.jdrupes.builder.api.FileResource;
@@ -36,10 +37,9 @@ import org.jdrupes.builder.api.Project;
 
 /// The default implementation of a [FileTree].
 ///
-public class DefaultFileTree extends ResourceSet<FileResource>
+public class DefaultFileTree extends DefaultResources<FileResource>
         implements FileTree {
 
-    private String kind = KIND_UNKNOWN;
     private Instant latestChange = Instant.MIN;
     private final Project project;
     private final Path root;
@@ -55,40 +55,18 @@ public class DefaultFileTree extends ResourceSet<FileResource>
     /// @param root the root of the file tree to search for files matching
     /// `pattern`
     /// @param pattern the pattern
+    /// @param kind the kind of content
     ///
-    public DefaultFileTree(Project project, Path root, String pattern) {
+    /* default */ DefaultFileTree(Project project, Path root,
+            String pattern, String kind) {
+        super(kind);
         this.project = project;
-        this.root = project.directory().resolve(root);
+        if (project == null) {
+            this.root = root.toAbsolutePath();
+        } else {
+            this.root = project.directory().resolve(root).normalize();
+        }
         this.pattern = pattern;
-    }
-
-    /// Returns a new file tree. The file tree includes all files
-    /// matching `pattern` in the tree starting at `root`. `root`
-    /// may must specified as absolute path.
-    ///
-    /// @param root the root of the file tree to search for files matching
-    /// `pattern`
-    /// @param pattern the pattern
-    ///
-    public DefaultFileTree(Path root, String pattern) {
-        project = null;
-        this.root = root.toAbsolutePath();
-        this.pattern = pattern;
-    }
-
-    /// Sets the kind of this file set (as resource).
-    ///
-    /// @param kind the kind
-    /// @return the file set
-    ///
-    public FileTree kind(String kind) {
-        this.kind = kind;
-        return this;
-    }
-
-    @Override
-    public String kind() {
-        return kind;
     }
 
     /// Returns the root of the file tree searched for files.
@@ -229,6 +207,30 @@ public class DefaultFileTree extends ResourceSet<FileResource>
         return stream().map(fr -> root().relativize(fr.path()));
     }
 
+    @Override
+    public int hashCode() {
+        final int prime = 31;
+        int result = super.hashCode();
+        result = prime * result + Objects.hash(pattern, root);
+        return result;
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        if (this == obj) {
+            return true;
+        }
+        if (!super.equals(obj)) {
+            return false;
+        }
+        if (getClass() != obj.getClass()) {
+            return false;
+        }
+        DefaultFileTree other = (DefaultFileTree) obj;
+        return Objects.equals(pattern, other.pattern)
+            && Objects.equals(root, other.root);
+    }
+
     /// To string.
     ///
     /// @return the string
@@ -236,7 +238,10 @@ public class DefaultFileTree extends ResourceSet<FileResource>
     @Override
     public String toString() {
         fill();
-        return "FileSet (kind " + kind() + ") from " + root(true)
+        return "FileSet (kind " + kind() + ") from "
+            + (project != null
+                ? project.rootProject().directory().relativize(root)
+                : root)
             + " with " + content.size() + " files, newest: " + latestChange;
     }
 }

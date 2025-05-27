@@ -18,11 +18,8 @@
 
 package org.jdrupes.builder.core;
 
-import java.time.Instant;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.HashSet;
 import java.util.LinkedHashSet;
+import java.util.Objects;
 import java.util.Set;
 import java.util.logging.Logger;
 import java.util.stream.Stream;
@@ -35,7 +32,7 @@ import org.jdrupes.builder.api.Resources;
 /// The [stream] method preserves the order in which the resources
 /// were added.
 ///
-public class ResourceSet<R extends Resource> extends ResourceObject
+public class DefaultResources<R extends Resource> extends ResourceObject
         implements Resources<R> {
 
     protected final Logger log = Logger.getLogger(getClass().getName());
@@ -44,33 +41,9 @@ public class ResourceSet<R extends Resource> extends ResourceObject
 
     /// Instantiates a new resource set.
     ///
-    public ResourceSet() {
+    /* default */ DefaultResources(String kind) {
+        super(kind);
         content = new LinkedHashSet<>();
-    }
-
-    /// Instantiates a new resource set.
-    ///
-    /// @param content the content
-    ///
-    public ResourceSet(Collection<R> content) {
-        this.content = new HashSet<>(content);
-    }
-
-    /// Creates a new resource set.
-    ///
-    /// @param <R> the generic type
-    /// @param resources the resources
-    /// @return the resources
-    ///
-    @SafeVarargs
-    @SuppressWarnings("PMD.ShortMethodName")
-    public static <R extends Resource> Resources<R> of(R... resources) {
-        return new ResourceSet<>(Arrays.asList(resources));
-    }
-
-    @Override
-    public Instant asOf() {
-        return Instant.MIN;
     }
 
     @Override
@@ -82,6 +55,29 @@ public class ResourceSet<R extends Resource> extends ResourceObject
     @Override
     public Stream<R> stream() {
         return content.stream();
+    }
+
+    @Override
+    public int hashCode() {
+        final int prime = 31;
+        int result = super.hashCode();
+        result = prime * result + Objects.hash(content);
+        return result;
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        if (this == obj) {
+            return true;
+        }
+        if (!super.equals(obj)) {
+            return false;
+        }
+        if (getClass() != obj.getClass()) {
+            return false;
+        }
+        DefaultResources<?> other = (DefaultResources<?>) obj;
+        return Objects.equals(content, other.content);
     }
 
 }

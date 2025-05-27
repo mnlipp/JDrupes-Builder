@@ -22,7 +22,7 @@ import java.util.Objects;
 
 /// A base class for [Resource]s.
 ///
-public class ResourceObject implements Resource {
+public abstract class ResourceObject implements Resource {
 
     private String kind = KIND_UNKNOWN;
 

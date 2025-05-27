@@ -23,6 +23,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -33,14 +34,18 @@ import java.util.stream.Stream;
 import org.jdrupes.builder.api.Build;
 import org.jdrupes.builder.api.Dependency;
 import static org.jdrupes.builder.api.Dependency.Intend.*;
+import org.jdrupes.builder.api.FileResource;
 import org.jdrupes.builder.api.FileTree;
+import org.jdrupes.builder.api.OwnResources;
 import org.jdrupes.builder.api.Project;
 import org.jdrupes.builder.api.Resource;
 import org.jdrupes.builder.api.ResourceProvider;
+import org.jdrupes.builder.api.Resources;
 import org.jdrupes.builder.api.RootProject;
 
 /// A default implementation of a [Project].
 ///
+@SuppressWarnings("PMD.TooManyMethods")
 public abstract class AbstractProject implements Project {
 
     private Map<Class<? extends Project>, Project> projects;
@@ -185,7 +190,8 @@ public abstract class AbstractProject implements Project {
         Optional.ofNullable(parent).map(Project::directory)
             .orElse(directory)
             // ... used to resolve explicitly set directory or name.
-            .resolve(Optional.ofNullable(directory).orElse(Path.of(name())));
+            .resolve(Optional.ofNullable(directory).orElse(Path.of(name()))
+                .normalize());
     }
 
     @Override
@@ -215,8 +221,8 @@ public abstract class AbstractProject implements Project {
 
     @Override
     @SuppressWarnings("unchecked")
-    public <T extends Resource> Stream<T> provided(Resource resource,
-            Set<Dependency.Intend> types) {
+    public <T extends Resource> Stream<T> provided(Set<Dependency.Intend> types,
+            Resource resource) {
         return dependencies.values().stream()
             .filter(d -> types.contains(d.type()))
             .map(d -> build().provide(d.provider(), resource))
@@ -227,10 +233,11 @@ public abstract class AbstractProject implements Project {
     @Override
     public Stream<Resource> provide(Resource resource) {
         return Stream.concat(
-            dependencies.values().stream()
-                .map(d -> build().provide(d.provider(), resource)),
-            providers.stream().map(p -> build().provide(p, resource)))
-            // Terminate stream to start all tasks for evaluating the futures
+            providers.stream().map(p -> build().provide(p, resource)),
+            resource instanceof OwnResources ? Stream.empty()
+                : Stream.of(provided(EnumSet.of(Expose), resource)))
+            // Terminate stream to start all tasks for evaluating the
+            // futures
             .toList().stream().flatMap(r -> r);
     }
 
@@ -246,14 +253,36 @@ public abstract class AbstractProject implements Project {
     }
 
     @Override
+    public FileResource newFileResource(Path path) {
+        return new DefaultFileResource(path);
+    }
+
+    @Override
+    public <T extends Resource> Resources<T> newResources() {
+        return new DefaultResources<>(Resource.KIND_UNKNOWN);
+    }
+
+    @Override
+    public <T extends Resource> Resources<T> newResources(String kind) {
+        return new DefaultResources<>(kind);
+    }
+
+    @Override
     public FileTree newFileTree(Project project, Path root, String pattern) {
-        return new DefaultFileTree(project, root, pattern);
+        return new DefaultFileTree(project, root, pattern,
+            Resource.KIND_UNKNOWN);
     }
 
     @Override
     public FileTree newFileTree(Project project, Path root, String pattern,
             String kind) {
-        return new DefaultFileTree(project, root, pattern).kind(kind);
+        return new DefaultFileTree(project, root, pattern, kind);
+    }
+
+    @Override
+    public String toString() {
+        return "Project " + name() + " (in "
+            + rootProject().directory().relativize(directory()) + ")";
     }
 
 }

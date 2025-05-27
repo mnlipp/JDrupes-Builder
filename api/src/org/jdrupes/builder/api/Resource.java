@@ -70,8 +70,12 @@ public interface Resource {
     /// @return the string
     ///
     default String asOfLocalized() {
+        var asOf = asOf();
+        if (asOf == Instant.MIN) {
+            return "ages ago";
+        }
         return DateTimeFormatter
             .ofLocalizedDateTime(FormatStyle.MEDIUM)
-            .format(asOf().atZone(ZoneId.systemDefault()));
+            .format(asOf.atZone(ZoneId.systemDefault()));
     }
 }

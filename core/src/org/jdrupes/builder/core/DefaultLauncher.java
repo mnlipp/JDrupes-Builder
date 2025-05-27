@@ -86,7 +86,8 @@ public class DefaultLauncher implements Launcher {
             } catch (URISyntaxException e) {
                 throw new BuildException("Problem scanning classpath", e);
             }
-        }).map(p -> new DefaultFileTree(p, "**/*.class"))
+        }).map(p -> new DefaultFileTree(null, p, "**/*.class",
+            Resource.KIND_CLASSES))
             .flatMap(FileTree::entries).map(Path::toString)
             .map(p -> p.substring(0, p.length() - 6).replace('/', '.'))
             .map(cn -> {
@@ -146,16 +147,11 @@ public class DefaultLauncher implements Launcher {
 
     }
 
-    /// Start.
-    ///
-    /// @param args the args
-    ///
-    @Override
-    @SuppressWarnings({ "PMD.AvoidPrintStackTrace", "PMD.SystemPrintln" })
-    public void start(String[] args) {
+    static {
         InputStream props;
         try {
-            props = Files.newInputStream(Path.of("logging.properties"));
+            props = Files.newInputStream(
+                Path.of("_jdbld", "logging.properties"));
         } catch (IOException e) {
             props = DefaultLauncher.class
                 .getResourceAsStream("logging.properties");
@@ -164,9 +160,17 @@ public class DefaultLauncher implements Launcher {
         try (var from = props) {
             LogManager.getLogManager().readConfiguration(from);
         } catch (SecurityException | IOException e) {
-            e.printStackTrace();
+            e.printStackTrace(); // NOPMD
         }
+    }
 
+    /// Start.
+    ///
+    /// @param args the args
+    ///
+    @Override
+    @SuppressWarnings({ "PMD.AvoidPrintStackTrace", "PMD.SystemPrintln" })
+    public void start(String[] args) {
         // Start building
         unwrapBuildException(() -> {
             // Finish project creation
