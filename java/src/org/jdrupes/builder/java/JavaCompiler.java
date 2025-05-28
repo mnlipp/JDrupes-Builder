@@ -20,6 +20,7 @@ package org.jdrupes.builder.java;
 
 import java.io.File;
 import java.nio.file.Path;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.EnumSet;
 import java.util.List;
@@ -58,8 +59,8 @@ public class JavaCompiler extends AbstractGenerator<FileTree> {
     /// @param sources the sources
     /// @return the java compiler
     ///
-    public JavaCompiler addSources(FileTree sources) {
-        this.sources.add(sources);
+    public JavaCompiler addSources(FileTree... sources) {
+        this.sources.addAll(Arrays.stream(sources));
         return this;
     }
 
@@ -89,7 +90,7 @@ public class JavaCompiler extends AbstractGenerator<FileTree> {
         final var classSet = project().newFileTree(
             project(), destDir, "**/*", Resource.KIND_CLASSES);
 
-        // (Re-)compile only if necessary
+        // Get classpath for compilation.
         log.fine(() -> "Getting classpath for " + project());
         var cpResources = project().newResources().addAll(
             project().provided(EnumSet.of(Intend.Consume, Intend.Expose),
@@ -97,11 +98,16 @@ public class JavaCompiler extends AbstractGenerator<FileTree> {
         log.finest(() -> project() + " uses classpath: " + cpResources.stream()
             .map(Resource::toString).collect(Collectors.joining(", ")));
 
+        // (Re-)compile only if necessary
         var classesAsOf = classSet.asOf();
         if (sources.asOf().isAfter(classesAsOf)
             || cpResources.asOf().isAfter(classesAsOf)
             || classSet.stream().count() < sources.stream()
-                .flatMap(Resources::stream).count()) {
+                .flatMap(Resources::stream).map(FileResource::path)
+                .filter(p -> p.toString().endsWith(".java")
+                    && !p.endsWith("package-info.java")
+                    && !p.endsWith("module-info.java"))
+                .count()) {
             classSet.delete();
             compile(cpResources, destDir);
         }
