@@ -18,10 +18,14 @@
 
 package org.jdrupes.builder.api;
 
+import java.util.stream.Stream;
+
 /// Defines the methods provided by a launcher.
 ///
 @SuppressWarnings("PMD.ImplicitFunctionalInterface")
 public interface Launcher {
+
+    Stream<Resource> provide(Resource requested);
 
     /// Starts a new build.
     ///

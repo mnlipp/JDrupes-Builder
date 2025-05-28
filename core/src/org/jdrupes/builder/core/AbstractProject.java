@@ -34,6 +34,7 @@ import java.util.stream.Stream;
 import org.jdrupes.builder.api.AccessibleResources;
 import org.jdrupes.builder.api.AllResources;
 import org.jdrupes.builder.api.Build;
+import org.jdrupes.builder.api.BuildException;
 import org.jdrupes.builder.api.Dependency;
 import org.jdrupes.builder.api.Dependency.Intend;
 import static org.jdrupes.builder.api.Dependency.Intend.*;
@@ -54,7 +55,7 @@ public abstract class AbstractProject implements Project {
     @SuppressWarnings("PMD.FieldNamingConventions")
     private static final ThreadLocal<
             List<Class<? extends Project>>> detectedSubprojects
-                = new ThreadLocal<>();
+                = ThreadLocal.withInitial(Collections::emptyList);
     private static ThreadLocal<Project> projectInstantiator
         = new ThreadLocal<>();
     private Project parent;
@@ -80,12 +81,16 @@ public abstract class AbstractProject implements Project {
     ///
     @SuppressWarnings({ "unchecked", "PMD.ClassCastExceptionWithToArray" })
     protected AbstractProject() {
+        parent = projectInstantiator.get();
         if (this instanceof RootProject) {
+            if (parent != null) {
+                throw new BuildException("Root project of type "
+                    + getClass().getSimpleName() + " cannot be a sub project.");
+            }
             initRootProject((Class<? extends Project>[]) detectedSubprojects
                 .get().toArray(new Class<?>[0]));
             return;
         }
-        parent = projectInstantiator.get();
 
         // Fallback, overridden when the parent explicitly adds a dependency.
         parent.dependency(this, Build);
@@ -124,7 +129,7 @@ public abstract class AbstractProject implements Project {
     }
 
     @Override
-    public Project project(Class<? extends Project> project) {
+    public final Project project(Class<? extends Project> project) {
         if (this.getClass().equals(project)) {
             return this;
         }
@@ -224,7 +229,7 @@ public abstract class AbstractProject implements Project {
     }
 
     @Override
-    public Project dependency(ResourceProvider<?> provider,
+    public final Project dependency(ResourceProvider<?> provider,
             Dependency.Intend type) {
         dependencies.put(provider, new Dependency(provider, type));
         return this;
@@ -286,15 +291,9 @@ public abstract class AbstractProject implements Project {
     }
 
     @Override
-    public FileTree newFileTree(Project project, Path root, String pattern) {
-        return new DefaultFileTree(project, root, pattern,
-            Resource.KIND_UNKNOWN);
-    }
-
-    @Override
     public FileTree newFileTree(Project project, Path root, String pattern,
-            String kind) {
-        return new DefaultFileTree(project, root, pattern, kind);
+            String kind, boolean withDirs) {
+        return new DefaultFileTree(project, root, pattern, kind, withDirs);
     }
 
     @Override

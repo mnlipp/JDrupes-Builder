@@ -16,38 +16,47 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package org.jdrupes.builder.core;
+package org.jdrupes.builder.java;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
+import java.io.File;
+import java.nio.file.Path;
 import java.util.stream.Stream;
 import org.jdrupes.builder.api.FileTree;
 import org.jdrupes.builder.api.Project;
 import org.jdrupes.builder.api.Resource;
-import org.jdrupes.builder.api.Resources;
+import org.jdrupes.builder.core.AbstractGenerator;
 
-/// The Class ResourceCollector.
+/// Provides [FileTree]s with classes from a given classpath.
 ///
-public class ResourcesCollector extends AbstractGenerator<FileTree> {
+public class ClasspathProvider extends AbstractGenerator<FileTree> {
 
-    private final Resources<FileTree> fileSets = project().newResources();
+    private final String path;
 
-    public ResourcesCollector(Project project) {
+    /// Instantiates a new classpath provider.
+    ///
+    /// @param project the project
+    /// @param path the path (directories separated by the system's
+    /// path separator)
+    ///
+    public ClasspathProvider(Project project, String path) {
         super(project);
+        this.path = path;
     }
 
-    public ResourcesCollector add(FileTree... fileSets) {
-        this.fileSets.addAll(Arrays.stream(fileSets));
-        return this;
-    }
-
+    /// Provide [FileTree]s with classes from a given classpath if the
+    /// requested resource as kind [Resource.KIND_CLASSES].
+    ///
+    /// @param requested the requested
+    /// @return the stream
+    ///
     @Override
     public Stream<FileTree> provide(Resource requested) {
-        if (!Resource.KIND_RESOURCES.equals(requested.kind())) {
+        if (!Resource.KIND_CLASSES.equals(requested.kind())) {
             return Stream.empty();
         }
-        return fileSets.stream();
+        return Stream.of(path.split(File.pathSeparator)).map(d -> project()
+            .newFileTree(project(), Path.of(d), "**/*.class",
+                Resource.KIND_CLASSES));
     }
 
 }

@@ -141,7 +141,9 @@ public interface Project extends ResourceProvider<Resource> {
     /// `pattern`
     /// @param pattern the pattern
     ///
-    FileTree newFileTree(Project project, Path root, String pattern);
+    default FileTree newFileTree(Project project, Path root, String pattern) {
+        return newFileTree(project, root, pattern, Resource.KIND_UNKNOWN);
+    }
 
     /// Returns a new file tree. The file tree includes all files
     /// matching `pattern` in the tree starting at `root`. `root`
@@ -154,8 +156,42 @@ public interface Project extends ResourceProvider<Resource> {
     /// @param pattern the pattern
     /// @param kind the file tree's kind
     ///
+    default FileTree newFileTree(Project project, Path root, String pattern,
+            String kind) {
+        return newFileTree(project, root, pattern, kind, false);
+    }
+
+    /// Returns a new file tree. The file tree includes all files
+    /// matching `pattern` in the tree starting at `root`. `root`
+    /// may be specified as absolute path or as path relative to the
+    /// `project`'s directory (see [Project#directory]).
+    ///
+    /// @param project the project
+    /// @param root the root of the file tree to search for files matching
+    /// `pattern`
+    /// @param pattern the pattern
+    /// @param withDirs whether to include directories
+    ///
+    default FileTree newFileTree(Project project, Path root,
+            String pattern, boolean withDirs) {
+        return newFileTree(project, root, pattern, Resource.KIND_UNKNOWN,
+            withDirs);
+    }
+
+    /// Returns a new file tree. The file tree includes all files
+    /// matching `pattern` in the tree starting at `root`. `root`
+    /// may be specified as absolute path or as path relative to the
+    /// `project`'s directory (see [Project#directory]).
+    ///
+    /// @param project the project
+    /// @param root the root of the file tree to search for files matching
+    /// `pattern`
+    /// @param pattern the pattern
+    /// @param kind the file tree's kind
+    /// @param withDirs whether to include directories
+    ///
     FileTree newFileTree(Project project, Path root, String pattern,
-            String kind);
+            String kind, boolean withDirs);
 
     /// Returns a new file resource.
     ///

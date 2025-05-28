@@ -29,8 +29,10 @@ import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.concurrent.Callable;
 import java.util.logging.LogManager;
 import java.util.logging.Logger;
+import java.util.stream.Stream;
 import org.jdrupes.builder.api.AllResources;
 import org.jdrupes.builder.api.BuildException;
 import org.jdrupes.builder.api.FileTree;
@@ -57,7 +59,11 @@ public class DefaultLauncher implements Launcher {
     /// @param rootProject the root project
     ///
     public DefaultLauncher(Class<? extends Project> rootProject) {
-        initRootProject(rootProject);
+        unwrapBuildException(() -> {
+            initRootProject(rootProject);
+            ((AbstractProject) this.rootProject).createProjects();
+            return null;
+        });
     }
 
     /// Instantiates a new default launcher. The classpath is scanned.
@@ -65,16 +71,19 @@ public class DefaultLauncher implements Launcher {
     /// registered as root project and all classes implementing the
     /// [Project] interface are registered as sub projects.
     ///
-    public DefaultLauncher() {
-        unwrapBuildException(this::initWithReflection);
+    public DefaultLauncher(ClassLoader clsLoader) {
+        unwrapBuildException(() -> {
+            initWithReflection(clsLoader);
+            ((AbstractProject) this.rootProject).createProjects();
+            return null;
+        });
     }
 
     @SuppressWarnings({ "unchecked", "PMD.AvoidLiteralsInIfCondition" })
-    private void initWithReflection() {
+    private void initWithReflection(ClassLoader clsLoader) {
         List<URL> classDirUrls;
         try {
-            classDirUrls = Collections.list(Thread.currentThread()
-                .getContextClassLoader().getResources(""));
+            classDirUrls = Collections.list(clsLoader.getResources(""));
         } catch (IOException e) {
             throw new BuildException("Problem scanning classpath", e);
         }
@@ -87,13 +96,13 @@ public class DefaultLauncher implements Launcher {
                 throw new BuildException("Problem scanning classpath", e);
             }
         }).map(p -> new DefaultFileTree(null, p, "**/*.class",
-            Resource.KIND_CLASSES))
+            Resource.KIND_CLASSES, false))
             .flatMap(FileTree::entries).map(Path::toString)
             .map(p -> p.substring(0, p.length() - 6).replace('/', '.'))
+            .filter(n -> !n.startsWith("org.jdrupes.builder.startup"))
             .map(cn -> {
                 try {
-                    return Thread.currentThread()
-                        .getContextClassLoader().loadClass(cn);
+                    return clsLoader.loadClass(cn);
                 } catch (ClassNotFoundException e) {
                     throw new IllegalStateException(
                         "Cannot load detected class", e);
@@ -128,11 +137,11 @@ public class DefaultLauncher implements Launcher {
     }
 
     @SuppressWarnings({ "PMD.AvoidReassigningCatchVariables",
-        "PMD.DoNotTerminateVM" })
-    private void unwrapBuildException(Runnable todo) {
+        "PMD.DoNotTerminateVM", "PMD.AvoidCatchingGenericException" })
+    private <T> T unwrapBuildException(Callable<T> todo) {
         try {
-            todo.run();
-        } catch (BuildException e) {
+            return todo.call();
+        } catch (Exception e) {
             var cause = e.getCause();
             while (cause != null) {
                 if (cause instanceof BuildException nbe) {
@@ -143,8 +152,8 @@ public class DefaultLauncher implements Launcher {
             final var rootCase = e;
             log.severe(() -> "Build failed: " + rootCase.getMessage());
             System.exit(1);
+            return null;
         }
-
     }
 
     static {
@@ -164,6 +173,15 @@ public class DefaultLauncher implements Launcher {
         }
     }
 
+    @Override
+    public Stream<Resource> provide(Resource requested) {
+        return unwrapBuildException(() -> {
+            // Provide requested resource, handling all exceptions here
+            var result = rootProject.provide(requested).toList();
+            return result.stream();
+        });
+    }
+
     /// Start.
     ///
     /// @param args the args
@@ -171,20 +189,14 @@ public class DefaultLauncher implements Launcher {
     @Override
     @SuppressWarnings({ "PMD.AvoidPrintStackTrace", "PMD.SystemPrintln" })
     public void start(String[] args) {
-        // Start building
-        unwrapBuildException(() -> {
-            // Finish project creation
-            ((AbstractProject) rootProject).createProjects();
-
-            // Provide requested resource
-            rootProject.provide(AllResources.of(Resource.KIND_APP_JAR))
-                .forEach(r -> {
-                    System.out.println(r);
-                });
-        });
+        provide(AllResources.of(Resource.KIND_APP_JAR))
+            .forEach(r -> {
+                System.out.println(r);
+            });
     }
 
     public static void main(String[] args) {
-        new DefaultLauncher().start(args);
+        new DefaultLauncher(Thread.currentThread().getContextClassLoader())
+            .start(args);
     }
 }

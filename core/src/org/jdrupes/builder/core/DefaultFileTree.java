@@ -44,6 +44,7 @@ public class DefaultFileTree extends DefaultResources<FileResource>
     private final Project project;
     private final Path root;
     private final String pattern;
+    private final boolean withDirs;
     private boolean filled;
 
     /// Returns a new file tree. The file tree includes all files
@@ -56,9 +57,10 @@ public class DefaultFileTree extends DefaultResources<FileResource>
     /// `pattern`
     /// @param pattern the pattern
     /// @param kind the kind of content
+    /// @param withDirs whether to include directories
     ///
     /* default */ DefaultFileTree(Project project, Path root,
-            String pattern, String kind) {
+            String pattern, String kind, boolean withDirs) {
         super(kind);
         this.project = project;
         if (project == null) {
@@ -67,6 +69,7 @@ public class DefaultFileTree extends DefaultResources<FileResource>
             this.root = project.directory().resolve(root).normalize();
         }
         this.pattern = pattern;
+        this.withDirs = withDirs;
     }
 
     /// Returns the root of the file tree searched for files.
@@ -117,12 +120,25 @@ public class DefaultFileTree extends DefaultResources<FileResource>
             @Override
             public FileVisitResult visitFile(Path path,
                     BasicFileAttributes attrs) throws IOException {
+                testAndAdd(path);
+                return FileVisitResult.CONTINUE;
+            }
+
+            private void testAndAdd(Path path) {
                 if (pathMatcher.matches(path)) {
                     var resource = new DefaultFileResource(path);
                     DefaultFileTree.this.add(resource);
                     if (resource.asOf().isAfter(latestChange)) {
                         latestChange = resource.asOf();
                     }
+                }
+            }
+
+            @Override
+            public FileVisitResult preVisitDirectory(Path dir,
+                    BasicFileAttributes attrs) throws IOException {
+                if (withDirs) {
+                    testAndAdd(dir);
                 }
                 return FileVisitResult.CONTINUE;
             }
