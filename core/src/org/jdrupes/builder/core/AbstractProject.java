@@ -142,7 +142,9 @@ public abstract class AbstractProject implements Project {
             }
             try {
                 projectInstantiator.set(this);
-                return k.getConstructor().newInstance();
+                var newProject = k.getConstructor().newInstance();
+                projectInstantiator.set(null);
+                return newProject;
             } catch (NoSuchMethodException | SecurityException
                     | InstantiationException | IllegalAccessException
                     | IllegalArgumentException | InvocationTargetException e) {

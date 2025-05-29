@@ -1,7 +1,12 @@
 package org.jdrupes.builder.startup;
 
+import java.net.MalformedURLException;
+import java.net.URL;
+import java.net.URLClassLoader;
 import java.util.stream.Stream;
 import org.jdrupes.builder.api.AllResources;
+import org.jdrupes.builder.api.BuildException;
+import org.jdrupes.builder.api.FileTree;
 import org.jdrupes.builder.api.Resource;
 import org.jdrupes.builder.api.RootProject;
 import org.jdrupes.builder.core.AbstractProject;
@@ -15,11 +20,19 @@ public class Root extends AbstractProject implements RootProject {
 
     public static void main(String[] args) {
         var launcher = new DefaultLauncher(Root.class);
-        Stream.concat(launcher.provide(AllResources.of(Resource.KIND_CLASSES)),
-            launcher.provide(AllResources.of(Resource.KIND_RESOURCES)))
-            .forEach(r -> {
-                System.out.println(r);
-            });
-
+        var cpUrls = Stream
+            .concat(launcher.provide(AllResources.of(Resource.KIND_CLASSES)),
+                launcher.provide(AllResources.of(Resource.KIND_RESOURCES)))
+            .map(ft -> {
+                try {
+                    return ((FileTree) ft).root().toFile().toURI().toURL();
+                } catch (MalformedURLException e) {
+                    // Cannot happen
+                    throw new BuildException(e);
+                }
+            }).toArray(URL[]::new);
+        ;
+        new DefaultLauncher(new URLClassLoader(cpUrls,
+            Thread.currentThread().getContextClassLoader())).start(args);
     }
 }
