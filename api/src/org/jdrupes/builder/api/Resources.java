@@ -23,7 +23,7 @@ import java.util.function.Supplier;
 import java.util.stream.Collector;
 import java.util.stream.Stream;
 
-/// Represents a container for a collection of resources. Implementations
+/// Defines a container for a collection of resources. Implementations
 /// must behave as sets (no duplicate entries) and must maintain insertion
 /// order when providing a [stream].
 ///
