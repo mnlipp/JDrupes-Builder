@@ -16,28 +16,13 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package org.jdrupes.builder.api;
+package org.jdrupes.builder.java;
 
-import java.util.stream.Stream;
+import org.jdrupes.builder.api.FileResource;
 
-/// Defines the methods provided by a launcher.
+/// A [FileResource] that represents a Java jar.
 ///
 @SuppressWarnings("PMD.ImplicitFunctionalInterface")
-public interface Launcher {
-
-    /// Provide the requested resources.
-    ///
-    /// @param <T> the requested type
-    /// @param requested the requested
-    /// @return the stream
-    ///
-    <T extends Resource> Stream<T> provide(ResourceRequest<T> requested);
-
-    /// Starts a new build.
-    ///
-    /// @param args the args
-    ///
-    @SuppressWarnings("PMD.UseVarargs")
-    void start(String[] args);
+public interface JarFile extends FileResource {
 
 }

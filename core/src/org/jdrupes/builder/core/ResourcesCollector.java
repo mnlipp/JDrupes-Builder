@@ -18,36 +18,63 @@
 
 package org.jdrupes.builder.core;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
 import java.util.stream.Stream;
 import org.jdrupes.builder.api.FileTree;
 import org.jdrupes.builder.api.Project;
 import org.jdrupes.builder.api.Resource;
+import org.jdrupes.builder.api.ResourceFile;
+import org.jdrupes.builder.api.ResourceRequest;
+import org.jdrupes.builder.api.ResourceType;
 import org.jdrupes.builder.api.Resources;
 
-/// The Class ResourceCollector.
+/// A provider for resources, usually from directories, to be included in a
+/// (Java) project. 
 ///
-public class ResourcesCollector extends AbstractGenerator<FileTree> {
+public class ResourcesCollector
+        extends AbstractGenerator<FileTree<ResourceFile>> {
 
-    private final Resources<FileTree> fileSets = project().newResources();
+    private final Resources<FileTree<ResourceFile>> fileTrees
+        = project().newResources(Resource.class);
 
+    /// Instantiates a new resources collector.
+    ///
+    /// @param project the project
+    ///
     public ResourcesCollector(Project project) {
         super(project);
     }
 
-    public ResourcesCollector add(FileTree... fileSets) {
-        this.fileSets.addAll(Arrays.stream(fileSets));
+    /// Adds the given file tree with resource directories.
+    ///
+    /// @param resources the resources
+    /// @return the resources collector
+    ///
+    public final ResourcesCollector add(FileTree<ResourceFile> resources) {
+        this.fileTrees.add(resources);
+        return this;
+    }
+
+    /// Adds the given file trees with resource directories.
+    ///
+    /// @param resources the resources
+    /// @return the resources collector
+    ///
+    public final ResourcesCollector
+            add(Stream<FileTree<ResourceFile>> resources) {
+        this.fileTrees.addAll(resources);
         return this;
     }
 
     @Override
-    public Stream<FileTree> provide(Resource requested) {
-        if (!Resource.KIND_RESOURCES.equals(requested.kind())) {
+    @SuppressWarnings("unchecked")
+    public <R extends Resource> Stream<R>
+            provide(ResourceRequest<R> requested) {
+        if (!requested.type()
+            .isAssignableFrom(new ResourceType<FileTree<ResourceFile>>() {
+            })) {
             return Stream.empty();
         }
-        return fileSets.stream();
+        return (Stream<R>) fileTrees.stream();
     }
 
 }

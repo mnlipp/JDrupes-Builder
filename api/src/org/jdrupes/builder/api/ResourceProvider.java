@@ -29,27 +29,18 @@ import java.util.stream.Stream;
 @SuppressWarnings("PMD.ImplicitFunctionalInterface")
 public interface ResourceProvider<T extends Resource> {
 
-    /// Provide the requested resource. Most providers will only
-    /// evaluate the requested resource kind and return all resources
-    /// of the requested kind.
-    ///
-    /// The restriction imposed on the returned values by `T` isn't
-    /// very strong. Therefore the following rules apply:
-    ///
-    /// | `requested`'s kind | Returned values' type  |
-    /// |--------------------|------------------------|
-    /// | `KIND_CLASSES`     | [FileTree]             |
-    /// | `KIND_RESOURCES`   | [FileTree]             |
-    ///
+    /// Provide the requested resource. 
+    /// 
     /// This method is never invoked concurrently for the same requested
     /// resource. It may, however, be invoked concurrently for different
     /// requested resources. Providers that evaluate all resources anyway
     /// should invoke themselves through [Build#provide] with a request
-    /// of [AllResources] to avoid concurrency and only filter the result
+    /// for all resources to avoid concurrency and only filter the result
     /// in the original thread.
     ///
+    /// @param <R> the type of the requested (and provided) resources
     /// @param requested the requested resource
     /// @return the provided resource(s) as stream
     ///
-    Stream<T> provide(Resource requested);
+    <R extends Resource> Stream<R> provide(ResourceRequest<R> requested);
 }

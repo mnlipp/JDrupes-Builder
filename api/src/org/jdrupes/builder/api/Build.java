@@ -36,10 +36,11 @@ public interface Build {
     /// result from the provider becomes available.
     ///
     /// @param <T> the requested resource type
+    /// @param provider the provider
     /// @param requested the requested resource
     /// @return the stream of resources
     ///
-    <T extends Resource> Stream<T> provide(ResourceProvider<T> provider,
-            Resource requested);
+    <T extends Resource> Stream<T> provide(ResourceProvider<?> provider,
+            ResourceRequest<T> requested);
 
 }

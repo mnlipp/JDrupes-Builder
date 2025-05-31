@@ -20,7 +20,6 @@ package org.jdrupes.builder.java;
 
 import java.io.File;
 import java.nio.file.Path;
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.EnumSet;
 import java.util.List;
@@ -30,21 +29,24 @@ import java.util.stream.Stream;
 import javax.tools.DiagnosticCollector;
 import javax.tools.JavaFileObject;
 import javax.tools.ToolProvider;
-import org.jdrupes.builder.api.AccessibleResources;
 import org.jdrupes.builder.api.BuildException;
+import org.jdrupes.builder.api.ClassFile;
 import org.jdrupes.builder.api.Dependency.Intend;
 import org.jdrupes.builder.api.FileResource;
 import org.jdrupes.builder.api.FileTree;
 import org.jdrupes.builder.api.Project;
 import org.jdrupes.builder.api.Resource;
+import org.jdrupes.builder.api.ResourceRequest;
+import org.jdrupes.builder.api.ResourceType;
 import org.jdrupes.builder.api.Resources;
 import org.jdrupes.builder.core.AbstractGenerator;
 
 /// The Class JavaCompiler.
 ///
-public class JavaCompiler extends AbstractGenerator<FileTree> {
+public class JavaCompiler extends AbstractGenerator<FileTree<ClassFile>> {
 
-    private final Resources<FileTree> sources = project().newResources();
+    private final Resources<FileTree<FileResource>> sources
+        = project().newResources(FileResource.class);
 
     /// Instantiates a new java compiler.
     ///
@@ -54,13 +56,25 @@ public class JavaCompiler extends AbstractGenerator<FileTree> {
         super(project);
     }
 
+    /// Adds the source tree.
+    ///
+    /// @param sources the sources
+    /// @return the java compiler
+    ///
+    public final JavaCompiler
+            addSources(FileTree<FileResource> sources) {
+        this.sources.add(sources);
+        return this;
+    }
+
     /// Adds the sources.
     ///
     /// @param sources the sources
     /// @return the java compiler
     ///
-    public JavaCompiler addSources(FileTree... sources) {
-        this.sources.addAll(Arrays.stream(sources));
+    public final JavaCompiler
+            addSources(Stream<FileTree<FileResource>> sources) {
+        this.sources.addAll(sources);
         return this;
     }
 
@@ -74,27 +88,27 @@ public class JavaCompiler extends AbstractGenerator<FileTree> {
             .collect(Collectors.toList());
     }
 
-    /// Provide.
-    ///
-    /// @param resource the resource
-    /// @return the stream
-    ///
     @Override
-    public Stream<FileTree> provide(Resource resource) {
-        if (!Resource.KIND_CLASSES.equals(resource.kind())) {
+    public <T extends Resource> Stream<T>
+            provide(ResourceRequest<T> requested) {
+        if (!requested.type()
+            .isAssignableFrom(new ResourceType<FileTree<ClassFile>>() {
+            })) {
             return Stream.empty();
         }
 
         // Get this project's previously generated classes (for checking)
         var destDir = project().buildDirectory().resolve("classes");
         final var classSet = project().newFileTree(
-            project(), destDir, "**/*", Resource.KIND_CLASSES);
+            project(), destDir, "**/*", ClassFile.class);
 
         // Get classpath for compilation.
         log.fine(() -> "Getting classpath for " + project());
-        var cpResources = project().newResources().addAll(
+        var cpResources = project().newResources(ClassFile.class).addAll(
             project().provided(EnumSet.of(Intend.Consume, Intend.Expose),
-                AccessibleResources.of(Resource.KIND_CLASSES)));
+                new ResourceRequest<>(
+                    new ResourceType<FileTree<ClassFile>>() {
+                    })));
         log.finest(() -> project() + " uses classpath: " + cpResources.stream()
             .map(Resource::toString).collect(Collectors.joining(", ")));
 
@@ -111,7 +125,10 @@ public class JavaCompiler extends AbstractGenerator<FileTree> {
             classSet.delete();
             compile(cpResources, destDir);
         }
-        return Stream.of(classSet);
+        classSet.clear();
+        @SuppressWarnings("unchecked")
+        var result = (Stream<T>) Stream.of(classSet);
+        return result;
     }
 
     @SuppressWarnings({ "PMD.AvoidCatchingGenericException",

@@ -32,29 +32,38 @@ import org.jdrupes.builder.api.Resources;
 /// The [stream] method preserves the order in which the resources
 /// were added.
 ///
-public class DefaultResources<R extends Resource> extends ResourceObject
-        implements Resources<R> {
+/// @param <T> the type of the contained resources
+///
+public class DefaultResources<T extends Resource> extends ResourceObject
+        implements Resources<T> {
 
     protected final Logger log = Logger.getLogger(getClass().getName());
-
-    protected final Set<R> content;
+    private final Set<T> content;
 
     /// Instantiates a new resource set.
     ///
-    /* default */ DefaultResources(String kind) {
-        super(kind);
+    /// @param type the type of this instance as resource
+    ///
+    /* default */ DefaultResources(Class<? extends Resource> type) {
+        super(type);
         content = new LinkedHashSet<>();
     }
 
     @Override
-    public Resources<R> add(R resource) {
+    public Resources<T> add(T resource) {
         content.add(resource);
         return this;
     }
 
     @Override
-    public Stream<R> stream() {
+    public Stream<T> stream() {
         return content.stream();
+    }
+
+    @Override
+    public Resources<T> clear() {
+        content.clear();
+        return this;
     }
 
     @Override

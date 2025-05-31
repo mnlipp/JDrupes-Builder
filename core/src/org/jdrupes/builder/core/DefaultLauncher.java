@@ -33,12 +33,15 @@ import java.util.concurrent.Callable;
 import java.util.logging.LogManager;
 import java.util.logging.Logger;
 import java.util.stream.Stream;
-import org.jdrupes.builder.api.AllResources;
 import org.jdrupes.builder.api.BuildException;
+import org.jdrupes.builder.api.ClassFile;
+import org.jdrupes.builder.api.FileResource;
 import org.jdrupes.builder.api.FileTree;
 import org.jdrupes.builder.api.Launcher;
 import org.jdrupes.builder.api.Project;
 import org.jdrupes.builder.api.Resource;
+import org.jdrupes.builder.api.ResourceRequest;
+import org.jdrupes.builder.api.ResourceType;
 import org.jdrupes.builder.api.RootProject;
 
 /// A default implementation of a [Launcher].
@@ -71,6 +74,8 @@ public class DefaultLauncher implements Launcher {
     /// registered as root project and all classes implementing the
     /// [Project] interface are registered as sub projects.
     ///
+    /// @param clsLoader the class loader
+    ///
     public DefaultLauncher(ClassLoader clsLoader) {
         unwrapBuildException(() -> {
             initWithReflection(clsLoader);
@@ -95,8 +100,8 @@ public class DefaultLauncher implements Launcher {
             } catch (URISyntaxException e) {
                 throw new BuildException("Problem scanning classpath", e);
             }
-        }).map(p -> new DefaultFileTree(null, p, "**/*.class",
-            Resource.KIND_CLASSES, false))
+        }).map(p -> new DefaultFileTree<ClassFile>(null, p, "**/*.class",
+            ClassFile.class, false))
             .flatMap(FileTree::entries).map(Path::toString)
             .map(p -> p.substring(0, p.length() - 6).replace('/', '.'))
             .filter(n -> !n.startsWith("org.jdrupes.builder.startup"))
@@ -174,7 +179,8 @@ public class DefaultLauncher implements Launcher {
     }
 
     @Override
-    public Stream<Resource> provide(Resource requested) {
+    public <T extends Resource> Stream<T>
+            provide(ResourceRequest<T> requested) {
         return unwrapBuildException(() -> {
             // Provide requested resource, handling all exceptions here
             var result = rootProject.provide(requested).toList();
@@ -189,12 +195,16 @@ public class DefaultLauncher implements Launcher {
     @Override
     @SuppressWarnings({ "PMD.AvoidPrintStackTrace", "PMD.SystemPrintln" })
     public void start(String[] args) {
-        provide(AllResources.of(Resource.KIND_APP_JAR))
-            .forEach(r -> {
-                System.out.println(r);
-            });
+        provide(new ResourceRequest<>(new ResourceType<FileResource>() {
+        })).forEach(r -> {
+            System.out.println(r);
+        });
     }
 
+    /// The main method.
+    ///
+    /// @param args the arguments
+    ///
     public static void main(String[] args) {
         new DefaultLauncher(Thread.currentThread().getContextClassLoader())
             .start(args);

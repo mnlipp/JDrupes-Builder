@@ -24,28 +24,28 @@ import java.util.Objects;
 ///
 public abstract class ResourceObject implements Resource {
 
-    private String kind = KIND_UNKNOWN;
+    private final Class<? extends Resource> type;
 
     /// Create a new instance
     ///
     protected ResourceObject() {
-        // kind is already set
+        type = getClass();
     }
 
-    /// Create a new instance with the given kind
+    /// Create a new instance
     ///
-    protected ResourceObject(String kind) {
-        this.kind = kind;
+    protected ResourceObject(Class<? extends Resource> type) {
+        this.type = type;
     }
 
     @Override
-    public String kind() {
-        return kind;
+    public Class<? extends Resource> type() {
+        return type;
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(kind);
+        return Objects.hash(type());
     }
 
     @Override
@@ -60,11 +60,11 @@ public abstract class ResourceObject implements Resource {
             return false;
         }
         ResourceObject other = (ResourceObject) obj;
-        return Objects.equals(kind, other.kind);
+        return Objects.equals(type(), other.type());
     }
 
     @Override
     public String toString() {
-        return "Resource of kind " + kind;
+        return "Resource of kind " + type().getSimpleName();
     }
 }

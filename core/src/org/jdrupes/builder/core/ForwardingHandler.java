@@ -16,28 +16,30 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package org.jdrupes.builder.api;
+package org.jdrupes.builder.core;
 
-import java.util.stream.Stream;
+import java.lang.reflect.InvocationHandler;
+import java.lang.reflect.Method;
 
-/// Defines the methods provided by a launcher.
+/// A [InvocationHandler] that simply forwards all invocations to the
+/// proxied object.
 ///
-@SuppressWarnings("PMD.ImplicitFunctionalInterface")
-public interface Launcher {
+public class ForwardingHandler implements InvocationHandler {
 
-    /// Provide the requested resources.
-    ///
-    /// @param <T> the requested type
-    /// @param requested the requested
-    /// @return the stream
-    ///
-    <T extends Resource> Stream<T> provide(ResourceRequest<T> requested);
+    private final Object proxied;
 
-    /// Starts a new build.
+    /// Instantiates a new forwarding handler.
     ///
-    /// @param args the args
+    /// @param proxied the proxied object
     ///
-    @SuppressWarnings("PMD.UseVarargs")
-    void start(String[] args);
+    public ForwardingHandler(Object proxied) {
+        this.proxied = proxied;
+    }
+
+    @Override
+    public Object invoke(Object proxy, Method method, Object[] args)
+            throws Throwable {
+        return method.invoke(proxied, args);
+    }
 
 }

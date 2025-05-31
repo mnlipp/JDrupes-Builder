@@ -25,12 +25,13 @@ import java.util.stream.Stream;
 
 /// Represents a container for a collection of resources. Implementations
 /// must behave as sets (no duplicate entries) and must maintain insertion
-/// order.
+/// order when providing a [stream].
 ///
 /// @param <T> the contained resource type
 ///
 public interface Resources<T extends Resource> extends Resource {
 
+    /// An implementation of empty resources for use with [empty].
     Resources<?> EMPTY = new Resources<>() {
 
         @Override
@@ -44,11 +45,21 @@ public interface Resources<T extends Resource> extends Resource {
         }
 
         @Override
+        public Resources<Resource> clear() {
+            return null;
+        }
+
+        @Override
         public String toString() {
             return "Empty resources";
         }
     };
 
+    /// Return an empty set of resources.
+    ///
+    /// @param <R> the generic type
+    /// @return the resources
+    ///
     @SuppressWarnings("unchecked")
     static <R extends Resource> Resources<R> empty() {
         return (Resources<R>) EMPTY;
@@ -66,7 +77,7 @@ public interface Resources<T extends Resource> extends Resource {
     /// @param resources the resources to add
     /// @return the resources
     ///
-    default Resources<T> addAll(Resources<T> resources) {
+    default Resources<T> addAll(Resources<? extends T> resources) {
         return addAll(resources.stream());
     }
 
@@ -75,7 +86,7 @@ public interface Resources<T extends Resource> extends Resource {
     /// @param resources the resources to add
     /// @return the resources
     ///
-    default Resources<T> addAll(Stream<T> resources) {
+    default Resources<T> addAll(Stream<? extends T> resources) {
         resources.forEach(this::add);
         return this;
     }
@@ -91,6 +102,12 @@ public interface Resources<T extends Resource> extends Resource {
     /// @return the stream
     ///
     Stream<T> stream();
+
+    /// Clears the contained resources.
+    ///
+    /// @return the resources
+    ///
+    Resources<T> clear();
 
     /// Returns a [Collector] that accumulates resources into a new
     /// [Resources] container.

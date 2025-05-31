@@ -21,9 +21,13 @@ package org.jdrupes.builder.api;
 import java.nio.file.Path;
 import java.util.stream.Stream;
 
-/// The representation of a file tree.
+/// The representation of a file tree. A file tree is a collection
+/// of [FileResource]s that are contained in directory hierarchy
+/// with a single root. 
 ///
-public interface FileTree extends Resources<FileResource> {
+/// @param <T> the generic type
+///
+public interface FileTree<T extends FileResource> extends Resources<T> {
 
     /// Returns the root of the file tree containing the files.
     ///
@@ -45,11 +49,22 @@ public interface FileTree extends Resources<FileResource> {
     /// Returns the paths of the files in this file tree relative to
     /// its root.
     ///
+    /// @return the stream
+    ///
     Stream<Path> entries();
+
+    /// Re-scans the file tree for changes.
+    ///
+    /// @return the file tree
+    ///
+    @Override
+    FileTree<T> clear();
 
     /// Deletes all files in this file tree and directories that are
     /// empty after deletion of the files (expect for root, which is
     /// not deleted).
     ///
-    FileTree delete();
+    /// @return the file tree
+    ///
+    FileTree<T> delete();
 }

@@ -27,27 +27,6 @@ import java.time.format.FormatStyle;
 ///
 public interface Resource {
 
-    /// The kind unknown.
-    String KIND_UNKNOWN = "unknown";
-
-    /// The kind resource.
-    String KIND_RESOURCE = "resource";
-
-    /// The kind resource.
-    String KIND_RESOURCES = "resource directory";
-
-    /// The kind jvm class.
-    String KIND_CLASS = "class";
-
-    /// The kind class directory.
-    String KIND_CLASSES = "class directory";
-
-    /// The kind library jar.
-    String KIND_LIB_JAR = "library jar";
-
-    /// The kind application jar.
-    String KIND_APP_JAR = "application jar";
-
     /// The instant at which this resource was created or last modified.
     ///
     /// @return the instant
@@ -56,12 +35,12 @@ public interface Resource {
         return Instant.MIN;
     }
 
-    /// Returns the kind of this resource.
+    /// Returns the type of this resource.
     ///
-    /// @return the kind
+    /// @return the class<? extends resource>
     ///
-    default String kind() {
-        return KIND_UNKNOWN;
+    default Class<? extends Resource> type() {
+        return getClass();
     }
 
     /// Returns a localized string representation of the instant

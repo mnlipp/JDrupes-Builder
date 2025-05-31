@@ -1,3 +1,21 @@
+/*
+ * JDrupes Builder
+ * Copyright (C) 2025 Michael N. Lipp
+ * 
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Affero General Public License as
+ * published by the Free Software Foundation, either version 3 of the
+ * License, or (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ * GNU Affero General Public License for more details.
+ *
+ * You should have received a copy of the GNU Affero General Public License
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
+ */
+
 package org.jdrupes.builder.java;
 
 import java.io.IOException;
@@ -15,47 +33,75 @@ import java.util.jar.Manifest;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
-import org.jdrupes.builder.api.AllResources;
 import org.jdrupes.builder.api.BuildException;
-import org.jdrupes.builder.api.FileResource;
+import org.jdrupes.builder.api.ClassFile;
 import org.jdrupes.builder.api.FileTree;
 import org.jdrupes.builder.api.Project;
 import org.jdrupes.builder.api.Resource;
+import org.jdrupes.builder.api.ResourceFile;
 import org.jdrupes.builder.api.ResourceProvider;
+import org.jdrupes.builder.api.ResourceRequest;
+import org.jdrupes.builder.api.ResourceType;
 import org.jdrupes.builder.api.Resources;
 import org.jdrupes.builder.core.AbstractGenerator;
 
-public class AppJarBuilder extends AbstractGenerator<FileResource> {
+/// The Class AppJarBuilder.
+///
+public class AppJarBuilder extends AbstractGenerator<JarFile> {
 
-    private List<ResourceProvider<?>> providers = new ArrayList<>();
+    private final List<ResourceProvider<?>> providers = new ArrayList<>();
 
+    /// Instantiates a new app jar builder.
+    ///
+    /// @param project the project
+    ///
     public AppJarBuilder(Project project) {
         super(project);
     }
 
+    /// Adds the given providers. Each provider is asked to provide
+    /// resources of type `FileTree<ClassResource>` and
+    /// `FileTree<ResourceResource>`. The resources from the provided
+    /// [FileTree]s are added to the jar.
+    ///
+    /// @param providers the providers
+    /// @return the app jar builder
+    ///
     public AppJarBuilder add(ResourceProvider<?>... providers) {
         this.providers.addAll(Arrays.asList(providers));
         return this;
     }
 
+    /// Provides the jar.
+    ///
+    /// @param <T> the generic type
+    /// @param requested the requested
+    /// @return the stream
+    ///
     @Override
     @SuppressWarnings({ "PMD.AvoidCatchingGenericException",
-        "PMD.CollapsibleIfStatements", "unchecked" })
-    public Stream<FileResource> provide(Resource resource) {
-        if (!Resource.KIND_APP_JAR.equals(resource.kind())) {
+        "PMD.CollapsibleIfStatements", "unchecked",
+        "PMD.AvoidInstantiatingObjectsInLoops" })
+    public <T extends Resource> Stream<T>
+            provide(ResourceRequest<T> requested) {
+        if (!requested.type().isAssignableFrom(new ResourceType<JarFile>() {
+        })) {
             return Stream.empty();
         }
 
         // Get all content.
         log.fine(() -> "Getting app jar content for " + project().name());
-        Resources<FileTree> fileTrees = project().newResources();
+        Resources<FileTree<? extends Resource>> fileTrees
+            = project().newResources(FileTree.class);
         for (var provider : providers) {
             fileTrees.addAll(project().build().provide(
-                (ResourceProvider<FileTree>) provider,
-                AllResources.of(Resource.KIND_CLASSES)));
+                provider, new ResourceRequest<>(
+                    new ResourceType<FileTree<ClassFile>>() {
+                    })));
             fileTrees.addAll(project().build().provide(
-                (ResourceProvider<FileTree>) provider,
-                AllResources.of(Resource.KIND_RESOURCES)));
+                provider, new ResourceRequest<>(
+                    new ResourceType<FileTree<ResourceFile>>() {
+                    })));
         }
 
         // Prepare jar file
@@ -66,9 +112,10 @@ public class AppJarBuilder extends AbstractGenerator<FileResource> {
             }
         }
         var jarResource = project()
-            .newFileResource(destDir.resolve(project().name() + ".jar"));
+            .newFileResource(JarFile.class,
+                destDir.resolve(project().name() + ".jar"));
         if (jarResource.asOf().isAfter(fileTrees.asOf())) {
-            return Stream.of(jarResource);
+            return Stream.of((T) jarResource);
         }
 
         // Build jar
@@ -102,13 +149,13 @@ public class AppJarBuilder extends AbstractGenerator<FileResource> {
         }
 
         // The result is the jar.
-        return Stream.of(jarResource);
+        return Stream.of((T) jarResource);
     }
 
     private void addEntries(Map<Path, Path> entries,
             Stream<? extends Resource> fileSets) {
-        fileSets.filter(fs -> fs instanceof FileTree).map(fs -> (FileTree) fs)
-            .forEach(fs -> {
+        fileSets.filter(fs -> fs instanceof FileTree)
+            .map(fs -> (FileTree<?>) fs).forEach(fs -> {
                 fs.stream().forEach(file -> {
                     var relPath = fs.root().relativize(file.path());
                     var existing = entries.get(relPath);

@@ -29,14 +29,15 @@ import java.util.stream.StreamSupport;
 import org.jdrupes.builder.api.BuildException;
 import org.jdrupes.builder.api.Resource;
 import org.jdrupes.builder.api.ResourceProvider;
+import org.jdrupes.builder.api.ResourceRequest;
 
 /// Evaluate the stream from a provider asynchronously.
 ///
 /// @param <T> the provided resource type
 ///
-public class FutureStream<R extends Resource> {
+public class FutureStream<T extends Resource> {
 
-    private final Future<List<R>> source;
+    private final Future<List<T>> source;
 
     /// Instantiates a new future resources.
     ///
@@ -44,8 +45,8 @@ public class FutureStream<R extends Resource> {
     /// @param provider the provider
     /// @param requested the requested
     ///
-    public FutureStream(ExecutorService executor, ResourceProvider<R> provider,
-            Resource requested) {
+    public FutureStream(ExecutorService executor, ResourceProvider<?> provider,
+            ResourceRequest<T> requested) {
         source = executor.submit(() -> provider.provide(requested).toList());
     }
 
@@ -53,12 +54,12 @@ public class FutureStream<R extends Resource> {
     ///
     /// @return the stream
     ///
-    public Stream<R> stream() {
+    public Stream<T> stream() {
         return StreamSupport
             .stream(new Spliterators.AbstractSpliterator<>(Long.MAX_VALUE, 0) {
 
                 @Override
-                public void forEachRemaining(Consumer<? super R> action) {
+                public void forEachRemaining(Consumer<? super T> action) {
                     try {
                         source.get().stream().forEach(action);
                     } catch (InterruptedException | ExecutionException e) {
@@ -67,7 +68,7 @@ public class FutureStream<R extends Resource> {
                 }
 
                 @Override
-                public boolean tryAdvance(Consumer<? super R> action) {
+                public boolean tryAdvance(Consumer<? super T> action) {
                     // Not needed when forEachRemaining is implemented.
                     return false;
                 }

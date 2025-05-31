@@ -18,9 +18,13 @@
 
 package org.jdrupes.builder.api;
 
-/// Attributed dependency relationship between a [Project] and a [Provider].
+/// Attributed dependency relationship between a [Project] and 
+/// a [ResourceProvider].
 ///
-public record Dependency(ResourceProvider<?> provider, Intend type) {
+/// @param provider the provider
+/// @param intend the intended usage of the dependency
+///
+public record Dependency(ResourceProvider<?> provider, Intend intend) {
 
     /// Defines how resources from the dependent project are to be used.
     ///

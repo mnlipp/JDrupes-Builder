@@ -18,15 +18,19 @@
 
 package org.jdrupes.builder.core;
 
+import java.lang.reflect.Proxy;
 import java.nio.file.Path;
 import java.time.Instant;
 import java.util.Objects;
 import org.jdrupes.builder.api.BuildException;
 import org.jdrupes.builder.api.FileResource;
+import org.jdrupes.builder.api.Resource;
+import org.jdrupes.builder.api.ResourceObject;
 
 /// A resource that represents a file.
 ///
-public class DefaultFileResource implements FileResource {
+public class DefaultFileResource extends ResourceObject
+        implements FileResource {
 
     private final Path path;
 
@@ -34,11 +38,20 @@ public class DefaultFileResource implements FileResource {
     ///
     /// @param path the path
     ///
-    /* default */ DefaultFileResource(Path path) {
+    /* default */ DefaultFileResource(Class<? extends Resource> type,
+            Path path) {
+        super(type);
         if (!path.isAbsolute()) {
             throw new BuildException("Path must be absolute, is " + path);
         }
         this.path = path;
+    }
+
+    /* default */ @SuppressWarnings("unchecked")
+    static <T extends FileResource> T create(Class<T> type, Path path) {
+        return (T) Proxy.newProxyInstance(type.getClassLoader(),
+            new Class<?>[] { type },
+            new ForwardingHandler(new DefaultFileResource(type, path)));
     }
 
     /// Path.
@@ -60,7 +73,10 @@ public class DefaultFileResource implements FileResource {
 
     @Override
     public int hashCode() {
-        return Objects.hash(path);
+        final int prime = 31;
+        int result = super.hashCode();
+        result = prime * result + Objects.hash(path, type());
+        return result;
     }
 
     @Override
@@ -68,14 +84,15 @@ public class DefaultFileResource implements FileResource {
         if (this == obj) {
             return true;
         }
-        if (obj == null) {
+        if (!super.equals(obj)) {
             return false;
         }
-        if (!(obj instanceof FileResource)) {
+        if (getClass() != obj.getClass()) {
             return false;
         }
-        FileResource other = (FileResource) obj;
-        return Objects.equals(path, other.path());
+        DefaultFileResource other = (DefaultFileResource) obj;
+        return Objects.equals(path, other.path)
+            && Objects.equals(type(), other.type());
     }
 
     @Override

@@ -24,6 +24,7 @@ import java.util.stream.Stream;
 import org.jdrupes.builder.api.Build;
 import org.jdrupes.builder.api.Resource;
 import org.jdrupes.builder.api.ResourceProvider;
+import org.jdrupes.builder.api.ResourceRequest;
 import org.jdrupes.builder.core.FutureStreamCache.Key;
 
 /// A default implementation of a [Build].
@@ -58,8 +59,8 @@ public class DefaultBuild implements Build {
     }
 
     @Override
-    public <T extends Resource> Stream<T> provide(ResourceProvider<T> provider,
-            Resource requested) {
+    public <T extends Resource> Stream<T> provide(ResourceProvider<?> provider,
+            ResourceRequest<T> requested) {
         return cache.computeIfAbsent(new Key<>(provider, requested),
             k -> new FutureStream<T>(executor, k.provider(), k.requested()))
             .stream();

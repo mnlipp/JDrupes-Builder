@@ -18,26 +18,9 @@
 
 package org.jdrupes.builder.api;
 
-import java.util.stream.Stream;
-
-/// Defines the methods provided by a launcher.
+/// A [FileResource] that represents a Java class.
 ///
 @SuppressWarnings("PMD.ImplicitFunctionalInterface")
-public interface Launcher {
-
-    /// Provide the requested resources.
-    ///
-    /// @param <T> the requested type
-    /// @param requested the requested
-    /// @return the stream
-    ///
-    <T extends Resource> Stream<T> provide(ResourceRequest<T> requested);
-
-    /// Starts a new build.
-    ///
-    /// @param args the args
-    ///
-    @SuppressWarnings("PMD.UseVarargs")
-    void start(String[] args);
+public interface ClassFile extends FileResource {
 
 }

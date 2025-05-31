@@ -37,14 +37,17 @@ import org.jdrupes.builder.api.Project;
 
 /// The default implementation of a [FileTree].
 ///
-public class DefaultFileTree extends DefaultResources<FileResource>
-        implements FileTree {
+/// @param <T> the type of the [FileResource]s in the tree.
+///
+public class DefaultFileTree<T extends FileResource> extends DefaultResources<T>
+        implements FileTree<T> {
 
     private Instant latestChange = Instant.MIN;
     private final Project project;
     private final Path root;
     private final String pattern;
     private final boolean withDirs;
+    private final Class<T> leafType;
     private boolean filled;
 
     /// Returns a new file tree. The file tree includes all files
@@ -56,12 +59,12 @@ public class DefaultFileTree extends DefaultResources<FileResource>
     /// @param root the root of the file tree to search for files matching
     /// `pattern`
     /// @param pattern the pattern
-    /// @param kind the kind of content
+    /// @param leafType the type of the elements in the tree
     /// @param withDirs whether to include directories
     ///
     /* default */ DefaultFileTree(Project project, Path root,
-            String pattern, String kind, boolean withDirs) {
-        super(kind);
+            String pattern, Class<T> leafType, boolean withDirs) {
+        super(FileTree.class);
         this.project = project;
         if (project == null) {
             this.root = root.toAbsolutePath();
@@ -70,14 +73,9 @@ public class DefaultFileTree extends DefaultResources<FileResource>
         }
         this.pattern = pattern;
         this.withDirs = withDirs;
+        this.leafType = leafType;
     }
 
-    /// Returns the root of the file tree searched for files.
-    ///
-    /// @param relativize whether to return a path relative to the project's
-    /// directory
-    /// @return the path
-    ///
     @Override
     public Path root(boolean relativize) {
         if (relativize && project != null) {
@@ -126,7 +124,7 @@ public class DefaultFileTree extends DefaultResources<FileResource>
 
             private void testAndAdd(Path path) {
                 if (pathMatcher.matches(path)) {
-                    var resource = new DefaultFileResource(path);
+                    T resource = DefaultFileResource.create(leafType, path);
                     DefaultFileTree.this.add(resource);
                     if (resource.asOf().isAfter(latestChange)) {
                         latestChange = resource.asOf();
@@ -165,13 +163,20 @@ public class DefaultFileTree extends DefaultResources<FileResource>
     }
 
     @Override
-    public Stream<FileResource> stream() {
+    public Stream<T> stream() {
         fill();
         return super.stream();
     }
 
     @Override
-    public FileTree delete() {
+    public FileTree<T> clear() {
+        super.clear();
+        filled = false;
+        return this;
+    }
+
+    @Override
+    public FileTree<T> delete() {
         final PathMatcher pathMatcher = FileSystems.getDefault()
             .getPathMatcher("glob:" + pattern);
         try {
@@ -201,8 +206,7 @@ public class DefaultFileTree extends DefaultResources<FileResource>
 
                 @Override
                 public FileVisitResult visitFileFailed(Path file,
-                        IOException exc)
-                        throws IOException {
+                        IOException exc) throws IOException {
                     if (exc instanceof AccessDeniedException) {
                         return FileVisitResult.SKIP_SUBTREE;
                     }
@@ -242,22 +246,18 @@ public class DefaultFileTree extends DefaultResources<FileResource>
         if (getClass() != obj.getClass()) {
             return false;
         }
-        DefaultFileTree other = (DefaultFileTree) obj;
+        DefaultFileTree<?> other = (DefaultFileTree<?>) obj;
         return Objects.equals(pattern, other.pattern)
             && Objects.equals(root, other.root);
     }
 
-    /// To string.
-    ///
-    /// @return the string
-    ///
     @Override
     public String toString() {
         fill();
-        return "FileSet (kind " + kind() + ") from "
+        return "FileSet (type " + type().getSimpleName() + ") from "
             + (project != null
                 ? project.rootProject().directory().relativize(root)
                 : root)
-            + " with " + content.size() + " files, newest: " + latestChange;
+            + " with " + stream().count() + " files, newest: " + latestChange;
     }
 }
