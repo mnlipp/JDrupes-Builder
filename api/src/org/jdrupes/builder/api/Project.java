@@ -114,6 +114,12 @@ public interface Project extends ResourceProvider<Resource> {
     ///
     Project providers(List<ResourceProvider<?>> providers);
 
+    /// Returns the providers that have been added as [Stream].
+    ///
+    /// @return the stream
+    ///
+    Stream<ResourceProvider<?>> providers();
+
     /// Adds a provider as a dependency. Resources provided by dependencies
     /// can be used by [Generator]s as input in addition to resources
     /// provided to [Generator]s directly.

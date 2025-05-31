@@ -236,6 +236,11 @@ public abstract class AbstractProject implements Project {
     }
 
     @Override
+    public Stream<ResourceProvider<?>> providers() {
+        return providers.stream();
+    }
+
+    @Override
     public Project dependency(ResourceProvider<?> provider,
             Dependency.Intend type) {
         dependencies.put(provider, new Dependency(provider, type));
