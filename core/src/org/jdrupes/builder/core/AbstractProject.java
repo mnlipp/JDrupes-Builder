@@ -77,7 +77,7 @@ public abstract class AbstractProject implements Project {
     ///
     /// This constructor may be used by root projects if there are no
     /// sub projects or if detection of projects from the classpath is
-    /// is used (see [DefaultLauncher#DefaultLauncher()]).
+    /// is used (see [AbstractLauncher#DefaultLauncher()]).
     ///
     @SuppressWarnings({ "unchecked", "PMD.ClassCastExceptionWithToArray" })
     protected AbstractProject() {

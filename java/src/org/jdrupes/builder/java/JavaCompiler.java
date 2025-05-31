@@ -134,7 +134,7 @@ public class JavaCompiler extends AbstractGenerator<FileTree<ClassFile>> {
     @SuppressWarnings({ "PMD.AvoidCatchingGenericException",
         "PMD.ExceptionAsFlowControl" })
     private void compile(Resources<Resource> cpResources, Path destDir) {
-        log.info(() -> "Compiling Java in " + project().name());
+        log.info(() -> "Compiling Java in project " + project().name());
         var classpath = cpResources.stream().<Path> mapMulti((r, sink) -> {
             if (r instanceof FileTree fileSet) {
                 sink.accept(fileSet.root());

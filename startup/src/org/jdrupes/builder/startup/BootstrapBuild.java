@@ -26,14 +26,15 @@ import org.jdrupes.builder.core.ResourcesCollector;
 import org.jdrupes.builder.java.ClasspathProvider;
 import org.jdrupes.builder.java.JavaCompiler;
 
-/// The built-in bootstrap project for compiling the actual (user) project.
+/// The JDrupes Builder project for compiling the user's JDrupes Builder
+/// project.
 ///
-public class BootstrapProject extends AbstractProject {
+public class BootstrapBuild extends AbstractProject {
 
     /// Instantiates a new bootstrap project.
     ///
     @SuppressWarnings("PMD.ConstructorCallsOverridableMethod")
-    public BootstrapProject() {
+    public BootstrapBuild() {
         // TODO: support for starting from jar
         directory(Path.of(".jdbld"));
         dependency(

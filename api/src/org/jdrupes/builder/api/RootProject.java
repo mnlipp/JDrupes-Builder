@@ -22,4 +22,6 @@ package org.jdrupes.builder.api;
 ///
 public interface RootProject extends Project {
 
+    /// The default provisioning action.
+    void provide();
 }

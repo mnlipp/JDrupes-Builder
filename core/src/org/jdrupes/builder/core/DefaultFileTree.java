@@ -62,7 +62,7 @@ public class DefaultFileTree<T extends FileResource> extends DefaultResources<T>
     /// @param leafType the type of the elements in the tree
     /// @param withDirs whether to include directories
     ///
-    /* default */ DefaultFileTree(Project project, Path root,
+    public DefaultFileTree(Project project, Path root,
             String pattern, Class<T> leafType, boolean withDirs) {
         super(FileTree.class);
         this.project = project;

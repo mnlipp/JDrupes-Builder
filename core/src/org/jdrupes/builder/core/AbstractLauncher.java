@@ -1,0 +1,174 @@
+/*
+ * JDrupes Builder
+ * Copyright (C) 2025 Michael N. Lipp
+ * 
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Affero General Public License as
+ * published by the Free Software Foundation, either version 3 of the
+ * License, or (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ * GNU Affero General Public License for more details.
+ *
+ * You should have received a copy of the GNU Affero General Public License
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
+ */
+
+package org.jdrupes.builder.core;
+
+import java.io.IOException;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Modifier;
+import java.net.URISyntaxException;
+import java.net.URL;
+import java.nio.file.Path;
+import java.util.Collections;
+import java.util.List;
+import java.util.concurrent.Callable;
+import java.util.logging.Logger;
+import java.util.stream.Collectors;
+import org.jdrupes.builder.api.BuildException;
+import org.jdrupes.builder.api.ClassFile;
+import org.jdrupes.builder.api.FileTree;
+import org.jdrupes.builder.api.Launcher;
+import org.jdrupes.builder.api.Project;
+import org.jdrupes.builder.api.RootProject;
+
+/// A default implementation of a [Launcher].
+///
+public abstract class AbstractLauncher implements Launcher {
+
+    protected final Logger log = Logger.getLogger(getClass().getName());
+
+    /// Creates and initializes a root project. This method must be called
+    /// if the root project creates its sub projects itself.
+    ///
+    /// @param rootProject the root project
+    ///
+    protected RootProject
+            createRootProject(Class<? extends RootProject> rootProject) {
+        try {
+            var result = rootProject.getConstructor().newInstance();
+            ((AbstractProject) result).createProjects();
+            return result;
+        } catch (NoSuchMethodException | SecurityException
+                | NegativeArraySizeException | InstantiationException
+                | IllegalAccessException | IllegalArgumentException
+                | InvocationTargetException e) {
+            throw new IllegalArgumentException(e);
+        }
+    }
+
+    /// Creates and initializes the root project and the sub projects.
+    /// Adds the sub projects to the root project automatically. This
+    /// method should be used if the launcher detects the sub projects
+    /// e.g. by reflection and the root project does not add its sub
+    /// projects itself.
+    ///
+    /// @param rootProject the root project
+    /// @param subprojects the sub projects
+    /// @return the root project
+    ///
+    protected RootProject createProjects(
+            Class<? extends RootProject> rootProject,
+            List<Class<? extends Project>> subprojects) {
+        try {
+            AbstractProject.detectedSubprojects(subprojects);
+            var result = rootProject.getConstructor().newInstance();
+            ((AbstractProject) result).createProjects();
+            return result;
+        } catch (SecurityException | NegativeArraySizeException
+                | IllegalArgumentException | InstantiationException
+                | IllegalAccessException | InvocationTargetException
+                | NoSuchMethodException e) {
+            throw new IllegalArgumentException(e);
+        }
+    }
+
+    /// Find projects.
+    ///
+    /// @param clsLoader the cls loader
+    /// @param rootProjects the root projects
+    /// @param subprojects the subprojects
+    ///
+    @SuppressWarnings({ "unchecked", "PMD.AvoidLiteralsInIfCondition" })
+    protected void findProjects(ClassLoader clsLoader,
+            List<Class<? extends RootProject>> rootProjects,
+            List<Class<? extends Project>> subprojects) {
+        List<URL> classDirUrls;
+        try {
+            classDirUrls = Collections.list(clsLoader.getResources(""));
+        } catch (IOException e) {
+            throw new BuildException("Problem scanning classpath", e);
+        }
+        classDirUrls.parallelStream().map(uri -> {
+            try {
+                return Path.of(uri.toURI());
+            } catch (URISyntaxException e) {
+                throw new BuildException("Problem scanning classpath", e);
+            }
+        }).map(p -> new DefaultFileTree<ClassFile>(null, p, "**/*.class",
+            ClassFile.class, false))
+            .flatMap(FileTree::entries).map(Path::toString)
+            .map(p -> p.substring(0, p.length() - 6).replace('/', '.'))
+            .filter(n -> !n.startsWith("org.jdrupes.builder.startup"))
+            .map(cn -> {
+                try {
+                    return clsLoader.loadClass(cn);
+                } catch (ClassNotFoundException e) {
+                    throw new IllegalStateException(
+                        "Cannot load detected class", e);
+                }
+            }).forEach(cls -> {
+                if (!cls.isInterface()
+                    && !Modifier.isAbstract(cls.getModifiers())) {
+                    if (RootProject.class.isAssignableFrom(cls)) {
+                        rootProjects.add((Class<? extends RootProject>) cls);
+                    } else if (Project.class.isAssignableFrom(cls)) {
+                        subprojects.add((Class<? extends Project>) cls);
+                    }
+                }
+            });
+        if (rootProjects.isEmpty()) {
+            throw new BuildException("No project implements RootProject");
+        }
+        if (rootProjects.size() > 1) {
+            StringBuilder msg = new StringBuilder(50);
+            msg.append("More than one project implements RootProject: ");
+            rootProjects.stream().map(Class::getName)
+                .collect(Collectors.joining(", "));
+            throw new BuildException("No project implements RootProject");
+        }
+    }
+
+    /// A utility method that invokes the callable. If an exception
+    /// occurs during the invocation, it unwraps the causes until it
+    /// finds the root [BuildException], prints the message from this
+    /// exception and exits.
+    ///
+    /// @param <T> the generic type
+    /// @param todo the todo
+    /// @return the t
+    ///
+    @SuppressWarnings({ "PMD.AvoidReassigningCatchVariables",
+        "PMD.DoNotTerminateVM", "PMD.AvoidCatchingGenericException" })
+    protected final <T> T unwrapBuildException(Callable<T> todo) {
+        try {
+            return todo.call();
+        } catch (Exception e) {
+            var cause = e.getCause();
+            while (cause != null) {
+                if (cause instanceof BuildException nbe) {
+                    e = nbe;
+                }
+                cause = cause.getCause();
+            }
+            final var rootCase = e;
+            log.severe(() -> "Build failed: " + rootCase.getMessage());
+            System.exit(1);
+            return null;
+        }
+    }
+}

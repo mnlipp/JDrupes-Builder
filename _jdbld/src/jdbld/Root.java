@@ -1,8 +1,11 @@
 package jdbld;
 
+import org.jdrupes.builder.api.ResourceRequest;
+import org.jdrupes.builder.api.ResourceType;
 import org.jdrupes.builder.api.RootProject;
 import org.jdrupes.builder.core.AbstractProject;
 import org.jdrupes.builder.java.AppJarBuilder;
+import org.jdrupes.builder.java.JarFile;
 
 public class Root extends AbstractProject implements RootProject {
 
@@ -11,5 +14,10 @@ public class Root extends AbstractProject implements RootProject {
 
         // Java references "core" and "api".
         provider(AppJarBuilder::new).add(project(Java.class));
+    }
+
+    public void provide() {
+        provide(new ResourceRequest<>(new ResourceType<JarFile>() {
+        })).forEach(System.out::println);
     }
 }

@@ -25,34 +25,29 @@ import java.util.stream.Stream;
 import org.jdrupes.builder.api.BuildException;
 import org.jdrupes.builder.api.ClassFile;
 import org.jdrupes.builder.api.FileTree;
-import org.jdrupes.builder.api.ResourceRequest;
 import org.jdrupes.builder.api.ResourceFile;
+import org.jdrupes.builder.api.ResourceRequest;
 import org.jdrupes.builder.api.ResourceType;
 import org.jdrupes.builder.api.RootProject;
 import org.jdrupes.builder.core.AbstractProject;
-import org.jdrupes.builder.core.DefaultLauncher;
 
 /// The built-in root project associated with the root directory.
 ///
 @SuppressWarnings("PMD.ShortClassName")
-public class Root extends AbstractProject implements RootProject {
+public class BootstrapRoot extends AbstractProject implements RootProject {
 
     /// Instantiates a new root project.
     ///
-    public Root() {
-        super(BootstrapProject.class);
+    public BootstrapRoot() {
+        super(BootstrapBuild.class);
     }
 
-    /// The main method.
-    ///
-    /// @param args the arguments
-    ///
-    public static void main(String[] args) {
-        var launcher = new DefaultLauncher(Root.class);
-        var cpUrls = Stream.concat(launcher.provide(new ResourceRequest<>(
+    @Override
+    public void provide() {
+        var cpUrls = Stream.concat(provide(new ResourceRequest<>(
             new ResourceType<FileTree<ClassFile>>() {
             })),
-            launcher.provide(new ResourceRequest<>(
+            provide(new ResourceRequest<>(
                 new ResourceType<FileTree<ResourceFile>>() {
                 })))
             .map(ft -> {
@@ -63,7 +58,7 @@ public class Root extends AbstractProject implements RootProject {
                     throw new BuildException(e);
                 }
             }).toArray(URL[]::new);
-        new DefaultLauncher(new URLClassLoader(cpUrls,
-            Thread.currentThread().getContextClassLoader())).start(args);
+        new BootstrapLauncher(new URLClassLoader(cpUrls,
+            Thread.currentThread().getContextClassLoader()));
     }
 }
