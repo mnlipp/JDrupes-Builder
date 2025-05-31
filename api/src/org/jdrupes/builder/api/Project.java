@@ -67,6 +67,12 @@ public interface Project extends ResourceProvider<Resource> {
     ///
     Path buildDirectory();
 
+    /// Returns the sub projects of this project as a stream.
+    ///
+    /// @return the stream
+    ///
+    Stream<Project> subprojects();
+
     /// Adds a provider to the project.
     ///
     /// @param provider the provider

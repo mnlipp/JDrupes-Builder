@@ -129,6 +129,11 @@ public abstract class AbstractProject implements Project {
     }
 
     @Override
+    public Stream<Project> subprojects() {
+        return projects.keySet().stream().map(this::project);
+    }
+
+    @Override
     public Project project(Class<? extends Project> project) {
         if (this.getClass().equals(project)) {
             return this;
