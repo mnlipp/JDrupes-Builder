@@ -11,9 +11,7 @@ public class Root extends AbstractProject implements RootProject {
 
     public Root() {
         name("jdbuilder");
-
-        // startup references "java", "core" and "api".
-        provider(AppJarBuilder::new).add(project(Startup.class));
+        provider(AppJarBuilder::new).addAll(subprojects());
     }
 
     public void provide() {

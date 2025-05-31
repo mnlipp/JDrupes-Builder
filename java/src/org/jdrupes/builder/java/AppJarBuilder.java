@@ -72,6 +72,17 @@ public class AppJarBuilder extends AbstractGenerator<JarFile> {
         return this;
     }
 
+    /// Adds the providers from the stream, see [add].
+    ///
+    /// @param providers the providers
+    /// @return the app jar builder
+    ///
+    public AppJarBuilder
+            addAll(Stream<? extends ResourceProvider<?>> providers) {
+        providers.forEach(this.providers::add);
+        return this;
+    }
+
     /// Provides the jar.
     ///
     /// @param <T> the generic type
