@@ -27,6 +27,7 @@ import java.util.logging.LogManager;
 import java.util.logging.Logger;
 import java.util.stream.Stream;
 import org.jdrupes.builder.api.Launcher;
+import org.jdrupes.builder.api.Masked;
 import org.jdrupes.builder.api.Project;
 import org.jdrupes.builder.api.Resource;
 import org.jdrupes.builder.api.ResourceRequest;
@@ -43,11 +44,11 @@ public class DirectLauncher extends AbstractLauncher {
 
     private RootProject rootProject;
 
-    /// Instantiates a new direct launcher. The classpath is scanned
-    /// for classes that implement [Project]. One of these must also
-    /// implement the [RootProject] interface. This class is instantiated
-    /// and registered as root project. All other classes implementing
-    /// the [Project] interface are registered as sub projects.
+    /// Instantiates a new direct launcher. The classpath is scanned for
+    /// classes that implement [Project] but do not implement [Masked].
+    /// One of these must also implement the [RootProject] interface.
+    /// The latter is instantiated and registered as root project with all
+    /// other classes found as direct sub projects.
     ///
     /// @param classLoader the class loader
     ///

@@ -22,12 +22,10 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.ArrayList;
 import java.util.logging.LogManager;
 import java.util.logging.Logger;
 import java.util.stream.Stream;
 import org.jdrupes.builder.api.Launcher;
-import org.jdrupes.builder.api.Project;
 import org.jdrupes.builder.api.Resource;
 import org.jdrupes.builder.api.ResourceRequest;
 import org.jdrupes.builder.api.RootProject;
@@ -61,28 +59,6 @@ public class BootstrapLauncher extends AbstractLauncher {
             this.rootProject.provide();
             return null;
         });
-    }
-
-    /// Instantiates a new default launcher. The classpath is scanned.
-    /// The project that implements the [RootProject] interface is
-    /// registered as root project and all classes implementing the
-    /// [Project] interface are registered as sub projects.
-    ///
-    /// @param clsLoader the class loader
-    ///
-    public BootstrapLauncher(ClassLoader clsLoader) {
-        unwrapBuildException(() -> {
-            initWithReflection(clsLoader);
-            return null;
-        });
-    }
-
-    private void initWithReflection(ClassLoader classloader) {
-        var rootProjects = new ArrayList<Class<? extends RootProject>>();
-        var subprojects = new ArrayList<Class<? extends Project>>();
-        findProjects(classloader, rootProjects, subprojects);
-        rootProject = createProjects(rootProjects.get(0), subprojects);
-        rootProject.provide();
     }
 
     static {

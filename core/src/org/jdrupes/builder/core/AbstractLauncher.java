@@ -33,6 +33,7 @@ import org.jdrupes.builder.api.BuildException;
 import org.jdrupes.builder.api.ClassFile;
 import org.jdrupes.builder.api.FileTree;
 import org.jdrupes.builder.api.Launcher;
+import org.jdrupes.builder.api.Masked;
 import org.jdrupes.builder.api.Project;
 import org.jdrupes.builder.api.RootProject;
 
@@ -87,11 +88,13 @@ public abstract class AbstractLauncher implements Launcher {
         }
     }
 
-    /// Find projects.
+    /// Find projects. The classpath is scanned for classes that implement
+    /// [Project] but do not implement [Masked].
     ///
     /// @param clsLoader the cls loader
-    /// @param rootProjects the root projects
-    /// @param subprojects the subprojects
+    /// @param rootProjects classes that implement [RootProject]
+    /// @param subprojects classes that implement [Project] but not
+    /// [RootProject]
     ///
     @SuppressWarnings({ "unchecked", "PMD.AvoidLiteralsInIfCondition" })
     protected void findProjects(ClassLoader clsLoader,
@@ -113,7 +116,6 @@ public abstract class AbstractLauncher implements Launcher {
             ClassFile.class, false))
             .flatMap(FileTree::entries).map(Path::toString)
             .map(p -> p.substring(0, p.length() - 6).replace('/', '.'))
-            .filter(n -> !n.startsWith("org.jdrupes.builder.startup"))
             .map(cn -> {
                 try {
                     return clsLoader.loadClass(cn);
@@ -122,7 +124,7 @@ public abstract class AbstractLauncher implements Launcher {
                         "Cannot load detected class", e);
                 }
             }).forEach(cls -> {
-                if (!cls.isInterface()
+                if (!Masked.class.isAssignableFrom(cls) && !cls.isInterface()
                     && !Modifier.isAbstract(cls.getModifiers())) {
                     if (RootProject.class.isAssignableFrom(cls)) {
                         rootProjects.add((Class<? extends RootProject>) cls);

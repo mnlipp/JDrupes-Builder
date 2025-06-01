@@ -25,6 +25,7 @@ import java.util.stream.Stream;
 import org.jdrupes.builder.api.BuildException;
 import org.jdrupes.builder.api.ClassFile;
 import org.jdrupes.builder.api.FileTree;
+import org.jdrupes.builder.api.Masked;
 import org.jdrupes.builder.api.ResourceFile;
 import org.jdrupes.builder.api.ResourceRequest;
 import org.jdrupes.builder.api.ResourceType;
@@ -34,7 +35,8 @@ import org.jdrupes.builder.core.AbstractProject;
 /// The built-in root project associated with the root directory.
 ///
 @SuppressWarnings("PMD.ShortClassName")
-public class BootstrapRoot extends AbstractProject implements RootProject {
+public class BootstrapRoot extends AbstractProject
+        implements RootProject, Masked {
 
     /// Instantiates a new root project.
     ///
@@ -58,7 +60,7 @@ public class BootstrapRoot extends AbstractProject implements RootProject {
                     throw new BuildException(e);
                 }
             }).toArray(URL[]::new);
-        new BootstrapLauncher(new URLClassLoader(cpUrls,
+        new DirectLauncher(new URLClassLoader(cpUrls,
             Thread.currentThread().getContextClassLoader()));
     }
 }

@@ -20,6 +20,7 @@ package org.jdrupes.builder.startup;
 
 import java.nio.file.Path;
 import org.jdrupes.builder.api.Dependency.Intend;
+import org.jdrupes.builder.api.Masked;
 import org.jdrupes.builder.api.ResourceFile;
 import org.jdrupes.builder.core.AbstractProject;
 import org.jdrupes.builder.core.ResourcesCollector;
@@ -29,7 +30,7 @@ import org.jdrupes.builder.java.JavaCompiler;
 /// The JDrupes Builder project for compiling the user's JDrupes Builder
 /// project.
 ///
-public class BootstrapBuild extends AbstractProject {
+public class BootstrapBuild extends AbstractProject implements Masked {
 
     /// Instantiates a new bootstrap project.
     ///
