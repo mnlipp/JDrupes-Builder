@@ -22,7 +22,6 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -49,7 +48,8 @@ import org.jdrupes.builder.core.AbstractGenerator;
 ///
 public class AppJarBuilder extends AbstractGenerator<JarFile> {
 
-    private final List<ResourceProvider<?>> providers = new ArrayList<>();
+    private final List<Stream<? extends ResourceProvider<?>>> providers
+        = new ArrayList<>();
 
     /// Instantiates a new app jar builder.
     ///
@@ -68,7 +68,7 @@ public class AppJarBuilder extends AbstractGenerator<JarFile> {
     /// @return the app jar builder
     ///
     public AppJarBuilder add(ResourceProvider<?>... providers) {
-        this.providers.addAll(Arrays.asList(providers));
+        this.providers.add(Stream.of(providers));
         return this;
     }
 
@@ -79,7 +79,7 @@ public class AppJarBuilder extends AbstractGenerator<JarFile> {
     ///
     public AppJarBuilder
             addAll(Stream<? extends ResourceProvider<?>> providers) {
-        providers.forEach(this.providers::add);
+        this.providers.add(providers);
         return this;
     }
 
@@ -104,7 +104,7 @@ public class AppJarBuilder extends AbstractGenerator<JarFile> {
         log.fine(() -> "Getting app jar content for " + project().name());
         Resources<FileTree<? extends Resource>> fileTrees
             = project().newResources(FileTree.class);
-        for (var provider : providers) {
+        providers.stream().flatMap(s -> s).forEach(provider -> {
             fileTrees.addAll(project().build().provide(
                 provider, new ResourceRequest<>(
                     new ResourceType<FileTree<ClassFile>>() {
@@ -113,7 +113,7 @@ public class AppJarBuilder extends AbstractGenerator<JarFile> {
                 provider, new ResourceRequest<>(
                     new ResourceType<FileTree<ResourceFile>>() {
                     })));
-        }
+        });
 
         // Prepare jar file
         var destDir = project().buildDirectory().resolve("app");

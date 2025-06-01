@@ -19,7 +19,6 @@
 package org.jdrupes.builder.api;
 
 import java.nio.file.Path;
-import java.util.List;
 import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Stream;
@@ -67,78 +66,83 @@ public interface Project extends ResourceProvider<Resource> {
     ///
     Path buildDirectory();
 
-    /// Returns the sub projects of this project as a stream.
+    /// Adds a provider to the project that generates resources which
+    /// are then provided by the project. This is short for
+    /// `dependency(provider, Intend.Provide)`. 
     ///
-    /// @return the stream
-    ///
-    Stream<Project> subprojects();
-
-    /// Adds a provider to the project.
-    ///
-    /// @param provider the provider
+    /// @param generator the provider
     /// @return the project
     ///
-    Project provider(ResourceProvider<?> provider);
+    Project generator(Generator<?> generator);
 
     /// Uses the supplier to create a provider, passing this project as 
-    /// argument and adds the result as a provider to this project. This
+    /// argument and adds the result as a generator to this project. This
     /// is a convenience method to add a provider to the project by writing
     /// (in a project's constructor):
-    ///
+    /// 
     /// ```java
-    /// provider(Provider::new);
+    /// generator(Provider::new);
     /// ```
     /// instead of:
-    ///
+    /// 
     /// ```java
-    /// provider(new Provider(this));
+    /// generator(new Provider(this));
     /// ```
     ///
     /// @param <T> the generic type
-    /// @param <R> the generic type
     /// @param supplier the supplier
     /// @return the project for method chaining
     ///
-    default <T extends ResourceProvider<R>, R extends Resource> T
-            provider(Function<Project, T> supplier) {
+    default <T extends Generator<?>> T
+            generator(Function<Project, T> supplier) {
         var provider = supplier.apply(this);
-        provider(provider);
+        generator(provider);
         return provider;
     }
 
-    /// Sets the providers associated with the project. Clears all
-    /// already existing providers.
-    ///
-    /// @param providers the providers
-    /// @return the project for method chaining
-    ///
-    Project providers(List<ResourceProvider<?>> providers);
-
-    /// Returns the providers that have been added as [Stream].
+    /// Returns the providers that have been added with one of the given 
+    /// intended usages as [Stream]. The stream may only be terminated
+    /// after all projects have been created.
     ///
     /// @return the stream
     ///
-    Stream<ResourceProvider<?>> providers();
+    Stream<ResourceProvider<?>> providers(Set<Intend> intends);
 
-    /// Adds a provider as a dependency. Resources provided by dependencies
-    /// can be used by [Generator]s as input in addition to resources
-    /// provided to [Generator]s directly.
+    /// Returns the providers that have been added with the given 
+    /// intended usage as [Stream]. This is short for
+    /// `providers(Set.of(intend))`.
+    ///
+    /// @return the stream
+    ///
+    default Stream<ResourceProvider<?>> providers(Intend intend) {
+        return providers(Set.of(intend));
+    }
+
+    /// Adds a provider that contributes resources to the project with
+    /// the given intended usage.
+    ///
+    /// While this could be used to add a [Generator] to the project
+    /// as a provider with [Intend#Provide], it is recommended to use
+    /// one of the "generator" methods for better readability.
     ///
     /// @param provider the provider
-    /// @param type the dependency type
+    /// @param intend the dependency type
     /// @return the project for method chaining
+    /// @see #generator(ResourceProvider)
+    /// @see #generator(Function)
     ///
-    Project dependency(ResourceProvider<?> provider, Dependency.Intend type);
+    Project dependency(ResourceProvider<?> provider, Intend intend);
 
-    /// Returns the resources provided to the project by its dependencies.
+    /// Retrieves all providers of the project with the given intended usage,
+    /// and returns all resources that are provided by these providers for
+    /// the given request.
     ///
     /// @param <T> the requested type
-    /// @param dependencyTypes the type of dependencies considered
+    /// @param intends the type of usage that providers must match
     /// @param requested the requested
-    /// @return the resources<? extends resource>
+    /// @return the provided resources
     ///
-    <T extends Resource> Stream<T> provided(
-            Set<Dependency.Intend> dependencyTypes,
+    <T extends Resource> Stream<T> provided(Set<Intend> intends,
             ResourceRequest<T> requested);
 
     /// Short for `directory().relativize(other)`.

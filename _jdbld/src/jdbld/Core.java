@@ -2,7 +2,7 @@ package jdbld;
 
 import java.nio.file.Path;
 
-import org.jdrupes.builder.api.Dependency.Intend;
+import org.jdrupes.builder.api.Intend;
 import org.jdrupes.builder.api.ResourceFile;
 import org.jdrupes.builder.core.AbstractProject;
 import org.jdrupes.builder.core.ResourcesCollector;
@@ -13,9 +13,9 @@ public class Core extends AbstractProject {
     public Core() {
         name("core");
         dependency(project(Api.class), Intend.Expose);
-        provider(JavaCompiler::new)
+        generator(JavaCompiler::new)
             .addSources(newFileTree(this, Path.of("src"), "**/*.java"));
-        provider(ResourcesCollector::new)
+        generator(ResourcesCollector::new)
             .add(newFileTree(this, Path.of("resources"), "**/*",
                 ResourceFile.class));
     }

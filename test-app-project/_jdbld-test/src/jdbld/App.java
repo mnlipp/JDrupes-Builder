@@ -1,7 +1,7 @@
 package jdbld;
 
 import java.nio.file.Path;
-import static org.jdrupes.builder.api.Dependency.Intend.Consume;
+import static org.jdrupes.builder.api.Intend.*;
 
 import org.jdrupes.builder.core.AbstractProject;
 import org.jdrupes.builder.java.AppJarBuilder;
@@ -13,8 +13,8 @@ public class App extends AbstractProject {
         name("app");
         dependency(project(Base1.class), Consume);
         dependency(project(Base2.class), Consume);
-        provider(JavaCompiler::new)
+        generator(JavaCompiler::new)
             .addSources(newFileTree(this, Path.of("src"), "**/*.java"));
-        provider(AppJarBuilder::new).add(this);
+        generator(AppJarBuilder::new).add(this);
     }
 }

@@ -10,9 +10,9 @@ public class Api extends AbstractProject {
 
     public Api() {
         name("api");
-        provider(JavaCompiler::new)
+        generator(JavaCompiler::new)
             .addSources(newFileTree(this, Path.of("src"), "**/*.java"));
-        provider(ResourcesCollector::new)
+        generator(ResourcesCollector::new)
             .add(newFileTree(this, Path.of("resources"), "**/*",
                 ResourceFile.class));
     }

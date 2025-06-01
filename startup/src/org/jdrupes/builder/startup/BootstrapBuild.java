@@ -19,7 +19,7 @@
 package org.jdrupes.builder.startup;
 
 import java.nio.file.Path;
-import org.jdrupes.builder.api.Dependency.Intend;
+import org.jdrupes.builder.api.Intend;
 import org.jdrupes.builder.api.Masked;
 import org.jdrupes.builder.api.ResourceFile;
 import org.jdrupes.builder.core.AbstractProject;
@@ -46,11 +46,11 @@ public class BootstrapBuild extends AbstractProject implements Masked {
             "**/_jdbld", true);
         var srcTrees = bldrDirs.stream()
             .map(r -> newFileTree(this, r.path().resolve("src"), "**/*.java"));
-        provider(JavaCompiler::new).addSources(srcTrees);
+        generator(JavaCompiler::new).addSources(srcTrees);
         var resourceTrees = bldrDirs.stream()
             .map(r -> newFileTree(this, r.path().resolve("resources"), "**/*",
                 ResourceFile.class));
-        provider(ResourcesCollector::new).add(resourceTrees);
+        generator(ResourcesCollector::new).add(resourceTrees);
     }
 
 }

@@ -25,26 +25,4 @@ package org.jdrupes.builder.api;
 /// @param intend the intended usage of the dependency
 ///
 public record Dependency(ResourceProvider<?> provider, Intend intend) {
-
-    /// Defines how resources from the dependent project are to be used.
-    ///
-    @SuppressWarnings("PMD.FieldNamingConventions")
-    public enum Intend {
-        
-        /// Requests for resources are forwarded, but the results are
-        /// not used. This is the default relationship between a project
-        /// and its sub projects.
-        Build,
-        
-        /// Resources from the provider are used, but not exposed
-        /// i.e. they are not provided to others.
-        Consume,
-        
-        /// Resources from the provider are used and exposed, i.e.
-        /// made available to others.
-        Expose,
-        
-        /// Resources are only required at runtime.
-        Runtime
-    }
 }

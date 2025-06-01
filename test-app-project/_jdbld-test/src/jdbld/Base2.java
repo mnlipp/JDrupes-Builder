@@ -9,7 +9,7 @@ public class Base2 extends AbstractProject {
 
     public Base2() {
         name("base2");
-        provider(JavaCompiler::new)
+        generator(JavaCompiler::new)
             .addSources(newFileTree(this, Path.of("src"), "**/*.java"));
     }
 
