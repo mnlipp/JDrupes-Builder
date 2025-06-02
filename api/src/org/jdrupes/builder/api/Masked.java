@@ -19,7 +19,7 @@
 package org.jdrupes.builder.api;
 
 /// A marker interface that can be implemented by [Project]s to prevent
-/// automatic instantiation as sub projects of the root project.
+/// automatic instantiation by the [launcher].
 ///
 public interface Masked {
 

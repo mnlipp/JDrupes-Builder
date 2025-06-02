@@ -20,8 +20,8 @@ package org.jdrupes.builder.api;
 
 import java.util.Objects;
 
-// TODO: Auto-generated Javadoc
-/// Represents a request for a resource of a given type.
+/// Represents a request for a resource of a given type, optionally
+/// with a given restriction on the resources to consider.
 ///
 /// @param <T> the generic type
 ///

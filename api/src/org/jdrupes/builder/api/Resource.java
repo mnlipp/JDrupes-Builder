@@ -23,7 +23,7 @@ import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 import java.time.format.FormatStyle;
 
-/// Represents a resource.
+/// Represents a resource handled by the builder.
 ///
 public interface Resource {
 

@@ -18,8 +18,14 @@
 
 package org.jdrupes.builder.api;
 
-/// A [FileResource] that represents a resource in the context of the
-/// project being build.
+/// A [FileResource] that represents a resource provided by a [Project].
+///
+/// Admittedly, the name is a bit confusing. Usually, the purpose of file
+/// artifacts provided by a project can easily be derived from their name
+/// e.g. `ZipFile` or `JarFile`. This interface represents an artifact that
+/// has no specific format (as the `ZipFile` has) or purpose (as a
+/// `JarFile` has). It's just a file providing some kind of resource,
+/// which makes it a `ResourceFile`.
 ///
 @SuppressWarnings("PMD.ImplicitFunctionalInterface")
 public interface ResourceFile extends FileResource {

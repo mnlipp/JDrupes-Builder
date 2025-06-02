@@ -23,5 +23,6 @@ package org.jdrupes.builder.api;
 public interface RootProject extends Project {
 
     /// The default provisioning action.
+    // TODO: Interaction with command line still to be defined.
     void provide();
 }

@@ -25,7 +25,7 @@ import java.util.stream.Stream;
 
 /// Defines a container for a collection of resources. Implementations
 /// must behave as sets (no duplicate entries) and must maintain insertion
-/// order when providing a [stream].
+/// order when providing the content through [stream].
 ///
 /// @param <T> the contained resource type
 ///

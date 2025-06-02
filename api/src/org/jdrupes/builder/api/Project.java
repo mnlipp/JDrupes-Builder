@@ -23,12 +23,21 @@ import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Stream;
 
-/// Defines the API for a project.
+/// [Project]s are used to structure the build configuration. Every
+/// build configuration has a single root project and can have
+/// sub-projects. The root project is the entry point for the build.
+/// The resources provided by the builder are actually provided by the
+/// root project.
 ///
-/// As a convenience, the interface provides factory methods
+/// Projects obtain resources from [ResourceProvider]s. Either from 
+/// [Generator]s or from other projects. Resources from [Generator]s
+/// are always included in the resources that a project provides.
+/// The usage of resources from other [Project]s depends on the type
+/// of the relationship between the projects, which is specified
+/// by the [Intend].
+///
+/// As a convenience, the interface also defines factory methods
 /// for objects used for defining the project.
-///
-/// Projects form a hierarchy with a single root.
 ///
 public interface Project extends ResourceProvider<Resource> {
 

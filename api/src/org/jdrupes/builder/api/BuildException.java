@@ -18,7 +18,7 @@
 
 package org.jdrupes.builder.api;
 
-/// Represents an exception that occurs during the build. Terminated the
+/// Represents an exception that occurs during the build. Terminates the
 /// current build when thrown.
 ///
 @SuppressWarnings("serial")

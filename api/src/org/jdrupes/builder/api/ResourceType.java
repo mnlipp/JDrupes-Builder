@@ -22,7 +22,6 @@ import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
 import java.util.Objects;
 
-// TODO: Auto-generated Javadoc
 /// Represents a resource type.
 ///
 /// @param <T> the resource type

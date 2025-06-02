@@ -20,7 +20,7 @@ package org.jdrupes.builder.api;
 
 import java.nio.file.Path;
 
-/// The Interface FileResource.
+/// A resource that represents a file.
 ///
 @SuppressWarnings("PMD.ImplicitFunctionalInterface")
 public interface FileResource extends Resource {

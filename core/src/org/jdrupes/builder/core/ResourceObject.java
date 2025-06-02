@@ -16,9 +16,11 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package org.jdrupes.builder.api;
+package org.jdrupes.builder.core;
 
 import java.util.Objects;
+
+import org.jdrupes.builder.api.Resource;
 
 /// A base class for [Resource]s.
 ///

@@ -22,8 +22,8 @@ import java.nio.file.Path;
 import java.util.stream.Stream;
 
 /// The representation of a file tree. A file tree is a collection
-/// of [FileResource]s that are contained in directory hierarchy
-/// with a single root. 
+/// of [FileResource]s that are contained in a directory hierarchy
+/// with a common root. 
 ///
 /// @param <T> the generic type
 ///
