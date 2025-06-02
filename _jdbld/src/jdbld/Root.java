@@ -23,6 +23,8 @@ public class Root extends AbstractProject implements RootProject {
 
         // Build app jar
         generator(AppJarBuilder::new).addAll(providers(Intend.CONTRIBUTORS));
+
+        // Build javadoc
         generator(JavaDoc::new).addSources(build().provide(this,
             new ResourceRequest<>(JavaConsts.JAVA_SOURCE_FILES)));
     }

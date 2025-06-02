@@ -74,10 +74,6 @@ public abstract class AbstractProject implements Project {
     /// Base class constructor for sub projects. Automatically adds a
     /// [Build] dependency between the root project and the new project.
     ///
-    /// This constructor may be used by root projects if there are no
-    /// sub projects or if detection of projects from the classpath is
-    /// is used (see [AbstractLauncher#DefaultLauncher()]).
-    ///
     @SuppressWarnings({ "unchecked", "PMD.ClassCastExceptionWithToArray" })
     protected AbstractProject() {
         parent = projectInstantiator.get();

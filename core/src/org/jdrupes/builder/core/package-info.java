@@ -1,3 +1,21 @@
+/*
+ * JDrupes Builder
+ * Copyright (C) 2025 Michael N. Lipp
+ * 
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Affero General Public License as
+ * published by the Free Software Foundation, either version 3 of the
+ * License, or (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ * GNU Affero General Public License for more details.
+ *
+ * You should have received a copy of the GNU Affero General Public License
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
+ */
+
 /// A build system is a [ResourceProvider] for [Resource]s.
 /// A [ResourceProvider] of [Resource]s typically bases its provisioning
 /// on specialized nested [ResourceProvider]s that handle the provisioning
@@ -5,9 +23,6 @@
 /// [Resource]s to new [Resource]s by executing a [Generator].
 /// 
 /// The state of a [ResourceProvider] is updated by adding it to a [Build].
-/// In addition to collecting providers, the [Build] also provides a
-/// [Context] that influences how a [ResourceProvider] evaluates the
-/// requested [Resource]s.
 
 package org.jdrupes.builder.core;
 

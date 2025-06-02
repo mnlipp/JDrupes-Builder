@@ -24,7 +24,6 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.logging.LogManager;
-import java.util.logging.Logger;
 import java.util.stream.Stream;
 import org.jdrupes.builder.api.Launcher;
 import org.jdrupes.builder.api.Masked;
@@ -40,8 +39,6 @@ import org.jdrupes.builder.core.LauncherSupport;
 ///
 public class DirectLauncher extends AbstractLauncher {
 
-    protected final Logger log = Logger.getLogger(getClass().getName());
-
     private RootProject rootProject;
 
     /// Instantiates a new direct launcher. The classpath is scanned for
@@ -50,7 +47,7 @@ public class DirectLauncher extends AbstractLauncher {
     /// The latter is instantiated and registered as root project with all
     /// other classes found as direct sub projects.
     ///
-    /// @param classLoader the class loader
+    /// @param classloader the classloader
     ///
     public DirectLauncher(ClassLoader classloader) {
         unwrapBuildException(() -> {

@@ -25,7 +25,7 @@ public abstract class JavaTool<T extends Resource>
             msg = String.format("%s:%d: %s",
                 diagnostic.getSource().toUri().getPath(),
                 diagnostic.getLineNumber(),
-                diagnostic.getMessage(Locale.ENGLISH));
+                diagnostic.getMessage(null));
         }
         Level level = switch (diagnostic.getKind()) {
         case ERROR -> Level.SEVERE;

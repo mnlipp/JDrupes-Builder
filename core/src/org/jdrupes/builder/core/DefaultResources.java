@@ -36,6 +36,7 @@ import org.jdrupes.builder.api.Resources;
 public class DefaultResources<T extends Resource> extends ResourceObject
         implements Resources<T> {
 
+    /// The log.
     protected final Logger log = Logger.getLogger(getClass().getName());
     private final Set<T> content;
 

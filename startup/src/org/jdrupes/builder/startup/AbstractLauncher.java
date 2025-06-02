@@ -41,6 +41,7 @@ import org.jdrupes.builder.java.ClassFile;
 ///
 public abstract class AbstractLauncher implements Launcher {
 
+    /// The log.
     protected final Logger log = Logger.getLogger(getClass().getName());
 
     /// Find projects. The classpath is scanned for classes that implement

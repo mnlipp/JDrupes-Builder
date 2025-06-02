@@ -32,6 +32,7 @@ import org.jdrupes.builder.api.Resources;
 public abstract class AbstractGenerator<T extends Resource>
         implements Generator<T> {
 
+    /// The log.
     protected final Logger log = Logger.getLogger(getClass().getName());
 
     private final Project project;

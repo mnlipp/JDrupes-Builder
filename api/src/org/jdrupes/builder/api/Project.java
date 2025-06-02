@@ -113,6 +113,7 @@ public interface Project extends ResourceProvider<Resource> {
     /// intended usages as [Stream]. The stream may only be terminated
     /// after all projects have been created.
     ///
+    /// @param intends the intends
     /// @return the stream
     ///
     Stream<ResourceProvider<?>> providers(Set<Intend> intends);
@@ -121,6 +122,7 @@ public interface Project extends ResourceProvider<Resource> {
     /// intended usage as [Stream]. This is short for
     /// `providers(Set.of(intend))`.
     ///
+    /// @param intend the intend
     /// @return the stream
     ///
     default Stream<ResourceProvider<?>> providers(Intend intend) {
@@ -137,8 +139,8 @@ public interface Project extends ResourceProvider<Resource> {
     /// @param provider the provider
     /// @param intend the dependency type
     /// @return the project for method chaining
-    /// @see #generator(ResourceProvider)
-    /// @see #generator(Function)
+    /// @see generator(Generator)
+    /// @see generator(Function)
     ///
     Project dependency(ResourceProvider<?> provider, Intend intend);
 

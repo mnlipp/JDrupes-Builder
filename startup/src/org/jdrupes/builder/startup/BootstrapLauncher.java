@@ -40,6 +40,7 @@ import org.jdrupes.builder.core.LauncherSupport;
 ///
 public class BootstrapLauncher extends AbstractLauncher {
 
+    /// The log.
     protected final Logger log = Logger.getLogger(getClass().getName());
 
     private RootProject rootProject;

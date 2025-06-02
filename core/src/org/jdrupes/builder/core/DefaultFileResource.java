@@ -35,6 +35,7 @@ public class DefaultFileResource extends ResourceObject
 
     /// Instantiates a new file resource.
     ///
+    /// @param type the type
     /// @param path the path
     ///
     /* default */ DefaultFileResource(Class<? extends Resource> type,

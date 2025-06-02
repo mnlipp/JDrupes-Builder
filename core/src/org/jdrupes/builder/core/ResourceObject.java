@@ -34,7 +34,9 @@ public abstract class ResourceObject implements Resource {
         type = getClass();
     }
 
-    /// Create a new instance
+    /// Create a new instance.
+    ///
+    /// @param type the type
     ///
     protected ResourceObject(Class<? extends Resource> type) {
         this.type = type;
