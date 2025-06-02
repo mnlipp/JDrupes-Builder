@@ -9,6 +9,7 @@ import org.jdrupes.builder.api.RootProject;
 import org.jdrupes.builder.core.AbstractProject;
 import org.jdrupes.builder.java.AppJarBuilder;
 import org.jdrupes.builder.java.JavaConsts;
+import org.jdrupes.builder.java.JavaDoc;
 
 public class Root extends AbstractProject implements RootProject {
 
@@ -22,12 +23,14 @@ public class Root extends AbstractProject implements RootProject {
 
         // Build app jar
         generator(AppJarBuilder::new).addAll(providers(Intend.CONTRIBUTORS));
+        generator(JavaDoc::new).addSources(build().provide(this,
+            new ResourceRequest<>(JavaConsts.JAVA_SOURCE_FILES)));
     }
 
     public void provide() {
         provide(new ResourceRequest<>(JavaConsts.JAR_FILE))
             .forEach(System.out::println);
-        provide(new ResourceRequest<>(JavaConsts.JAVA_SOURCE_FILES))
+        provide(new ResourceRequest<>(JavaConsts.JAVADOC_DIRECTORY))
             .collect(Collectors.toSet()).stream().forEach(System.out::println);
         ;
     }

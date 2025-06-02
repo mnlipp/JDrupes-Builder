@@ -38,19 +38,10 @@ import org.jdrupes.builder.api.Resource;
 import org.jdrupes.builder.api.ResourceRequest;
 import org.jdrupes.builder.api.ResourceType;
 import org.jdrupes.builder.api.Resources;
+import org.jdrupes.builder.core.AbstractGenerator;
 import static org.jdrupes.builder.java.JavaConsts.*;
 
-/// The [JavaCompiler] generator provides two types of resources.
-/// 
-/// 1. The [JavaSourceFile]s of the project as configured with [addSources]
-///    in response to a [ResourceRequest] with [ResourceType]
-///    [JavaConsts#JAVA_SOURCE_FILES].
-///
-/// 2. The [ClassFile]s that result from compiling the sources in response
-///    to a [ResourceRequest] with [ResourceType]
-///    [JavaConsts#JAVA_CLASS_FILES].
-///
-public class JavaCompiler extends JavaTool<FileTree<ClassFile>> {
+public class JavaDoc extends JavaTool<FileTree<FileResource>> {
 
     private final Resources<FileTree<JavaSourceFile>> sources
         = project().newResources(FileResource.class);
@@ -59,7 +50,7 @@ public class JavaCompiler extends JavaTool<FileTree<ClassFile>> {
     ///
     /// @param project the project
     ///
-    public JavaCompiler(Project project) {
+    public JavaDoc(Project project) {
         super(project);
     }
 
@@ -68,7 +59,7 @@ public class JavaCompiler extends JavaTool<FileTree<ClassFile>> {
     /// @param sources the sources
     /// @return the java compiler
     ///
-    public final JavaCompiler addSources(FileTree<JavaSourceFile> sources) {
+    public final JavaDoc addSources(FileTree<JavaSourceFile> sources) {
         this.sources.add(sources);
         return this;
     }
@@ -81,7 +72,7 @@ public class JavaCompiler extends JavaTool<FileTree<ClassFile>> {
     /// @param pattern the pattern
     /// @return the resources collector
     ///
-    public final JavaCompiler addSources(Path directory, String pattern) {
+    public final JavaDoc addSources(Path directory, String pattern) {
         addSources(
             project().newFileTree(directory, pattern, JavaSourceFile.class));
         return this;
@@ -92,7 +83,7 @@ public class JavaCompiler extends JavaTool<FileTree<ClassFile>> {
     /// @param sources the sources
     /// @return the java compiler
     ///
-    public final JavaCompiler
+    public final JavaDoc
             addSources(Stream<FileTree<JavaSourceFile>> sources) {
         this.sources.addAll(sources);
         return this;
@@ -105,73 +96,31 @@ public class JavaCompiler extends JavaTool<FileTree<ClassFile>> {
     private Collection<Path> sourcePaths() {
         return sources.stream().map(Resources::stream)
             .flatMap(Function.identity()).map(FileResource::path)
-            .collect(Collectors.toList());
+            .collect(Collectors.toSet());
     }
 
     @Override
+    @SuppressWarnings({ "PMD.AvoidCatchingGenericException",
+        "PMD.ExceptionAsFlowControl" })
     public <T extends Resource> Stream<T>
             provide(ResourceRequest<T> requested) {
-        if (requested.type().isAssignableFrom(JAVA_SOURCE_FILES)) {
-            @SuppressWarnings("unchecked")
-            var result = (Stream<T>) sources.stream();
-            return result;
-        }
-        if (!requested.type().isAssignableFrom(JAVA_CLASS_FILES)) {
+        if (!requested.type().isAssignableFrom(JAVADOC_DIRECTORY)) {
             return Stream.empty();
         }
 
-        // Get this project's previously generated classes (for checking)
-        var destDir = project().buildDirectory().resolve("classes");
-        final var classSet = project().newFileTree(
-            destDir, "**/*", ClassFile.class);
-
-        // Get classpath for compilation.
-        log.fine(() -> "Getting classpath for " + project());
-        var cpResources = project().newResources(ClassFile.class).addAll(
-            project().provided(EnumSet.of(Intend.Consume, Intend.Expose),
-                new ResourceRequest<>(JAVA_CLASS_FILES)));
-        log.finest(() -> project() + " uses classpath: " + cpResources.stream()
-            .map(Resource::toString).collect(Collectors.joining(", ")));
-
-        // (Re-)compile only if necessary
-        var classesAsOf = classSet.asOf();
-        if (sources.asOf().isAfter(classesAsOf)
-            || cpResources.asOf().isAfter(classesAsOf)
-            || classSet.stream().count() < sources.stream()
-                .flatMap(Resources::stream).map(FileResource::path)
-                .filter(p -> p.toString().endsWith(".java")
-                    && !p.endsWith("package-info.java")
-                    && !p.endsWith("module-info.java"))
-                .count()) {
-            classSet.delete();
-            compile(cpResources, destDir);
-        }
-        classSet.clear();
-        @SuppressWarnings("unchecked")
-        var result = (Stream<T>) Stream.of(classSet);
-        return result;
-    }
-
-    @SuppressWarnings({ "PMD.AvoidCatchingGenericException",
-        "PMD.ExceptionAsFlowControl" })
-    private void compile(Resources<Resource> cpResources, Path destDir) {
-        log.info(() -> "Compiling Java in project " + project().name());
-        var classpath = cpResources.stream().<Path> mapMulti((r, sink) -> {
-            if (r instanceof FileTree fileSet) {
-                sink.accept(fileSet.root());
-            }
-        }).map(Path::toString).collect(Collectors.joining(File.pathSeparator));
-        var javac = ToolProvider.getSystemJavaCompiler();
+        var javadoc = ToolProvider.getSystemDocumentationTool();
         var diagnostics = new DiagnosticCollector<JavaFileObject>();
+        var destDir = project().buildDirectory().resolve("doc");
         try (var fileManager
-            = javac.getStandardFileManager(diagnostics, null, null)) {
-            var compilationUnits
+            = javadoc.getStandardFileManager(diagnostics, null, null)) {
+            var sourceFiles
                 = fileManager.getJavaFileObjectsFromPaths(sourcePaths());
-            if (!javac.getTask(null, fileManager, null,
-                List.of("-d", destDir.toString(),
-                    "-cp", classpath),
-                null, compilationUnits).call()) {
-                throw new BuildException("Compilation failed");
+            if (!javadoc.getTask(null, fileManager, diagnostics, null,
+                List.of(// "-locale", "en_US",
+                    "-d", destDir.toString(), "-quiet"),
+                sourceFiles)
+                .call()) {
+                throw new BuildException("Documentation generation failed");
             }
         } catch (Exception e) {
             log.log(java.util.logging.Level.SEVERE, () -> "Project "
@@ -181,5 +130,7 @@ public class JavaCompiler extends JavaTool<FileTree<ClassFile>> {
         } finally {
             logDiagnostics(diagnostics);
         }
+        return Stream.empty();
     }
+
 }
