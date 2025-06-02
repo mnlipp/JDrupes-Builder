@@ -165,15 +165,13 @@ public interface Project extends ResourceProvider<Resource> {
     /// may be specified as absolute path or as path relative to the
     /// `project`'s directory (see [Project#directory]).
     ///
-    /// @param project the project
     /// @param root the root of the file tree to search for files matching
     /// `pattern`
     /// @param pattern the pattern
     /// @return the file tree
     ///
-    default FileTree<FileResource> newFileTree(Project project, Path root,
-            String pattern) {
-        return newFileTree(project, root, pattern, FileResource.class);
+    default FileTree<FileResource> newFileTree(Path root, String pattern) {
+        return newFileTree(root, pattern, FileResource.class);
     }
 
     /// Returns a new file tree. The file tree includes all files
@@ -182,16 +180,15 @@ public interface Project extends ResourceProvider<Resource> {
     /// `project`'s directory (see [Project#directory]).
     ///
     /// @param <T> the type of the [FileResource]s in the tree.
-    /// @param project the project
     /// @param root the root of the file tree to search for files matching
     /// `pattern`
     /// @param pattern the pattern
     /// @param type the file tree's type
     /// @return the file tree
     ///
-    default <T extends FileResource> FileTree<T> newFileTree(Project project,
-            Path root, String pattern, Class<T> type) {
-        return newFileTree(project, root, pattern, type, false);
+    default <T extends FileResource> FileTree<T> newFileTree(Path root,
+            String pattern, Class<T> type) {
+        return newFileTree(root, pattern, type, false);
     }
 
     /// Returns a new file tree. The file tree includes all files
@@ -199,17 +196,15 @@ public interface Project extends ResourceProvider<Resource> {
     /// may be specified as absolute path or as path relative to the
     /// `project`'s directory (see [Project#directory]).
     ///
-    /// @param project the project
     /// @param root the root of the file tree to search for files matching
     /// `pattern`
     /// @param pattern the pattern
     /// @param withDirs whether to include directories
     /// @return the file tree
     ///
-    default FileTree<FileResource> newFileTree(Project project, Path root,
-            String pattern, boolean withDirs) {
-        return newFileTree(project, root, pattern, FileResource.class,
-            withDirs);
+    default FileTree<FileResource> newFileTree(Path root, String pattern,
+            boolean withDirs) {
+        return newFileTree(root, pattern, FileResource.class, withDirs);
     }
 
     /// Returns a new file tree. The file tree includes all files
@@ -218,7 +213,6 @@ public interface Project extends ResourceProvider<Resource> {
     /// `project`'s directory (see [Project#directory]).
     ///
     /// @param <T> the type of the [FileResource]s in the tree.
-    /// @param project the project
     /// @param root the root of the file tree to search for files matching
     /// `pattern`
     /// @param pattern the pattern
@@ -226,8 +220,8 @@ public interface Project extends ResourceProvider<Resource> {
     /// @param withDirs whether to include directories
     /// @return the file tree
     ///
-    <T extends FileResource> FileTree<T> newFileTree(Project project, Path root,
-            String pattern, Class<T> type, boolean withDirs);
+    <T extends FileResource> FileTree<T> newFileTree(Path root, String pattern,
+            Class<T> type, boolean withDirs);
 
     /// Returns a new file resource.
     ///

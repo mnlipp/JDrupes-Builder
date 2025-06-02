@@ -13,8 +13,7 @@ public class App extends AbstractProject {
         name("app");
         dependency(project(Base1.class), Consume);
         dependency(project(Base2.class), Consume);
-        generator(JavaCompiler::new)
-            .addSources(newFileTree(this, Path.of("src"), "**/*.java"));
+        generator(JavaCompiler::new).addSources(Path.of("src"), "**/*.java");
         generator(AppJarBuilder::new).add(this);
     }
 }

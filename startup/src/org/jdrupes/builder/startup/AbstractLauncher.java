@@ -16,10 +16,9 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package org.jdrupes.builder.core;
+package org.jdrupes.builder.startup;
 
 import java.io.IOException;
-import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Modifier;
 import java.net.URISyntaxException;
 import java.net.URL;
@@ -30,63 +29,19 @@ import java.util.concurrent.Callable;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
 import org.jdrupes.builder.api.BuildException;
-import org.jdrupes.builder.api.ClassFile;
 import org.jdrupes.builder.api.FileTree;
 import org.jdrupes.builder.api.Launcher;
 import org.jdrupes.builder.api.Masked;
 import org.jdrupes.builder.api.Project;
 import org.jdrupes.builder.api.RootProject;
+import org.jdrupes.builder.core.DefaultFileTree;
+import org.jdrupes.builder.java.ClassFile;
 
 /// A default implementation of a [Launcher].
 ///
 public abstract class AbstractLauncher implements Launcher {
 
     protected final Logger log = Logger.getLogger(getClass().getName());
-
-    /// Creates and initializes a root project. This method must be called
-    /// if the root project creates its sub projects itself.
-    ///
-    /// @param rootProject the root project
-    ///
-    protected RootProject
-            createRootProject(Class<? extends RootProject> rootProject) {
-        try {
-            var result = rootProject.getConstructor().newInstance();
-            ((AbstractProject) result).createProjects();
-            return result;
-        } catch (NoSuchMethodException | SecurityException
-                | NegativeArraySizeException | InstantiationException
-                | IllegalAccessException | IllegalArgumentException
-                | InvocationTargetException e) {
-            throw new IllegalArgumentException(e);
-        }
-    }
-
-    /// Creates and initializes the root project and the sub projects.
-    /// Adds the sub projects to the root project automatically. This
-    /// method should be used if the launcher detects the sub projects
-    /// e.g. by reflection and the root project does not add its sub
-    /// projects itself.
-    ///
-    /// @param rootProject the root project
-    /// @param subprojects the sub projects
-    /// @return the root project
-    ///
-    protected RootProject createProjects(
-            Class<? extends RootProject> rootProject,
-            List<Class<? extends Project>> subprojects) {
-        try {
-            AbstractProject.detectedSubprojects(subprojects);
-            var result = rootProject.getConstructor().newInstance();
-            ((AbstractProject) result).createProjects();
-            return result;
-        } catch (SecurityException | NegativeArraySizeException
-                | IllegalArgumentException | InstantiationException
-                | IllegalAccessException | InvocationTargetException
-                | NoSuchMethodException e) {
-            throw new IllegalArgumentException(e);
-        }
-    }
 
     /// Find projects. The classpath is scanned for classes that implement
     /// [Project] but do not implement [Masked].

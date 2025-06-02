@@ -29,8 +29,8 @@ import org.jdrupes.builder.api.Launcher;
 import org.jdrupes.builder.api.Resource;
 import org.jdrupes.builder.api.ResourceRequest;
 import org.jdrupes.builder.api.RootProject;
-import org.jdrupes.builder.core.AbstractLauncher;
 import org.jdrupes.builder.core.AbstractProject;
+import org.jdrupes.builder.core.LauncherSupport;
 
 /// A default implementation of a [Launcher]. The launcher first builds
 /// the user's JDrupes Builder project, using the JDrupes Builder project
@@ -55,7 +55,7 @@ public class BootstrapLauncher extends AbstractLauncher {
     ///
     public BootstrapLauncher(Class<? extends RootProject> rootProject) {
         unwrapBuildException(() -> {
-            this.rootProject = createRootProject(rootProject);
+            this.rootProject = LauncherSupport.createRootProject(rootProject);
             this.rootProject.provide();
             return null;
         });

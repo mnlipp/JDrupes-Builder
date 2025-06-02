@@ -30,7 +30,6 @@ import javax.tools.DiagnosticCollector;
 import javax.tools.JavaFileObject;
 import javax.tools.ToolProvider;
 import org.jdrupes.builder.api.BuildException;
-import org.jdrupes.builder.api.ClassFile;
 import org.jdrupes.builder.api.FileResource;
 import org.jdrupes.builder.api.FileTree;
 import org.jdrupes.builder.api.Intend;
@@ -40,12 +39,21 @@ import org.jdrupes.builder.api.ResourceRequest;
 import org.jdrupes.builder.api.ResourceType;
 import org.jdrupes.builder.api.Resources;
 import org.jdrupes.builder.core.AbstractGenerator;
+import static org.jdrupes.builder.java.JavaConsts.*;
 
-/// The Class JavaCompiler.
+/// The [JavaCompiler] generator provides two types of resources.
+/// 
+/// 1. The [JavaSourceFile]s of the project as configured with [addSources]
+///    in response to a [ResourceRequest] with [ResourceType]
+///    [JavaConsts#JAVA_SOURCE_FILES].
+///
+/// 2. The [ClassFile]s that result from compiling the sources in response
+///    to a [ResourceRequest] with [ResourceType]
+///    [JavaConsts#JAVA_CLASS_FILES].
 ///
 public class JavaCompiler extends AbstractGenerator<FileTree<ClassFile>> {
 
-    private final Resources<FileTree<FileResource>> sources
+    private final Resources<FileTree<JavaSourceFile>> sources
         = project().newResources(FileResource.class);
 
     /// Instantiates a new java compiler.
@@ -61,9 +69,22 @@ public class JavaCompiler extends AbstractGenerator<FileTree<ClassFile>> {
     /// @param sources the sources
     /// @return the java compiler
     ///
-    public final JavaCompiler
-            addSources(FileTree<FileResource> sources) {
+    public final JavaCompiler addSources(FileTree<JavaSourceFile> sources) {
         this.sources.add(sources);
+        return this;
+    }
+
+    /// Adds the files from the given directory matching the given pattern.
+    /// Short for
+    /// `addSources(project().newFileTree(directory, pattern, JavaSourceFile.class))`.
+    ///
+    /// @param directory the directory
+    /// @param pattern the pattern
+    /// @return the resources collector
+    ///
+    public final JavaCompiler addSources(Path directory, String pattern) {
+        addSources(
+            project().newFileTree(directory, pattern, JavaSourceFile.class));
         return this;
     }
 
@@ -73,7 +94,7 @@ public class JavaCompiler extends AbstractGenerator<FileTree<ClassFile>> {
     /// @return the java compiler
     ///
     public final JavaCompiler
-            addSources(Stream<FileTree<FileResource>> sources) {
+            addSources(Stream<FileTree<JavaSourceFile>> sources) {
         this.sources.addAll(sources);
         return this;
     }
@@ -91,24 +112,25 @@ public class JavaCompiler extends AbstractGenerator<FileTree<ClassFile>> {
     @Override
     public <T extends Resource> Stream<T>
             provide(ResourceRequest<T> requested) {
-        if (!requested.type()
-            .isAssignableFrom(new ResourceType<FileTree<ClassFile>>() {
-            })) {
+        if (requested.type().isAssignableFrom(JAVA_SOURCE_FILES)) {
+            @SuppressWarnings("unchecked")
+            var result = (Stream<T>) sources.stream();
+            return result;
+        }
+        if (!requested.type().isAssignableFrom(JAVA_CLASS_FILES)) {
             return Stream.empty();
         }
 
         // Get this project's previously generated classes (for checking)
         var destDir = project().buildDirectory().resolve("classes");
         final var classSet = project().newFileTree(
-            project(), destDir, "**/*", ClassFile.class);
+            destDir, "**/*", ClassFile.class);
 
         // Get classpath for compilation.
         log.fine(() -> "Getting classpath for " + project());
         var cpResources = project().newResources(ClassFile.class).addAll(
             project().provided(EnumSet.of(Intend.Consume, Intend.Expose),
-                new ResourceRequest<>(
-                    new ResourceType<FileTree<ClassFile>>() {
-                    })));
+                new ResourceRequest<>(JAVA_CLASS_FILES)));
         log.finest(() -> project() + " uses classpath: " + cpResources.stream()
             .map(Resource::toString).collect(Collectors.joining(", ")));
 

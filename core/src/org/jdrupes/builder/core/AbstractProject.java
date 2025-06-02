@@ -285,9 +285,8 @@ public abstract class AbstractProject implements Project {
 
     @Override
     public <T extends FileResource> FileTree<T> newFileTree(
-            Project project, Path root, String pattern, Class<T> type,
-            boolean withDirs) {
-        return new DefaultFileTree<>(project, root, pattern, type, withDirs);
+            Path root, String pattern, Class<T> type, boolean withDirs) {
+        return new DefaultFileTree<>(this, root, pattern, type, withDirs);
     }
 
     @Override

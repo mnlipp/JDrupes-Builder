@@ -18,6 +18,7 @@
 
 package org.jdrupes.builder.core;
 
+import java.nio.file.Path;
 import java.util.stream.Stream;
 import org.jdrupes.builder.api.FileTree;
 import org.jdrupes.builder.api.Project;
@@ -62,6 +63,19 @@ public class ResourcesCollector
     public final ResourcesCollector
             add(Stream<FileTree<ResourceFile>> resources) {
         this.fileTrees.addAll(resources);
+        return this;
+    }
+
+    /// Adds the files from the given directory matching the given pattern.
+    /// Short for
+    /// `add(project().newFileTree(directory, pattern, ResourceFile.class))`.
+    ///
+    /// @param directory the directory
+    /// @param pattern the pattern
+    /// @return the resources collector
+    ///
+    public final ResourcesCollector add(Path directory, String pattern) {
+        add(project().newFileTree(directory, pattern, ResourceFile.class));
         return this;
     }
 

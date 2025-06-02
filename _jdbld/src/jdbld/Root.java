@@ -1,13 +1,14 @@
 package jdbld;
 
 import static org.jdrupes.builder.api.Intend.*;
+
+import java.util.stream.Collectors;
 import org.jdrupes.builder.api.Intend;
 import org.jdrupes.builder.api.ResourceRequest;
-import org.jdrupes.builder.api.ResourceType;
 import org.jdrupes.builder.api.RootProject;
 import org.jdrupes.builder.core.AbstractProject;
 import org.jdrupes.builder.java.AppJarBuilder;
-import org.jdrupes.builder.java.JarFile;
+import org.jdrupes.builder.java.JavaConsts;
 
 public class Root extends AbstractProject implements RootProject {
 
@@ -24,7 +25,10 @@ public class Root extends AbstractProject implements RootProject {
     }
 
     public void provide() {
-        provide(new ResourceRequest<>(new ResourceType<JarFile>() {
-        })).forEach(System.out::println);
+        provide(new ResourceRequest<>(JavaConsts.JAR_FILE))
+            .forEach(System.out::println);
+        provide(new ResourceRequest<>(JavaConsts.JAVA_SOURCE_FILES))
+            .collect(Collectors.toSet()).stream().forEach(System.out::println);
+        ;
     }
 }

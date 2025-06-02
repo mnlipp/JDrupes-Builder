@@ -23,7 +23,6 @@ import java.net.URL;
 import java.net.URLClassLoader;
 import java.util.stream.Stream;
 import org.jdrupes.builder.api.BuildException;
-import org.jdrupes.builder.api.ClassFile;
 import org.jdrupes.builder.api.FileTree;
 import org.jdrupes.builder.api.Masked;
 import org.jdrupes.builder.api.ResourceFile;
@@ -31,6 +30,7 @@ import org.jdrupes.builder.api.ResourceRequest;
 import org.jdrupes.builder.api.ResourceType;
 import org.jdrupes.builder.api.RootProject;
 import org.jdrupes.builder.core.AbstractProject;
+import org.jdrupes.builder.java.ClassFile;
 
 /// The built-in root project associated with the root directory.
 ///

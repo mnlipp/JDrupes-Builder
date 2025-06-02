@@ -16,11 +16,27 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package org.jdrupes.builder.api;
+package org.jdrupes.builder.java;
 
-/// A [FileResource] that represents a Java class.
+import org.jdrupes.builder.api.FileTree;
+import org.jdrupes.builder.api.ResourceType;
+
+/// Defines some constants for using the Java related components.
 ///
-@SuppressWarnings("PMD.ImplicitFunctionalInterface")
-public interface ClassFile extends FileResource {
+public class JavaConsts {
 
+    /// The Java source files.
+    public static final ResourceType<
+            FileTree<JavaSourceFile>> JAVA_SOURCE_FILES = new ResourceType<>() {
+            };
+
+    /// The Java class files.
+    public static final ResourceType<
+            FileTree<ClassFile>> JAVA_CLASS_FILES = new ResourceType<>() {
+            };
+
+    /// The Java jar file.
+    public static final ResourceType<JarFile> JAR_FILE
+        = new ResourceType<>() {
+        };
 }

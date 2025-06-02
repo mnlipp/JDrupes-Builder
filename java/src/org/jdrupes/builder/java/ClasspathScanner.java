@@ -21,17 +21,16 @@ package org.jdrupes.builder.java;
 import java.io.File;
 import java.nio.file.Path;
 import java.util.stream.Stream;
-import org.jdrupes.builder.api.ClassFile;
 import org.jdrupes.builder.api.FileTree;
 import org.jdrupes.builder.api.Project;
 import org.jdrupes.builder.api.Resource;
 import org.jdrupes.builder.api.ResourceRequest;
-import org.jdrupes.builder.api.ResourceType;
 import org.jdrupes.builder.core.AbstractGenerator;
+import static org.jdrupes.builder.java.JavaConsts.*;
 
 /// Provides [FileTree]s with classes from a given classpath.
 ///
-public class ClasspathProvider
+public class ClasspathScanner
         extends AbstractGenerator<FileTree<ClassFile>> {
 
     private final String path;
@@ -42,7 +41,7 @@ public class ClasspathProvider
     /// @param path the path (directories separated by the system's
     /// path separator)
     ///
-    public ClasspathProvider(Project project, String path) {
+    public ClasspathScanner(Project project, String path) {
         super(project);
         this.path = path;
     }
@@ -58,14 +57,13 @@ public class ClasspathProvider
     public <T extends Resource> Stream<T>
             provide(ResourceRequest<T> requested) {
         if (!requested.type()
-            .isAssignableFrom(new ResourceType<FileTree<ClassFile>>() {
-            })) {
+            .isAssignableFrom(JAVA_CLASS_FILES)) {
             return Stream.empty();
         }
         @SuppressWarnings("unchecked")
         var result = (Stream<T>) Stream.of(path.split(File.pathSeparator))
-            .map(d -> project().newFileTree(project(), Path.of(d), "**/*.class",
-                ClassFile.class, false));
+            .map(d -> project().newFileTree(Path.of(d), "**/*.class", ClassFile.class,
+                false));
         return result;
     }
 

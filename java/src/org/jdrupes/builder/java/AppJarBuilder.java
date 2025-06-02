@@ -33,7 +33,6 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 import org.jdrupes.builder.api.BuildException;
-import org.jdrupes.builder.api.ClassFile;
 import org.jdrupes.builder.api.FileTree;
 import org.jdrupes.builder.api.Project;
 import org.jdrupes.builder.api.Resource;

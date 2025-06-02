@@ -32,7 +32,7 @@ import org.jdrupes.builder.api.Project;
 import org.jdrupes.builder.api.Resource;
 import org.jdrupes.builder.api.ResourceRequest;
 import org.jdrupes.builder.api.RootProject;
-import org.jdrupes.builder.core.AbstractLauncher;
+import org.jdrupes.builder.core.LauncherSupport;
 
 /// An implementation of a [Launcher] that expects that the JDrupes
 /// Builder project already been compiled and its classes are available
@@ -57,7 +57,8 @@ public class DirectLauncher extends AbstractLauncher {
             var rootProjects = new ArrayList<Class<? extends RootProject>>();
             var subprojects = new ArrayList<Class<? extends Project>>();
             findProjects(classloader, rootProjects, subprojects);
-            rootProject = createProjects(rootProjects.get(0), subprojects);
+            rootProject = LauncherSupport
+                .createProjects(rootProjects.get(0), subprojects);
             rootProject.provide();
             return null;
         });

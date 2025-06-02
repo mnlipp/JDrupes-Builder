@@ -231,7 +231,8 @@ public class DefaultFileTree<T extends FileResource> extends DefaultResources<T>
     public int hashCode() {
         final int prime = 31;
         int result = super.hashCode();
-        result = prime * result + Objects.hash(pattern, root);
+        result = prime * result
+            + Objects.hash(leafType, pattern, root, withDirs);
         return result;
     }
 
@@ -247,8 +248,9 @@ public class DefaultFileTree<T extends FileResource> extends DefaultResources<T>
             return false;
         }
         DefaultFileTree<?> other = (DefaultFileTree<?>) obj;
-        return Objects.equals(pattern, other.pattern)
-            && Objects.equals(root, other.root);
+        return Objects.equals(leafType, other.leafType)
+            && Objects.equals(pattern, other.pattern)
+            && Objects.equals(root, other.root) && withDirs == other.withDirs;
     }
 
     @Override
