@@ -41,6 +41,27 @@ import java.util.stream.Stream;
 ///
 public interface Project extends ResourceProvider<Resource> {
 
+    /// The common project properties.
+    ///
+    @SuppressWarnings("PMD.FieldNamingConventions")
+    enum Properties implements PropertyKey {
+
+        /// The Build directory. Created artifacts should be put there.
+        /// Defaults to [Path] "build".
+        BuildDirectory(Path.of("build"));
+
+        private final Object defaultValue;
+
+        <T> Properties(T defaultValue) {
+            this.defaultValue = defaultValue;
+        }
+
+        @Override
+        public Object defaultValue() {
+            return defaultValue;
+        }
+    }
+
     /// Returns the root project.
     ///
     /// @return the project
@@ -69,11 +90,14 @@ public interface Project extends ResourceProvider<Resource> {
     Path directory();
 
     /// Returns the directory where the project's [Generator]s should
-    /// create the artifacts.
+    /// create the artifacts. This is short for 
+    /// `directory().resolve((Path) get(Properties.BuildDirectory))`.
     ///
     /// @return the path
     ///
-    Path buildDirectory();
+    default Path buildDirectory() {
+        return directory().resolve((Path) get(Properties.BuildDirectory));
+    }
 
     /// Adds a provider to the project that generates resources which
     /// are then provided by the project. This is short for
@@ -164,6 +188,25 @@ public interface Project extends ResourceProvider<Resource> {
     default Path relativize(Path other) {
         return directory().relativize(other);
     }
+
+    /// Returns value of the given property of the project. If the
+    /// property is not set, the parent project's value is returned.
+    /// If neither is set, the property's default value is returned.
+    ///
+    /// A method for setting a property is is not part of the public API.
+    /// It must be provided by the project's implementation as
+    /// `protected T set(ProjectProperty property, Object value)`,
+    /// where `T` is the type of the implementing class.
+    ///
+    /// Regrettably, there is no way to enforce at compile time that the
+    /// type of the value passed to `set` matches the type of the property.
+    /// An implementation must check this at runtime.
+    ///
+    /// @param <T> the generic type
+    /// @param property the property
+    /// @return the t
+    ///
+    <T> T get(PropertyKey property);
 
     /// Obtains the resource stream for the given resource from the
     /// given provider. The result from invoking the provider is

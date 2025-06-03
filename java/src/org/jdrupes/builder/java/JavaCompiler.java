@@ -54,6 +54,7 @@ public class JavaCompiler extends JavaTool<FileTree<ClassFile>> {
 
     private final Resources<FileTree<JavaSourceFile>> sources
         = project().newResources(FileResource.class);
+    private Path destination = Path.of("classes");
 
     /// Instantiates a new java compiler.
     ///
@@ -61,6 +62,25 @@ public class JavaCompiler extends JavaTool<FileTree<ClassFile>> {
     ///
     public JavaCompiler(Project project) {
         super(project);
+    }
+
+    /// Returns the destination directory. Defaults to "`classes`".
+    ///
+    /// @return the destination
+    ///
+    public Path destination() {
+        return destination;
+    }
+
+    /// Sets the destination directory. The [Path] is resolved against
+    /// the project's build directory (see [Project#buildDirectory]).
+    ///
+    /// @param destination the new destination
+    /// @return the java compiler
+    ///
+    public JavaCompiler destination(Path destination) {
+        this.destination = destination;
+        return this;
     }
 
     /// Adds the source tree.
@@ -121,7 +141,7 @@ public class JavaCompiler extends JavaTool<FileTree<ClassFile>> {
         }
 
         // Get this project's previously generated classes (for checking)
-        var destDir = project().buildDirectory().resolve("classes");
+        var destDir = project().buildDirectory().resolve(destination);
         final var classSet = project().newFileTree(
             destDir, "**/*", ClassFile.class);
 

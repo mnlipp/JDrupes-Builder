@@ -38,6 +38,7 @@ import org.jdrupes.builder.api.Generator;
 import org.jdrupes.builder.api.Intend;
 import static org.jdrupes.builder.api.Intend.*;
 import org.jdrupes.builder.api.Project;
+import org.jdrupes.builder.api.PropertyKey;
 import org.jdrupes.builder.api.Resource;
 import org.jdrupes.builder.api.ResourceProvider;
 import org.jdrupes.builder.api.ResourceRequest;
@@ -63,6 +64,8 @@ public abstract class AbstractProject implements Project {
     @SuppressWarnings("PMD.UseConcurrentHashMap")
     private final Map<ResourceProvider<?>, Intend> providers
         = new LinkedHashMap<>();
+    @SuppressWarnings("PMD.UseConcurrentHashMap")
+    private final Map<PropertyKey, Object> properties = new HashMap<>();
     // Only non null in the root project
     private BuilderData build;
     // Only non null in the root project
@@ -226,11 +229,6 @@ public abstract class AbstractProject implements Project {
     }
 
     @Override
-    public Path buildDirectory() {
-        return directory().resolve("build");
-    }
-
-    @Override
     public Project generator(Generator<?> provider) {
         providers.put(provider, Provide);
         return this;
@@ -276,7 +274,7 @@ public abstract class AbstractProject implements Project {
 
     private BuilderData context() {
         if (parent != null) {
-            return ((AbstractProject) parent).context();
+            return parent.context();
         }
         if (build != null) {
             return build;
@@ -288,6 +286,33 @@ public abstract class AbstractProject implements Project {
     public <T extends Resource> Stream<T> get(ResourceProvider<?> provider,
             ResourceRequest<T> requested) {
         return context().get(provider, requested);
+    }
+
+    @Override
+    @SuppressWarnings("unchecked")
+    public <T> T get(PropertyKey property) {
+        return (T) Optional.ofNullable(properties.get(property))
+            .orElseGet(() -> {
+                if (parent != null) {
+                    return parent.get(property);
+                }
+                return property.defaultValue();
+            });
+    }
+
+    /// Sets the given property to the given value.
+    ///
+    /// @param property the property
+    /// @param value the value
+    /// @return the abstract project for method chaining
+    ///
+    protected AbstractProject set(PropertyKey property, Object value) {
+        if (!property.type().isAssignableFrom(value.getClass())) {
+            throw new IllegalArgumentException("Value for " + property
+                + " must be of type " + property.type());
+        }
+        properties.put(property, value);
+        return this;
     }
 
     @Override
@@ -306,6 +331,16 @@ public abstract class AbstractProject implements Project {
     public <T extends FileResource> FileTree<T> newFileTree(
             Path root, String pattern, Class<T> type, boolean withDirs) {
         return new DefaultFileTree<>(this, root, pattern, type, withDirs);
+    }
+
+    /// Set the value of the given project property.
+    ///
+    /// @param property the property
+    /// @param value the value
+    /// @return the project
+    ///
+    public AbstractProject property(PropertyKey property, Object value) {
+        return set(property, value);
     }
 
     @Override

@@ -49,6 +49,7 @@ public class AppJarBuilder extends AbstractGenerator<JarFile> {
 
     private final List<Stream<? extends ResourceProvider<?>>> providers
         = new ArrayList<>();
+    private Path destination = Path.of("app");
 
     /// Instantiates a new app jar builder.
     ///
@@ -56,6 +57,25 @@ public class AppJarBuilder extends AbstractGenerator<JarFile> {
     ///
     public AppJarBuilder(Project project) {
         super(project);
+    }
+
+    /// Returns the destination directory. Defaults to "`app`".
+    ///
+    /// @return the destination
+    ///
+    public Path destination() {
+        return destination;
+    }
+
+    /// Sets the destination directory. The [Path] is resolved against
+    /// the project's build directory (see [Project#buildDirectory]).
+    ///
+    /// @param destination the new destination
+    /// @return the java compiler
+    ///
+    public AppJarBuilder destination(Path destination) {
+        this.destination = destination;
+        return this;
     }
 
     /// Adds the given providers. Each provider is asked to provide

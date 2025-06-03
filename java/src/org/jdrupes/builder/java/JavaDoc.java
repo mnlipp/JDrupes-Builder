@@ -36,10 +36,13 @@ import org.jdrupes.builder.api.ResourceRequest;
 import org.jdrupes.builder.api.Resources;
 import static org.jdrupes.builder.java.JavaConsts.*;
 
+/// A generator for creating the Javadoc.
+///
 public class JavaDoc extends JavaTool<FileTree<FileResource>> {
 
     private final Resources<FileTree<JavaSourceFile>> sources
         = project().newResources(FileResource.class);
+    private Path destination = Path.of("doc");
 
     /// Instantiates a new java compiler.
     ///
@@ -47,6 +50,25 @@ public class JavaDoc extends JavaTool<FileTree<FileResource>> {
     ///
     public JavaDoc(Project project) {
         super(project);
+    }
+
+    /// Returns the destination directory. Defaults to "`doc`".
+    ///
+    /// @return the destination
+    ///
+    public Path destination() {
+        return destination;
+    }
+
+    /// Sets the destination directory. The [Path] is resolved against
+    /// the project's build directory (see [Project#buildDirectory]).
+    ///
+    /// @param destination the new destination
+    /// @return the java compiler
+    ///
+    public JavaDoc destination(Path destination) {
+        this.destination = destination;
+        return this;
     }
 
     /// Adds the source tree.
@@ -78,8 +100,7 @@ public class JavaDoc extends JavaTool<FileTree<FileResource>> {
     /// @param sources the sources
     /// @return the java compiler
     ///
-    public final JavaDoc
-            addSources(Stream<FileTree<JavaSourceFile>> sources) {
+    public final JavaDoc addSources(Stream<FileTree<JavaSourceFile>> sources) {
         this.sources.addAll(sources);
         return this;
     }
@@ -105,7 +126,7 @@ public class JavaDoc extends JavaTool<FileTree<FileResource>> {
 
         var javadoc = ToolProvider.getSystemDocumentationTool();
         var diagnostics = new DiagnosticCollector<JavaFileObject>();
-        var destDir = project().buildDirectory().resolve("doc");
+        var destDir = project().buildDirectory().resolve(destination);
         try (var fileManager
             = javadoc.getStandardFileManager(diagnostics, null, null)) {
             var sourceFiles
