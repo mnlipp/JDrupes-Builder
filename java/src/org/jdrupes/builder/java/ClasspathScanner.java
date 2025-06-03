@@ -62,7 +62,8 @@ public class ClasspathScanner
         }
         @SuppressWarnings("unchecked")
         var result = (Stream<T>) Stream.of(path.split(File.pathSeparator))
-            .map(d -> project().newFileTree(Path.of(d), "**/*.class", ClassFile.class,
+            .map(d -> project().newFileTree(Path.of(d), "**/*.class",
+                ClassFile.class,
                 false));
         return result;
     }

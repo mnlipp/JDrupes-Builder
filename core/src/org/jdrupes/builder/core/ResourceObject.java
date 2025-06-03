@@ -19,7 +19,6 @@
 package org.jdrupes.builder.core;
 
 import java.util.Objects;
-
 import org.jdrupes.builder.api.Resource;
 
 /// A base class for [Resource]s.

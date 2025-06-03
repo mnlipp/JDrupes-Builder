@@ -34,6 +34,7 @@ public final class LauncherSupport {
     /// if the root project creates its sub projects itself.
     ///
     /// @param rootProject the root project
+    /// @return the root project
     ///
     public static RootProject
             createRootProject(Class<? extends RootProject> rootProject) {

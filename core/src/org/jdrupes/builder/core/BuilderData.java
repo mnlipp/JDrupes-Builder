@@ -21,15 +21,15 @@ package org.jdrupes.builder.core;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.stream.Stream;
-import org.jdrupes.builder.api.Build;
+import org.jdrupes.builder.api.Project;
 import org.jdrupes.builder.api.Resource;
 import org.jdrupes.builder.api.ResourceProvider;
 import org.jdrupes.builder.api.ResourceRequest;
 import org.jdrupes.builder.core.FutureStreamCache.Key;
 
-/// A default implementation of a [Build].
+/// A context for building.
 ///
-public class DefaultBuild implements Build {
+public class BuilderData {
 
     private final FutureStreamCache cache;
     private ExecutorService executor
@@ -38,7 +38,7 @@ public class DefaultBuild implements Build {
     /// Instantiates a new default build. By default, the build uses
     /// a virtual thread per task executor.
     ///
-    public DefaultBuild() {
+    public BuilderData() {
         cache = new FutureStreamCache();
     }
 
@@ -58,11 +58,18 @@ public class DefaultBuild implements Build {
         this.executor = executor;
     }
 
-    @Override
-    public <T extends Resource> Stream<T> provide(ResourceProvider<?> provider,
+    /// Implements [Project#get].
+    ///
+    /// @param <T> the generic type
+    /// @param provider the provider
+    /// @param requested the requested
+    /// @return the stream
+    ///
+    public <T extends Resource> Stream<T> get(ResourceProvider<?> provider,
             ResourceRequest<T> requested) {
         return cache.computeIfAbsent(new Key<>(provider, requested),
             k -> new FutureStream<T>(executor, k.provider(), k.requested()))
             .stream();
     }
+
 }

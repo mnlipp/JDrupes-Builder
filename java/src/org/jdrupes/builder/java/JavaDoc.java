@@ -18,10 +18,8 @@
 
 package org.jdrupes.builder.java;
 
-import java.io.File;
 import java.nio.file.Path;
 import java.util.Collection;
-import java.util.EnumSet;
 import java.util.List;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -32,13 +30,10 @@ import javax.tools.ToolProvider;
 import org.jdrupes.builder.api.BuildException;
 import org.jdrupes.builder.api.FileResource;
 import org.jdrupes.builder.api.FileTree;
-import org.jdrupes.builder.api.Intend;
 import org.jdrupes.builder.api.Project;
 import org.jdrupes.builder.api.Resource;
 import org.jdrupes.builder.api.ResourceRequest;
-import org.jdrupes.builder.api.ResourceType;
 import org.jdrupes.builder.api.Resources;
-import org.jdrupes.builder.core.AbstractGenerator;
 import static org.jdrupes.builder.java.JavaConsts.*;
 
 public class JavaDoc extends JavaTool<FileTree<FileResource>> {

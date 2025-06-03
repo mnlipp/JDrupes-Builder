@@ -16,15 +16,12 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-/// A build system is a [provider][ResourceProvider] for [Resource]s.
-/// The build system's configuration typically bases the provisioning
-/// on specialized nested [ResourceProvider]s that handle the provisioning
-/// in a particular scope such as a [Project] or by transforming existing
-/// [Resource]s to new [Resource]s by executing a [Generator].
-
 package org.jdrupes.builder.core;
 
-import org.jdrupes.builder.api.Generator;
-import org.jdrupes.builder.api.Project;
-import org.jdrupes.builder.api.Resource;
-import org.jdrupes.builder.api.ResourceProvider;
+import org.jdrupes.builder.api.BuildContext;
+
+/// The core package's implementation of a [BuildContext].
+///
+public class DefaultBuildContext implements BuildContext {
+
+}

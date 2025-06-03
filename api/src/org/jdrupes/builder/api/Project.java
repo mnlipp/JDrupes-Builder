@@ -165,11 +165,25 @@ public interface Project extends ResourceProvider<Resource> {
         return directory().relativize(other);
     }
 
-    /// Returns the current build.
+    /// Obtains the resource stream for the given resource from the
+    /// given provider. The result from invoking the provider is
+    /// evaluated asynchronously and cached. Only when the returned
+    /// stream is terminated will the invocation block until the
+    /// result from the provider becomes available.
     ///
-    /// @return the builds the
+    /// Strictly speaking, this method is not a method of [Project]
+    /// as the it does not matter which instance of [Project] is
+    /// used to invoke the method. Like the factory methods ("`new...`")
+    /// this method is provided to simplify the implementation of a
+    /// [Project]'s constructor.
     ///
-    Build build();
+    /// @param <T> the requested resource type
+    /// @param provider the provider
+    /// @param requested the requested resource
+    /// @return the stream of resources
+    ///
+    <T extends Resource> Stream<T> get(ResourceProvider<?> provider,
+            ResourceRequest<T> requested);
 
     /// Returns a new file tree. The file tree includes all files
     /// matching `pattern` in the tree starting at `root`. `root`

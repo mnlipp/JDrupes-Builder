@@ -104,11 +104,9 @@ public class AppJarBuilder extends AbstractGenerator<JarFile> {
         Resources<FileTree<? extends Resource>> fileTrees
             = project().newResources(FileTree.class);
         providers.stream().flatMap(s -> s).forEach(provider -> {
-            fileTrees.addAll(project().build().provide(
-                provider, new ResourceRequest<>(
-                    new ResourceType<FileTree<ClassFile>>() {
-                    })));
-            fileTrees.addAll(project().build().provide(
+            fileTrees.addAll(project().get(
+                provider, new ResourceRequest<>(JavaConsts.JAVA_CLASS_FILES)));
+            fileTrees.addAll(project().get(
                 provider, new ResourceRequest<>(
                     new ResourceType<FileTree<ResourceFile>>() {
                     })));

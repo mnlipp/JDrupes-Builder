@@ -59,21 +59,14 @@ public abstract class AbstractGenerator<T extends Resource>
         return (G) this;
     }
 
-    /// Returns the generator's name.
-    ///
-    /// @return the string
-    ///
     @Override
     public String name() {
         return name;
     }
 
-    /// Return the project that this generator belongs to.
-    ///
-    /// @return the project
-    ///
     @Override
     public Project project() {
         return project;
     }
+
 }

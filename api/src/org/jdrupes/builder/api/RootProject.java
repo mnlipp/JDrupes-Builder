@@ -22,6 +22,17 @@ package org.jdrupes.builder.api;
 ///
 public interface RootProject extends Project {
 
+    /// May be overridden by the root project to configure the build.
+    /// This method must be invoked by the base class before it returns
+    /// control to the root project's constructor. The method is never
+    /// invoked by the user.
+    ///
+    /// @param buildContext the context to configure
+    ///
+    default void setupDefaults(BuildContext buildContext) {
+        // Default does nothing
+    }
+
     /// The default provisioning action.
     // TODO: Interaction with command line still to be defined.
     void provide();

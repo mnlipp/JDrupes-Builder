@@ -37,6 +37,9 @@ import org.jdrupes.builder.api.ResourceRequest;
 ///
 public class FutureStream<T extends Resource> {
 
+    @SuppressWarnings("PMD.FieldNamingConventions")
+    private static final ThreadLocal<Boolean> providerInvocationAllowed
+        = ThreadLocal.withInitial(() -> false);
     private final Future<List<T>> source;
 
     /// Instantiates a new future resources.
@@ -47,7 +50,22 @@ public class FutureStream<T extends Resource> {
     ///
     public FutureStream(ExecutorService executor, ResourceProvider<?> provider,
             ResourceRequest<T> requested) {
-        source = executor.submit(() -> provider.provide(requested).toList());
+        source = executor.submit(() -> {
+            try {
+                providerInvocationAllowed.set(true);
+                return provider.provide(requested).toList();
+            } finally {
+                providerInvocationAllowed.set(false);
+            }
+        });
+    }
+
+    /// Checks if is provider invocation is allowed.
+    ///
+    /// @return true, if is provider invocation allowed
+    ///
+    public static boolean isProviderInvocationAllowed() {
+        return providerInvocationAllowed.get();
     }
 
     /// Returns the lazily evaluated stream of resources.
