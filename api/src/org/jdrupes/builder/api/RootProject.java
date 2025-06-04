@@ -22,14 +22,16 @@ package org.jdrupes.builder.api;
 ///
 public interface RootProject extends Project {
 
-    /// May be overridden by the root project to configure the build.
+    /// May be overridden by the root project to apply common settings
+    /// to projects of specific types.
+    /// 
     /// This method must be invoked by the base class before it returns
     /// control to the root project's constructor. The method is never
     /// invoked by the user.
     ///
-    /// @param buildContext the context to configure
+    /// @param project the project to prepare
     ///
-    default void setupDefaults(BuildContext buildContext) {
+    default void prepareProject(Project project) {
         // Default does nothing
     }
 

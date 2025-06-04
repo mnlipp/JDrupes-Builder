@@ -68,8 +68,6 @@ public abstract class AbstractProject implements Project {
     private final Map<PropertyKey, Object> properties = new HashMap<>();
     // Only non null in the root project
     private BuilderData build;
-    // Only non null in the root project
-    private DefaultBuildContext buildContext;
 
     /* default */
     static void detectedSubprojects(List<Class<? extends Project>> subClasses) {
@@ -90,13 +88,12 @@ public abstract class AbstractProject implements Project {
             }
             initRootProject((Class<? extends Project>[]) detectedSubprojects
                 .get().toArray(new Class<?>[0]));
-            applyDefaults();
             return;
         }
 
         // Fallback, overridden when the parent explicitly adds a dependency.
         parent.dependency(this, Forward);
-        applyDefaults();
+        rootProject().prepareProject(this);
     }
 
     /// Base class constructor for the root project.
@@ -110,7 +107,6 @@ public abstract class AbstractProject implements Project {
                 "This constructor may only be called by a root project.");
         }
         initRootProject(subprojects);
-        applyDefaults();
     }
 
     @SuppressWarnings("PMD.UseVarargs")
@@ -122,14 +118,7 @@ public abstract class AbstractProject implements Project {
         for (var sub : subprojects) {
             projects.put(sub, null);
         }
-
-        // Allow root project to configure the build
-        buildContext = new DefaultBuildContext();
-        ((RootProject) this).setupDefaults(buildContext);
-    }
-
-    private void applyDefaults() {
-        var context = rootProject().buildContext;
+        ((RootProject) this).prepareProject(this);
     }
 
     /* default */ void createProjects() {
@@ -137,9 +126,9 @@ public abstract class AbstractProject implements Project {
     }
 
     @Override
-    public final AbstractProject rootProject() {
+    public final RootProject rootProject() {
         if (parent == null) {
-            return this;
+            return (RootProject) this;
         }
         return parent.rootProject();
     }

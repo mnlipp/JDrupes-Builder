@@ -2,22 +2,31 @@ package jdbld;
 
 import static org.jdrupes.builder.api.Intend.*;
 
+import java.nio.file.Path;
 import java.util.stream.Collectors;
 
-import org.jdrupes.builder.api.BuildContext;
 import org.jdrupes.builder.api.Intend;
+import org.jdrupes.builder.api.Project;
 import org.jdrupes.builder.api.ResourceRequest;
 import org.jdrupes.builder.api.RootProject;
 import org.jdrupes.builder.core.AbstractProject;
+import org.jdrupes.builder.core.ResourcesCollector;
 import org.jdrupes.builder.java.AppJarBuilder;
+import org.jdrupes.builder.java.JavaCompiler;
 import org.jdrupes.builder.java.JavaConsts;
-import org.jdrupes.builder.java.JavaDoc;
+import org.jdrupes.builder.java.Javadoc;
+import org.jdrupes.builder.java.JavaProject;
 
 public class Root extends AbstractProject implements RootProject {
 
     @Override
-    public void setupDefaults(BuildContext buildContext) {
-        int i = 0;
+    public void prepareProject(Project project) {
+        if (project instanceof JavaProject) {
+            project.generator(JavaCompiler::new)
+                .addSources(Path.of("src"), "**/*.java");
+            project.generator(ResourcesCollector::new)
+                .add(Path.of("resources"), "**/*");
+        }
     }
 
     public Root() {
@@ -32,15 +41,14 @@ public class Root extends AbstractProject implements RootProject {
         generator(AppJarBuilder::new).addAll(providers(Intend.CONTRIBUTORS));
 
         // Build javadoc
-        generator(JavaDoc::new).addSources(get(this,
+        generator(Javadoc::new).addSources(get(this,
             new ResourceRequest<>(JavaConsts.JAVA_SOURCE_FILES)));
     }
 
     public void provide() {
-        provide(new ResourceRequest<>(JavaConsts.JAR_FILE))
+        get(this, new ResourceRequest<>(JavaConsts.APP_JAR_FILE))
             .forEach(System.out::println);
-        provide(new ResourceRequest<>(JavaConsts.JAVADOC_DIRECTORY))
+        get(this, new ResourceRequest<>(JavaConsts.JAVADOC_DIRECTORY))
             .collect(Collectors.toSet()).stream().forEach(System.out::println);
-        ;
     }
 }

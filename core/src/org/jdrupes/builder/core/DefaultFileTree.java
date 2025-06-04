@@ -29,7 +29,10 @@ import java.nio.file.SimpleFileVisitor;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.time.Instant;
 import java.util.Objects;
+import java.util.Spliterators;
+import java.util.function.Consumer;
 import java.util.stream.Stream;
+import java.util.stream.StreamSupport;
 import org.jdrupes.builder.api.BuildException;
 import org.jdrupes.builder.api.FileResource;
 import org.jdrupes.builder.api.FileTree;
@@ -66,11 +69,7 @@ public class DefaultFileTree<T extends FileResource> extends DefaultResources<T>
             String pattern, Class<T> leafType, boolean withDirs) {
         super(FileTree.class);
         this.project = project;
-        if (project == null) {
-            this.root = root.toAbsolutePath();
-        } else {
-            this.root = project.directory().resolve(root).normalize();
-        }
+        this.root = root;
         this.pattern = pattern;
         this.withDirs = withDirs;
         this.leafType = leafType;
@@ -78,10 +77,14 @@ public class DefaultFileTree<T extends FileResource> extends DefaultResources<T>
 
     @Override
     public Path root(boolean relativize) {
-        if (relativize && project != null) {
-            return project.directory().relativize(root);
+        if (project == null) {
+            return root.toAbsolutePath();
         }
-        return root;
+        Path result = project.directory().resolve(root).normalize();
+        if (relativize) {
+            return project.directory().relativize(result);
+        }
+        return result;
     }
 
     @Override
@@ -94,7 +97,7 @@ public class DefaultFileTree<T extends FileResource> extends DefaultResources<T>
             return;
         }
         try {
-            find(root, pattern);
+            find(root(), pattern);
         } catch (IOException e) {
             log.log(java.util.logging.Level.SEVERE, e,
                 () -> "Problem scanning files: " + e.getMessage());
@@ -164,8 +167,21 @@ public class DefaultFileTree<T extends FileResource> extends DefaultResources<T>
 
     @Override
     public Stream<T> stream() {
-        fill();
-        return super.stream();
+        return StreamSupport
+            .stream(new Spliterators.AbstractSpliterator<>(Long.MAX_VALUE, 0) {
+
+                @Override
+                public void forEachRemaining(Consumer<? super T> action) {
+                    fill();
+                    DefaultFileTree.super.stream().forEach(action);
+                }
+
+                @Override
+                public boolean tryAdvance(Consumer<? super T> action) {
+                    // Not needed when forEachRemaining is implemented.
+                    return false;
+                }
+            }, false);
     }
 
     @Override
@@ -180,6 +196,7 @@ public class DefaultFileTree<T extends FileResource> extends DefaultResources<T>
         final PathMatcher pathMatcher = FileSystems.getDefault()
             .getPathMatcher("glob:" + pattern);
         try {
+            var root = root();
             Files.walkFileTree(root, new SimpleFileVisitor<>() {
 
                 @Override
@@ -232,7 +249,7 @@ public class DefaultFileTree<T extends FileResource> extends DefaultResources<T>
         final int prime = 31;
         int result = super.hashCode();
         result = prime * result
-            + Objects.hash(leafType, pattern, root, withDirs);
+            + Objects.hash(leafType, pattern, root(), withDirs);
         return result;
     }
 
@@ -250,12 +267,15 @@ public class DefaultFileTree<T extends FileResource> extends DefaultResources<T>
         DefaultFileTree<?> other = (DefaultFileTree<?>) obj;
         return Objects.equals(leafType, other.leafType)
             && Objects.equals(pattern, other.pattern)
-            && Objects.equals(root, other.root) && withDirs == other.withDirs;
+            && Objects.equals(root(), other.root())
+            && withDirs == other.withDirs;
     }
 
     @Override
     public String toString() {
+        var wasFilled = filled;
         fill();
+        filled = wasFilled;
         return "FileSet (type " + type().getSimpleName() + ") from "
             + (project != null
                 ? project.rootProject().directory().relativize(root)

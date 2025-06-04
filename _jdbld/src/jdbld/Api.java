@@ -1,16 +1,12 @@
 package jdbld;
 
-import java.nio.file.Path;
 import org.jdrupes.builder.core.AbstractProject;
-import org.jdrupes.builder.core.ResourcesCollector;
-import org.jdrupes.builder.java.JavaCompiler;
+import org.jdrupes.builder.java.JavaProject;
 
-public class Api extends AbstractProject {
+public class Api extends AbstractProject implements JavaProject {
 
     public Api() {
         name("api");
-        generator(JavaCompiler::new).addSources(Path.of("src"), "**/*.java");
-        generator(ResourcesCollector::new).add(Path.of("resources"), "**/*");
     }
 
 }

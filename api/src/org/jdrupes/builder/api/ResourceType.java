@@ -28,6 +28,11 @@ import java.util.Objects;
 ///
 public class ResourceType<T extends Resource> {
 
+    /// The Java class files.
+    public static final ResourceType<FileTree<ResourceFile>> RESOURCE_FILES
+        = new ResourceType<>() {
+        };
+
     private final Class<T> type;
     private final Class<? extends Resource> containedType;
 
@@ -56,7 +61,7 @@ public class ResourceType<T extends Resource> {
                 containedType = (Class<? extends Resource>) genType
                     .getActualTypeArguments()[0];
             } else {
-                type = (Class<T>) resourceType.getClass();
+                type = (Class<T>) resourceType;
                 containedType = null;
             }
         } catch (Exception e) {

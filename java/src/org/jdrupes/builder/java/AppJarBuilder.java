@@ -49,6 +49,7 @@ public class AppJarBuilder extends AbstractGenerator<JarFile> {
 
     private final List<Stream<? extends ResourceProvider<?>>> providers
         = new ArrayList<>();
+    private List<? extends ResourceProvider<?>> collectedProviders;
     private Path destination = Path.of("app");
 
     /// Instantiates a new app jar builder.
@@ -114,8 +115,7 @@ public class AppJarBuilder extends AbstractGenerator<JarFile> {
         "PMD.AvoidInstantiatingObjectsInLoops" })
     public <T extends Resource> Stream<T>
             provide(ResourceRequest<T> requested) {
-        if (!requested.type().isAssignableFrom(new ResourceType<JarFile>() {
-        })) {
+        if (!requested.type().isAssignableFrom(JavaConsts.APP_JAR_FILE)) {
             return Stream.empty();
         }
 
@@ -123,13 +123,14 @@ public class AppJarBuilder extends AbstractGenerator<JarFile> {
         log.fine(() -> "Getting app jar content for " + project().name());
         Resources<FileTree<? extends Resource>> fileTrees
             = project().newResources(FileTree.class);
-        providers.stream().flatMap(s -> s).forEach(provider -> {
-            fileTrees.addAll(project().get(
-                provider, new ResourceRequest<>(JavaConsts.JAVA_CLASS_FILES)));
-            fileTrees.addAll(project().get(
-                provider, new ResourceRequest<>(
-                    new ResourceType<FileTree<ResourceFile>>() {
-                    })));
+        if (collectedProviders == null) {
+            collectedProviders = providers.stream().flatMap(s -> s).toList();
+        }
+        collectedProviders.stream().forEach(provider -> {
+            fileTrees.addAll(project().get(provider,
+                new ResourceRequest<>(JavaConsts.JAVA_CLASS_FILES)));
+            fileTrees.addAll(project().get(provider,
+                new ResourceRequest<>(ResourceType.RESOURCE_FILES)));
         });
 
         // Prepare jar file
@@ -139,9 +140,8 @@ public class AppJarBuilder extends AbstractGenerator<JarFile> {
                 throw new BuildException("Cannot create directory " + destDir);
             }
         }
-        var jarResource = project()
-            .newFileResource(JarFile.class,
-                destDir.resolve(project().name() + ".jar"));
+        var jarResource = project().newFileResource(JarFile.class,
+            destDir.resolve(project().name() + ".jar"));
         if (jarResource.asOf().isAfter(fileTrees.asOf())) {
             return Stream.of((T) jarResource);
         }

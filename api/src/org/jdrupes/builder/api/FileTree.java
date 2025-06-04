@@ -23,7 +23,13 @@ import java.util.stream.Stream;
 
 /// The representation of a file tree. A file tree is a collection
 /// of [FileResource]s that are contained in a directory hierarchy
-/// with a common root. 
+/// with a common root.
+///
+/// Implementations of this interface must ensure that the content
+/// of the file tree is not evaluated before a terminal operation
+/// is performed on the [Stream] returned by [#entries]. The delayed
+/// evaluation includes resolving a relative path for root against
+/// the project's directory.
 ///
 /// @param <T> the generic type
 ///

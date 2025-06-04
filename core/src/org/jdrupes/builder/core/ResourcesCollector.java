@@ -83,9 +83,7 @@ public class ResourcesCollector
     @SuppressWarnings("unchecked")
     public <R extends Resource> Stream<R>
             provide(ResourceRequest<R> requested) {
-        if (!requested.type()
-            .isAssignableFrom(new ResourceType<FileTree<ResourceFile>>() {
-            })) {
+        if (!requested.type().isAssignableFrom(ResourceType.RESOURCE_FILES)) {
             return Stream.empty();
         }
         return (Stream<R>) fileTrees.stream();

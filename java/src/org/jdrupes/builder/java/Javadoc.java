@@ -38,7 +38,7 @@ import static org.jdrupes.builder.java.JavaConsts.*;
 
 /// A generator for creating the Javadoc.
 ///
-public class JavaDoc extends JavaTool<FileTree<FileResource>> {
+public class Javadoc extends JavaTool<FileTree<FileResource>> {
 
     private final Resources<FileTree<JavaSourceFile>> sources
         = project().newResources(FileResource.class);
@@ -48,7 +48,7 @@ public class JavaDoc extends JavaTool<FileTree<FileResource>> {
     ///
     /// @param project the project
     ///
-    public JavaDoc(Project project) {
+    public Javadoc(Project project) {
         super(project);
     }
 
@@ -66,7 +66,7 @@ public class JavaDoc extends JavaTool<FileTree<FileResource>> {
     /// @param destination the new destination
     /// @return the java compiler
     ///
-    public JavaDoc destination(Path destination) {
+    public Javadoc destination(Path destination) {
         this.destination = destination;
         return this;
     }
@@ -76,7 +76,7 @@ public class JavaDoc extends JavaTool<FileTree<FileResource>> {
     /// @param sources the sources
     /// @return the java compiler
     ///
-    public final JavaDoc addSources(FileTree<JavaSourceFile> sources) {
+    public final Javadoc addSources(FileTree<JavaSourceFile> sources) {
         this.sources.add(sources);
         return this;
     }
@@ -89,7 +89,7 @@ public class JavaDoc extends JavaTool<FileTree<FileResource>> {
     /// @param pattern the pattern
     /// @return the resources collector
     ///
-    public final JavaDoc addSources(Path directory, String pattern) {
+    public final Javadoc addSources(Path directory, String pattern) {
         addSources(
             project().newFileTree(directory, pattern, JavaSourceFile.class));
         return this;
@@ -100,7 +100,7 @@ public class JavaDoc extends JavaTool<FileTree<FileResource>> {
     /// @param sources the sources
     /// @return the java compiler
     ///
-    public final JavaDoc addSources(Stream<FileTree<JavaSourceFile>> sources) {
+    public final Javadoc addSources(Stream<FileTree<JavaSourceFile>> sources) {
         this.sources.addAll(sources);
         return this;
     }
@@ -146,7 +146,10 @@ public class JavaDoc extends JavaTool<FileTree<FileResource>> {
         } finally {
             logDiagnostics(diagnostics);
         }
-        return Stream.empty();
+        @SuppressWarnings("unchecked")
+        var result = (Stream<T>) Stream
+            .of(project().newFileResource(JavadocDirectory.class, destDir));
+        return result;
     }
 
 }

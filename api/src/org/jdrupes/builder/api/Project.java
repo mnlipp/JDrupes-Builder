@@ -66,7 +66,7 @@ public interface Project extends ResourceProvider<Resource> {
     ///
     /// @return the project
     ///
-    Project rootProject();
+    RootProject rootProject();
 
     /// Returns the instance of the given project class. Projects
     /// are created lazily by the builder and must be accessed
