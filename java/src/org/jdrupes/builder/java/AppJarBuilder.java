@@ -21,9 +21,7 @@ package org.jdrupes.builder.java;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.ArrayList;
 import java.util.LinkedHashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.jar.Attributes;
 import java.util.jar.JarEntry;
@@ -36,20 +34,19 @@ import org.jdrupes.builder.api.BuildException;
 import org.jdrupes.builder.api.FileTree;
 import org.jdrupes.builder.api.Project;
 import org.jdrupes.builder.api.Resource;
-import org.jdrupes.builder.api.ResourceFile;
 import org.jdrupes.builder.api.ResourceProvider;
 import org.jdrupes.builder.api.ResourceRequest;
 import org.jdrupes.builder.api.ResourceType;
 import org.jdrupes.builder.api.Resources;
 import org.jdrupes.builder.core.AbstractGenerator;
+import org.jdrupes.builder.core.CachedStream;
 
 /// The Class AppJarBuilder.
 ///
 public class AppJarBuilder extends AbstractGenerator<JarFile> {
 
-    private final List<Stream<? extends ResourceProvider<?>>> providers
-        = new ArrayList<>();
-    private List<? extends ResourceProvider<?>> collectedProviders;
+    private final CachedStream<ResourceProvider<?>> providers
+        = new CachedStream<>();
     private Path destination = Path.of("app");
 
     /// Instantiates a new app jar builder.
@@ -123,10 +120,7 @@ public class AppJarBuilder extends AbstractGenerator<JarFile> {
         log.fine(() -> "Getting app jar content for " + project().name());
         Resources<FileTree<? extends Resource>> fileTrees
             = project().newResources(FileTree.class);
-        if (collectedProviders == null) {
-            collectedProviders = providers.stream().flatMap(s -> s).toList();
-        }
-        collectedProviders.stream().forEach(provider -> {
+        providers.stream().forEach(provider -> {
             fileTrees.addAll(project().get(provider,
                 new ResourceRequest<>(JavaConsts.JAVA_CLASS_FILES)));
             fileTrees.addAll(project().get(provider,
