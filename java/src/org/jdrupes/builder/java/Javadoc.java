@@ -133,7 +133,10 @@ public class Javadoc extends JavaTool<FileTree<FileResource>> {
                 = fileManager.getJavaFileObjectsFromPaths(sourcePaths());
             if (!javadoc.getTask(null, fileManager, diagnostics, null,
                 List.of(// "-locale", "en_US",
-                    "-d", destDir.toString(), "-quiet"),
+                    "-d", destDir.toString(), "-quiet",
+                    "-overview",
+                    project().rootProject().directory().resolve("overview.md")
+                        .toString()),
                 sourceFiles).call()) {
                 throw new BuildException("Documentation generation failed");
             }
