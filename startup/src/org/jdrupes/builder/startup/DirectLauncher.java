@@ -18,12 +18,7 @@
 
 package org.jdrupes.builder.startup;
 
-import java.io.IOException;
-import java.io.InputStream;
-import java.nio.file.Files;
-import java.nio.file.Path;
 import java.util.ArrayList;
-import java.util.logging.LogManager;
 import java.util.stream.Stream;
 import org.jdrupes.builder.api.Launcher;
 import org.jdrupes.builder.api.Masked;
@@ -55,27 +50,10 @@ public class DirectLauncher extends AbstractLauncher {
             var subprojects = new ArrayList<Class<? extends Project>>();
             findProjects(classloader, rootProjects, subprojects);
             rootProject = LauncherSupport
-                .createProjects(rootProjects.get(0), subprojects);
+                .createProjects(rootProjects.get(0), subprojects, jdbldProps);
             rootProject.provide();
             return null;
         });
-    }
-
-    static {
-        InputStream props;
-        try {
-            props = Files.newInputStream(
-                Path.of("_jdbld", "logging.properties"));
-        } catch (IOException e) {
-            props = BootstrapLauncher.class
-                .getResourceAsStream("logging.properties");
-        }
-        // Get logging properties from file and put them in effect
-        try (var from = props) {
-            LogManager.getLogManager().readConfiguration(from);
-        } catch (SecurityException | IOException e) {
-            e.printStackTrace(); // NOPMD
-        }
     }
 
     @Override

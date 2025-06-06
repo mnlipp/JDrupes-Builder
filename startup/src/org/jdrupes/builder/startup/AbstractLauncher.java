@@ -19,13 +19,18 @@
 package org.jdrupes.builder.startup;
 
 import java.io.IOException;
+import java.io.InputStream;
 import java.lang.reflect.Modifier;
 import java.net.URISyntaxException;
 import java.net.URL;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
+import java.util.Properties;
 import java.util.concurrent.Callable;
+import java.util.logging.LogManager;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
 import org.jdrupes.builder.api.BuildException;
@@ -34,12 +39,50 @@ import org.jdrupes.builder.api.Launcher;
 import org.jdrupes.builder.api.Masked;
 import org.jdrupes.builder.api.Project;
 import org.jdrupes.builder.api.RootProject;
+import org.jdrupes.builder.core.BuilderData;
 import org.jdrupes.builder.core.DefaultFileTree;
 import org.jdrupes.builder.java.ClassFile;
 
 /// A default implementation of a [Launcher].
 ///
 public abstract class AbstractLauncher implements Launcher {
+
+    @SuppressWarnings("PMD.FieldNamingConventions")
+    protected static final Properties jdbldProps;
+
+    static {
+        // Get builder configuration
+        Properties fallbacks = new Properties();
+        fallbacks.putAll(Map.of(BuilderData.JDBLD_DIRECTORY, "_jdbld"));
+        jdbldProps = new Properties(fallbacks);
+        var propsPath
+            = Path.of("").toAbsolutePath().resolve(".jdbld.properties");
+        if (propsPath.toFile().canRead()) {
+            try {
+                jdbldProps.load(Files.newBufferedReader(propsPath));
+            } catch (IOException e) {
+                throw new BuildException(
+                    "Cannot read properties from " + propsPath, e);
+            }
+        }
+
+        // Get logging configuration
+        InputStream props;
+        try {
+            props = Files.newInputStream(
+                Path.of(jdbldProps.getProperty(BuilderData.JDBLD_DIRECTORY),
+                    "logging.properties"));
+        } catch (IOException e) {
+            props = BootstrapLauncher.class
+                .getResourceAsStream("logging.properties");
+        }
+        // Get logging properties from file and put them in effect
+        try (var from = props) {
+            LogManager.getLogManager().readConfiguration(from);
+        } catch (SecurityException | IOException e) {
+            e.printStackTrace(); // NOPMD
+        }
+    }
 
     /// The log.
     protected final Logger log = Logger.getLogger(getClass().getName());

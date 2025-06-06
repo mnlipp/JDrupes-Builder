@@ -18,9 +18,11 @@
 
 package org.jdrupes.builder.core;
 
+import java.nio.file.Path;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.stream.Stream;
+import org.jdrupes.builder.api.BuildContext;
 import org.jdrupes.builder.api.Project;
 import org.jdrupes.builder.api.Resource;
 import org.jdrupes.builder.api.ResourceProvider;
@@ -29,8 +31,9 @@ import org.jdrupes.builder.core.FutureStreamCache.Key;
 
 /// A context for building.
 ///
-public class BuilderData {
+public class BuilderData implements BuildContext {
 
+    public static final String JDBLD_DIRECTORY = "jdbldDirectory";
     private final FutureStreamCache cache;
     private ExecutorService executor
         = Executors.newVirtualThreadPerTaskExecutor();
@@ -38,7 +41,7 @@ public class BuilderData {
     /// Instantiates a new default build. By default, the build uses
     /// a virtual thread per task executor.
     ///
-    public BuilderData() {
+    /* default */ BuilderData() {
         cache = new FutureStreamCache();
     }
 
@@ -70,6 +73,12 @@ public class BuilderData {
         return cache.computeIfAbsent(new Key<>(provider, requested),
             k -> new FutureStream<T>(executor, k.provider(), k.requested()))
             .stream();
+    }
+
+    @Override
+    public Path jdbldDirectory() {
+        return Path
+            .of(LauncherSupport.jdbldProperties().getProperty(JDBLD_DIRECTORY));
     }
 
 }

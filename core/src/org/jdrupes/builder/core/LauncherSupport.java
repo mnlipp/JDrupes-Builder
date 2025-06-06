@@ -20,12 +20,15 @@ package org.jdrupes.builder.core;
 
 import java.lang.reflect.InvocationTargetException;
 import java.util.List;
+import java.util.Properties;
 import org.jdrupes.builder.api.Project;
 import org.jdrupes.builder.api.RootProject;
 
 /// Provides support for creating projects based on [AbstractProject].
 ///
 public final class LauncherSupport {
+
+    private static Properties jdbldProps;
 
     private LauncherSupport() {
     }
@@ -38,12 +41,14 @@ public final class LauncherSupport {
     ///
     /// @param rootProject the root project
     /// @param subprojects the sub projects
+    /// @param jdbldProps the builder properties
     /// @return the root project
     ///
     public static RootProject createProjects(
             Class<? extends RootProject> rootProject,
-            List<Class<? extends Project>> subprojects) {
+            List<Class<? extends Project>> subprojects, Properties jdbldProps) {
         try {
+            LauncherSupport.jdbldProps = jdbldProps;
             var result = rootProject.getConstructor().newInstance();
             subprojects.forEach(result::project);
             return result;
@@ -53,6 +58,10 @@ public final class LauncherSupport {
                 | NoSuchMethodException e) {
             throw new IllegalArgumentException(e);
         }
+    }
+
+    /* default */ static Properties jdbldProperties() {
+        return jdbldProps;
     }
 
 }

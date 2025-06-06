@@ -89,6 +89,12 @@ public interface Project extends ResourceProvider<Resource> {
     ///
     Path directory();
 
+    /// Returns the build context.
+    ///
+    /// @return the builder configuration
+    ///
+    BuildContext context();
+    
     /// Returns the directory where the project's [Generator]s should
     /// create the artifacts. This is short for 
     /// `directory().resolve((Path) get(Properties.BuildDirectory))`.

@@ -39,13 +39,13 @@ public class BootstrapBuild extends AbstractProject implements Masked {
     public BootstrapBuild() {
         super(BootstrapRoot.class);
         // TODO: support for starting from jar
-        directory(Path.of(".jdbld"));
+        directory(context().jdbldDirectory());
         dependency(
             new ClasspathScanner(this, System.getProperty("java.class.path")),
             Intend.Consume);
         // TODO: configurable pattern
-        var bldrDirs = newFileTree(Path.of("").toAbsolutePath(), "**/_jdbld",
-            true);
+        var bldrDirs = newFileTree(Path.of("").toAbsolutePath(),
+            "**/" + context().jdbldDirectory().toString(), true);
         var srcTrees = bldrDirs.stream()
             .map(r -> newFileTree(r.path().resolve("src"), "**/*.java",
                 JavaSourceFile.class));

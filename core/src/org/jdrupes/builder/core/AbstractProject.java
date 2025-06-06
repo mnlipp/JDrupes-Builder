@@ -20,7 +20,6 @@ package org.jdrupes.builder.core;
 
 import java.lang.reflect.InvocationTargetException;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.Collections;
 import java.util.EnumSet;
 import java.util.HashMap;
@@ -65,13 +64,14 @@ public abstract class AbstractProject implements Project {
     @SuppressWarnings("PMD.UseConcurrentHashMap")
     private final Map<PropertyKey, Object> properties = new HashMap<>();
     // Only non null in the root project
-    private BuilderData build;
+    private BuilderData context;
 
     /// Base class constructor for root projects and subprojects that
     /// do not specify a parent. In the latter case, automatically adds a
     /// [Intend#Forward] dependency between the root project and the
     /// new project.
     ///
+    @SuppressWarnings("PMD.ConstructorCallsOverridableMethod")
     protected AbstractProject() {
         parent = fallbackParent.get();
         if (this instanceof RootProject) {
@@ -81,6 +81,7 @@ public abstract class AbstractProject implements Project {
             }
             // ConcurrentHashMap does not support null values.
             projects = Collections.synchronizedMap(new HashMap<>());
+            context = new BuilderData();
         } else {
             parent.dependency(this, Forward);
         }
@@ -172,15 +173,15 @@ public abstract class AbstractProject implements Project {
     }
 
     /// Sets the project's directory. The path is resolved against the
-    /// parent project's directory. If the project is the root project,
-    /// the path is resolved against the current working directory.
+    /// parent project's directory. You cannot set the directory of the
+    /// root project. It is always the current working directory.
     ///
     /// @param path the directory
     /// @return the project
     ///
     public AbstractProject directory(Path path) {
         if (parent == null) {
-            directory = Paths.get("").toAbsolutePath().resolve(path);
+            throw new BuildException("Cannot set directory of root project.");
         } else {
             directory = path;
         }
@@ -251,12 +252,10 @@ public abstract class AbstractProject implements Project {
             .toList().stream().flatMap(r -> r);
     }
 
-    private BuilderData context() {
-        AbstractProject root = (AbstractProject) rootProject();
-        if (root.build != null) {
-            return root.build;
-        }
-        return root.build = new BuilderData();
+    @Override
+    @SuppressWarnings("PMD.AvoidSynchronizedStatement")
+    public BuilderData context() {
+        return ((AbstractProject) rootProject()).context;
     }
 
     @Override
