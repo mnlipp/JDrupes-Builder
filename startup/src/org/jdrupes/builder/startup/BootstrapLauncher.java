@@ -37,7 +37,8 @@ public class BootstrapLauncher extends AbstractLauncher {
 
     /// The log.
     protected final Logger log = Logger.getLogger(getClass().getName());
-    /* default */static String[] forwardedArgs;
+    /* default */@SuppressWarnings("PMD.MutableStaticState")
+    static String[] forwardedArgs;
     private RootProject rootProject;
 
     /// Instantiates a new bootstrap launcher. An instance of the class
