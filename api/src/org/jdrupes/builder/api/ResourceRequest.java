@@ -68,6 +68,15 @@ public class ResourceRequest<T extends Resource> {
         return type;
     }
 
+    /// Checks if this request requests a resource of the given type.
+    ///
+    /// @param other the other
+    /// @return true, if successful
+    ///
+    public boolean wants(ResourceType<?> other) {
+        return type().isAssignableFrom(other);
+    }
+    
     /// Return the restriction.
     ///
     /// @return the restriction

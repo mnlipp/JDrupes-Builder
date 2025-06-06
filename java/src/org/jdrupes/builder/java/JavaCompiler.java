@@ -130,13 +130,13 @@ public class JavaCompiler extends JavaTool<FileTree<ClassFile>> {
 
     @Override
     public <T extends Resource> Stream<T>
-            provide(ResourceRequest<T> requested) {
-        if (requested.type().isAssignableFrom(JAVA_SOURCE_FILES)) {
+            provide(ResourceRequest<T> request) {
+        if (request.wants(JAVA_SOURCE_FILES)) {
             @SuppressWarnings("unchecked")
             var result = (Stream<T>) sources.stream();
             return result;
         }
-        if (!requested.type().isAssignableFrom(JAVA_CLASS_FILES)) {
+        if (!request.wants(JAVA_CLASS_FILES) && !request.wants(CLEANINESS)) {
             return Stream.empty();
         }
 
@@ -144,6 +144,10 @@ public class JavaCompiler extends JavaTool<FileTree<ClassFile>> {
         var destDir = project().buildDirectory().resolve(destination);
         final var classSet = project().newFileTree(
             destDir, "**/*", ClassFile.class);
+        if (request.wants(CLEANINESS)) {
+            classSet.delete();
+            return Stream.empty();
+        }
 
         // Get classpath for compilation.
         log.fine(() -> "Getting classpath for " + project());

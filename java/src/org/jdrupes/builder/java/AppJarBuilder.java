@@ -103,7 +103,7 @@ public class AppJarBuilder extends AbstractGenerator<JarFile> {
     /// Provides the jar.
     ///
     /// @param <T> the generic type
-    /// @param requested the requested
+    /// @param request the requested
     /// @return the stream
     ///
     @Override
@@ -111,8 +111,25 @@ public class AppJarBuilder extends AbstractGenerator<JarFile> {
         "PMD.CollapsibleIfStatements", "unchecked",
         "PMD.AvoidInstantiatingObjectsInLoops" })
     public <T extends Resource> Stream<T>
-            provide(ResourceRequest<T> requested) {
-        if (!requested.type().isAssignableFrom(JavaConsts.APP_JAR_FILE)) {
+            provide(ResourceRequest<T> request) {
+        if (!request.wants(JavaConsts.APP_JAR_FILE)
+            && !request.wants(JavaConsts.CLEANINESS)) {
+            return Stream.empty();
+        }
+
+        // Prepare jar file
+        var destDir = project().buildDirectory().resolve("app");
+        if (!destDir.toFile().exists()) {
+            if (!destDir.toFile().mkdirs()) {
+                throw new BuildException("Cannot create directory " + destDir);
+            }
+        }
+        var jarResource = project().newFileResource(JarFile.class,
+            destDir.resolve(project().name() + ".jar"));
+
+        // Maybe only delete
+        if (request.wants(JavaConsts.CLEANINESS)) {
+            jarResource.delete();
             return Stream.empty();
         }
 
@@ -127,19 +144,16 @@ public class AppJarBuilder extends AbstractGenerator<JarFile> {
                 new ResourceRequest<>(ResourceType.RESOURCE_FILES)));
         });
 
-        // Prepare jar file
-        var destDir = project().buildDirectory().resolve("app");
-        if (!destDir.toFile().exists()) {
-            if (!destDir.toFile().mkdirs()) {
-                throw new BuildException("Cannot create directory " + destDir);
-            }
-        }
-        var jarResource = project().newFileResource(JarFile.class,
-            destDir.resolve(project().name() + ".jar"));
+        // Check if rebuild needed.
         if (jarResource.asOf().isAfter(fileTrees.asOf())) {
             return Stream.of((T) jarResource);
         }
+        buildJar(jarResource, fileTrees);
+        return Stream.of((T) jarResource);
+    }
 
+    private void buildJar(JarFile jarResource,
+            Resources<FileTree<? extends Resource>> fileTrees) {
         // Build jar
         log.info(() -> "Building application jar in " + project().name());
         var entries = new LinkedHashMap<Path, Path>();
@@ -169,9 +183,6 @@ public class AppJarBuilder extends AbstractGenerator<JarFile> {
         } catch (IOException e) {
             throw new BuildException(e);
         }
-
-        // The result is the jar.
-        return Stream.of((T) jarResource);
     }
 
     private void addEntries(Map<Path, Path> entries,

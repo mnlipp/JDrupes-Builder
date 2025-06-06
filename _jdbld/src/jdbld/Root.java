@@ -46,6 +46,8 @@ public class Root extends AbstractProject implements RootProject {
     }
 
     public void provide() {
+        get(this, new ResourceRequest<>(JavaConsts.CLEANINESS))
+            .forEach(System.out::println);
         get(this, new ResourceRequest<>(JavaConsts.APP_JAR_FILE))
             .forEach(System.out::println);
         get(this, new ResourceRequest<>(JavaConsts.JAVADOC_DIRECTORY))

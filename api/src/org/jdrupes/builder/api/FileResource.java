@@ -31,4 +31,9 @@ public interface FileResource extends Resource {
     ///
     Path path();
 
+    /// Convenience method for deleting the file.
+    ///
+    default void delete() {
+        path().toFile().delete();
+    }
 }

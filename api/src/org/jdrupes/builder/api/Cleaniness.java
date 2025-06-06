@@ -18,26 +18,9 @@
 
 package org.jdrupes.builder.api;
 
-/// Models a [ResourceProvider] that generates new [Resource]s (artifacts)
-/// and makes them available to a [Project].
+/// A phony resource that (when requested) causes a generator to remove
+/// its generated outputs.
 ///
-/// All generators must handle requests for [Cleaniness].
-///
-/// @param <T> the type of the resources that this generator provides
-///
-@SuppressWarnings("PMD.ShortClassName")
-public interface Generator<T extends Resource> extends ResourceProvider<T> {
-
-    /// Returns the generator's name.
-    ///
-    /// @return the string
-    ///
-    String name();
-
-    /// Returns the project that this generator belongs to.
-    ///
-    /// @return the project
-    ///
-    Project project();
+public class Cleaniness implements Resource {
 
 }

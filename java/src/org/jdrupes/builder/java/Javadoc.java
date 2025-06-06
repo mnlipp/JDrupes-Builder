@@ -119,14 +119,23 @@ public class Javadoc extends JavaTool<FileTree<FileResource>> {
     @SuppressWarnings({ "PMD.AvoidCatchingGenericException",
         "PMD.ExceptionAsFlowControl" })
     public <T extends Resource> Stream<T>
-            provide(ResourceRequest<T> requested) {
-        if (!requested.type().isAssignableFrom(JAVADOC_DIRECTORY)) {
+            provide(ResourceRequest<T> request) {
+        if (!request.wants(JAVADOC_DIRECTORY) && !request.wants(CLEANINESS)) {
             return Stream.empty();
         }
 
+        // Get destination and check if we only have to cleanup.
+        var destDir = project().buildDirectory().resolve(destination);
+        var generated = project().newFileTree(destDir, "**/*");
+        if (request.wants(CLEANINESS)) {
+            generated.delete();
+            destDir.toFile().delete();
+            return Stream.empty();
+        }
+
+        // Generate
         var javadoc = ToolProvider.getSystemDocumentationTool();
         var diagnostics = new DiagnosticCollector<JavaFileObject>();
-        var destDir = project().buildDirectory().resolve(destination);
         try (var fileManager
             = javadoc.getStandardFileManager(diagnostics, null, null)) {
             var sourceFiles
