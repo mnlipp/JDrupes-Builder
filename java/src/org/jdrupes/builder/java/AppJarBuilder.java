@@ -23,6 +23,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.LinkedHashMap;
 import java.util.Map;
+import java.util.Optional;
 import java.util.jar.Attributes;
 import java.util.jar.JarEntry;
 import java.util.jar.JarOutputStream;
@@ -48,7 +49,7 @@ public class AppJarBuilder extends AbstractGenerator<JarFile> {
 
     private final CachedStream<ResourceProvider<?>> providers
         = new CachedStream<>();
-    private Path destination = Path.of("app");
+    private Path destination;
     private String mainClass;
 
     /// Instantiates a new app jar builder.
@@ -90,8 +91,9 @@ public class AppJarBuilder extends AbstractGenerator<JarFile> {
     ///
     /// @param mainClass the new main class
     ///
-    public void mainClass(String mainClass) {
+    public AppJarBuilder mainClass(String mainClass) {
         this.mainClass = mainClass;
+        return this;
     }
 
     /// Adds the given providers. Each provider is asked to provide
@@ -135,7 +137,8 @@ public class AppJarBuilder extends AbstractGenerator<JarFile> {
         }
 
         // Prepare jar file
-        var destDir = project().buildDirectory().resolve("app");
+        var destDir = Optional.ofNullable(destination)
+            .orElseGet(() -> project().buildDirectory().resolve("app"));
         if (!destDir.toFile().exists()) {
             if (!destDir.toFile().mkdirs()) {
                 throw new BuildException("Cannot create directory " + destDir);
