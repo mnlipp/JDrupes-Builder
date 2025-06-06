@@ -37,7 +37,7 @@ public class BootstrapLauncher extends AbstractLauncher {
 
     /// The log.
     protected final Logger log = Logger.getLogger(getClass().getName());
-
+    /* default */static String[] forwardedArgs;
     private RootProject rootProject;
 
     /// Instantiates a new bootstrap launcher. An instance of the class
@@ -54,7 +54,7 @@ public class BootstrapLauncher extends AbstractLauncher {
         unwrapBuildException(() -> {
             this.rootProject = LauncherSupport.createProjects(rootProject,
                 Collections.emptyList(), jdbldProps);
-            this.rootProject.provide();
+            this.rootProject.execute("bootstrap");
             return null;
         });
     }
@@ -74,6 +74,7 @@ public class BootstrapLauncher extends AbstractLauncher {
     /// @param args the arguments
     ///
     public static void main(String[] args) {
+        forwardedArgs = args;
         new BootstrapLauncher(BootstrapRoot.class);
     }
 }

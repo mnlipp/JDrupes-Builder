@@ -36,10 +36,11 @@ import org.jdrupes.builder.api.Project;
 import org.jdrupes.builder.api.Resource;
 import org.jdrupes.builder.api.ResourceProvider;
 import org.jdrupes.builder.api.ResourceRequest;
-import org.jdrupes.builder.api.ResourceType;
+import static org.jdrupes.builder.api.ResourceType.*;
 import org.jdrupes.builder.api.Resources;
 import org.jdrupes.builder.core.AbstractGenerator;
 import org.jdrupes.builder.core.CachedStream;
+import static org.jdrupes.builder.java.JavaConsts.*;
 
 /// The Class AppJarBuilder.
 ///
@@ -112,8 +113,7 @@ public class AppJarBuilder extends AbstractGenerator<JarFile> {
         "PMD.AvoidInstantiatingObjectsInLoops" })
     public <T extends Resource> Stream<T>
             provide(ResourceRequest<T> request) {
-        if (!request.wants(JavaConsts.APP_JAR_FILE)
-            && !request.wants(JavaConsts.CLEANINESS)) {
+        if (!request.wants(APP_JAR_FILE) && !request.wants(CLEANINESS)) {
             return Stream.empty();
         }
 
@@ -128,7 +128,7 @@ public class AppJarBuilder extends AbstractGenerator<JarFile> {
             destDir.resolve(project().name() + ".jar"));
 
         // Maybe only delete
-        if (request.wants(JavaConsts.CLEANINESS)) {
+        if (request.wants(CLEANINESS)) {
             jarResource.delete();
             return Stream.empty();
         }
@@ -139,9 +139,9 @@ public class AppJarBuilder extends AbstractGenerator<JarFile> {
             = project().newResources(FileTree.class);
         providers.stream().forEach(provider -> {
             fileTrees.addAll(project().get(provider,
-                new ResourceRequest<>(JavaConsts.JAVA_CLASS_FILES)));
+                new ResourceRequest<>(JAVA_CLASS_FILES)));
             fileTrees.addAll(project().get(provider,
-                new ResourceRequest<>(ResourceType.RESOURCE_FILES)));
+                new ResourceRequest<>(RESOURCE_FILES)));
         });
 
         // Check if rebuild needed.

@@ -43,15 +43,19 @@ public class DirectLauncher extends AbstractLauncher {
     /// other classes found as direct sub projects.
     ///
     /// @param classloader the classloader
+    /// @param args the arguments
     ///
-    public DirectLauncher(ClassLoader classloader) {
+    @SuppressWarnings("PMD.UseVarargs")
+    public DirectLauncher(ClassLoader classloader, String[] args) {
         unwrapBuildException(() -> {
             var rootProjects = new ArrayList<Class<? extends RootProject>>();
             var subprojects = new ArrayList<Class<? extends Project>>();
             findProjects(classloader, rootProjects, subprojects);
             rootProject = LauncherSupport
                 .createProjects(rootProjects.get(0), subprojects, jdbldProps);
-            rootProject.provide();
+            for (var arg : args) {
+                rootProject.execute(arg);
+            }
             return null;
         });
     }
@@ -74,6 +78,7 @@ public class DirectLauncher extends AbstractLauncher {
     /// @param args the arguments
     ///
     public static void main(String[] args) {
-        new DirectLauncher(Thread.currentThread().getContextClassLoader());
+        new DirectLauncher(Thread.currentThread().getContextClassLoader(),
+            args);
     }
 }

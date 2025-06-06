@@ -35,7 +35,16 @@ public interface RootProject extends Project {
         // Default does nothing
     }
 
-    /// The default provisioning action.
-    // TODO: Interaction with command line still to be defined.
-    void provide();
+    /// By default, every root project has a clean target.
+    ///
+    default void clean() {
+        get(this, new ResourceRequest<>(ResourceType.CLEANINESS))
+            .forEach(System.out::println);
+    }
+
+    /// Execute the project's public method with the given name.
+    ///
+    /// @param name the name
+    ///
+    void execute(String name);
 }

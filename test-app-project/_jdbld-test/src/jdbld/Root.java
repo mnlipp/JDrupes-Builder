@@ -11,7 +11,7 @@ public class Root extends AbstractProject implements RootProject {
     public Root() {
     }
 
-    public void provide() {
+    public void build() {
         provide(new ResourceRequest<>(new ResourceType<JarFile>() {
         })).forEach(System.out::println);
     }

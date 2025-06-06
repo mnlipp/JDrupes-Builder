@@ -44,8 +44,9 @@ public class BootstrapRoot extends AbstractProject
         dependency(project(BootstrapBuild.class), Intend.Forward);
     }
 
-    @Override
-    public void provide() {
+    /// Bootstrap.
+    ///
+    public void bootstrap() {
         var cpUrls = Stream.concat(
             provide(new ResourceRequest<>(JavaConsts.JAVA_CLASS_FILES)),
             provide(new ResourceRequest<>(ResourceType.RESOURCE_FILES)))
@@ -58,6 +59,7 @@ public class BootstrapRoot extends AbstractProject
                 }
             }).toArray(URL[]::new);
         new DirectLauncher(new URLClassLoader(cpUrls,
-            Thread.currentThread().getContextClassLoader()));
+            Thread.currentThread().getContextClassLoader()),
+            BootstrapLauncher.forwardedArgs);
     }
 }

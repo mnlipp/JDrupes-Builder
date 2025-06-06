@@ -33,6 +33,11 @@ public class ResourceType<T extends Resource> {
         = new ResourceType<>() {
         };
 
+    /// Used to request cleanup.
+    public static final ResourceType<Cleaniness> CLEANINESS
+        = new ResourceType<>() {
+        };
+
     private final Class<T> type;
     private final Class<? extends Resource> containedType;
 

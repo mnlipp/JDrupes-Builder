@@ -19,6 +19,7 @@
 package org.jdrupes.builder.core;
 
 import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
 import java.nio.file.Path;
 import java.util.Collections;
 import java.util.EnumSet;
@@ -289,6 +290,22 @@ public abstract class AbstractProject implements Project {
         }
         properties.put(property, value);
         return this;
+    }
+
+    /// Implements [RootProject#execute].
+    ///
+    /// @param name the name
+    ///
+    public void execute(String name) {
+        try {
+            Method method = getClass().getMethod(name);
+            method.invoke(this);
+        } catch (NoSuchMethodException | SecurityException
+                | IllegalAccessException | IllegalArgumentException
+                | InvocationTargetException e) {
+            throw new BuildException("Project " + this + " does not support "
+                + name, e);
+        }
     }
 
     @Override
