@@ -39,7 +39,8 @@ public class Root extends AbstractProject implements RootProject {
 
         // Build app jar
         generator(AppJarBuilder::new).addAll(providers(Intend.CONTRIBUTORS))
-            .mainClass("org.jdrupes.builder.startup.BootstrapLauncher");
+            .mainClass("org.jdrupes.builder.startup.BootstrapLauncher")
+            .destination(directory().resolve(Path.of("_jdbld", "app")));
 
         // Build javadoc
         generator(Javadoc::new).addSources(get(this,
