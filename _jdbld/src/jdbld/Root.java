@@ -30,7 +30,7 @@ public class Root extends AbstractProject implements RootProject {
     }
 
     public Root() {
-        name("jdbuilder");
+        name("jdrupes-builder");
 
         dependency(project(Api.class), Expose);
         dependency(project(Core.class), Expose);
@@ -38,7 +38,8 @@ public class Root extends AbstractProject implements RootProject {
         dependency(project(Startup.class), Expose);
 
         // Build app jar
-        generator(AppJarBuilder::new).addAll(providers(Intend.CONTRIBUTORS));
+        generator(AppJarBuilder::new).addAll(providers(Intend.CONTRIBUTORS))
+            .mainClass("org.jdrupes.builder.startup.BootstrapLauncher");
 
         // Build javadoc
         generator(Javadoc::new).addSources(get(this,

@@ -328,8 +328,9 @@ public abstract class AbstractProject implements Project {
 
     @Override
     public String toString() {
-        return "Project " + name() + " (in "
-            + rootProject().directory().relativize(directory()) + ")";
+        var relDir = rootProject().directory().relativize(directory());
+        return "Project " + name() + (relDir.toString().isBlank() ? ""
+            : (" (in " + relDir + ")"));
     }
 
 }

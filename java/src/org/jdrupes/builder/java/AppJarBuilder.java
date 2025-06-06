@@ -49,6 +49,7 @@ public class AppJarBuilder extends AbstractGenerator<JarFile> {
     private final CachedStream<ResourceProvider<?>> providers
         = new CachedStream<>();
     private Path destination = Path.of("app");
+    private String mainClass;
 
     /// Instantiates a new app jar builder.
     ///
@@ -75,6 +76,22 @@ public class AppJarBuilder extends AbstractGenerator<JarFile> {
     public AppJarBuilder destination(Path destination) {
         this.destination = destination;
         return this;
+    }
+
+    /// Returns the main class.
+    ///
+    /// @return the main class
+    ///
+    public String mainClass() {
+        return mainClass;
+    }
+
+    /// Sets the main class.
+    ///
+    /// @param mainClass the new main class
+    ///
+    public void mainClass(String mainClass) {
+        this.mainClass = mainClass;
     }
 
     /// Adds the given providers. Each provider is asked to provide
@@ -133,6 +150,12 @@ public class AppJarBuilder extends AbstractGenerator<JarFile> {
             return Stream.empty();
         }
 
+        // Make sure mainClass is set
+        if (mainClass == null) {
+            throw new BuildException("Main class must be set for "
+                + name() + " in " + project());
+        }
+
         // Get all content.
         log.fine(() -> "Getting app jar content for " + project().name());
         Resources<FileTree<? extends Resource>> fileTrees
@@ -164,6 +187,7 @@ public class AppJarBuilder extends AbstractGenerator<JarFile> {
         @SuppressWarnings("PMD.LooseCoupling")
         Attributes attributes = manifest.getMainAttributes();
         attributes.put(Attributes.Name.MANIFEST_VERSION, "1.0");
+        attributes.put(Attributes.Name.MAIN_CLASS, mainClass);
         try (JarOutputStream jos = new JarOutputStream(
             Files.newOutputStream(jarResource.path()), manifest)) {
             for (var entry : entries.entrySet()) {
