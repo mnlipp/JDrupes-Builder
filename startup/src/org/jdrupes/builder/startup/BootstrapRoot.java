@@ -37,6 +37,8 @@ import org.jdrupes.builder.java.JavaConsts;
 public class BootstrapRoot extends AbstractProject
         implements RootProject, Masked {
 
+    /// Instantiates a new bootstrap root.
+    ///
     @SuppressWarnings("PMD.ConstructorCallsOverridableMethod")
     public BootstrapRoot() {
         dependency(project(BootstrapBuild.class), Intend.Forward);

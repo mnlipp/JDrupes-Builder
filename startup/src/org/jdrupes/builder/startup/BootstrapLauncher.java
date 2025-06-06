@@ -30,7 +30,6 @@ import org.jdrupes.builder.api.Launcher;
 import org.jdrupes.builder.api.Resource;
 import org.jdrupes.builder.api.ResourceRequest;
 import org.jdrupes.builder.api.RootProject;
-import org.jdrupes.builder.core.AbstractProject;
 import org.jdrupes.builder.core.LauncherSupport;
 
 /// A default implementation of a [Launcher]. The launcher first builds

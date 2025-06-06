@@ -18,7 +18,6 @@
 
 package org.jdrupes.builder.core;
 
-import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -53,7 +52,8 @@ public abstract class AbstractProject implements Project {
 
     private Map<Class<? extends Project>, Project> projects;
     @SuppressWarnings("PMD.FieldNamingConventions")
-    private static ThreadLocal<Project> fallbackParent = new ThreadLocal<>();
+    private static ThreadLocal<AbstractProject> fallbackParent
+        = new ThreadLocal<>();
     private final AbstractProject parent;
     private String name;
     private Path directory;
@@ -71,7 +71,7 @@ public abstract class AbstractProject implements Project {
     /// new project.
     ///
     protected AbstractProject() {
-        parent = (AbstractProject) fallbackParent.get();
+        parent = fallbackParent.get();
         if (this instanceof RootProject) {
             if (parent != null) {
                 throw new BuildException("Root project of type "
@@ -92,11 +92,12 @@ public abstract class AbstractProject implements Project {
     /// project in the constructor. Automatically adds a [Intend#Forward]
     /// dependency between the parent project and the new project.
     ///
-    /// @param parent the parent
+    /// @param parentProject the parent project's class
     ///
-    protected AbstractProject(Project parent) {
-        this.parent = (AbstractProject) parent;
-        projects.put(getClass(), this);
+    @SuppressWarnings("PMD.ConstructorCallsOverridableMethod")
+    protected AbstractProject(Class<? extends Project> parentProject) {
+        this.parent = (AbstractProject) project(parentProject);
+        ((AbstractProject) rootProject()).projects.put(getClass(), this);
         // Fallback, overridden when the parent explicitly adds a dependency.
         parent.dependency(this, Forward);
         rootProject().prepareProject(this);
@@ -104,10 +105,16 @@ public abstract class AbstractProject implements Project {
 
     @Override
     public final RootProject rootProject() {
-        if (parent == null) {
-            return (RootProject) this;
+        if (this instanceof RootProject root) {
+            return root;
         }
-        return parent.rootProject();
+        // The method may be called (indirectly) from the constructor
+        // of a subproject, that specifies its parent project class, to
+        // get the parent project instance. In this case, the new
+        // project's parent attribute has not been set yet and we have
+        // to use the fallback.
+        return Optional.ofNullable(parent).orElse(fallbackParent.get())
+            .rootProject();
     }
 
     @Override
@@ -116,41 +123,24 @@ public abstract class AbstractProject implements Project {
         if (this.getClass().equals(prjCls)) {
             return this;
         }
-        if (parent != null) {
-            return parent.project(prjCls);
+        if (projects == null) {
+            return rootProject().project(prjCls);
         }
 
         // "this" is the root project.
         synchronized (projects) {
             return Optional.ofNullable(projects.get(prjCls)).orElseGet(() -> {
-                return createProject(prjCls);
+                try {
+                    fallbackParent.set(this);
+                    return prjCls.getConstructor().newInstance();
+                } catch (SecurityException | InstantiationException
+                        | IllegalAccessException | InvocationTargetException
+                        | NoSuchMethodException e) {
+                    throw new IllegalArgumentException(e);
+                } finally {
+                    fallbackParent.set(null);
+                }
             });
-        }
-    }
-
-    private Project createProject(Class<? extends Project> prjCls) {
-        try {
-            fallbackParent.set(this);
-            @SuppressWarnings("unchecked")
-            var prjConstructor
-                = (Constructor<Project>) prjCls.getConstructors()[0];
-            if (prjConstructor.getParameterCount() == 0) {
-                return prjConstructor.newInstance();
-            }
-            if (!Project.class
-                .isAssignableFrom(prjConstructor.getParameterTypes()[0])) {
-                throw new IllegalArgumentException("Argument of project's"
-                    + " constructor must implement the Project interface");
-            }
-            @SuppressWarnings("unchecked")
-            var result = prjConstructor.newInstance(project(
-                (Class<Project>) prjConstructor.getParameterTypes()[0]));
-            return result;
-        } catch (SecurityException | InstantiationException
-                | IllegalAccessException | InvocationTargetException e) {
-            throw new IllegalArgumentException(e);
-        } finally {
-            fallbackParent.set(null);
         }
     }
 

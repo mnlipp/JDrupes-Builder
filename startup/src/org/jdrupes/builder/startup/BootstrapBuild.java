@@ -36,7 +36,8 @@ public class BootstrapBuild extends AbstractProject implements Masked {
     /// Instantiates a new bootstrap project.
     ///
     @SuppressWarnings("PMD.ConstructorCallsOverridableMethod")
-    public BootstrapBuild(BootstrapRoot parent) {
+    public BootstrapBuild() {
+        super(BootstrapRoot.class);
         // TODO: support for starting from jar
         directory(Path.of(".jdbld"));
         dependency(
