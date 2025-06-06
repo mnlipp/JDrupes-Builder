@@ -18,6 +18,7 @@
 
 package org.jdrupes.builder.core;
 
+import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -25,7 +26,6 @@ import java.util.Collections;
 import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Optional;
@@ -53,12 +53,8 @@ public abstract class AbstractProject implements Project {
 
     private Map<Class<? extends Project>, Project> projects;
     @SuppressWarnings("PMD.FieldNamingConventions")
-    private static final ThreadLocal<
-            List<Class<? extends Project>>> detectedSubprojects
-                = ThreadLocal.withInitial(Collections::emptyList);
-    private static ThreadLocal<Project> projectInstantiator
-        = new ThreadLocal<>();
-    private AbstractProject parent;
+    private static ThreadLocal<Project> fallbackParent = new ThreadLocal<>();
+    private final AbstractProject parent;
     private String name;
     private Path directory;
     @SuppressWarnings("PMD.UseConcurrentHashMap")
@@ -69,60 +65,41 @@ public abstract class AbstractProject implements Project {
     // Only non null in the root project
     private BuilderData build;
 
-    /* default */
-    static void detectedSubprojects(List<Class<? extends Project>> subClasses) {
-        detectedSubprojects.set(subClasses);
-    }
-
-    /// Base class constructor for sub projects. Automatically adds a
+    /// Base class constructor for root projects and subprojects that
+    /// do not specify a parent. In the latter case, automatically adds a
     /// [Intend#Forward] dependency between the root project and the
     /// new project.
     ///
-    @SuppressWarnings({ "unchecked", "PMD.ClassCastExceptionWithToArray" })
     protected AbstractProject() {
-        parent = (AbstractProject) projectInstantiator.get();
+        parent = (AbstractProject) fallbackParent.get();
         if (this instanceof RootProject) {
             if (parent != null) {
                 throw new BuildException("Root project of type "
                     + getClass().getSimpleName() + " cannot be a sub project.");
             }
-            initRootProject((Class<? extends Project>[]) detectedSubprojects
-                .get().toArray(new Class<?>[0]));
-            return;
+            // ConcurrentHashMap does not support null values.
+            projects = Collections.synchronizedMap(new HashMap<>());
+            projects.put(getClass(), this);
+        } else {
+            ((AbstractProject) rootProject()).projects.put(getClass(), this);
+            parent.dependency(this, Forward);
         }
-
         // Fallback, overridden when the parent explicitly adds a dependency.
-        parent.dependency(this, Forward);
         rootProject().prepareProject(this);
     }
 
-    /// Base class constructor for the root project.
+    /// Base class constructor for sub projects that reference their parent
+    /// project in the constructor. Automatically adds a [Intend#Forward]
+    /// dependency between the parent project and the new project.
     ///
-    /// @param subprojects the sub projects
+    /// @param parent the parent
     ///
-    @SafeVarargs
-    protected AbstractProject(Class<? extends Project>... subprojects) {
-        if (!(this instanceof RootProject)) {
-            throw new IllegalStateException(
-                "This constructor may only be called by a root project.");
-        }
-        initRootProject(subprojects);
-    }
-
-    @SuppressWarnings("PMD.UseVarargs")
-    private void initRootProject(Class<? extends Project>[] subprojects) {
-        parent = null;
-        // ConcurrentHashMap does not support null values.
-        projects = Collections.synchronizedMap(new HashMap<>());
+    protected AbstractProject(Project parent) {
+        this.parent = (AbstractProject) parent;
         projects.put(getClass(), this);
-        for (var sub : subprojects) {
-            projects.put(sub, null);
-        }
-        ((RootProject) this).prepareProject(this);
-    }
-
-    /* default */ void createProjects() {
-        projects.keySet().stream().forEach(this::project);
+        // Fallback, overridden when the parent explicitly adds a dependency.
+        parent.dependency(this, Forward);
+        rootProject().prepareProject(this);
     }
 
     @Override
@@ -134,28 +111,47 @@ public abstract class AbstractProject implements Project {
     }
 
     @Override
-    public Project project(Class<? extends Project> project) {
-        if (this.getClass().equals(project)) {
+    @SuppressWarnings("PMD.AvoidSynchronizedStatement")
+    public Project project(Class<? extends Project> prjCls) {
+        if (this.getClass().equals(prjCls)) {
             return this;
         }
         if (parent != null) {
-            return parent.project(project);
+            return parent.project(prjCls);
         }
-        return projects.compute(project, (k, v) -> {
-            if (v != null) {
-                return v;
+
+        // "this" is the root project.
+        synchronized (projects) {
+            return Optional.ofNullable(projects.get(prjCls)).orElseGet(() -> {
+                return createProject(prjCls);
+            });
+        }
+    }
+
+    private Project createProject(Class<? extends Project> prjCls) {
+        try {
+            fallbackParent.set(this);
+            @SuppressWarnings("unchecked")
+            var prjConstructor
+                = (Constructor<Project>) prjCls.getConstructors()[0];
+            if (prjConstructor.getParameterCount() == 0) {
+                return prjConstructor.newInstance();
             }
-            try {
-                projectInstantiator.set(this);
-                var newProject = k.getConstructor().newInstance();
-                projectInstantiator.set(null);
-                return newProject;
-            } catch (NoSuchMethodException | SecurityException
-                    | InstantiationException | IllegalAccessException
-                    | IllegalArgumentException | InvocationTargetException e) {
-                throw new IllegalArgumentException(e);
+            if (!Project.class
+                .isAssignableFrom(prjConstructor.getParameterTypes()[0])) {
+                throw new IllegalArgumentException("Argument of project's"
+                    + " constructor must implement the Project interface");
             }
-        });
+            @SuppressWarnings("unchecked")
+            var result = prjConstructor.newInstance(project(
+                (Class<Project>) prjConstructor.getParameterTypes()[0]));
+            return result;
+        } catch (SecurityException | InstantiationException
+                | IllegalAccessException | InvocationTargetException e) {
+            throw new IllegalArgumentException(e);
+        } finally {
+            fallbackParent.set(null);
+        }
     }
 
     /// Sets the project's name.
@@ -320,16 +316,6 @@ public abstract class AbstractProject implements Project {
     public <T extends FileResource> FileTree<T> newFileTree(
             Path root, String pattern, Class<T> type, boolean withDirs) {
         return new DefaultFileTree<>(this, root, pattern, type, withDirs);
-    }
-
-    /// Set the value of the given project property.
-    ///
-    /// @param property the property
-    /// @param value the value
-    /// @return the project
-    ///
-    public AbstractProject property(PropertyKey property, Object value) {
-        return set(property, value);
     }
 
     @Override

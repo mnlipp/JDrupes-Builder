@@ -22,6 +22,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.Collections;
 import java.util.logging.LogManager;
 import java.util.logging.Logger;
 import java.util.stream.Stream;
@@ -45,18 +46,20 @@ public class BootstrapLauncher extends AbstractLauncher {
 
     private RootProject rootProject;
 
-    /// Instantiates a new default launcher. In instance of the class
-    /// passed as argument is created and registered as root project.
+    /// Instantiates a new bootstrap launcher. An instance of the class
+    /// passed as argument is created and used as root project for the
+    /// build.
     ///
     /// Unless the root project is the only project, the root project
-    /// must use [AbstractProject#AbstractProject(Class...)] as its 
-    /// super constructor to register sub projects.
+    /// must declare dependencies, else the subprojects won't be
+    /// instantiated.
     ///
     /// @param rootProject the root project
     ///
     public BootstrapLauncher(Class<? extends RootProject> rootProject) {
         unwrapBuildException(() -> {
-            this.rootProject = LauncherSupport.createRootProject(rootProject);
+            this.rootProject = LauncherSupport.createProjects(rootProject,
+                Collections.emptyList());
             this.rootProject.provide();
             return null;
         });

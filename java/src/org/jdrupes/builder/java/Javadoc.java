@@ -134,8 +134,7 @@ public class Javadoc extends JavaTool<FileTree<FileResource>> {
             if (!javadoc.getTask(null, fileManager, diagnostics, null,
                 List.of(// "-locale", "en_US",
                     "-d", destDir.toString(), "-quiet"),
-                sourceFiles)
-                .call()) {
+                sourceFiles).call()) {
                 throw new BuildException("Documentation generation failed");
             }
         } catch (Exception e) {

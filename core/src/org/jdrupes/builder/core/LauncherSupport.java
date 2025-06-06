@@ -30,26 +30,6 @@ public final class LauncherSupport {
     private LauncherSupport() {
     }
 
-    /// Creates and initializes a root project. This method must be called
-    /// if the root project creates its sub projects itself.
-    ///
-    /// @param rootProject the root project
-    /// @return the root project
-    ///
-    public static RootProject
-            createRootProject(Class<? extends RootProject> rootProject) {
-        try {
-            var result = rootProject.getConstructor().newInstance();
-            ((AbstractProject) result).createProjects();
-            return result;
-        } catch (NoSuchMethodException | SecurityException
-                | NegativeArraySizeException | InstantiationException
-                | IllegalAccessException | IllegalArgumentException
-                | InvocationTargetException e) {
-            throw new IllegalArgumentException(e);
-        }
-    }
-
     /// Creates and initializes the root project and the sub projects.
     /// Adds the sub projects to the root project automatically. This
     /// method should be used if the launcher detects the sub projects
@@ -64,9 +44,8 @@ public final class LauncherSupport {
             Class<? extends RootProject> rootProject,
             List<Class<? extends Project>> subprojects) {
         try {
-            AbstractProject.detectedSubprojects(subprojects);
             var result = rootProject.getConstructor().newInstance();
-            ((AbstractProject) result).createProjects();
+            subprojects.forEach(result::project);
             return result;
         } catch (SecurityException | NegativeArraySizeException
                 | IllegalArgumentException | InstantiationException

@@ -23,6 +23,7 @@ import java.net.URL;
 import java.net.URLClassLoader;
 import java.util.stream.Stream;
 import org.jdrupes.builder.api.BuildException;
+import org.jdrupes.builder.api.Intend;
 import org.jdrupes.builder.api.Masked;
 import org.jdrupes.builder.api.ResourceRequest;
 import org.jdrupes.builder.api.ResourceType;
@@ -36,10 +37,9 @@ import org.jdrupes.builder.java.JavaConsts;
 public class BootstrapRoot extends AbstractProject
         implements RootProject, Masked {
 
-    /// Instantiates a new root project.
-    ///
+    @SuppressWarnings("PMD.ConstructorCallsOverridableMethod")
     public BootstrapRoot() {
-        super(BootstrapBuild.class);
+        dependency(project(BootstrapBuild.class), Intend.Forward);
     }
 
     @Override
