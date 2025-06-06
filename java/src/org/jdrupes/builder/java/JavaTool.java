@@ -18,6 +18,7 @@
 
 package org.jdrupes.builder.java;
 
+import java.nio.file.Path;
 import java.util.Locale;
 import java.util.logging.Level;
 import javax.tools.Diagnostic;
@@ -53,7 +54,8 @@ public abstract class JavaTool<T extends Resource>
             msg = diagnostic.getMessage(Locale.ENGLISH);
         } else {
             msg = String.format("%s:%d: %s",
-                diagnostic.getSource().toUri().getPath(),
+                project().rootProject().directory().relativize(
+                    Path.of(diagnostic.getSource().toUri().getPath())),
                 diagnostic.getLineNumber(),
                 diagnostic.getMessage(null));
         }

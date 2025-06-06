@@ -1,0 +1,27 @@
+#!/usr/bin/bash
+
+propertiesFile=".jdbld.properties"
+
+if [ ! -r "$propertiesFile" ]; then
+  cd `dirname $0`
+fi
+
+if [ ! -r "$propertiesFile" ]; then
+  echo >&2 "File $propertiesFile must exist in root directory of build."
+  exit 1
+fi
+
+jdbldDirectory="_jdbld"
+cat "$propertiesFile" | while read line; do
+  if expr match "$line" "^ *jdbldDirectory[ \t]*=" > /dev/null; then
+    _jdbldDirectory=$(echo $line \
+      | sed -E 's/^[[:space:]]*jdbldDirectory[[:space:]]*=[[:space:]]*(.*\S)[[:space:]]*$/\1/')
+  fi
+done
+
+javaCmd=java
+if [ ! -z "JAVA_HOME" ]; then
+  javaCmd="$JAVA_HOME/bin/java"
+fi
+
+$javaCmd -jar "$jdbldDirectory/app/jdrupes-builder.jar" "$@"
