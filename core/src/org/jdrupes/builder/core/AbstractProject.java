@@ -29,6 +29,8 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Optional;
 import java.util.Set;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Future;
 import java.util.stream.Stream;
 import org.jdrupes.builder.api.BuildException;
 import org.jdrupes.builder.api.FileResource;
@@ -50,7 +52,7 @@ import org.jdrupes.builder.api.RootProject;
 @SuppressWarnings({ "PMD.TooManyMethods", "PMD.CouplingBetweenObjects" })
 public abstract class AbstractProject implements Project {
 
-    private Map<Class<? extends Project>, Project> projects;
+    private Map<Class<? extends Project>, Future<Project>> projects;
     @SuppressWarnings("PMD.FieldNamingConventions")
     private static ThreadLocal<AbstractProject> fallbackParent
         = new ThreadLocal<>();
@@ -79,9 +81,7 @@ public abstract class AbstractProject implements Project {
             }
             // ConcurrentHashMap does not support null values.
             projects = Collections.synchronizedMap(new HashMap<>());
-            projects.put(getClass(), this);
         } else {
-            ((AbstractProject) rootProject()).projects.put(getClass(), this);
             parent.dependency(this, Forward);
         }
         // Fallback, overridden when the parent explicitly adds a dependency.
@@ -97,7 +97,6 @@ public abstract class AbstractProject implements Project {
     @SuppressWarnings("PMD.ConstructorCallsOverridableMethod")
     protected AbstractProject(Class<? extends Project> parentProject) {
         this.parent = (AbstractProject) project(parentProject);
-        ((AbstractProject) rootProject()).projects.put(getClass(), this);
         // Fallback, overridden when the parent explicitly adds a dependency.
         parent.dependency(this, Forward);
         rootProject().prepareProject(this);
@@ -128,19 +127,24 @@ public abstract class AbstractProject implements Project {
         }
 
         // "this" is the root project.
-        synchronized (projects) {
-            return Optional.ofNullable(projects.get(prjCls)).orElseGet(() -> {
-                try {
-                    fallbackParent.set(this);
-                    return prjCls.getConstructor().newInstance();
-                } catch (SecurityException | InstantiationException
-                        | IllegalAccessException | InvocationTargetException
-                        | NoSuchMethodException e) {
-                    throw new IllegalArgumentException(e);
-                } finally {
-                    fallbackParent.set(null);
-                }
-            });
+        try {
+            return projects.computeIfAbsent(prjCls, k -> {
+                return context().executor().submit(() -> {
+                    try {
+                        fallbackParent.set(this);
+                        return (Project) k.getConstructor().newInstance();
+                    } catch (SecurityException | InstantiationException
+                            | IllegalAccessException
+                            | InvocationTargetException
+                            | NoSuchMethodException e) {
+                        throw new IllegalArgumentException(e);
+                    } finally {
+                        fallbackParent.set(null);
+                    }
+                });
+            }).get();
+        } catch (InterruptedException | ExecutionException e) {
+            throw new BuildException(e);
         }
     }
 
@@ -248,13 +252,11 @@ public abstract class AbstractProject implements Project {
     }
 
     private BuilderData context() {
-        if (parent != null) {
-            return parent.context();
+        AbstractProject root = (AbstractProject) rootProject();
+        if (root.build != null) {
+            return root.build;
         }
-        if (build != null) {
-            return build;
-        }
-        return build = new BuilderData();
+        return root.build = new BuilderData();
     }
 
     @Override
