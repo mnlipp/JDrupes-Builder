@@ -23,28 +23,30 @@ import java.util.stream.Stream;
 import org.jdrupes.builder.api.FileTree;
 import org.jdrupes.builder.api.Project;
 import org.jdrupes.builder.api.Resource;
-import org.jdrupes.builder.api.ResourceFile;
 import org.jdrupes.builder.api.ResourceRequest;
 import org.jdrupes.builder.api.ResourceType;
 import org.jdrupes.builder.api.Resources;
-import static org.jdrupes.builder.core.CoreTypes.*;
 
 /// A provider for resources, usually from directories, to be included in a
 /// (Java) project. 
 ///
-public class ResourcesCollector
-        extends AbstractGenerator<FileTree<ResourceFile>> {
+public class ResourceCollector<T extends FileTree<?>>
+        extends AbstractGenerator<T> {
 
-    private final Resources<FileTree<ResourceFile>> fileTrees
-        = project().newResources(new ResourceType<>() {
-        });
+    private final ResourceType<T> type;
+    private final Resources<T> fileTrees;
 
     /// Instantiates a new resources collector.
     ///
     /// @param project the project
     ///
-    public ResourcesCollector(Project project) {
+    @SuppressWarnings({ "PMD.ConstructorCallsOverridableMethod", "unchecked" })
+    public ResourceCollector(Project project, ResourceType<T> type) {
         super(project);
+        this.type = type;
+        fileTrees = project().newResources(
+            new ResourceType<>(Resources.class, type) {
+            });
     }
 
     /// Adds the given file tree with resource directories.
@@ -52,7 +54,7 @@ public class ResourcesCollector
     /// @param resources the resources
     /// @return the resources collector
     ///
-    public final ResourcesCollector add(FileTree<ResourceFile> resources) {
+    public final ResourceCollector<T> add(T resources) {
         this.fileTrees.add(resources);
         return this;
     }
@@ -62,8 +64,7 @@ public class ResourcesCollector
     /// @param resources the resources
     /// @return the resources collector
     ///
-    public final ResourcesCollector
-            add(Stream<FileTree<ResourceFile>> resources) {
+    public final ResourceCollector<T> add(Stream<T> resources) {
         this.fileTrees.addAll(resources);
         return this;
     }
@@ -76,8 +77,8 @@ public class ResourcesCollector
     /// @param pattern the pattern
     /// @return the resources collector
     ///
-    public final ResourcesCollector add(Path directory, String pattern) {
-        add(project().newFileTree(ResourceFiles, directory, pattern));
+    public final ResourceCollector<T> add(Path directory, String pattern) {
+        add(project().newFileTree(type, directory, pattern));
         return this;
     }
 
@@ -85,7 +86,7 @@ public class ResourcesCollector
     @SuppressWarnings("unchecked")
     public <R extends Resource> Stream<R>
             provide(ResourceRequest<R> requested) {
-        if (!requested.type().isAssignableFrom(ResourceFiles)) {
+        if (!requested.type().isAssignableFrom(type)) {
             return Stream.empty();
         }
         return (Stream<R>) fileTrees.stream();

@@ -23,13 +23,15 @@ import java.net.URL;
 import java.net.URLClassLoader;
 import java.util.stream.Stream;
 import org.jdrupes.builder.api.BuildException;
+import org.jdrupes.builder.api.FileResource;
+import org.jdrupes.builder.api.FileTree;
 import org.jdrupes.builder.api.Intend;
 import org.jdrupes.builder.api.Masked;
 import org.jdrupes.builder.api.ResourceRequest;
 import org.jdrupes.builder.api.RootProject;
 import org.jdrupes.builder.core.AbstractProject;
 import static org.jdrupes.builder.core.CoreTypes.*;
-import org.jdrupes.builder.java.JavaTypes;
+import static org.jdrupes.builder.java.JavaTypes.*;
 
 /// The built-in root project associated with the root directory.
 ///
@@ -47,12 +49,13 @@ public class BootstrapRoot extends AbstractProject
     /// Bootstrap.
     ///
     public void bootstrap() {
-        var cpUrls = Stream.concat(
-            provide(new ResourceRequest<>(JavaTypes.ClassTree)),
-            provide(new ResourceRequest<>(ResourceFiles)))
-            .map(ft -> {
+        var cpUrls = provide(new ResourceRequest<>(ClasspathElementType))
+            .map(cpe -> {
                 try {
-                    return ft.root().toFile().toURI().toURL();
+                    if (cpe instanceof FileTree tree) {
+                        return tree.root().toFile().toURI().toURL();
+                    }
+                    return ((FileResource) cpe).path().toFile().toURI().toURL();
                 } catch (MalformedURLException e) {
                     // Cannot happen
                     throw new BuildException(e);

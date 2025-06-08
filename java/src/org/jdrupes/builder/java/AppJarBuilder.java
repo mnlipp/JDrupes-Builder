@@ -43,7 +43,6 @@ import static org.jdrupes.builder.api.ResourceType.*;
 import org.jdrupes.builder.api.Resources;
 import org.jdrupes.builder.core.AbstractGenerator;
 import org.jdrupes.builder.core.CachedStream;
-import static org.jdrupes.builder.core.CoreTypes.*;
 import static org.jdrupes.builder.java.JavaTypes.*;
 
 /// The Class AppJarBuilder.
@@ -135,7 +134,7 @@ public class AppJarBuilder extends AbstractGenerator<JarFile> {
         "PMD.AvoidInstantiatingObjectsInLoops" })
     public <T extends Resource> Stream<T>
             provide(ResourceRequest<T> request) {
-        if (!request.wants(AppJarFile) && !request.wants(Cleaniness)) {
+        if (!request.wants(AppJarFileType) && !request.wants(Cleaniness)) {
             return Stream.empty();
         }
 
@@ -147,7 +146,7 @@ public class AppJarBuilder extends AbstractGenerator<JarFile> {
                 throw new BuildException("Cannot create directory " + destDir);
             }
         }
-        var jarResource = project().newFileResource(JarFile,
+        var jarResource = project().newFileResource(AppJarFileType,
             destDir.resolve(project().name() + ".jar"));
 
         // Maybe only delete
@@ -169,9 +168,9 @@ public class AppJarBuilder extends AbstractGenerator<JarFile> {
             });
         providers.stream().forEach(provider -> {
             fileTrees.addAll(project().get(provider,
-                new ResourceRequest<>(ClassTree)));
+                new ResourceRequest<>(ClassTreeType)));
             fileTrees.addAll(project().get(provider,
-                new ResourceRequest<>(ResourceFiles)));
+                new ResourceRequest<>(JavaResourceTreeType)));
         });
 
         // Check if rebuild needed.
@@ -182,7 +181,7 @@ public class AppJarBuilder extends AbstractGenerator<JarFile> {
         return Stream.of((T) jarResource);
     }
 
-    private void buildJar(JarFile jarResource,
+    private void buildJar(AppJarFile jarResource,
             Resources<FileTree<? extends FileResource>> fileTrees) {
         // Build jar
         log.info(() -> "Building application jar in " + project().name());

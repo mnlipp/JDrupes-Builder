@@ -78,7 +78,6 @@ public class DefaultFileTree<T extends FileResource> extends DefaultResources<T>
     /// Creates the a new [FileTree].
     ///
     /// @param <T> the tree's type
-    /// @param <L> the element's type
     /// @param project the project
     /// @param type the type
     /// @param root the root
@@ -87,7 +86,7 @@ public class DefaultFileTree<T extends FileResource> extends DefaultResources<T>
     /// @return the file tree
     ///
     @SuppressWarnings("unchecked")
-    public static <T extends FileTree<L>, L extends FileResource>
+    public static <T extends FileTree<?>>
             T create(Project project, ResourceType<T> type, Path root,
                     String pattern, boolean withDirs) {
         return (T) Proxy.newProxyInstance(type.type().getClassLoader(),
@@ -296,7 +295,8 @@ public class DefaultFileTree<T extends FileResource> extends DefaultResources<T>
         var wasFilled = filled;
         fill();
         filled = wasFilled;
-        return type() + " from " + Path.of("").toAbsolutePath().relativize(root)
+        return type() + " from "
+            + Path.of("").toAbsolutePath().relativize(root())
             + " with " + stream().count() + " files, newest: " + latestChange;
     }
 }

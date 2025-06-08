@@ -317,13 +317,12 @@ public abstract class AbstractProject implements Project {
     }
 
     @Override
-    public <T extends Resources<C>, C extends Resource>
-            T newResources(ResourceType<T> type) {
+    public <T extends Resources<?>> T newResources(ResourceType<T> type) {
         return DefaultResources.create(type);
     }
 
     @Override
-    public <T extends FileTree<C>, C extends FileResource> T newFileTree(
+    public <T extends FileTree<?>> T newFileTree(
             ResourceType<T> type, Path root, String pattern, boolean withDirs) {
         return DefaultFileTree.create(this, type, root, pattern, withDirs);
     }

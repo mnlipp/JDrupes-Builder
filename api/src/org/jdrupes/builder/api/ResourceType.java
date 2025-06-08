@@ -58,6 +58,9 @@ public class ResourceType<T extends Resource> {
     private ResourceType(Type type) {
         if (type instanceof WildcardType wType) {
             type = wType.getUpperBounds()[0];
+            if (Object.class.equals(type)) {
+                type = Resource.class;
+            }
         }
         if (type instanceof ParameterizedType pType && Resources.class
             .isAssignableFrom((Class<?>) pType.getRawType())) {

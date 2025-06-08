@@ -56,7 +56,7 @@ public class ClasspathScanner
     @Override
     public <T extends Resource> Stream<T>
             provide(ResourceRequest<T> requested) {
-        if (!ClasspathElement.isAssignableFrom(requested.type())) {
+        if (!ClasspathElementType.isAssignableFrom(requested.type())) {
             return Stream.empty();
         }
         @SuppressWarnings("unchecked")
@@ -64,10 +64,10 @@ public class ClasspathScanner
             .map(Path::of).map(p -> {
                 if (p.toFile().isDirectory()) {
                     return (ClasspathElement) project().newFileTree(
-                        ClassTree, p.toAbsolutePath(), "**/*.class", false);
+                        ClassTreeType, p.toAbsolutePath(), "**/*.class", false);
                 } else {
                     return (ClasspathElement) project()
-                        .newFileResource(JarFile, p.toAbsolutePath());
+                        .newFileResource(JarFileType, p.toAbsolutePath());
                 }
             }).map(e -> {
                 System.out.println(

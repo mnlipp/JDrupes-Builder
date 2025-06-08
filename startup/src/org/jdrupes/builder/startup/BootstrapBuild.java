@@ -19,12 +19,13 @@
 package org.jdrupes.builder.startup;
 
 import java.nio.file.Path;
+import org.jdrupes.builder.api.FileResource;
+import org.jdrupes.builder.api.FileTree;
 import org.jdrupes.builder.api.Intend;
 import org.jdrupes.builder.api.Masked;
 import org.jdrupes.builder.api.ResourceType;
 import org.jdrupes.builder.core.AbstractProject;
-import static org.jdrupes.builder.core.CoreTypes.*;
-import org.jdrupes.builder.core.ResourcesCollector;
+import org.jdrupes.builder.core.ResourceCollector;
 import org.jdrupes.builder.java.ClasspathScanner;
 import org.jdrupes.builder.java.JavaCompiler;
 import static org.jdrupes.builder.java.JavaTypes.*;
@@ -47,19 +48,20 @@ public class BootstrapBuild extends AbstractProject implements Masked {
 
         // Collect directories with "build configuration", derive source
         // trees and use as java sources.
-        var bldrDirs = newFileTree(new ResourceType<>() {
+        var bldrDirs = newFileTree(new ResourceType<FileTree<FileResource>>() {
         }, Path.of("").toAbsolutePath(),
             "**/" + context().jdbldDirectory().toString(), true);
         var srcTrees = bldrDirs.stream()
-            .map(r -> newFileTree(JavaSourceFiles, r.path().resolve("src"),
+            .map(r -> newFileTree(JavaSourceTreeType, r.path().resolve("src"),
                 "**/*.java"));
         generator(JavaCompiler::new).addSources(srcTrees);
 
         // Add resources
         var resourceTrees = bldrDirs.stream()
-            .map(r -> newFileTree(ResourceFiles, r.path().resolve("resources"),
-                "**/*"));
-        generator(ResourcesCollector::new).add(resourceTrees);
+            .map(r -> newFileTree(JavaResourceTreeType,
+                r.path().resolve("resources"), "**/*"));
+        generator(new ResourceCollector<>(this, JavaResourceTreeType)
+            .add(resourceTrees));
     }
 
 }

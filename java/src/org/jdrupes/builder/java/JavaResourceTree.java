@@ -16,18 +16,13 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package org.jdrupes.builder.core;
+package org.jdrupes.builder.java;
 
-import org.jdrupes.builder.api.FileResource;
-import org.jdrupes.builder.api.ResourceType;
+import org.jdrupes.builder.api.FileTree;
+import org.jdrupes.builder.api.ResourceFile;
 
-/// The Class CoreResourceTypes.
+/// The Interface ClassTree.
 ///
-public class CoreTypes {
-
-    /// The resource type for [FileResource].
-    @SuppressWarnings("PMD.FieldNamingConventions")
-    public static final ResourceType<FileResource> FileResourceType
-        = new ResourceType<>() {
-        };
+public interface JavaResourceTree
+        extends FileTree<ResourceFile>, ClasspathElement {
 }

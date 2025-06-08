@@ -16,18 +16,23 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package org.jdrupes.builder.core;
+package org.jdrupes.builder.java;
 
-import org.jdrupes.builder.api.FileResource;
-import org.jdrupes.builder.api.ResourceType;
+import org.jdrupes.builder.api.Project;
+import org.jdrupes.builder.core.ResourceCollector;
+import static org.jdrupes.builder.java.JavaTypes.*;
 
-/// The Class CoreResourceTypes.
+/// The Class JavaResourcesCollector.
 ///
-public class CoreTypes {
+public class JavaResourceCollector
+        extends ResourceCollector<JavaResourceTree> {
 
-    /// The resource type for [FileResource].
-    @SuppressWarnings("PMD.FieldNamingConventions")
-    public static final ResourceType<FileResource> FileResourceType
-        = new ResourceType<>() {
-        };
+    /// Instantiates a new java resources collector.
+    ///
+    /// @param project the project
+    ///
+    public JavaResourceCollector(Project project) {
+        super(project, JavaResourceTreeType);
+    }
+
 }

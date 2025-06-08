@@ -16,18 +16,12 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package org.jdrupes.builder.core;
+package org.jdrupes.builder.java;
 
 import org.jdrupes.builder.api.FileResource;
-import org.jdrupes.builder.api.ResourceType;
 
-/// The Class CoreResourceTypes.
+/// A [FileResource] that represents a Java jar.
 ///
-public class CoreTypes {
-
-    /// The resource type for [FileResource].
-    @SuppressWarnings("PMD.FieldNamingConventions")
-    public static final ResourceType<FileResource> FileResourceType
-        = new ResourceType<>() {
-        };
+@SuppressWarnings("PMD.ImplicitFunctionalInterface")
+public interface AppJarFile extends JarFile {
 }

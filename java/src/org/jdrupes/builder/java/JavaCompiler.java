@@ -45,11 +45,11 @@ import static org.jdrupes.builder.java.JavaTypes.*;
 /// 
 /// 1. The [JavaSourceFile]s of the project as configured with [addSources]
 ///    in response to a [ResourceRequest] with [ResourceType]
-///    [JavaTypes#JavaSourceFiles].
+///    [JavaTypes#JavaSourceTreeType].
 ///
 /// 2. The [ClassFile]s that result from compiling the sources in response
 ///    to a [ResourceRequest] with [ResourceType]
-///    [JavaTypes#ClassTree].
+///    [JavaTypes#ClassTreeType].
 ///
 public class JavaCompiler extends JavaTool<FileTree<ClassFile>> {
 
@@ -105,8 +105,7 @@ public class JavaCompiler extends JavaTool<FileTree<ClassFile>> {
     ///
     public final JavaCompiler addSources(Path directory, String pattern) {
         addSources(
-            project().newFileTree(new ResourceType<FileTree<JavaSourceFile>>() {
-            }, directory, pattern));
+            project().newFileTree(JavaSourceTreeType, directory, pattern));
         return this;
     }
 
@@ -134,18 +133,19 @@ public class JavaCompiler extends JavaTool<FileTree<ClassFile>> {
     @Override
     public <T extends Resource> Stream<T>
             provide(ResourceRequest<T> request) {
-        if (request.wants(JavaSourceFiles)) {
+        if (request.wants(JavaSourceTreeType)) {
             @SuppressWarnings("unchecked")
             var result = (Stream<T>) sources.stream();
             return result;
         }
-        if (!request.wants(ClassTree) && !request.wants(Cleaniness)) {
+        if (!request.wants(ClassTreeType) && !request.wants(Cleaniness)) {
             return Stream.empty();
         }
 
         // Get this project's previously generated classes (for checking)
         var destDir = project().buildDirectory().resolve(destination);
-        final var classSet = project().newFileTree(ClassTree, destDir, "**/*");
+        final var classSet
+            = project().newFileTree(ClassTreeType, destDir, "**/*");
         if (request.wants(Cleaniness)) {
             classSet.delete();
             return Stream.empty();
@@ -153,9 +153,11 @@ public class JavaCompiler extends JavaTool<FileTree<ClassFile>> {
 
         // Get classpath for compilation.
         log.fine(() -> "Getting classpath for " + project());
-        var cpResources = project().newResources(new ResourceType<>() {
-        }).addAll(project().provided(EnumSet.of(Intend.Consume, Intend.Expose),
-            new ResourceRequest<>(ClasspathElement)));
+        var cpResources = project()
+            .newResources(new ResourceType<Resources<ClasspathElement>>() {
+            }).addAll(
+                project().provided(EnumSet.of(Intend.Consume, Intend.Expose),
+                    new ResourceRequest<>(ClasspathElementType)));
         log.finest(() -> project() + " uses classpath: " + cpResources.stream()
             .map(Resource::toString).collect(Collectors.joining(", ")));
 
@@ -180,7 +182,8 @@ public class JavaCompiler extends JavaTool<FileTree<ClassFile>> {
 
     @SuppressWarnings({ "PMD.AvoidCatchingGenericException",
         "PMD.ExceptionAsFlowControl" })
-    private void compile(Resources<Resource> cpResources, Path destDir) {
+    private void compile(Resources<? extends Resource> cpResources,
+            Path destDir) {
         log.info(() -> "Compiling Java in project " + project().name());
         var classpath = cpResources.stream().<Path> mapMulti((r, sink) -> {
             System.out.println(r);

@@ -4,8 +4,8 @@ import java.nio.file.Path;
 
 import org.jdrupes.builder.api.Intend;
 import org.jdrupes.builder.core.AbstractProject;
-import org.jdrupes.builder.core.ResourcesCollector;
 import org.jdrupes.builder.java.JavaCompiler;
+import org.jdrupes.builder.java.JavaResourceCollector;
 
 public class Startup extends AbstractProject {
 
@@ -13,7 +13,8 @@ public class Startup extends AbstractProject {
         name("startup");
         dependency(project(Java.class), Intend.Consume);
         generator(JavaCompiler::new).addSources(Path.of("src"), "**/*.java");
-        generator(ResourcesCollector::new).add(Path.of("resources"), "**/*");
+        generator(JavaResourceCollector::new).add(Path.of("resources"),
+            "**/*");
     }
 
 }

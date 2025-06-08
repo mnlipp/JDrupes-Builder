@@ -124,13 +124,13 @@ public class Javadoc extends JavaTool<FileTree<FileResource>> {
         "PMD.ExceptionAsFlowControl" })
     public <T extends Resource> Stream<T>
             provide(ResourceRequest<T> request) {
-        if (!request.wants(JavadocDirectory) && !request.wants(Cleaniness)) {
+        if (!request.wants(JavadocDirectoryType) && !request.wants(Cleaniness)) {
             return Stream.empty();
         }
 
         // Get destination and check if we only have to cleanup.
         var destDir = project().buildDirectory().resolve(destination);
-        var generated = project().newFileTree(ClassTree, destDir, "**/*");
+        var generated = project().newFileTree(ClassTreeType, destDir, "**/*");
         if (request.wants(Cleaniness)) {
             generated.delete();
             destDir.toFile().delete();
@@ -163,7 +163,7 @@ public class Javadoc extends JavaTool<FileTree<FileResource>> {
         }
         @SuppressWarnings("unchecked")
         var result = (Stream<T>) Stream
-            .of(project().newFileResource(JavadocDirectory, destDir));
+            .of(project().newFileResource(JavadocDirectoryType, destDir));
         return result;
     }
 

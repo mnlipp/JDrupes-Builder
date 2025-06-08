@@ -111,7 +111,7 @@ public abstract class AbstractLauncher implements Launcher {
             } catch (URISyntaxException e) {
                 throw new BuildException("Problem scanning classpath", e);
             }
-        }).map(p -> DefaultFileTree.create(null, ClassTree, p, "**/*.class",
+        }).map(p -> DefaultFileTree.create(null, ClassTreeType, p, "**/*.class",
             false))
             .flatMap(FileTree::entries).map(Path::toString)
             .map(p -> p.substring(0, p.length() - 6).replace('/', '.'))
