@@ -27,8 +27,8 @@ import java.util.Optional;
 import java.util.stream.Stream;
 
 /// A special kind of type token for representing a resource type.
-/// The method [#type] returns the type as [Class]. If this class
-/// if derived from [Resources], [#containedType] returns the
+/// The method [type()] returns the type as [Class]. If this class
+/// if derived from [Resources], [containedType()] returns the
 /// [ResourceType] of the contained elements.
 ///
 /// @param <T> the resource type
