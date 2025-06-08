@@ -21,9 +21,12 @@ package org.jdrupes.builder.core;
 import org.jdrupes.builder.api.FileResource;
 import org.jdrupes.builder.api.ResourceType;
 
-/// The Class CoreResourceTypes.
+/// A collection of core [ResourceType]s.
 ///
-public class CoreTypes {
+public final class CoreTypes {
+
+    private CoreTypes() {
+    }
 
     /// The resource type for [FileResource].
     @SuppressWarnings("PMD.FieldNamingConventions")

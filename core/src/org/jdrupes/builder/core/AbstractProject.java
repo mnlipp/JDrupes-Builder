@@ -66,7 +66,7 @@ public abstract class AbstractProject implements Project {
     @SuppressWarnings("PMD.UseConcurrentHashMap")
     private final Map<PropertyKey, Object> properties = new HashMap<>();
     // Only non null in the root project
-    private BuilderData context;
+    private DefaultBuildContext context;
 
     /// Base class constructor for root projects and subprojects that
     /// do not specify a parent. In the latter case, automatically adds a
@@ -83,7 +83,7 @@ public abstract class AbstractProject implements Project {
             }
             // ConcurrentHashMap does not support null values.
             projects = Collections.synchronizedMap(new HashMap<>());
-            context = new BuilderData();
+            context = new DefaultBuildContext();
         } else {
             parent.dependency(this, Forward);
         }
@@ -256,7 +256,7 @@ public abstract class AbstractProject implements Project {
 
     @Override
     @SuppressWarnings("PMD.AvoidSynchronizedStatement")
-    public BuilderData context() {
+    public DefaultBuildContext context() {
         return ((AbstractProject) rootProject()).context;
     }
 

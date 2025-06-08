@@ -21,10 +21,13 @@ package org.jdrupes.builder.java;
 import org.jdrupes.builder.api.FileTree;
 import org.jdrupes.builder.api.ResourceType;
 
-/// Defines some constants for using the Java related components.
+/// A collection of Java specific [ResourceType]s.
 ///
 @SuppressWarnings({ "PMD.FieldNamingConventions", "PMD.DataClass" })
-public class JavaTypes {
+public final class JavaTypes {
+
+    private JavaTypes() {
+    }
 
     /// The Java source files.
     public static final ResourceType<

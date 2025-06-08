@@ -31,8 +31,9 @@ import org.jdrupes.builder.core.FutureStreamCache.Key;
 
 /// A context for building.
 ///
-public class BuilderData implements BuildContext {
+public class DefaultBuildContext implements BuildContext {
 
+    /// The key for specifying the builder directory in the properties file.
     public static final String JDBLD_DIRECTORY = "jdbldDirectory";
     private final FutureStreamCache cache;
     private ExecutorService executor
@@ -41,7 +42,7 @@ public class BuilderData implements BuildContext {
     /// Instantiates a new default build. By default, the build uses
     /// a virtual thread per task executor.
     ///
-    /* default */ BuilderData() {
+    /* default */ DefaultBuildContext() {
         cache = new FutureStreamCache();
     }
 

@@ -39,7 +39,7 @@ import org.jdrupes.builder.api.Launcher;
 import org.jdrupes.builder.api.Masked;
 import org.jdrupes.builder.api.Project;
 import org.jdrupes.builder.api.RootProject;
-import org.jdrupes.builder.core.BuilderData;
+import org.jdrupes.builder.core.DefaultBuildContext;
 import org.jdrupes.builder.core.DefaultFileTree;
 import static org.jdrupes.builder.java.JavaTypes.*;
 
@@ -47,13 +47,15 @@ import static org.jdrupes.builder.java.JavaTypes.*;
 ///
 public abstract class AbstractLauncher implements Launcher {
 
+    /// The JDrupes Builder properties read from the file
+    /// `.jdbld.properties` in the root project.
     @SuppressWarnings("PMD.FieldNamingConventions")
     protected static final Properties jdbldProps;
 
     static {
         // Get builder configuration
         Properties fallbacks = new Properties();
-        fallbacks.putAll(Map.of(BuilderData.JDBLD_DIRECTORY, "_jdbld"));
+        fallbacks.putAll(Map.of(DefaultBuildContext.JDBLD_DIRECTORY, "_jdbld"));
         jdbldProps = new Properties(fallbacks);
         var propsPath
             = Path.of("").toAbsolutePath().resolve(".jdbld.properties");
@@ -70,7 +72,7 @@ public abstract class AbstractLauncher implements Launcher {
         InputStream props;
         try {
             props = Files.newInputStream(
-                Path.of(jdbldProps.getProperty(BuilderData.JDBLD_DIRECTORY),
+                Path.of(jdbldProps.getProperty(DefaultBuildContext.JDBLD_DIRECTORY),
                     "logging.properties"));
         } catch (IOException e) {
             props = BootstrapLauncher.class
@@ -86,6 +88,13 @@ public abstract class AbstractLauncher implements Launcher {
 
     /// The log.
     protected final Logger log = Logger.getLogger(getClass().getName());
+
+    /// Instantiates a new abstract launcher.
+    ///
+    @SuppressWarnings("PMD.UnnecessaryConstructor")
+    public AbstractLauncher() {
+        // Makes javadoc happy.
+    }
 
     /// Find projects. The classpath is scanned for classes that implement
     /// [Project] but do not implement [Masked].

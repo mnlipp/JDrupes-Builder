@@ -18,33 +18,38 @@
 
 package org.jdrupes.builder.core;
 
-import java.nio.file.Path;
 import java.util.stream.Stream;
-import org.jdrupes.builder.api.FileTree;
 import org.jdrupes.builder.api.Project;
 import org.jdrupes.builder.api.Resource;
 import org.jdrupes.builder.api.ResourceRequest;
 import org.jdrupes.builder.api.ResourceType;
 import org.jdrupes.builder.api.Resources;
 
-/// A provider for resources, usually from directories, to be included in a
-/// (Java) project. 
+/// A provider for resources to be included in a project. This
+/// implementation can be used for all kinds of resources. Usually
+/// language specific packages derive specializations that bind
+/// this class to a specific type of resource. These specializations
+/// often also offer methods that ease the specification of resources
+/// to be included.
 ///
-public class ResourceCollector<T extends FileTree<?>>
+/// @param <T> the resource type type
+///
+public class ResourceCollector<T extends Resource>
         extends AbstractGenerator<T> {
 
     private final ResourceType<T> type;
-    private final Resources<T> fileTrees;
+    private final Resources<T> resources;
 
     /// Instantiates a new resources collector.
     ///
     /// @param project the project
+    /// @param type the type of resources to collect
     ///
     @SuppressWarnings({ "PMD.ConstructorCallsOverridableMethod", "unchecked" })
     public ResourceCollector(Project project, ResourceType<T> type) {
         super(project);
         this.type = type;
-        fileTrees = project().newResources(
+        resources = project().newResources(
             new ResourceType<>(Resources.class, type) {
             });
     }
@@ -55,7 +60,7 @@ public class ResourceCollector<T extends FileTree<?>>
     /// @return the resources collector
     ///
     public final ResourceCollector<T> add(T resources) {
-        this.fileTrees.add(resources);
+        this.resources.add(resources);
         return this;
     }
 
@@ -65,20 +70,7 @@ public class ResourceCollector<T extends FileTree<?>>
     /// @return the resources collector
     ///
     public final ResourceCollector<T> add(Stream<T> resources) {
-        this.fileTrees.addAll(resources);
-        return this;
-    }
-
-    /// Adds the files from the given directory matching the given pattern.
-    /// Short for
-    /// `add(project().newFileTree(directory, pattern, ResourceFile.class))`.
-    ///
-    /// @param directory the directory
-    /// @param pattern the pattern
-    /// @return the resources collector
-    ///
-    public final ResourceCollector<T> add(Path directory, String pattern) {
-        add(project().newFileTree(type, directory, pattern));
+        this.resources.addAll(resources);
         return this;
     }
 
@@ -89,7 +81,7 @@ public class ResourceCollector<T extends FileTree<?>>
         if (!requested.type().isAssignableFrom(type)) {
             return Stream.empty();
         }
-        return (Stream<R>) fileTrees.stream();
+        return (Stream<R>) resources.stream();
     }
 
 }

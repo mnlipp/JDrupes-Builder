@@ -43,6 +43,12 @@ public class FutureStreamCache {
             ResourceRequest<T> requested) {
     }
 
+    /// Instantiates a new future stream cache.
+    ///
+    /* default */ FutureStreamCache() {
+        // Make javadoc happy
+    }
+
     /// Compute if absent.
     ///
     /// @param <T> the generic type

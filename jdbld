@@ -29,4 +29,4 @@ if [ ! -r "$jdbldDirectory/app/jdrupes-builder.jar" ]; then
   exit 1
 fi
 
-$javaCmd -jar "$jdbldDirectory/app/jdrupes-builder.jar" "$@"
+$javaCmd -Duser.language=en_US -jar "$jdbldDirectory/app/jdrupes-builder.jar" "$@"

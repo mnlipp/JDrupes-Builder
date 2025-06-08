@@ -16,18 +16,5 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
+/// Defines the API for the JDrupes Builder.
 package org.jdrupes.builder.api;
-
-/// A phony resource that (when requested) causes a generator to remove
-/// its generated outputs.
-///
-public class Cleaniness extends ResourceObject {
-
-    /// Instantiates a new cleaniness.
-    ///
-    @SuppressWarnings("PMD.UnnecessaryConstructor")
-    public Cleaniness() {
-        // Make javadoc happy.
-    }
-
-}

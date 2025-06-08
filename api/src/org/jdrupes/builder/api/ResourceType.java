@@ -31,6 +31,9 @@ import java.util.stream.Stream;
 /// if derived from [Resources], [containedType()] returns the
 /// [ResourceType] of the contained elements.
 ///
+/// Beware of automatic inference of type arguments. The inferred
+/// type arguments will usually be super classes of what you expect.
+///
 /// @param <T> the resource type
 ///
 public class ResourceType<T extends Resource> {

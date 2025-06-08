@@ -23,7 +23,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Stream;
 
-/// A chached stream allows the user of a [Stream] to access it multiple
+/// A cached stream allows the user of a [Stream] to access it multiple
 /// times. The stream is evaluated on the first call to [#stream] and
 /// then cached.
 ///
@@ -36,6 +36,13 @@ public class CachedStream<T> {
 
     private List<Stream<? extends T>> sources = new ArrayList<>();
     private List<? extends T> cache;
+
+    /// Instantiates a new cached stream.
+    ///
+    @SuppressWarnings("PMD.UnnecessaryConstructor")
+    public CachedStream() {
+        // Make javadoc happy.
+    }
 
     /// Use all given streams as sources.
     ///

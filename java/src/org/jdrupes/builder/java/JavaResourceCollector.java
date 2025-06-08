@@ -18,21 +18,38 @@
 
 package org.jdrupes.builder.java;
 
+import java.nio.file.Path;
 import org.jdrupes.builder.api.Project;
+import org.jdrupes.builder.api.ResourceFile;
 import org.jdrupes.builder.core.ResourceCollector;
 import static org.jdrupes.builder.java.JavaTypes.*;
 
-/// The Class JavaResourcesCollector.
+/// A [ResourceCollector] for [ResourceFile]s that should be included
+/// the resources provided by a Java project.
 ///
 public class JavaResourceCollector
         extends ResourceCollector<JavaResourceTree> {
 
-    /// Instantiates a new java resources collector.
+    /// Instantiates a new Java resources collector.
     ///
     /// @param project the project
     ///
     public JavaResourceCollector(Project project) {
         super(project, JavaResourceTreeType);
+    }
+
+    /// Adds the files from the given directory matching the given pattern.
+    /// Short for
+    /// `add(project().newFileTree(JavaResourceTreeType, directory, pattern))`.
+    ///
+    /// @param directory the directory
+    /// @param pattern the pattern
+    /// @return the resources collector
+    ///
+    public final ResourceCollector<JavaResourceTree> add(Path directory,
+            String pattern) {
+        add(project().newFileTree(JavaResourceTreeType, directory, pattern));
+        return this;
     }
 
 }

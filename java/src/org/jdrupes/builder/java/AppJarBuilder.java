@@ -92,6 +92,7 @@ public class AppJarBuilder extends AbstractGenerator<JarFile> {
     /// Sets the main class.
     ///
     /// @param mainClass the new main class
+    /// @return the app jar builder for method chaining
     ///
     public AppJarBuilder mainClass(String mainClass) {
         this.mainClass = mainClass;
