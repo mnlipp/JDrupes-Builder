@@ -18,7 +18,9 @@
 
 package org.jdrupes.builder.java;
 
+import java.io.File;
 import java.nio.file.Path;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.function.Function;
@@ -46,13 +48,19 @@ public class Javadoc extends JavaTool<FileTree<FileResource>> {
         = project().newResources(new ResourceType<>() {
         });
     private Path destination = Path.of("doc");
+    private final Resources<ClasspathElement> tagletpath;
+    private final List<String> taglets = new ArrayList<>();
 
     /// Instantiates a new java compiler.
     ///
     /// @param project the project
     ///
+    @SuppressWarnings("PMD.ConstructorCallsOverridableMethod")
     public Javadoc(Project project) {
         super(project);
+        tagletpath = project().newResources(new ResourceType<>() {
+        });
+
     }
 
     /// Returns the destination directory. Defaults to "`doc`".
@@ -92,6 +100,7 @@ public class Javadoc extends JavaTool<FileTree<FileResource>> {
     /// @param pattern the pattern
     /// @return the resources collector
     ///
+    @SuppressWarnings("PMD.UseDiamondOperator")
     public final Javadoc addSources(Path directory, String pattern) {
         addSources(
             project().newFileTree(new ResourceType<FileTree<JavaSourceFile>>() {
@@ -119,12 +128,33 @@ public class Javadoc extends JavaTool<FileTree<FileResource>> {
             .collect(Collectors.toSet());
     }
 
+    /// Adds the given elements to the taglepath.
+    ///
+    /// @param classpathElements the classpath elements
+    /// @return the javadoc
+    ///
+    public Javadoc tagletpath(Stream<ClasspathElement> classpathElements) {
+        tagletpath.addAll(classpathElements);
+        return this;
+    }
+
+    /// Adds the given taglets.
+    ///
+    /// @param taglets the taglets
+    /// @return the javadoc
+    ///
+    public Javadoc taglets(Stream<String> taglets) {
+        this.taglets.addAll(taglets.toList());
+        return this;
+    }
+
     @Override
     @SuppressWarnings({ "PMD.AvoidCatchingGenericException",
         "PMD.ExceptionAsFlowControl" })
     public <T extends Resource> Stream<T>
             provide(ResourceRequest<T> request) {
-        if (!request.wants(JavadocDirectoryType) && !request.wants(Cleaniness)) {
+        if (!request.wants(JavadocDirectoryType)
+            && !request.wants(Cleaniness)) {
             return Stream.empty();
         }
 
@@ -142,15 +172,21 @@ public class Javadoc extends JavaTool<FileTree<FileResource>> {
         var diagnostics = new DiagnosticCollector<JavaFileObject>();
         try (var fileManager
             = javadoc.getStandardFileManager(diagnostics, null, null)) {
+            List<String> options = new ArrayList<>(List.of(
+                "-d", destDir.toString(), "-quiet", "-overview",
+                project().rootProject().directory().resolve("overview.md")
+                    .toString()));
+            var tagletPath = tagletPath();
+            if (!tagletPath.isEmpty()) {
+                options.addAll(List.of("-tagletpath", tagletPath));
+            }
+            for (var taglet : taglets) {
+                options.addAll(List.of("-taglet", taglet));
+            }
             var sourceFiles
                 = fileManager.getJavaFileObjectsFromPaths(sourcePaths());
             if (!javadoc.getTask(null, fileManager, diagnostics, null,
-                List.of(// "-locale", "en_US",
-                    "-d", destDir.toString(), "-quiet",
-                    "-overview",
-                    project().rootProject().directory().resolve("overview.md")
-                        .toString()),
-                sourceFiles).call()) {
+                options, sourceFiles).call()) {
                 throw new BuildException("Documentation generation failed");
             }
         } catch (Exception e) {
@@ -167,4 +203,20 @@ public class Javadoc extends JavaTool<FileTree<FileResource>> {
         return result;
     }
 
+    private String tagletPath() {
+        tagletpath.stream().<Path> mapMulti((e, consumer) -> {
+            if (e instanceof ClassTree classTree) {
+                consumer.accept(classTree.root());
+            } else if (e instanceof JarFile jarFile) {
+                consumer.accept(jarFile.path());
+            }
+        }).map(Path::toString).collect(Collectors.joining(File.pathSeparator));
+        return tagletpath.stream().<Path> mapMulti((e, consumer) -> {
+            if (e instanceof ClassTree classTree) {
+                consumer.accept(classTree.root());
+            } else if (e instanceof JarFile jarFile) {
+                consumer.accept(jarFile.path());
+            }
+        }).map(Path::toString).collect(Collectors.joining(File.pathSeparator));
+    }
 }

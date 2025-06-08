@@ -4,6 +4,7 @@ import static org.jdrupes.builder.api.Intend.*;
 
 import java.nio.file.Path;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import org.jdrupes.builder.api.Intend;
 import org.jdrupes.builder.api.Project;
@@ -16,6 +17,7 @@ import org.jdrupes.builder.java.JavaTypes;
 import org.jdrupes.builder.java.Javadoc;
 import org.jdrupes.builder.java.JavaProject;
 import org.jdrupes.builder.java.JavaResourceCollector;
+import static org.jdrupes.builder.java.JavaTypes.*;
 
 public class Root extends AbstractProject implements RootProject {
 
@@ -43,8 +45,16 @@ public class Root extends AbstractProject implements RootProject {
             .destination(directory().resolve(Path.of("_jdbld", "app")));
 
         // Build javadoc
-        generator(Javadoc::new).addSources(get(this,
-            new ResourceRequest<>(JavaTypes.JavaSourceTreeType)));
+        generator(Javadoc::new).tagletpath(Stream.of(
+            newFileResource(JarFileType, directory().resolve(
+                Path.of("_jdbld/lib/plantuml-taglet-3.1.0.jar"))),
+            newFileResource(JarFileType, directory().resolve(
+                Path.of("_jdbld/lib/plantuml-1.2023.11.jar")))))
+            .taglets(Stream.of("org.jdrupes.taglets.plantUml.PlantUml",
+                "org.jdrupes.taglets.plantUml.StartUml",
+                "org.jdrupes.taglets.plantUml.EndUml"))
+            .addSources(get(this,
+                new ResourceRequest<>(JavaTypes.JavaSourceTreeType)));
     }
 
     public void build() {

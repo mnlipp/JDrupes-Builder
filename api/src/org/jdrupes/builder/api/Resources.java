@@ -19,8 +19,6 @@
 package org.jdrupes.builder.api;
 
 import java.time.Instant;
-import java.util.function.Supplier;
-import java.util.stream.Collector;
 import java.util.stream.Stream;
 
 /// Defines a container for a collection of resources. Implementations
@@ -78,17 +76,4 @@ public interface Resources<T extends Resource> extends Resource {
     /// @return the resources
     ///
     Resources<T> clear();
-
-    /// Returns a [Collector] that accumulates resources into a new
-    /// [Resources] container.
-    ///
-    /// @param <T> the contained resource type
-    /// @param containerSupplier the container supplier
-    /// @return the collector
-    ///
-    static <T extends Resource> Collector<T, Resources<T>, Resources<T>>
-            into(Supplier<Resources<T>> containerSupplier) {
-        return Collector.of(containerSupplier, Resources::add,
-            Resources::addAll, Collector.Characteristics.UNORDERED);
-    }
 }
