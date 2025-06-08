@@ -20,58 +20,90 @@ package org.jdrupes.builder.api;
 
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
+import java.lang.reflect.WildcardType;
+import java.util.Arrays;
 import java.util.Objects;
+import java.util.Optional;
+import java.util.stream.Stream;
 
-/// Represents a resource type.
+/// A special kind of type token for representing a resource type.
+/// The method [#type] returns the type as [Class]. If this class
+/// if derived from [Resources], [#containedType] returns the
+/// [ResourceType] of the contained elements.
 ///
 /// @param <T> the resource type
 ///
 public class ResourceType<T extends Resource> {
 
-    /// The Java class files.
-    public static final ResourceType<FileTree<ResourceFile>> RESOURCE_FILES
-        = new ResourceType<>() {
-        };
-
     /// Used to request cleanup.
-    public static final ResourceType<Cleaniness> CLEANINESS
-        = new ResourceType<>() {
-        };
+    @SuppressWarnings("PMD.FieldNamingConventions")
+    public static final ResourceType<
+            Cleaniness> Cleaniness = new ResourceType<>() {
+            };
 
     private final Class<T> type;
-    private final Class<? extends Resource> containedType;
+    private final ResourceType<?> containedType;
 
     /// Instantiates a new resource type.
     ///
     /// @param type the type
     /// @param containedType the contained type
     ///
-    public ResourceType(Class<T> type,
-            Class<? extends Resource> containedType) {
+    public ResourceType(Class<T> type, ResourceType<?> containedType) {
         this.type = type;
         this.containedType = containedType;
+    }
+
+    @SuppressWarnings("unchecked")
+    private ResourceType(Type type) {
+        if (type instanceof WildcardType wType) {
+            type = wType.getUpperBounds()[0];
+        }
+        if (type instanceof ParameterizedType pType && Resources.class
+            .isAssignableFrom((Class<?>) pType.getRawType())) {
+            this.type = (Class<T>) pType.getRawType();
+            var argType = pType.getActualTypeArguments()[0];
+            if (argType instanceof ParameterizedType pArgType) {
+                containedType = new ResourceType<>(pArgType);
+            } else {
+                var subType = pType.getActualTypeArguments()[0];
+                containedType = new ResourceType<>(subType);
+            }
+            return;
+        }
+
+        // If type is not a parameterized type, its super or one of its
+        // interfaces may be.
+        this.type = (Class<T>) type;
+        this.containedType = Stream.concat(
+            Optional.ofNullable(((Class<?>) type).getGenericSuperclass())
+                .stream(),
+            Arrays.stream(((Class<?>) type).getGenericInterfaces()))
+            .filter(t -> t instanceof ParameterizedType pType && Resources.class
+                .isAssignableFrom((Class<?>) pType.getRawType()))
+            .map(t -> (ParameterizedType) t).findFirst()
+            .map(t -> new ResourceType<>(Resources.class,
+                new ResourceType<>(t).containedType()))
+            .orElseGet(() -> new ResourceType<>(Resources.class, null))
+            .containedType();
     }
 
     /// Instantiates a new resource type, using the information from a
     /// derived class.
     ///
-    @SuppressWarnings({ "unchecked", "PMD.AvoidCatchingGenericException" })
+    @SuppressWarnings({ "unchecked", "PMD.AvoidCatchingGenericException",
+        "rawtypes" })
     protected ResourceType() {
-        Type myType = getClass().getGenericSuperclass();
+        Type resourceType = getClass().getGenericSuperclass();
         try {
-            Type resourceType
-                = ((ParameterizedType) myType).getActualTypeArguments()[0];
-            if (resourceType instanceof ParameterizedType genType) {
-                type = (Class<T>) genType.getRawType();
-                containedType = (Class<? extends Resource>) genType
-                    .getActualTypeArguments()[0];
-            } else {
-                type = (Class<T>) resourceType;
-                containedType = null;
-            }
+            Type theResource = ((ParameterizedType) resourceType)
+                .getActualTypeArguments()[0];
+            var tempType = new ResourceType(theResource);
+            type = tempType.type();
+            containedType = tempType.containedType();
         } catch (Exception e) {
             throw new UnsupportedOperationException(
-                "Could not derive resource type for " + myType, e);
+                "Could not derive resource type for " + resourceType, e);
         }
     }
 
@@ -83,11 +115,12 @@ public class ResourceType<T extends Resource> {
         return type;
     }
 
-    /// Return the contained type.
+    /// Return the contained type or `null`, if the resource is not
+    /// a container.
     ///
-    /// @return the class<? extends resource>
+    /// @return the type
     ///
-    public Class<? extends Resource> containedType() {
+    public ResourceType<?> containedType() {
         return containedType;
     }
 
@@ -138,7 +171,7 @@ public class ResourceType<T extends Resource> {
     public String toString() {
         return "ResourceType " + type.getSimpleName()
             + (containedType == null ? ""
-                : "(" + containedType.getSimpleName() + ")");
+                : "(" + containedType + ")");
     }
 
 }

@@ -31,7 +31,7 @@ import java.util.stream.Stream;
 /// evaluation includes resolving a relative path for root against
 /// the project's directory.
 ///
-/// @param <T> the generic type
+/// @param <T> the contained type
 ///
 public interface FileTree<T extends FileResource> extends Resources<T> {
 

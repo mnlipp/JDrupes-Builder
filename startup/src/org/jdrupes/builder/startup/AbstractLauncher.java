@@ -41,7 +41,7 @@ import org.jdrupes.builder.api.Project;
 import org.jdrupes.builder.api.RootProject;
 import org.jdrupes.builder.core.BuilderData;
 import org.jdrupes.builder.core.DefaultFileTree;
-import org.jdrupes.builder.java.ClassFile;
+import static org.jdrupes.builder.java.JavaTypes.*;
 
 /// A default implementation of a [Launcher].
 ///
@@ -111,8 +111,8 @@ public abstract class AbstractLauncher implements Launcher {
             } catch (URISyntaxException e) {
                 throw new BuildException("Problem scanning classpath", e);
             }
-        }).map(p -> new DefaultFileTree<ClassFile>(null, p, "**/*.class",
-            ClassFile.class, false))
+        }).map(p -> DefaultFileTree.create(null, ClassTree, p, "**/*.class",
+            false))
             .flatMap(FileTree::entries).map(Path::toString)
             .map(p -> p.substring(0, p.length() - 6).replace('/', '.'))
             .map(cn -> {

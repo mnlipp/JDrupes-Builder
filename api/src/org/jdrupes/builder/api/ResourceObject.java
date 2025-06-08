@@ -16,33 +16,32 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package org.jdrupes.builder.core;
+package org.jdrupes.builder.api;
 
 import java.util.Objects;
-import org.jdrupes.builder.api.Resource;
 
 /// A base class for [Resource]s.
 ///
 public abstract class ResourceObject implements Resource {
 
-    private final Class<? extends Resource> type;
+    private final ResourceType<?> type;
 
-    /// Create a new instance
+    /// Create a new instance.
     ///
     protected ResourceObject() {
-        type = getClass();
+        this.type = new ResourceType<>(getClass(), null);
     }
 
     /// Create a new instance.
     ///
     /// @param type the type
     ///
-    protected ResourceObject(Class<? extends Resource> type) {
+    protected ResourceObject(ResourceType<?> type) {
         this.type = type;
     }
 
     @Override
-    public Class<? extends Resource> type() {
+    public ResourceType<?> type() {
         return type;
     }
 
@@ -68,6 +67,6 @@ public abstract class ResourceObject implements Resource {
 
     @Override
     public String toString() {
-        return "Resource of kind " + type().getSimpleName();
+        return "Resource of kind " + type();
     }
 }

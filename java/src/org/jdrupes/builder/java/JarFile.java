@@ -23,6 +23,5 @@ import org.jdrupes.builder.api.FileResource;
 /// A [FileResource] that represents a Java jar.
 ///
 @SuppressWarnings("PMD.ImplicitFunctionalInterface")
-public interface JarFile extends FileResource {
-
+public interface JarFile extends FileResource, ClasspathElement {
 }

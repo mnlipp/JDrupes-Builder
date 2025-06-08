@@ -13,7 +13,7 @@ import org.jdrupes.builder.core.AbstractProject;
 import org.jdrupes.builder.core.ResourcesCollector;
 import org.jdrupes.builder.java.AppJarBuilder;
 import org.jdrupes.builder.java.JavaCompiler;
-import org.jdrupes.builder.java.JavaConsts;
+import org.jdrupes.builder.java.JavaTypes;
 import org.jdrupes.builder.java.Javadoc;
 import org.jdrupes.builder.java.JavaProject;
 
@@ -44,13 +44,13 @@ public class Root extends AbstractProject implements RootProject {
 
         // Build javadoc
         generator(Javadoc::new).addSources(get(this,
-            new ResourceRequest<>(JavaConsts.JAVA_SOURCE_FILES)));
+            new ResourceRequest<>(JavaTypes.JavaSourceFiles)));
     }
 
     public void build() {
-        get(this, new ResourceRequest<>(JavaConsts.APP_JAR_FILE))
+        get(this, new ResourceRequest<>(JavaTypes.AppJarFile))
             .forEach(System.out::println);
-        get(this, new ResourceRequest<>(JavaConsts.JAVADOC_DIRECTORY))
-            .collect(Collectors.toSet()).stream().forEach(System.out::println);
+        get(this, new ResourceRequest<>(JavaTypes.JavadocDirectory))
+        .collect(Collectors.toSet()).stream().forEach(System.out::println);
     }
 }

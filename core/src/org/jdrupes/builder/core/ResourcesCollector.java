@@ -27,6 +27,7 @@ import org.jdrupes.builder.api.ResourceFile;
 import org.jdrupes.builder.api.ResourceRequest;
 import org.jdrupes.builder.api.ResourceType;
 import org.jdrupes.builder.api.Resources;
+import static org.jdrupes.builder.core.CoreTypes.*;
 
 /// A provider for resources, usually from directories, to be included in a
 /// (Java) project. 
@@ -35,7 +36,8 @@ public class ResourcesCollector
         extends AbstractGenerator<FileTree<ResourceFile>> {
 
     private final Resources<FileTree<ResourceFile>> fileTrees
-        = project().newResources(Resource.class);
+        = project().newResources(new ResourceType<>() {
+        });
 
     /// Instantiates a new resources collector.
     ///
@@ -75,7 +77,7 @@ public class ResourcesCollector
     /// @return the resources collector
     ///
     public final ResourcesCollector add(Path directory, String pattern) {
-        add(project().newFileTree(directory, pattern, ResourceFile.class));
+        add(project().newFileTree(ResourceFiles, directory, pattern));
         return this;
     }
 
@@ -83,7 +85,7 @@ public class ResourcesCollector
     @SuppressWarnings("unchecked")
     public <R extends Resource> Stream<R>
             provide(ResourceRequest<R> requested) {
-        if (!requested.type().isAssignableFrom(ResourceType.RESOURCE_FILES)) {
+        if (!requested.type().isAssignableFrom(ResourceFiles)) {
             return Stream.empty();
         }
         return (Stream<R>) fileTrees.stream();

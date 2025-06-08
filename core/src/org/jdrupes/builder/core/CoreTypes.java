@@ -16,11 +16,27 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package org.jdrupes.builder.api;
+package org.jdrupes.builder.core;
 
-/// A phony resource that (when requested) causes a generator to remove
-/// its generated outputs.
+import org.jdrupes.builder.api.FileResource;
+import org.jdrupes.builder.api.FileTree;
+import org.jdrupes.builder.api.ResourceFile;
+import org.jdrupes.builder.api.ResourceType;
+
+/// The Class CoreResourceTypes.
 ///
-public class Cleaniness extends ResourceObject {
+public class CoreTypes {
+
+    /// The resource type for [FileResource].
+    @SuppressWarnings("PMD.FieldNamingConventions")
+    public static final ResourceType<FileResource> FileResourceType
+        = new ResourceType<>() {
+        };
+
+    /// Resource files.
+    @SuppressWarnings("PMD.FieldNamingConventions")
+    public static final ResourceType<
+            FileTree<ResourceFile>> ResourceFiles = new ResourceType<>() {
+            };
 
 }

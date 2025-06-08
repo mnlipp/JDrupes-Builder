@@ -33,16 +33,18 @@ import org.jdrupes.builder.api.FileTree;
 import org.jdrupes.builder.api.Project;
 import org.jdrupes.builder.api.Resource;
 import org.jdrupes.builder.api.ResourceRequest;
+import org.jdrupes.builder.api.ResourceType;
 import static org.jdrupes.builder.api.ResourceType.*;
 import org.jdrupes.builder.api.Resources;
-import static org.jdrupes.builder.java.JavaConsts.*;
+import static org.jdrupes.builder.java.JavaTypes.*;
 
 /// A generator for creating the Javadoc.
 ///
 public class Javadoc extends JavaTool<FileTree<FileResource>> {
 
     private final Resources<FileTree<JavaSourceFile>> sources
-        = project().newResources(FileResource.class);
+        = project().newResources(new ResourceType<>() {
+        });
     private Path destination = Path.of("doc");
 
     /// Instantiates a new java compiler.
@@ -92,7 +94,8 @@ public class Javadoc extends JavaTool<FileTree<FileResource>> {
     ///
     public final Javadoc addSources(Path directory, String pattern) {
         addSources(
-            project().newFileTree(directory, pattern, JavaSourceFile.class));
+            project().newFileTree(new ResourceType<FileTree<JavaSourceFile>>() {
+            }, directory, pattern));
         return this;
     }
 
@@ -121,14 +124,14 @@ public class Javadoc extends JavaTool<FileTree<FileResource>> {
         "PMD.ExceptionAsFlowControl" })
     public <T extends Resource> Stream<T>
             provide(ResourceRequest<T> request) {
-        if (!request.wants(JAVADOC_DIRECTORY) && !request.wants(CLEANINESS)) {
+        if (!request.wants(JavadocDirectory) && !request.wants(Cleaniness)) {
             return Stream.empty();
         }
 
         // Get destination and check if we only have to cleanup.
         var destDir = project().buildDirectory().resolve(destination);
-        var generated = project().newFileTree(destDir, "**/*");
-        if (request.wants(CLEANINESS)) {
+        var generated = project().newFileTree(ClassTree, destDir, "**/*");
+        if (request.wants(Cleaniness)) {
             generated.delete();
             destDir.toFile().delete();
             return Stream.empty();
@@ -160,7 +163,7 @@ public class Javadoc extends JavaTool<FileTree<FileResource>> {
         }
         @SuppressWarnings("unchecked")
         var result = (Stream<T>) Stream
-            .of(project().newFileResource(JavadocDirectory.class, destDir));
+            .of(project().newFileResource(JavadocDirectory, destDir));
         return result;
     }
 

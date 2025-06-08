@@ -44,6 +44,7 @@ import org.jdrupes.builder.api.Resource;
 import org.jdrupes.builder.api.ResourceProvider;
 import org.jdrupes.builder.api.ResourceRequest;
 import org.jdrupes.builder.api.ResourceRequest.Restriction;
+import org.jdrupes.builder.api.ResourceType;
 import org.jdrupes.builder.api.Resources;
 import org.jdrupes.builder.api.RootProject;
 
@@ -300,30 +301,31 @@ public abstract class AbstractProject implements Project {
         try {
             Method method = getClass().getMethod(name);
             method.invoke(this);
-        } catch (NoSuchMethodException | SecurityException
-                | IllegalAccessException | IllegalArgumentException
-                | InvocationTargetException e) {
-            throw new BuildException("Project " + this + " does not support "
-                + name, e);
+        } catch (NoSuchMethodException e) {
+            throw new BuildException(this + " does not support " + name, e);
+        } catch (SecurityException | IllegalAccessException
+                | IllegalArgumentException | InvocationTargetException e) {
+            throw new BuildException("Problem invoking " + name + " on " + this
+                + (e.getMessage() == null ? "" : (": " + e.getMessage())), e);
         }
     }
 
     @Override
-    public <T extends FileResource> T newFileResource(Class<T> type,
+    public <T extends FileResource> T newFileResource(ResourceType<T> type,
             Path path) {
         return DefaultFileResource.create(type, path);
     }
 
     @Override
-    public <T extends Resource> Resources<T>
-            newResources(Class<? extends Resource> type) {
-        return new DefaultResources<>(type);
+    public <T extends Resources<C>, C extends Resource>
+            T newResources(ResourceType<T> type) {
+        return DefaultResources.create(type);
     }
 
     @Override
-    public <T extends FileResource> FileTree<T> newFileTree(
-            Path root, String pattern, Class<T> type, boolean withDirs) {
-        return new DefaultFileTree<>(this, root, pattern, type, withDirs);
+    public <T extends FileTree<C>, C extends FileResource> T newFileTree(
+            ResourceType<T> type, Path root, String pattern, boolean withDirs) {
+        return DefaultFileTree.create(this, type, root, pattern, withDirs);
     }
 
     @Override

@@ -26,7 +26,7 @@ import org.jdrupes.builder.api.Project;
 import org.jdrupes.builder.api.Resource;
 import org.jdrupes.builder.api.ResourceRequest;
 import org.jdrupes.builder.core.AbstractGenerator;
-import static org.jdrupes.builder.java.JavaConsts.*;
+import static org.jdrupes.builder.java.JavaTypes.*;
 
 /// Provides [FileTree]s with classes from a given classpath.
 ///
@@ -56,15 +56,30 @@ public class ClasspathScanner
     @Override
     public <T extends Resource> Stream<T>
             provide(ResourceRequest<T> requested) {
-        if (!requested.type()
-            .isAssignableFrom(JAVA_CLASS_FILES)) {
+        if (!ClasspathElement.isAssignableFrom(requested.type())) {
             return Stream.empty();
         }
         @SuppressWarnings("unchecked")
         var result = (Stream<T>) Stream.of(path.split(File.pathSeparator))
-            .map(d -> project().newFileTree(Path.of(d), "**/*.class",
-                ClassFile.class,
-                false));
+            .map(Path::of).map(p -> {
+                if (p.toFile().isDirectory()) {
+                    return (ClasspathElement) project().newFileTree(
+                        ClassTree, p.toAbsolutePath(), "**/*.class", false);
+                } else {
+                    return (ClasspathElement) project()
+                        .newFileResource(JarFile, p.toAbsolutePath());
+                }
+            }).map(e -> {
+                System.out.println(
+                    "Before filter " + e + " (" + requested);
+                return e;
+            })
+//            .filter(e -> requested.type().getClass()
+//                .isAssignableFrom(e.getClass()))
+            .map(e -> {
+                System.out.println("After filter " + e);
+                return e;
+            });
         return result;
     }
 

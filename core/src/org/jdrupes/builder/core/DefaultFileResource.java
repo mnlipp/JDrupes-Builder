@@ -24,7 +24,8 @@ import java.time.Instant;
 import java.util.Objects;
 import org.jdrupes.builder.api.BuildException;
 import org.jdrupes.builder.api.FileResource;
-import org.jdrupes.builder.api.Resource;
+import org.jdrupes.builder.api.ResourceObject;
+import org.jdrupes.builder.api.ResourceType;
 
 /// A resource that represents a file.
 ///
@@ -38,8 +39,7 @@ public class DefaultFileResource extends ResourceObject
     /// @param type the type
     /// @param path the path
     ///
-    /* default */ DefaultFileResource(Class<? extends Resource> type,
-            Path path) {
+    protected DefaultFileResource(ResourceType<?> type, Path path) {
         super(type);
         if (!path.isAbsolute()) {
             throw new BuildException("Path must be absolute, is " + path);
@@ -47,10 +47,18 @@ public class DefaultFileResource extends ResourceObject
         this.path = path;
     }
 
-    /* default */ @SuppressWarnings("unchecked")
-    static <T extends FileResource> T create(Class<T> type, Path path) {
-        return (T) Proxy.newProxyInstance(type.getClassLoader(),
-            new Class<?>[] { type },
+    /// Creates a new file resource.
+    ///
+    /// @param <T> the resource type
+    /// @param type the type
+    /// @param path the path
+    /// @return the t
+    ///
+    @SuppressWarnings({ "unchecked" })
+    public static <T extends FileResource> T create(ResourceType<T> type,
+            Path path) {
+        return (T) Proxy.newProxyInstance(type.type().getClassLoader(),
+            new Class<?>[] { type.type() },
             new ForwardingHandler(new DefaultFileResource(type, path)));
     }
 

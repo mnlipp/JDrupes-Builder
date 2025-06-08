@@ -38,7 +38,7 @@ public interface RootProject extends Project {
     /// By default, every root project has a clean target.
     ///
     default void clean() {
-        get(this, new ResourceRequest<>(ResourceType.CLEANINESS))
+        get(this, new ResourceRequest<>(ResourceType.Cleaniness))
             .forEach(System.out::println);
     }
 

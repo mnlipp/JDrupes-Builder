@@ -25,6 +25,7 @@ import java.time.format.FormatStyle;
 
 /// Represents a resource handled by the builder.
 ///
+@SuppressWarnings("PMD.ImplicitFunctionalInterface")
 public interface Resource {
 
     /// The instant at which this resource was created or last modified.
@@ -37,11 +38,9 @@ public interface Resource {
 
     /// Returns the type of this resource.
     ///
-    /// @return the class<? extends resource>
+    /// @return the type
     ///
-    default Class<? extends Resource> type() {
-        return getClass();
-    }
+    ResourceType<?> type();
 
     /// Returns a localized string representation of the instant
     /// at which this resource was created or last modified.

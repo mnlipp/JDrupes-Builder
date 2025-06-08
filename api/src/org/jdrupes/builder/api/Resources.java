@@ -27,43 +27,9 @@ import java.util.stream.Stream;
 /// must behave as sets (no duplicate entries) and must maintain insertion
 /// order when providing the content through [stream].
 ///
-/// @param <T> the contained resource type
+/// @param <T> the contained type
 ///
 public interface Resources<T extends Resource> extends Resource {
-
-    /// An implementation of empty resources for use with [empty].
-    Resources<?> EMPTY = new Resources<>() {
-
-        @Override
-        public Resources<Resource> add(Resource resource) {
-            throw new UnsupportedOperationException();
-        }
-
-        @Override
-        public Stream<Resource> stream() {
-            return Stream.empty();
-        }
-
-        @Override
-        public Resources<Resource> clear() {
-            return null;
-        }
-
-        @Override
-        public String toString() {
-            return "Empty resources";
-        }
-    };
-
-    /// Return an empty set of resources.
-    ///
-    /// @param <R> the generic type
-    /// @return the resources
-    ///
-    @SuppressWarnings("unchecked")
-    static <R extends Resource> Resources<R> empty() {
-        return (Resources<R>) EMPTY;
-    }
 
     /// Adds the given resource.
     ///
@@ -91,6 +57,10 @@ public interface Resources<T extends Resource> extends Resource {
         return this;
     }
 
+    /// As of.
+    ///
+    /// @return the instant
+    ///
     @Override
     default Instant asOf() {
         return stream().map(Resource::asOf).reduce(Instant.MIN, (latest,

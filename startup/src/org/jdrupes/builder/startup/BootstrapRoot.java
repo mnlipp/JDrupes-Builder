@@ -26,10 +26,10 @@ import org.jdrupes.builder.api.BuildException;
 import org.jdrupes.builder.api.Intend;
 import org.jdrupes.builder.api.Masked;
 import org.jdrupes.builder.api.ResourceRequest;
-import org.jdrupes.builder.api.ResourceType;
 import org.jdrupes.builder.api.RootProject;
 import org.jdrupes.builder.core.AbstractProject;
-import org.jdrupes.builder.java.JavaConsts;
+import static org.jdrupes.builder.core.CoreTypes.*;
+import org.jdrupes.builder.java.JavaTypes;
 
 /// The built-in root project associated with the root directory.
 ///
@@ -48,8 +48,8 @@ public class BootstrapRoot extends AbstractProject
     ///
     public void bootstrap() {
         var cpUrls = Stream.concat(
-            provide(new ResourceRequest<>(JavaConsts.JAVA_CLASS_FILES)),
-            provide(new ResourceRequest<>(ResourceType.RESOURCE_FILES)))
+            provide(new ResourceRequest<>(JavaTypes.ClassTree)),
+            provide(new ResourceRequest<>(ResourceFiles)))
             .map(ft -> {
                 try {
                     return ft.root().toFile().toURI().toURL();

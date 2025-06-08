@@ -39,22 +39,23 @@ import org.jdrupes.builder.api.ResourceRequest;
 import org.jdrupes.builder.api.ResourceType;
 import static org.jdrupes.builder.api.ResourceType.*;
 import org.jdrupes.builder.api.Resources;
-import static org.jdrupes.builder.java.JavaConsts.*;
+import static org.jdrupes.builder.java.JavaTypes.*;
 
 /// The [JavaCompiler] generator provides two types of resources.
 /// 
 /// 1. The [JavaSourceFile]s of the project as configured with [addSources]
 ///    in response to a [ResourceRequest] with [ResourceType]
-///    [JavaConsts#JAVA_SOURCE_FILES].
+///    [JavaTypes#JavaSourceFiles].
 ///
 /// 2. The [ClassFile]s that result from compiling the sources in response
 ///    to a [ResourceRequest] with [ResourceType]
-///    [JavaConsts#JAVA_CLASS_FILES].
+///    [JavaTypes#ClassTree].
 ///
 public class JavaCompiler extends JavaTool<FileTree<ClassFile>> {
 
     private final Resources<FileTree<JavaSourceFile>> sources
-        = project().newResources(FileResource.class);
+        = project().newResources(new ResourceType<>() {
+        });
     private Path destination = Path.of("classes");
 
     /// Instantiates a new java compiler.
@@ -104,7 +105,8 @@ public class JavaCompiler extends JavaTool<FileTree<ClassFile>> {
     ///
     public final JavaCompiler addSources(Path directory, String pattern) {
         addSources(
-            project().newFileTree(directory, pattern, JavaSourceFile.class));
+            project().newFileTree(new ResourceType<FileTree<JavaSourceFile>>() {
+            }, directory, pattern));
         return this;
     }
 
@@ -132,29 +134,28 @@ public class JavaCompiler extends JavaTool<FileTree<ClassFile>> {
     @Override
     public <T extends Resource> Stream<T>
             provide(ResourceRequest<T> request) {
-        if (request.wants(JAVA_SOURCE_FILES)) {
+        if (request.wants(JavaSourceFiles)) {
             @SuppressWarnings("unchecked")
             var result = (Stream<T>) sources.stream();
             return result;
         }
-        if (!request.wants(JAVA_CLASS_FILES) && !request.wants(CLEANINESS)) {
+        if (!request.wants(ClassTree) && !request.wants(Cleaniness)) {
             return Stream.empty();
         }
 
         // Get this project's previously generated classes (for checking)
         var destDir = project().buildDirectory().resolve(destination);
-        final var classSet = project().newFileTree(
-            destDir, "**/*", ClassFile.class);
-        if (request.wants(CLEANINESS)) {
+        final var classSet = project().newFileTree(ClassTree, destDir, "**/*");
+        if (request.wants(Cleaniness)) {
             classSet.delete();
             return Stream.empty();
         }
 
         // Get classpath for compilation.
         log.fine(() -> "Getting classpath for " + project());
-        var cpResources = project().newResources(ClassFile.class).addAll(
-            project().provided(EnumSet.of(Intend.Consume, Intend.Expose),
-                new ResourceRequest<>(JAVA_CLASS_FILES)));
+        var cpResources = project().newResources(new ResourceType<>() {
+        }).addAll(project().provided(EnumSet.of(Intend.Consume, Intend.Expose),
+            new ResourceRequest<>(ClasspathElement)));
         log.finest(() -> project() + " uses classpath: " + cpResources.stream()
             .map(Resource::toString).collect(Collectors.joining(", ")));
 
@@ -182,8 +183,11 @@ public class JavaCompiler extends JavaTool<FileTree<ClassFile>> {
     private void compile(Resources<Resource> cpResources, Path destDir) {
         log.info(() -> "Compiling Java in project " + project().name());
         var classpath = cpResources.stream().<Path> mapMulti((r, sink) -> {
-            if (r instanceof FileTree fileSet) {
-                sink.accept(fileSet.root());
+            System.out.println(r);
+            if (r instanceof ClassTree classTree) {
+                sink.accept(classTree.root());
+            } else if (r instanceof JarFile jarFile) {
+                sink.accept(jarFile.path());
             }
         }).map(Path::toString).collect(Collectors.joining(File.pathSeparator));
         var javac = ToolProvider.getSystemJavaCompiler();

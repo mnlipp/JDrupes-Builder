@@ -39,6 +39,7 @@ import java.util.stream.Stream;
 /// As a convenience, the interface also defines factory methods
 /// for objects used for defining the project.
 ///
+@SuppressWarnings("PMD.TooManyMethods")
 public interface Project extends ResourceProvider<Resource> {
 
     /// The common project properties.
@@ -234,69 +235,6 @@ public interface Project extends ResourceProvider<Resource> {
     <T extends Resource> Stream<T> get(ResourceProvider<?> provider,
             ResourceRequest<T> requested);
 
-    /// Returns a new file tree. The file tree includes all files
-    /// matching `pattern` in the tree starting at `root`. `root`
-    /// may be specified as absolute path or as path relative to the
-    /// `project`'s directory (see [Project#directory]).
-    ///
-    /// @param root the root of the file tree to search for files matching
-    /// `pattern`
-    /// @param pattern the pattern
-    /// @return the file tree
-    ///
-    default FileTree<FileResource> newFileTree(Path root, String pattern) {
-        return newFileTree(root, pattern, FileResource.class);
-    }
-
-    /// Returns a new file tree. The file tree includes all files
-    /// matching `pattern` in the tree starting at `root`. `root`
-    /// may be specified as absolute path or as path relative to the
-    /// `project`'s directory (see [Project#directory]).
-    ///
-    /// @param <T> the type of the [FileResource]s in the tree.
-    /// @param root the root of the file tree to search for files matching
-    /// `pattern`
-    /// @param pattern the pattern
-    /// @param type the file tree's type
-    /// @return the file tree
-    ///
-    default <T extends FileResource> FileTree<T> newFileTree(Path root,
-            String pattern, Class<T> type) {
-        return newFileTree(root, pattern, type, false);
-    }
-
-    /// Returns a new file tree. The file tree includes all files
-    /// matching `pattern` in the tree starting at `root`. `root`
-    /// may be specified as absolute path or as path relative to the
-    /// `project`'s directory (see [Project#directory]).
-    ///
-    /// @param root the root of the file tree to search for files matching
-    /// `pattern`
-    /// @param pattern the pattern
-    /// @param withDirs whether to include directories
-    /// @return the file tree
-    ///
-    default FileTree<FileResource> newFileTree(Path root, String pattern,
-            boolean withDirs) {
-        return newFileTree(root, pattern, FileResource.class, withDirs);
-    }
-
-    /// Returns a new file tree. The file tree includes all files
-    /// matching `pattern` in the tree starting at `root`. `root`
-    /// may be specified as absolute path or as path relative to the
-    /// `project`'s directory (see [Project#directory]).
-    ///
-    /// @param <T> the type of the [FileResource]s in the tree.
-    /// @param root the root of the file tree to search for files matching
-    /// `pattern`
-    /// @param pattern the pattern
-    /// @param type the file tree's type
-    /// @param withDirs whether to include directories
-    /// @return the file tree
-    ///
-    <T extends FileResource> FileTree<T> newFileTree(Path root, String pattern,
-            Class<T> type, boolean withDirs);
-
     /// Returns a new file resource.
     ///
     /// @param <T> the type of file resource
@@ -304,15 +242,50 @@ public interface Project extends ResourceProvider<Resource> {
     /// @param path the path
     /// @return the file resource
     ///
-    <T extends FileResource> T newFileResource(Class<T> type, Path path);
+    <T extends FileResource> T newFileResource(ResourceType<T> type, Path path);
 
     /// Returns a new resource container.
     ///
-    /// @param <T> the contained type
-    /// @param type the type of the new object as resource
+    /// @param <T> the container type
+    /// @param <C> the contained type
+    /// @param type the type
     /// @return the resources
     ///
-    <T extends Resource> Resources<T>
-            newResources(Class<? extends Resource> type);
+    <T extends Resources<C>, C extends Resource> 
+        T newResources(ResourceType<T> type);
 
+    /// Returns a new file tree. The file tree includes all files
+    /// matching `pattern` in the tree starting at `root`. `root`
+    /// may be specified as absolute path or as path relative to the
+    /// `project`'s directory (see [Project#directory]).
+    ///
+    /// @param <T> the file tree's type
+    /// @param <C> the contained element's type
+    /// @param type the type
+    /// @param root the root of the file tree to search for files matching
+    /// `pattern`
+    /// @param pattern the pattern
+    /// @param withDirs whether to include directories
+    /// @return the file tree
+    ///
+    <T extends FileTree<C>, C extends FileResource> T newFileTree(
+            ResourceType<T> type, Path root, String pattern, boolean withDirs);
+
+    /// Returns a new file tree. The file tree includes all files
+    /// matching `pattern` in the tree starting at `root`. `root`
+    /// may be specified as absolute path or as path relative to the
+    /// `project`'s directory (see [Project#directory]).
+    ///
+    /// @param <T> the file tree's type
+    /// @param <C> the contained element's type
+    /// @param type the type
+    /// @param root the root of the file tree to search for files matching
+    /// `pattern`
+    /// @param pattern the pattern
+    /// @return the file tree
+    ///
+    default <T extends FileTree<C>, C extends FileResource> T newFileTree(
+            ResourceType<? extends T> type, Path root, String pattern) {
+        return newFileTree(type, root, pattern, false);
+    }
 }

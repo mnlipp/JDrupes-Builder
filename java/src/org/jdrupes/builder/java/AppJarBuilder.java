@@ -32,16 +32,19 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 import org.jdrupes.builder.api.BuildException;
+import org.jdrupes.builder.api.FileResource;
 import org.jdrupes.builder.api.FileTree;
 import org.jdrupes.builder.api.Project;
 import org.jdrupes.builder.api.Resource;
 import org.jdrupes.builder.api.ResourceProvider;
 import org.jdrupes.builder.api.ResourceRequest;
+import org.jdrupes.builder.api.ResourceType;
 import static org.jdrupes.builder.api.ResourceType.*;
 import org.jdrupes.builder.api.Resources;
 import org.jdrupes.builder.core.AbstractGenerator;
 import org.jdrupes.builder.core.CachedStream;
-import static org.jdrupes.builder.java.JavaConsts.*;
+import static org.jdrupes.builder.core.CoreTypes.*;
+import static org.jdrupes.builder.java.JavaTypes.*;
 
 /// The Class AppJarBuilder.
 ///
@@ -132,7 +135,7 @@ public class AppJarBuilder extends AbstractGenerator<JarFile> {
         "PMD.AvoidInstantiatingObjectsInLoops" })
     public <T extends Resource> Stream<T>
             provide(ResourceRequest<T> request) {
-        if (!request.wants(APP_JAR_FILE) && !request.wants(CLEANINESS)) {
+        if (!request.wants(AppJarFile) && !request.wants(Cleaniness)) {
             return Stream.empty();
         }
 
@@ -144,11 +147,11 @@ public class AppJarBuilder extends AbstractGenerator<JarFile> {
                 throw new BuildException("Cannot create directory " + destDir);
             }
         }
-        var jarResource = project().newFileResource(JarFile.class,
+        var jarResource = project().newFileResource(JarFile,
             destDir.resolve(project().name() + ".jar"));
 
         // Maybe only delete
-        if (request.wants(CLEANINESS)) {
+        if (request.wants(Cleaniness)) {
             jarResource.delete();
             return Stream.empty();
         }
@@ -161,13 +164,14 @@ public class AppJarBuilder extends AbstractGenerator<JarFile> {
 
         // Get all content.
         log.fine(() -> "Getting app jar content for " + project().name());
-        Resources<FileTree<? extends Resource>> fileTrees
-            = project().newResources(FileTree.class);
+        Resources<FileTree<? extends FileResource>> fileTrees
+            = project().newResources(new ResourceType<>() {
+            });
         providers.stream().forEach(provider -> {
             fileTrees.addAll(project().get(provider,
-                new ResourceRequest<>(JAVA_CLASS_FILES)));
+                new ResourceRequest<>(ClassTree)));
             fileTrees.addAll(project().get(provider,
-                new ResourceRequest<>(RESOURCE_FILES)));
+                new ResourceRequest<>(ResourceFiles)));
         });
 
         // Check if rebuild needed.
@@ -179,7 +183,7 @@ public class AppJarBuilder extends AbstractGenerator<JarFile> {
     }
 
     private void buildJar(JarFile jarResource,
-            Resources<FileTree<? extends Resource>> fileTrees) {
+            Resources<FileTree<? extends FileResource>> fileTrees) {
         // Build jar
         log.info(() -> "Building application jar in " + project().name());
         var entries = new LinkedHashMap<Path, Path>();

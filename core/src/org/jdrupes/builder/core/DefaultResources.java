@@ -18,12 +18,15 @@
 
 package org.jdrupes.builder.core;
 
+import java.lang.reflect.Proxy;
 import java.util.LinkedHashSet;
 import java.util.Objects;
 import java.util.Set;
 import java.util.logging.Logger;
 import java.util.stream.Stream;
 import org.jdrupes.builder.api.Resource;
+import org.jdrupes.builder.api.ResourceObject;
+import org.jdrupes.builder.api.ResourceType;
 import org.jdrupes.builder.api.Resources;
 
 /// Represents a set of resources. Resources are added by [add].
@@ -44,9 +47,17 @@ public class DefaultResources<T extends Resource> extends ResourceObject
     ///
     /// @param type the type of this instance as resource
     ///
-    /* default */ DefaultResources(Class<? extends Resource> type) {
+    protected DefaultResources(ResourceType<?> type) {
         super(type);
         content = new LinkedHashSet<>();
+    }
+
+    /* default */ @SuppressWarnings("unchecked")
+    static <T extends Resources<C>, C extends Resource> T create(
+            ResourceType<T> type) {
+        return (T) Proxy.newProxyInstance(type.type().getClassLoader(),
+            new Class<?>[] { type.type() },
+            new ForwardingHandler(new DefaultResources<>(type)));
     }
 
     @Override

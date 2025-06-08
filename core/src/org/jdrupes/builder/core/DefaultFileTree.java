@@ -19,6 +19,7 @@
 package org.jdrupes.builder.core;
 
 import java.io.IOException;
+import java.lang.reflect.Proxy;
 import java.nio.file.AccessDeniedException;
 import java.nio.file.FileSystems;
 import java.nio.file.FileVisitResult;
@@ -37,6 +38,7 @@ import org.jdrupes.builder.api.BuildException;
 import org.jdrupes.builder.api.FileResource;
 import org.jdrupes.builder.api.FileTree;
 import org.jdrupes.builder.api.Project;
+import org.jdrupes.builder.api.ResourceType;
 
 /// The default implementation of a [FileTree].
 ///
@@ -50,7 +52,6 @@ public class DefaultFileTree<T extends FileResource> extends DefaultResources<T>
     private final Path root;
     private final String pattern;
     private final boolean withDirs;
-    private final Class<T> leafType;
     private boolean filled;
 
     /// Returns a new file tree. The file tree includes all files
@@ -59,20 +60,39 @@ public class DefaultFileTree<T extends FileResource> extends DefaultResources<T>
     /// `project`'s directory (see [Project#directory]).
     ///
     /// @param project the project
+    /// @param type the type
     /// @param root the root of the file tree to search for files matching
     /// `pattern`
     /// @param pattern the pattern
-    /// @param leafType the type of the elements in the tree
     /// @param withDirs whether to include directories
     ///
-    public DefaultFileTree(Project project, Path root,
-            String pattern, Class<T> leafType, boolean withDirs) {
-        super(FileTree.class);
+    public DefaultFileTree(Project project, ResourceType<?> type, Path root,
+            String pattern, boolean withDirs) {
+        super(type);
         this.project = project;
         this.root = root;
         this.pattern = pattern;
         this.withDirs = withDirs;
-        this.leafType = leafType;
+    }
+
+    /// Creates the a new [FileTree].
+    ///
+    /// @param <T> the tree's type
+    /// @param <L> the element's type
+    /// @param project the project
+    /// @param type the type
+    /// @param root the root
+    /// @param pattern the pattern
+    /// @param withDirs whether to include directories
+    /// @return the file tree
+    ///
+    @SuppressWarnings("unchecked")
+    public static <T extends FileTree<L>, L extends FileResource>
+            T create(Project project, ResourceType<T> type, Path root,
+                    String pattern, boolean withDirs) {
+        return (T) Proxy.newProxyInstance(type.type().getClassLoader(),
+            new Class<?>[] { type.type() }, new ForwardingHandler(
+                new DefaultFileTree<>(project, type, root, pattern, withDirs)));
     }
 
     @Override
@@ -112,8 +132,7 @@ public class DefaultFileTree<T extends FileResource> extends DefaultResources<T>
         return latestChange;
     }
 
-    private void find(Path root, String pattern)
-            throws IOException {
+    private void find(Path root, String pattern) throws IOException {
         final PathMatcher pathMatcher = FileSystems.getDefault()
             .getPathMatcher("glob:" + pattern);
         Files.walkFileTree(root, new SimpleFileVisitor<>() {
@@ -127,7 +146,9 @@ public class DefaultFileTree<T extends FileResource> extends DefaultResources<T>
 
             private void testAndAdd(Path path) {
                 if (pathMatcher.matches(path)) {
-                    T resource = DefaultFileResource.create(leafType, path);
+                    @SuppressWarnings("unchecked")
+                    T resource = DefaultFileResource
+                        .create((ResourceType<T>) type().containedType(), path);
                     DefaultFileTree.this.add(resource);
                     if (resource.asOf().isAfter(latestChange)) {
                         latestChange = resource.asOf();
@@ -249,7 +270,7 @@ public class DefaultFileTree<T extends FileResource> extends DefaultResources<T>
         final int prime = 31;
         int result = super.hashCode();
         result = prime * result
-            + Objects.hash(leafType, pattern, root(), withDirs);
+            + Objects.hash(pattern, root(), withDirs);
         return result;
     }
 
@@ -265,8 +286,7 @@ public class DefaultFileTree<T extends FileResource> extends DefaultResources<T>
             return false;
         }
         DefaultFileTree<?> other = (DefaultFileTree<?>) obj;
-        return Objects.equals(leafType, other.leafType)
-            && Objects.equals(pattern, other.pattern)
+        return Objects.equals(pattern, other.pattern)
             && Objects.equals(root(), other.root())
             && withDirs == other.withDirs;
     }
@@ -276,10 +296,7 @@ public class DefaultFileTree<T extends FileResource> extends DefaultResources<T>
         var wasFilled = filled;
         fill();
         filled = wasFilled;
-        return "FileSet (type " + type().getSimpleName() + ") from "
-            + (project != null
-                ? project.rootProject().directory().relativize(root)
-                : root)
+        return type() + " from " + Path.of("").toAbsolutePath().relativize(root)
             + " with " + stream().count() + " files, newest: " + latestChange;
     }
 }

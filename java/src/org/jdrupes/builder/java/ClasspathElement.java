@@ -16,11 +16,12 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package org.jdrupes.builder.api;
+package org.jdrupes.builder.java;
 
-/// A phony resource that (when requested) causes a generator to remove
-/// its generated outputs.
+import org.jdrupes.builder.api.Resource;
+
+/// The Interface ClasspathElement.
 ///
-public class Cleaniness extends ResourceObject {
+public interface ClasspathElement extends Resource {
 
 }
