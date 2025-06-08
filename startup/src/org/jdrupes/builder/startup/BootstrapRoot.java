@@ -21,7 +21,6 @@ package org.jdrupes.builder.startup;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLClassLoader;
-import java.util.stream.Stream;
 import org.jdrupes.builder.api.BuildException;
 import org.jdrupes.builder.api.FileResource;
 import org.jdrupes.builder.api.FileTree;
@@ -30,7 +29,6 @@ import org.jdrupes.builder.api.Masked;
 import org.jdrupes.builder.api.ResourceRequest;
 import org.jdrupes.builder.api.RootProject;
 import org.jdrupes.builder.core.AbstractProject;
-import static org.jdrupes.builder.core.CoreTypes.*;
 import static org.jdrupes.builder.java.JavaTypes.*;
 
 /// The built-in root project associated with the root directory.

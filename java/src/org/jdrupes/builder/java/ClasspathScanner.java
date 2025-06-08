@@ -69,17 +69,7 @@ public class ClasspathScanner
                     return (ClasspathElement) project()
                         .newFileResource(JarFileType, p.toAbsolutePath());
                 }
-            }).map(e -> {
-                System.out.println(
-                    "Before filter " + e + " (" + requested);
-                return e;
-            })
-//            .filter(e -> requested.type().getClass()
-//                .isAssignableFrom(e.getClass()))
-            .map(e -> {
-                System.out.println("After filter " + e);
-                return e;
-            });
+            }).filter(e -> requested.type().isAssignableFrom(e.type()));
         return result;
     }
 

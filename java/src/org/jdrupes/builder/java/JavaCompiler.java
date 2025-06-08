@@ -186,7 +186,6 @@ public class JavaCompiler extends JavaTool<FileTree<ClassFile>> {
             Path destDir) {
         log.info(() -> "Compiling Java in project " + project().name());
         var classpath = cpResources.stream().<Path> mapMulti((r, sink) -> {
-            System.out.println(r);
             if (r instanceof ClassTree classTree) {
                 sink.accept(classTree.root());
             } else if (r instanceof JarFile jarFile) {
