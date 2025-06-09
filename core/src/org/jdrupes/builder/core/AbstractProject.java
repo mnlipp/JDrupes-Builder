@@ -71,6 +71,16 @@ public abstract class AbstractProject implements Project {
     // Only non null in the root project
     private DefaultBuildContext context;
 
+    /// Named parameter for specifying the parent project.
+    ///
+    /// @param parentProject the parent project
+    /// @return the named parameter
+    ///
+    public static NamedParameter<Class<? extends Project>>
+            parent(Class<? extends Project> parentProject) {
+        return new NamedParameter<>("parent", parentProject);
+    }
+
     /// Named parameter for specifying the name.
     ///
     /// @param name the name
@@ -116,6 +126,7 @@ public abstract class AbstractProject implements Project {
     ///
     /// @param parentProject the parent project's class
     /// @param params the named parameters
+    ///   * parent - the class of the parent project
     ///   * name - the name of the project. If not provided the name is
     ///     set to the (simple) class name
     ///   * directory - the directory of the project. If not provided,
@@ -125,9 +136,10 @@ public abstract class AbstractProject implements Project {
     ///
     @SuppressWarnings({ "PMD.ConstructorCallsOverridableMethod",
         "PMD.UseLocaleWithCaseConversions", "PMD.UnusedFormalParameter" })
-    protected AbstractProject(Class<? extends Project> parentProject,
-            NamedParameter<?>... params) {
+    protected AbstractProject(NamedParameter<?>... params) {
         // Evaluate patent project
+        var parentProject = NamedParameter.<
+                Class<? extends Project>> get(params, "parent", null);
         if (parentProject == null) {
             parent = fallbackParent.get();
             if (this instanceof RootProject) {
@@ -169,16 +181,6 @@ public abstract class AbstractProject implements Project {
             parent.dependency(this, Forward);
         }
         rootProject().prepareProject(this);
-    }
-
-    /// Base class constructor for root projects and subprojects that
-    /// do not specify a parent. Short for
-    /// `AbstractProject(null, params)`.
-    ///
-    /// @param params the params
-    ///
-    protected AbstractProject(NamedParameter<?>... params) {
-        this(null, params);
     }
 
     /// Root project.
