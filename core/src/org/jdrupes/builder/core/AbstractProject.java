@@ -76,7 +76,7 @@ public abstract class AbstractProject implements Project {
     /// @param parentProject the parent project
     /// @return the named parameter
     ///
-    public static NamedParameter<Class<? extends Project>>
+    protected static NamedParameter<Class<? extends Project>>
             parent(Class<? extends Project> parentProject) {
         return new NamedParameter<>("parent", parentProject);
     }
@@ -86,7 +86,7 @@ public abstract class AbstractProject implements Project {
     /// @param name the name
     /// @return the named parameter
     ///
-    public static NamedParameter<String> name(String name) {
+    protected static NamedParameter<String> name(String name) {
         return new NamedParameter<>("name", name);
     }
 
@@ -95,7 +95,7 @@ public abstract class AbstractProject implements Project {
     /// @param directory the directory
     /// @return the named parameter
     ///
-    public static NamedParameter<Path> directory(Path directory) {
+    protected static NamedParameter<Path> directory(Path directory) {
         return new NamedParameter<>("directory", directory);
     }
 
@@ -106,7 +106,7 @@ public abstract class AbstractProject implements Project {
     ///
     /// @return the named parameter
     ///
-    public static NamedParameter<Path> jdbldDirectory() {
+    protected static NamedParameter<Path> jdbldDirectory() {
         return new NamedParameter<>("directory", jdbldDirectory);
     }
 
@@ -124,7 +124,6 @@ public abstract class AbstractProject implements Project {
     /// parent project and the new project. This can then be overridden in the
     /// sub project's constructor.
     ///
-    /// @param parentProject the parent project's class
     /// @param params the named parameters
     ///   * parent - the class of the parent project
     ///   * name - the name of the project. If not provided the name is
