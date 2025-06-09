@@ -7,7 +7,7 @@ import org.jdrupes.builder.java.JavaProject;
 public class Java extends AbstractProject implements JavaProject {
 
     public Java() {
-        name("java");
+        super(name("java"));
         dependency(project(Core.class), Intend.Consume);
     }
 

@@ -32,7 +32,7 @@ public class Root extends AbstractProject implements RootProject {
     }
 
     public Root() {
-        name("jdrupes-builder");
+        super(name("jdrupes-builder"));
 
         dependency(project(Api.class), Expose);
         dependency(project(Core.class), Expose);

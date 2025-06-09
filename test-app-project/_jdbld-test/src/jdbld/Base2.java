@@ -8,7 +8,7 @@ import org.jdrupes.builder.java.JavaCompiler;
 public class Base2 extends AbstractProject {
 
     public Base2() {
-        name("base2");
+        super(name("base2"));
         generator(JavaCompiler::new).addSources(Path.of("src"), "**/*.java");
     }
 

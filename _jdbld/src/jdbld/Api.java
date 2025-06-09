@@ -6,7 +6,7 @@ import org.jdrupes.builder.java.JavaProject;
 public class Api extends AbstractProject implements JavaProject {
 
     public Api() {
-        name("api");
+        super(name("api"));
     }
 
 }

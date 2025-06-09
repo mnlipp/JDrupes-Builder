@@ -10,7 +10,7 @@ import org.jdrupes.builder.java.JavaCompiler;
 public class App extends AbstractProject {
 
     public App() {
-        name("app");
+        super(name("app"));
         dependency(project(Base1.class), Consume);
         dependency(project(Base2.class), Consume);
         generator(JavaCompiler::new).addSources(Path.of("src"), "**/*.java");
