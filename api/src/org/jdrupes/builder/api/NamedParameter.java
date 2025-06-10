@@ -59,8 +59,8 @@ public record NamedParameter<T>(String name, T value) {
     /// @param <T> the generic type
     /// @param parameters the parameters
     /// @param name the name
-    /// @param fallback the fallback or `null`
-    /// @return the t
+    /// @param fallback supplier for a fallback value or `null`
+    /// @return the value
     ///
     @SuppressWarnings("unchecked")
     public static <T> T get(NamedParameter<?>[] parameters, String name,
