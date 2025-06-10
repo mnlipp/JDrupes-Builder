@@ -7,13 +7,15 @@ that centers around resources and uses Java for its configuration.
 In jdbld's terminology, a build system is a
 [provider][org.jdrupes.builder.api.ResourceProvider] for
 [org.jdrupes.builder.api.Resource]s. The build system's configuration
-is structured using [org.jdrupes.builder.api.Project]s.
-In a single project configuration, a project simply provides the resources
-that it's [org.jdrupes.builder.api.Generator]s provide.
+is a collection of classes that implement [org.jdrupes.builder.api.Project].
+In a single project configuration, an instance of the defined class
+provides all resources by requesting them from its associated
+[org.jdrupes.builder.api.Generator]s, a special kind of
+[org.jdrupes.builder.api.ResourceProvider]s.
 
 ![Builder classes](single-project-classes.svg)
 
-Using this API, you can create a simple build configuration.
+Using this API, you can create a simple build configuration as shown below.
 
 ![Simple app jar project](simple-appjar-project.svg)
 
@@ -25,7 +27,7 @@ jar builder provides resources of type [org.jdrupes.builder.java.JarFile].
 In order to build the jar, it uses the [org.jdrupes.builder.java.ClassTree]
 resources provided by the project.
 
-The actual build configuration looks like this:
+The source code for the actual build configuration looks like this:
 
 ```java
 public class SimpleApp extends AbstractProject {

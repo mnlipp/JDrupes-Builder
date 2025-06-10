@@ -21,6 +21,7 @@ package org.jdrupes.builder.java;
 import java.io.File;
 import java.nio.file.Path;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 import java.util.function.Function;
@@ -50,6 +51,7 @@ public class Javadoc extends JavaTool<FileTree<FileResource>> {
     private Path destination = Path.of("doc");
     private final Resources<ClasspathElement> tagletpath;
     private final List<String> taglets = new ArrayList<>();
+    private final List<String> options = new ArrayList<>();
 
     /// Instantiates a new java compiler.
     ///
@@ -148,6 +150,26 @@ public class Javadoc extends JavaTool<FileTree<FileResource>> {
         return this;
     }
 
+    /// Adds the given options.
+    ///
+    /// @param options the options
+    /// @return the javadoc
+    ///
+    public Javadoc options(Stream<String> options) {
+        this.options.addAll(options.toList());
+        return this;
+    }
+
+    /// Adds the given options.
+    ///
+    /// @param options the options
+    /// @return the javadoc
+    ///
+    public Javadoc options(String... options) {
+        this.options.addAll(Arrays.asList(options));
+        return this;
+    }
+
     @Override
     @SuppressWarnings({ "PMD.AvoidCatchingGenericException",
         "PMD.ExceptionAsFlowControl" })
@@ -172,21 +194,24 @@ public class Javadoc extends JavaTool<FileTree<FileResource>> {
         var diagnostics = new DiagnosticCollector<JavaFileObject>();
         try (var fileManager
             = javadoc.getStandardFileManager(diagnostics, null, null)) {
-            List<String> options = new ArrayList<>(List.of(
-                "-d", destDir.toString(), "-quiet", "-overview",
-                project().rootProject().directory().resolve("overview.md")
-                    .toString()));
+            if (options.contains("-d")) {
+                new BuildException(project()
+                    + ": Specifying the destination directory with "
+                    + "options() is not allowed.");
+            }
+            List<String> allOptions = new ArrayList<>(options);
+            allOptions.addAll(List.of("-d", destDir.toString()));
             var tagletPath = tagletPath();
             if (!tagletPath.isEmpty()) {
-                options.addAll(List.of("-tagletpath", tagletPath));
+                allOptions.addAll(List.of("-tagletpath", tagletPath));
             }
             for (var taglet : taglets) {
-                options.addAll(List.of("-taglet", taglet));
+                allOptions.addAll(List.of("-taglet", taglet));
             }
             var sourceFiles
                 = fileManager.getJavaFileObjectsFromPaths(sourcePaths());
             if (!javadoc.getTask(null, fileManager, diagnostics, null,
-                options, sourceFiles).call()) {
+                allOptions, sourceFiles).call()) {
                 throw new BuildException("Documentation generation failed");
             }
         } catch (Exception e) {

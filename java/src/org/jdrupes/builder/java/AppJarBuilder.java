@@ -32,7 +32,6 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 import org.jdrupes.builder.api.BuildException;
-import org.jdrupes.builder.api.FileResource;
 import org.jdrupes.builder.api.FileTree;
 import org.jdrupes.builder.api.Project;
 import org.jdrupes.builder.api.Resource;
@@ -164,30 +163,28 @@ public class AppJarBuilder extends AbstractGenerator<JarFile> {
 
         // Get all content.
         log.fine(() -> "Getting app jar content for " + project().name());
-        Resources<FileTree<? extends FileResource>> fileTrees
+        Resources<ClasspathElement> toBeIncluded
             = project().newResources(new ResourceType<>() {
             });
         providers.stream().forEach(provider -> {
-            fileTrees.addAll(project().get(provider,
-                new ResourceRequest<>(ClassTreeType)));
-            fileTrees.addAll(project().get(provider,
-                new ResourceRequest<>(JavaResourceTreeType)));
+            toBeIncluded.addAll(project().get(provider,
+                new ResourceRequest<>(ClasspathElementType)));
         });
 
         // Check if rebuild needed.
-        if (jarResource.asOf().isAfter(fileTrees.asOf())) {
+        if (jarResource.asOf().isAfter(toBeIncluded.asOf())) {
             return Stream.of((T) jarResource);
         }
-        buildJar(jarResource, fileTrees);
+        buildJar(jarResource, toBeIncluded);
         return Stream.of((T) jarResource);
     }
 
     private void buildJar(AppJarFile jarResource,
-            Resources<FileTree<? extends FileResource>> fileTrees) {
+            Resources<ClasspathElement> classpathElements) {
         // Build jar
         log.info(() -> "Building application jar in " + project().name());
         var entries = new LinkedHashMap<Path, Path>();
-        addEntries(entries, fileTrees.stream());
+        addEntries(entries, classpathElements.stream());
 
         // Add content to jar
         Manifest manifest = new Manifest();
@@ -217,8 +214,9 @@ public class AppJarBuilder extends AbstractGenerator<JarFile> {
     }
 
     private void addEntries(Map<Path, Path> entries,
-            Stream<? extends Resource> fileSets) {
-        fileSets.filter(fs -> fs instanceof FileTree)
+            Stream<? extends Resource> classpathElement) {
+        // TODO: handle embedded jars.
+        classpathElement.filter(fs -> fs instanceof FileTree)
             .map(fs -> (FileTree<?>) fs).forEach(fs -> {
                 fs.stream().forEach(file -> {
                     var relPath = fs.root().relativize(file.path());

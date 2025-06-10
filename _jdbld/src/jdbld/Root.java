@@ -53,6 +53,15 @@ public class Root extends AbstractProject implements RootProject {
             .taglets(Stream.of("org.jdrupes.taglets.plantUml.PlantUml",
                 "org.jdrupes.taglets.plantUml.StartUml",
                 "org.jdrupes.taglets.plantUml.EndUml"))
+            .options("-overview", directory().resolve("overview.md").toString())
+            .options("--add-stylesheet",
+                directory().resolve("misc/javadoc-overwrites.css").toString())
+            .options("--add-script",
+                directory().resolve("misc/prism.js").toString())
+            .options("--add-stylesheet",
+                directory().resolve("misc/prism.css").toString())
+            .options("-quiet")
+
             .addSources(get(this,
                 new ResourceRequest<>(JavaTypes.JavaSourceTreeType)));
     }
