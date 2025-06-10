@@ -11,7 +11,7 @@ import org.jdrupes.builder.api.Project;
 import org.jdrupes.builder.api.ResourceRequest;
 import org.jdrupes.builder.api.RootProject;
 import org.jdrupes.builder.core.AbstractProject;
-import org.jdrupes.builder.java.AppJarBuilder;
+import org.jdrupes.builder.java.AppJarGenerator;
 import org.jdrupes.builder.java.JavaCompiler;
 import org.jdrupes.builder.java.JavaTypes;
 import org.jdrupes.builder.java.Javadoc;
@@ -40,7 +40,7 @@ public class Root extends AbstractProject implements RootProject {
         dependency(project(Startup.class), Expose);
 
         // Build app jar
-        generator(AppJarBuilder::new).addAll(providers(Intend.CONTRIBUTORS))
+        generator(AppJarGenerator::new).addAll(providers(Intend.CONTRIBUTORS))
             .mainClass("org.jdrupes.builder.startup.BootstrapLauncher")
             .destination(directory().resolve(Path.of("_jdbld", "app")));
 

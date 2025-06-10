@@ -44,9 +44,9 @@ import org.jdrupes.builder.core.AbstractGenerator;
 import org.jdrupes.builder.core.CachedStream;
 import static org.jdrupes.builder.java.JavaTypes.*;
 
-/// The Class AppJarBuilder.
+/// The Class AppJarGenerator.
 ///
-public class AppJarBuilder extends AbstractGenerator<JarFile> {
+public class AppJarGenerator extends AbstractGenerator<JarFile> {
 
     private final CachedStream<ResourceProvider<?>> providers
         = new CachedStream<>();
@@ -57,7 +57,7 @@ public class AppJarBuilder extends AbstractGenerator<JarFile> {
     ///
     /// @param project the project
     ///
-    public AppJarBuilder(Project project) {
+    public AppJarGenerator(Project project) {
         super(project);
     }
 
@@ -75,7 +75,7 @@ public class AppJarBuilder extends AbstractGenerator<JarFile> {
     /// @param destination the new destination
     /// @return the java compiler
     ///
-    public AppJarBuilder destination(Path destination) {
+    public AppJarGenerator destination(Path destination) {
         this.destination = destination;
         return this;
     }
@@ -93,7 +93,7 @@ public class AppJarBuilder extends AbstractGenerator<JarFile> {
     /// @param mainClass the new main class
     /// @return the app jar builder for method chaining
     ///
-    public AppJarBuilder mainClass(String mainClass) {
+    public AppJarGenerator mainClass(String mainClass) {
         this.mainClass = mainClass;
         return this;
     }
@@ -106,7 +106,7 @@ public class AppJarBuilder extends AbstractGenerator<JarFile> {
     /// @param providers the providers
     /// @return the app jar builder
     ///
-    public AppJarBuilder add(ResourceProvider<?>... providers) {
+    public AppJarGenerator add(ResourceProvider<?>... providers) {
         this.providers.add(Stream.of(providers));
         return this;
     }
@@ -116,7 +116,7 @@ public class AppJarBuilder extends AbstractGenerator<JarFile> {
     /// @param providers the providers
     /// @return the app jar builder
     ///
-    public AppJarBuilder
+    public AppJarGenerator
             addAll(Stream<? extends ResourceProvider<?>> providers) {
         this.providers.add(providers);
         return this;
