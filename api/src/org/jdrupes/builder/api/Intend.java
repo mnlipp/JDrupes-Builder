@@ -21,32 +21,41 @@ package org.jdrupes.builder.api;
 import java.util.EnumSet;
 import java.util.Set;
 
-/// Attributes the relationship between a [Project] and an associated
-/// [ResourceProvider].
+/// Attributes the relationship between a [Project] ("this project")
+/// and an associated [ResourceProvider].
 ///
 @SuppressWarnings("PMD.FieldNamingConventions")
 public enum Intend {
     
-    /// Requests for resources are forwarded, but the results are
-    /// not used. This is the default relationship between a project
-    /// and its sub projects.
-    Forward,
+    /// The project should ignore the resources from the provider.
+    /// This is the default relationship between a project and its
+    /// sub projects. Note that the dependency relationship still
+    /// has an effect because [ResourceRequest]s are propagated to
+    /// the associated provider.
+    Ignore,
     
-    /// Resources from the provider are used, but not exposed
-    /// i.e. they are not provided to others.
+    /// The project consumes the resources from the associated
+    /// provider, but it does not expose them, i.e. the project
+    /// in its role as provider does not provide them to others.
     Consume,
     
-    /// Resources from the provider are used and exposed, i.e.
-    /// made available to others.
+    /// The project consumes the resources from the associated
+    /// provider and makes them available to other projects that
+    /// have this project as a dependency.
     Expose,
     
-    /// The resources from the provider are provided by the project.
+    /// The resources from the associated provider are genuinely
+    /// provided by this project, i.e. supplied by this project.
     /// This is the default relationship between a project and its
-    /// generators.
-    Provide,
+    /// generators. It implies that the resources obtained through
+    /// this dependency are exposed to projects that have this
+    /// project as a dependency.
+    Supply,
     
-    /// Resources are only required at runtime.
-    Runtime;
+    /// The resources from the provider are forwarded (exposed) to
+    /// other projects that have this project as a dependency but
+    /// are not used (consumed) by this project.
+    Forward;
     
     /// All providers.
     public static final Set<Intend> ALL = EnumSet.allOf(Intend.class);

@@ -37,6 +37,7 @@ public class Root extends AbstractProject implements RootProject {
         dependency(project(Api.class), Expose);
         dependency(project(Core.class), Expose);
         dependency(project(Java.class), Expose);
+        dependency(project(MvnRepo.class), Expose);
         dependency(project(Startup.class), Expose);
 
         // Build app jar

@@ -30,6 +30,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 import java.util.concurrent.Callable;
+import java.util.logging.Level;
 import java.util.logging.LogManager;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
@@ -72,7 +73,8 @@ public abstract class AbstractLauncher implements Launcher {
         InputStream props;
         try {
             props = Files.newInputStream(
-                Path.of(jdbldProps.getProperty(DefaultBuildContext.JDBLD_DIRECTORY),
+                Path.of(
+                    jdbldProps.getProperty(DefaultBuildContext.JDBLD_DIRECTORY),
                     "logging.properties"));
         } catch (IOException e) {
             props = BootstrapLauncher.class
@@ -114,14 +116,17 @@ public abstract class AbstractLauncher implements Launcher {
         } catch (IOException e) {
             throw new BuildException("Problem scanning classpath", e);
         }
-        classDirUrls.parallelStream().map(uri -> {
-            try {
-                return Path.of(uri.toURI());
-            } catch (URISyntaxException e) {
-                throw new BuildException("Problem scanning classpath", e);
-            }
-        }).map(p -> DefaultFileTree.create(null, ClassTreeType, p, "**/*.class",
-            false))
+        classDirUrls.parallelStream()
+            .filter(uri -> !"jar".equals(uri.getProtocol())).map(uri -> {
+                try {
+                    return Path.of(uri.toURI());
+                } catch (URISyntaxException e) {
+                    throw new BuildException("Problem scanning classpath", e);
+                }
+            })
+            .map(p -> DefaultFileTree.create(null, ClassTreeType, p,
+                "**/*.class",
+                false))
             .flatMap(FileTree::entries).map(Path::toString)
             .map(p -> p.substring(0, p.length() - 6).replace('/', '.'))
             .map(cn -> {
@@ -163,20 +168,32 @@ public abstract class AbstractLauncher implements Launcher {
     /// @return the t
     ///
     @SuppressWarnings({ "PMD.AvoidReassigningCatchVariables",
-        "PMD.DoNotTerminateVM", "PMD.AvoidCatchingGenericException" })
+        "PMD.DoNotTerminateVM", "PMD.AvoidCatchingGenericException",
+        "PMD.AvoidInstanceofChecksInCatchClause" })
     protected final <T> T unwrapBuildException(Callable<T> todo) {
         try {
             return todo.call();
         } catch (Exception e) {
-            var cause = e.getCause();
-            while (cause != null) {
-                if (cause instanceof BuildException nbe) {
-                    e = nbe;
+            Throwable checking = e;
+            Throwable cause = e;
+            BuildException bldEx = null;
+            while (checking != null) {
+                if (checking instanceof BuildException exc) {
+                    bldEx = exc;
+                    cause = exc.getCause();
                 }
-                cause = cause.getCause();
+                checking = checking.getCause();
             }
-            final var rootCase = e;
-            log.severe(() -> "Build failed: " + rootCase.getMessage());
+            final var finalBldEx = bldEx;
+            if (bldEx == null) {
+                log.log(Level.SEVERE, e,
+                    () -> "Starting builder failed: " + e.getMessage());
+            } else if (cause == null) {
+                log.severe(() -> "Build failed: " + finalBldEx.getMessage());
+            } else {
+                log.log(Level.SEVERE, cause,
+                    () -> "Build failed: " + finalBldEx.getMessage());
+            }
             System.exit(1);
             return null;
         }

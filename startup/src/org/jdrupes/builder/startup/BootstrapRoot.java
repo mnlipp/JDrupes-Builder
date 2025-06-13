@@ -41,7 +41,7 @@ public class BootstrapRoot extends AbstractProject
     ///
     @SuppressWarnings("PMD.ConstructorCallsOverridableMethod")
     public BootstrapRoot() {
-        dependency(project(BootstrapBuild.class), Intend.Forward);
+        dependency(project(BootstrapBuild.class), Intend.Ignore);
     }
 
     /// Bootstrap.

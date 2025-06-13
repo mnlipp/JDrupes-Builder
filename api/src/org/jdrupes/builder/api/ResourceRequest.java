@@ -35,7 +35,7 @@ public class ResourceRequest<T extends Resource> {
         /// No restriction. Provide all resources of the requested type.
         None, 
         
-        /// Provide only resources that are exposed.
+        /// Request only resources that are exposed.
         Exposed
     }
 

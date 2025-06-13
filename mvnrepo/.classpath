@@ -6,12 +6,11 @@
 			<attribute name="module" value="true"/>
 		</attributes>
 	</classpathentry>
-	<classpathentry kind="lib" path="lib/context-2.4.29.jar"/>
-	<classpathentry kind="lib" path="lib/slf4j-api-2.0.17.jar"/>
-	<classpathentry kind="lib" path="lib/slf4j-jdk14-2.0.17.jar"/>
-	<classpathentry combineaccessrules="false" kind="src" path="/api"/>
+	<classpathentry kind="lib" path="/_jdbld/lib/context-2.4.29.jar"/>
 	<classpathentry combineaccessrules="false" kind="src" path="/core"/>
+	<classpathentry combineaccessrules="false" kind="src" path="/api"/>
 	<classpathentry combineaccessrules="false" kind="src" path="/java"/>
-	<classpathentry combineaccessrules="false" kind="src" path="/mvnrepo"/>
+	<classpathentry kind="lib" path="/_jdbld/lib/maven-resolver-api-1.9.23.jar"/>
+	<classpathentry kind="lib" path="/_jdbld/lib/maven-resolver-util-1.9.23.jar"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>

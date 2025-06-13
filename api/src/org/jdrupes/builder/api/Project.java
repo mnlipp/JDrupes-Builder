@@ -164,7 +164,7 @@ public interface Project extends ResourceProvider<Resource> {
     /// the given intended usage.
     ///
     /// While this could be used to add a [Generator] to the project
-    /// as a provider with [Intend#Provide], it is recommended to use
+    /// as a provider with [Intend#Supply], it is recommended to use
     /// one of the "generator" methods for better readability.
     ///
     /// @param provider the provider
