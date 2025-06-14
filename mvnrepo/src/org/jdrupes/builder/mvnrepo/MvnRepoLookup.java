@@ -1,3 +1,21 @@
+/*
+ * JDrupes Builder
+ * Copyright (C) 2025 Michael N. Lipp
+ * 
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Affero General Public License as
+ * published by the Free Software Foundation, either version 3 of the
+ * License, or (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ * GNU Affero General Public License for more details.
+ *
+ * You should have received a copy of the GNU Affero General Public License
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
+ */
+
 package org.jdrupes.builder.mvnrepo;
 
 import eu.maveniverse.maven.mima.context.Context;
@@ -19,24 +37,36 @@ import org.jdrupes.builder.api.Resource;
 import org.jdrupes.builder.api.ResourceFactory;
 import org.jdrupes.builder.api.ResourceProvider;
 import org.jdrupes.builder.api.ResourceRequest;
-import org.jdrupes.builder.core.DefaultFileResource;
 import org.jdrupes.builder.java.JarFile;
-import org.jdrupes.builder.java.JavaResourceFactory;
-
 import static org.jdrupes.builder.java.JavaTypes.*;
 
+/// The Class MvnRepoLookup.
+///
 public class MvnRepoLookup implements ResourceProvider<JarFile> {
 
     private List<String> coordinates = new ArrayList<>();
 
+    /// Instantiates a new mvn repo lookup.
+    ///
     public MvnRepoLookup() {
     }
 
+    /// Artifact.
+    ///
+    /// @param coordinate the coordinate
+    /// @return the mvn repo lookup
+    ///
     public MvnRepoLookup artifact(String coordinate) {
         coordinates.add(coordinate);
         return this;
     }
 
+    /// Provide.
+    ///
+    /// @param <T> the generic type
+    /// @param request the request
+    /// @return the stream
+    ///
     @Override
     public <T extends Resource> Stream<T> provide(ResourceRequest<T> request) {
         if (!request.type().isAssignableFrom(JarFileType)) {
@@ -50,7 +80,7 @@ public class MvnRepoLookup implements ResourceProvider<JarFile> {
             DefaultArtifact artifact = new DefaultArtifact(coordinates.get(0));
             CollectRequest collectRequest = new CollectRequest()
                 .setRepositories(context.remoteRepositories())
-                .addDependency(new Dependency(artifact, null));
+                .addDependency(new Dependency(artifact, "runtime"));
 
             DependencyRequest dependencyRequest
                 = new DependencyRequest(collectRequest, null);

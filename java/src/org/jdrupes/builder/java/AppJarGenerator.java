@@ -37,6 +37,7 @@ import org.jdrupes.builder.api.Project;
 import org.jdrupes.builder.api.Resource;
 import org.jdrupes.builder.api.ResourceProvider;
 import org.jdrupes.builder.api.ResourceRequest;
+import static org.jdrupes.builder.api.ResourceRequest.Restriction.*;
 import org.jdrupes.builder.api.ResourceType;
 import static org.jdrupes.builder.api.ResourceType.*;
 import org.jdrupes.builder.api.Resources;
@@ -168,7 +169,7 @@ public class AppJarGenerator extends AbstractGenerator<JarFile> {
             });
         providers.stream().forEach(provider -> {
             toBeIncluded.addAll(project().get(provider,
-                new ResourceRequest<>(ClasspathElementType)));
+                new ResourceRequest<>(ClasspathElementType, Exposed)));
         });
 
         // Check if rebuild needed.
