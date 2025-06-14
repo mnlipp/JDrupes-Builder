@@ -18,10 +18,18 @@
 
 package org.jdrupes.builder.java;
 
+import java.nio.file.Path;
 import org.jdrupes.builder.api.Resource;
 
 /// The Interface ClasspathElement.
 ///
 public interface ClasspathElement extends Resource {
+
+    /// Return the representation of the element as as it must appear
+    /// on the classpath.
+    ///
+    /// @return the path
+    ///
+    Path toPath();
 
 }

@@ -18,10 +18,26 @@
 
 package org.jdrupes.builder.java;
 
+import java.nio.file.Path;
 import org.jdrupes.builder.api.FileResource;
+import org.jdrupes.builder.core.DefaultFileResource;
+import static org.jdrupes.builder.java.JavaTypes.JarFileType;
 
 /// A [FileResource] that represents a Java jar.
 ///
-@SuppressWarnings("PMD.ImplicitFunctionalInterface")
-public interface JarFile extends FileResource, ClasspathElement {
+public class JarFile extends DefaultFileResource implements ClasspathElement {
+
+    /// Instantiates a new jar file.
+    ///
+    /// @param path the path
+    ///
+    public JarFile(Path path) {
+        super(JarFileType, path);
+    }
+
+    @Override
+    public Path toPath() {
+        return path();
+    }
+
 }

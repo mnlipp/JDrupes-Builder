@@ -46,7 +46,7 @@ import static org.jdrupes.builder.java.JavaTypes.*;
 public class Javadoc extends JavaTool<FileTree<FileResource>> {
 
     private final Resources<FileTree<JavaSourceFile>> sources
-        = project().newResources(new ResourceType<>() {
+        = project().create(new ResourceType<>() {
         });
     private Path destination = Path.of("doc");
     private final Resources<ClasspathElement> tagletpath;
@@ -60,7 +60,7 @@ public class Javadoc extends JavaTool<FileTree<FileResource>> {
     @SuppressWarnings("PMD.ConstructorCallsOverridableMethod")
     public Javadoc(Project project) {
         super(project);
-        tagletpath = project().newResources(new ResourceType<>() {
+        tagletpath = project().create(new ResourceType<>() {
         });
 
     }
@@ -105,8 +105,7 @@ public class Javadoc extends JavaTool<FileTree<FileResource>> {
     @SuppressWarnings("PMD.UseDiamondOperator")
     public final Javadoc addSources(Path directory, String pattern) {
         addSources(
-            project().newFileTree(new ResourceType<FileTree<JavaSourceFile>>() {
-            }, directory, pattern));
+            project().create(JavaSourceTreeType, directory, pattern));
         return this;
     }
 
@@ -182,7 +181,7 @@ public class Javadoc extends JavaTool<FileTree<FileResource>> {
 
         // Get destination and check if we only have to cleanup.
         var destDir = project().buildDirectory().resolve(destination);
-        var generated = project().newFileTree(ClassTreeType, destDir, "**/*");
+        var generated = project().create(ClassTreeType, destDir, "**/*");
         if (request.wants(Cleaniness)) {
             generated.delete();
             destDir.toFile().delete();
@@ -224,7 +223,7 @@ public class Javadoc extends JavaTool<FileTree<FileResource>> {
         }
         @SuppressWarnings("unchecked")
         var result = (Stream<T>) Stream
-            .of(project().newFileResource(JavadocDirectoryType, destDir));
+            .of(project().create(JavadocDirectoryType, destDir));
         return result;
     }
 

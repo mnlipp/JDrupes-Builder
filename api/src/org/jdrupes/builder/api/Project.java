@@ -235,53 +235,17 @@ public interface Project extends ResourceProvider<Resource> {
     <T extends Resource> Stream<T> get(ResourceProvider<?> provider,
             ResourceRequest<T> requested);
 
-    /// Returns a new file resource.
+    /// Returns a new resource with the given type. Short for invoking
+    /// [ResourceFactory#create] with the current project as first argument
+    /// and the given arguments appended.
     ///
-    /// @param <T> the type of file resource
+    /// @param <T> the generic type
     /// @param type the type
-    /// @param path the path
-    /// @return the file resource
+    /// @param args the args
+    /// @return the t
     ///
-    <T extends FileResource> T newFileResource(ResourceType<T> type, Path path);
-
-    /// Returns a new resource container.
-    ///
-    /// @param <T> the container type
-    /// @param type the type
-    /// @return the resources
-    ///
-    <T extends Resources<?>> T newResources(ResourceType<T> type);
-
-    /// Returns a new file tree. The file tree includes all files
-    /// matching `pattern` in the tree starting at `root`. `root`
-    /// may be specified as absolute path or as path relative to the
-    /// `project`'s directory (see [Project#directory]).
-    ///
-    /// @param <T> the file tree's type
-    /// @param type the type
-    /// @param root the root of the file tree to search for files matching
-    /// `pattern`
-    /// @param pattern the pattern
-    /// @param withDirs whether to include directories
-    /// @return the file tree
-    ///
-    <T extends FileTree<?>> T newFileTree(
-            ResourceType<T> type, Path root, String pattern, boolean withDirs);
-
-    /// Returns a new file tree. The file tree includes all files
-    /// matching `pattern` in the tree starting at `root`. `root`
-    /// may be specified as absolute path or as path relative to the
-    /// `project`'s directory (see [Project#directory]).
-    ///
-    /// @param <T> the file tree's type
-    /// @param type the type
-    /// @param root the root of the file tree to search for files matching
-    /// `pattern`
-    /// @param pattern the pattern
-    /// @return the file tree
-    ///
-    default <T extends FileTree<?>> T newFileTree(
-            ResourceType<? extends T> type, Path root, String pattern) {
-        return newFileTree(type, root, pattern, false);
+    default <T extends Resource> T create(ResourceType<T> type,
+            Object... args) {
+        return ResourceFactory.create(this, type, args);
     }
 }

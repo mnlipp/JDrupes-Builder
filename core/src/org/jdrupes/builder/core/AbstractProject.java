@@ -33,8 +33,6 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 import java.util.stream.Stream;
 import org.jdrupes.builder.api.BuildException;
-import org.jdrupes.builder.api.FileResource;
-import org.jdrupes.builder.api.FileTree;
 import org.jdrupes.builder.api.Generator;
 import org.jdrupes.builder.api.Intend;
 import static org.jdrupes.builder.api.Intend.*;
@@ -45,8 +43,6 @@ import org.jdrupes.builder.api.Resource;
 import org.jdrupes.builder.api.ResourceProvider;
 import org.jdrupes.builder.api.ResourceRequest;
 import org.jdrupes.builder.api.ResourceRequest.Restriction;
-import org.jdrupes.builder.api.ResourceType;
-import org.jdrupes.builder.api.Resources;
 import org.jdrupes.builder.api.RootProject;
 
 /// A default implementation of a [Project].
@@ -401,45 +397,6 @@ public abstract class AbstractProject implements Project {
             throw new BuildException("Problem invoking " + name + " on " + this
                 + (e.getMessage() == null ? "" : (": " + e.getMessage())), e);
         }
-    }
-
-    /// New file resource.
-    ///
-    /// @param <T> the generic type
-    /// @param type the type
-    /// @param path the path
-    /// @return the t
-    ///
-    @Override
-    public <T extends FileResource> T newFileResource(ResourceType<T> type,
-            Path path) {
-        return DefaultFileResource.create(type, path);
-    }
-
-    /// New resources.
-    ///
-    /// @param <T> the generic type
-    /// @param type the type
-    /// @return the t
-    ///
-    @Override
-    public <T extends Resources<?>> T newResources(ResourceType<T> type) {
-        return DefaultResources.create(type);
-    }
-
-    /// New file tree.
-    ///
-    /// @param <T> the generic type
-    /// @param type the type
-    /// @param root the root
-    /// @param pattern the pattern
-    /// @param withDirs the with dirs
-    /// @return the t
-    ///
-    @Override
-    public <T extends FileTree<?>> T newFileTree(
-            ResourceType<T> type, Path root, String pattern, boolean withDirs) {
-        return DefaultFileTree.create(this, type, root, pattern, withDirs);
     }
 
     /// To string.

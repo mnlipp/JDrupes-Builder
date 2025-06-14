@@ -18,9 +18,29 @@
 
 package org.jdrupes.builder.java;
 
-import org.jdrupes.builder.api.FileTree;
+import java.nio.file.Path;
+import org.jdrupes.builder.api.Project;
+import org.jdrupes.builder.core.DefaultFileTree;
+import static org.jdrupes.builder.java.JavaTypes.ClassTreeType;
 
-/// The Interface ClassTree.
+/// The type ClassTree.
 ///
-public interface ClassTree extends FileTree<ClassFile>, ClasspathElement {
+public class ClassTree extends DefaultFileTree<ClassFile>
+        implements ClasspathElement {
+
+    /// Instantiates a new class tree.
+    ///
+    /// @param project the project
+    /// @param root the root
+    /// @param pattern the pattern
+    ///
+    public ClassTree(Project project, Path root, String pattern) {
+        super(project, ClassTreeType, root, pattern, false);
+    }
+
+    @Override
+    public Path toPath() {
+        return root();
+    }
+
 }

@@ -25,6 +25,15 @@ import java.util.stream.Stream;
 /// of [FileResource]s that are contained in a directory hierarchy
 /// with a common root.
 ///
+/// Implementations of this interface must provide a [ResourceFactory]
+/// that supports the invocation of [ResourceFactory#create] with
+/// arguments
+///
+/// * [Project] the project
+/// * [Path] the root directory
+/// * [String] the pattern
+/// * `boolean` whether to include directories (optional, defaults to `false`)
+///
 /// Implementations of this interface must ensure that the content
 /// of the file tree is not evaluated before a terminal operation
 /// is performed on the [Stream] returned by [#entries]. The delayed

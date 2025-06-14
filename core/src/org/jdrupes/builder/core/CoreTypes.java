@@ -19,6 +19,7 @@
 package org.jdrupes.builder.core;
 
 import org.jdrupes.builder.api.FileResource;
+import org.jdrupes.builder.api.ResourceFile;
 import org.jdrupes.builder.api.ResourceType;
 
 /// A collection of core [ResourceType]s.
@@ -31,6 +32,12 @@ public final class CoreTypes {
     /// The resource type for [FileResource].
     @SuppressWarnings("PMD.FieldNamingConventions")
     public static final ResourceType<FileResource> FileResourceType
+        = new ResourceType<>() {
+        };
+
+    /// The resource type for [ResourceFile].
+    @SuppressWarnings("PMD.FieldNamingConventions")
+    public static final ResourceType<ResourceFile> ResourceFileType
         = new ResourceType<>() {
         };
 }

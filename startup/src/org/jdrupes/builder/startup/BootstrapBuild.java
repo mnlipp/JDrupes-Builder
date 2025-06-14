@@ -46,17 +46,17 @@ public class BootstrapBuild extends AbstractProject implements Masked {
 
         // Collect directories with "build configuration", derive source
         // trees and use as java sources.
-        var bldrDirs = newFileTree(new ResourceType<FileTree<FileResource>>() {
+        var bldrDirs = create(new ResourceType<FileTree<FileResource>>() {
         }, Path.of("").toAbsolutePath(),
             "**/" + context().jdbldDirectory().toString(), true);
         var srcTrees = bldrDirs.stream()
-            .map(r -> newFileTree(JavaSourceTreeType, r.path().resolve("src"),
+            .map(r -> create(JavaSourceTreeType, r.path().resolve("src"),
                 "**/*.java"));
         generator(JavaCompiler::new).addSources(srcTrees);
 
         // Add resources
         var resourceTrees = bldrDirs.stream()
-            .map(r -> newFileTree(JavaResourceTreeType,
+            .map(r -> create(JavaResourceTreeType,
                 r.path().resolve("resources"), "**/*"));
         generator(new ResourceCollector<>(this, JavaResourceTreeType)
             .add(resourceTrees));

@@ -38,6 +38,7 @@ import org.jdrupes.builder.api.BuildException;
 import org.jdrupes.builder.api.FileResource;
 import org.jdrupes.builder.api.FileTree;
 import org.jdrupes.builder.api.Project;
+import org.jdrupes.builder.api.ResourceFactory;
 import org.jdrupes.builder.api.ResourceType;
 
 /// The default implementation of a [FileTree].
@@ -46,7 +47,6 @@ import org.jdrupes.builder.api.ResourceType;
 ///
 public class DefaultFileTree<T extends FileResource> extends DefaultResources<T>
         implements FileTree<T> {
-
     private Instant latestChange = Instant.MIN;
     private final Project project;
     private final Path root;
@@ -58,6 +58,9 @@ public class DefaultFileTree<T extends FileResource> extends DefaultResources<T>
     /// matching `pattern` in the tree starting at `root`. `root`
     /// may be specified as absolute path or as path relative to the
     /// `project`'s directory (see [Project#directory]).
+    ///
+    /// if `project` is `null`, and `root` is a relative path,
+    /// `root` is resolved against the current working directory.
     ///
     /// @param project the project
     /// @param type the type
@@ -146,8 +149,8 @@ public class DefaultFileTree<T extends FileResource> extends DefaultResources<T>
             private void testAndAdd(Path path) {
                 if (pathMatcher.matches(path)) {
                     @SuppressWarnings("unchecked")
-                    T resource = DefaultFileResource
-                        .create((ResourceType<T>) type().containedType(), path);
+                    T resource = (T) ResourceFactory
+                        .create(type().containedType(), path);
                     DefaultFileTree.this.add(resource);
                     if (resource.asOf().isAfter(latestChange)) {
                         latestChange = resource.asOf();
@@ -294,9 +297,10 @@ public class DefaultFileTree<T extends FileResource> extends DefaultResources<T>
     public String toString() {
         var wasFilled = filled;
         fill();
+        String str = type().toString() + " (" + asOfLocalized()
+            + ") from " + Path.of("").toAbsolutePath().relativize(root())
+            + " with " + stream().count() + " elements";
         filled = wasFilled;
-        return type() + " from "
-            + Path.of("").toAbsolutePath().relativize(root())
-            + " with " + stream().count() + " files, newest: " + latestChange;
+        return str;
     }
 }

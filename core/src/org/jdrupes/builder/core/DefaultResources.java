@@ -99,4 +99,10 @@ public class DefaultResources<T extends Resource> extends ResourceObject
         return Objects.equals(content, other.content);
     }
 
+    @Override
+    public String toString() {
+        return type().toString() + " (" + asOfLocalized()
+            + ") with " + content.size() + " elements";
+    }
+
 }

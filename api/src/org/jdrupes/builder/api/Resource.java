@@ -21,7 +21,6 @@ package org.jdrupes.builder.api;
 import java.time.Instant;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
-import java.time.format.FormatStyle;
 
 /// Represents a resource handled by the builder.
 ///
@@ -52,8 +51,7 @@ public interface Resource {
         if (asOf == Instant.MIN) {
             return "ages ago";
         }
-        return DateTimeFormatter
-            .ofLocalizedDateTime(FormatStyle.MEDIUM)
+        return DateTimeFormatter.ISO_LOCAL_DATE_TIME
             .format(asOf.atZone(ZoneId.systemDefault()));
     }
 }

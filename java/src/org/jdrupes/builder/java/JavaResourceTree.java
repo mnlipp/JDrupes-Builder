@@ -18,11 +18,32 @@
 
 package org.jdrupes.builder.java;
 
-import org.jdrupes.builder.api.FileTree;
+import java.nio.file.Path;
+import org.jdrupes.builder.api.Project;
 import org.jdrupes.builder.api.ResourceFile;
+import org.jdrupes.builder.core.DefaultFileTree;
+import static org.jdrupes.builder.java.JavaTypes.JavaResourceTreeType;
 
-/// The Interface ClassTree.
+/// The Class JavaResourceTree.
 ///
-public interface JavaResourceTree
-        extends FileTree<ResourceFile>, ClasspathElement {
+public class JavaResourceTree
+        extends DefaultFileTree<ResourceFile> implements ClasspathElement {
+
+    /// Instantiates a new java resource tree.
+    ///
+    /// @param project the project
+    /// @param root the root
+    /// @param pattern the pattern
+    /// @param withDirs the with dirs
+    ///
+    public JavaResourceTree(Project project, Path root,
+            String pattern, boolean withDirs) {
+        super(project, JavaResourceTreeType, root, pattern, withDirs);
+    }
+
+    @Override
+    public Path toPath() {
+        return root();
+    }
+
 }

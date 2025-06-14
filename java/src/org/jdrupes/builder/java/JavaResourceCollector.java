@@ -48,7 +48,7 @@ public class JavaResourceCollector
     ///
     public final ResourceCollector<JavaResourceTree> add(Path directory,
             String pattern) {
-        add(project().newFileTree(JavaResourceTreeType, directory, pattern));
+        add(project().create(JavaResourceTreeType, directory, pattern));
         return this;
     }
 

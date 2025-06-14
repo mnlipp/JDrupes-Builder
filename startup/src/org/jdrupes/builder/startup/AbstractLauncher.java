@@ -39,9 +39,9 @@ import org.jdrupes.builder.api.FileTree;
 import org.jdrupes.builder.api.Launcher;
 import org.jdrupes.builder.api.Masked;
 import org.jdrupes.builder.api.Project;
+import org.jdrupes.builder.api.ResourceFactory;
 import org.jdrupes.builder.api.RootProject;
 import org.jdrupes.builder.core.DefaultBuildContext;
-import org.jdrupes.builder.core.DefaultFileTree;
 import static org.jdrupes.builder.java.JavaTypes.*;
 
 /// A default implementation of a [Launcher].
@@ -52,6 +52,8 @@ public abstract class AbstractLauncher implements Launcher {
     /// `.jdbld.properties` in the root project.
     @SuppressWarnings("PMD.FieldNamingConventions")
     protected static final Properties jdbldProps;
+    /// The log.
+    protected final Logger log = Logger.getLogger(getClass().getName());
 
     static {
         // Get builder configuration
@@ -88,9 +90,6 @@ public abstract class AbstractLauncher implements Launcher {
         }
     }
 
-    /// The log.
-    protected final Logger log = Logger.getLogger(getClass().getName());
-
     /// Instantiates a new abstract launcher.
     ///
     @SuppressWarnings("PMD.UnnecessaryConstructor")
@@ -124,9 +123,9 @@ public abstract class AbstractLauncher implements Launcher {
                     throw new BuildException("Problem scanning classpath", e);
                 }
             })
-            .map(p -> DefaultFileTree.create(null, ClassTreeType, p,
-                "**/*.class",
-                false))
+            .map(
+                p -> ResourceFactory.create(ClassTreeType, p, "**/*.class",
+                    false))
             .flatMap(FileTree::entries).map(Path::toString)
             .map(p -> p.substring(0, p.length() - 6).replace('/', '.'))
             .map(cn -> {

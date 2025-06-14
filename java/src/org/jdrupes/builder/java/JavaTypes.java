@@ -29,11 +29,21 @@ public final class JavaTypes {
     private JavaTypes() {
     }
 
+    /// The Java source file.
+    public static final ResourceType<JavaSourceFile> JavaSourceFileType
+        = new ResourceType<>() {
+        };
+
     /// The Java source files.
     public static final ResourceType<
             FileTree<JavaSourceFile>> JavaSourceTreeType
                 = new ResourceType<>() {
                 };
+
+    /// The class file.
+    public static final ResourceType<ClassFile> ClassFileType
+        = new ResourceType<>() {
+        };
 
     /// The Java class files.
     public static final ResourceType<ClassTree> ClassTreeType

@@ -16,10 +16,13 @@ import org.eclipse.aether.resolution.DependencyResolutionException;
 import org.eclipse.aether.util.graph.visitor.PreorderNodeListGenerator;
 import org.jdrupes.builder.api.BuildException;
 import org.jdrupes.builder.api.Resource;
+import org.jdrupes.builder.api.ResourceFactory;
 import org.jdrupes.builder.api.ResourceProvider;
 import org.jdrupes.builder.api.ResourceRequest;
 import org.jdrupes.builder.core.DefaultFileResource;
 import org.jdrupes.builder.java.JarFile;
+import org.jdrupes.builder.java.JavaResourceFactory;
+
 import static org.jdrupes.builder.java.JavaTypes.*;
 
 public class MvnRepoLookup implements ResourceProvider<JarFile> {
@@ -67,7 +70,7 @@ public class MvnRepoLookup implements ResourceProvider<JarFile> {
                 return (Stream<T>) dependencyNodes.stream()
                     .filter(d -> d.getArtifact() != null)
                     .map(d -> d.getArtifact().getFile().toPath())
-                    .map(p -> DefaultFileResource.create(JarFileType, p));
+                    .map(p -> ResourceFactory.create(JarFileType, p));
             } catch (DependencyResolutionException e) {
                 throw new BuildException(
                     "Cannot resolve: " + e.getMessage(), e);

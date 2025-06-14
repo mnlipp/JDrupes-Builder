@@ -18,10 +18,19 @@
 
 package org.jdrupes.builder.java;
 
+import java.nio.file.Path;
 import org.jdrupes.builder.api.FileResource;
 
-/// A [FileResource] that represents a Java jar.
+/// A [FileResource] that represents an application jar.
 ///
-@SuppressWarnings("PMD.ImplicitFunctionalInterface")
-public interface AppJarFile extends JarFile {
+public class AppJarFile extends JarFile {
+
+    /// Instantiates a new app jar file.
+    ///
+    /// @param path the path
+    ///
+    public AppJarFile(Path path) {
+        super(path);
+    }
+
 }

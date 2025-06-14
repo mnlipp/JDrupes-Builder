@@ -54,7 +54,7 @@ import static org.jdrupes.builder.java.JavaTypes.*;
 public class JavaCompiler extends JavaTool<FileTree<ClassFile>> {
 
     private final Resources<FileTree<JavaSourceFile>> sources
-        = project().newResources(new ResourceType<>() {
+        = project().create(new ResourceType<>() {
         });
     private Path destination = Path.of("classes");
 
@@ -105,7 +105,7 @@ public class JavaCompiler extends JavaTool<FileTree<ClassFile>> {
     ///
     public final JavaCompiler addSources(Path directory, String pattern) {
         addSources(
-            project().newFileTree(JavaSourceTreeType, directory, pattern));
+            project().create(JavaSourceTreeType, directory, pattern));
         return this;
     }
 
@@ -145,7 +145,7 @@ public class JavaCompiler extends JavaTool<FileTree<ClassFile>> {
         // Get this project's previously generated classes (for checking)
         var destDir = project().buildDirectory().resolve(destination);
         final var classSet
-            = project().newFileTree(ClassTreeType, destDir, "**/*");
+            = project().create(ClassTreeType, destDir, "**/*");
         if (request.wants(Cleaniness)) {
             classSet.delete();
             return Stream.empty();
@@ -153,7 +153,7 @@ public class JavaCompiler extends JavaTool<FileTree<ClassFile>> {
 
         // Get classpath for compilation.
         log.fine(() -> "Getting classpath for " + project());
-        var cpResources = project().newResources(
+        var cpResources = project().create(
             new ResourceType<Resources<ClasspathElement>>() {
             }).addAll(
                 project().provided(EnumSet.of(Intend.Consume, Intend.Expose),

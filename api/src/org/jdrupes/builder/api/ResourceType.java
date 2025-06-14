@@ -175,9 +175,8 @@ public class ResourceType<T extends Resource> {
 
     @Override
     public String toString() {
-        return "ResourceType " + type.getSimpleName()
-            + (containedType == null ? ""
-                : "(" + containedType + ")");
+        return type.getSimpleName() + (containedType == null ? ""
+            : "(" + containedType + ")");
     }
 
 }

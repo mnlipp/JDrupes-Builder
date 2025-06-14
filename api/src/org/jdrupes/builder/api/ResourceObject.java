@@ -67,6 +67,6 @@ public abstract class ResourceObject implements Resource {
 
     @Override
     public String toString() {
-        return "Resource of kind " + type();
+        return type().toString() + " (" + asOfLocalized() + ")";
     }
 }

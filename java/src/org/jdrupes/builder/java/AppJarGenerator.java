@@ -146,7 +146,7 @@ public class AppJarGenerator extends AbstractGenerator<JarFile> {
                 throw new BuildException("Cannot create directory " + destDir);
             }
         }
-        var jarResource = project().newFileResource(AppJarFileType,
+        var jarResource = project().create(AppJarFileType,
             destDir.resolve(project().name() + ".jar"));
 
         // Maybe only delete
@@ -164,7 +164,7 @@ public class AppJarGenerator extends AbstractGenerator<JarFile> {
         // Get all content.
         log.fine(() -> "Getting app jar content for " + project().name());
         Resources<ClasspathElement> toBeIncluded
-            = project().newResources(new ResourceType<>() {
+            = project().create(new ResourceType<>() {
             });
         providers.stream().forEach(provider -> {
             toBeIncluded.addAll(project().get(provider,
