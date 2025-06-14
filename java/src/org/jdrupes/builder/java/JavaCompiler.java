@@ -104,8 +104,7 @@ public class JavaCompiler extends JavaTool<FileTree<ClassFile>> {
     /// @return the resources collector
     ///
     public final JavaCompiler addSources(Path directory, String pattern) {
-        addSources(
-            project().create(JavaSourceTreeType, directory, pattern));
+        addSources(project().create(JavaSourceTreeType, directory, pattern));
         return this;
     }
 
@@ -144,8 +143,7 @@ public class JavaCompiler extends JavaTool<FileTree<ClassFile>> {
 
         // Get this project's previously generated classes (for checking)
         var destDir = project().buildDirectory().resolve(destination);
-        final var classSet
-            = project().create(ClassTreeType, destDir, "**/*");
+        final var classSet = project().create(ClassTreeType, destDir, "**/*");
         if (request.wants(Cleaniness)) {
             classSet.delete();
             return Stream.empty();
@@ -159,7 +157,8 @@ public class JavaCompiler extends JavaTool<FileTree<ClassFile>> {
                 project().provided(EnumSet.of(Intend.Consume, Intend.Expose),
                     new ResourceRequest<>(ClasspathElementType)));
         log.finest(() -> project() + " uses classpath: " + cpResources.stream()
-            .map(Resource::toString).collect(Collectors.joining(", ")));
+            .map(e -> e.toPath().toString())
+            .collect(Collectors.joining(File.pathSeparator)));
 
         // (Re-)compile only if necessary
         var classesAsOf = classSet.asOf();
@@ -182,16 +181,11 @@ public class JavaCompiler extends JavaTool<FileTree<ClassFile>> {
 
     @SuppressWarnings({ "PMD.AvoidCatchingGenericException",
         "PMD.ExceptionAsFlowControl" })
-    private void compile(Resources<? extends Resource> cpResources,
+    private void compile(Resources<ClasspathElement> cpResources,
             Path destDir) {
         log.info(() -> "Compiling Java in project " + project().name());
-        var classpath = cpResources.stream().<Path> mapMulti((r, sink) -> {
-            if (r instanceof ClassTree classTree) {
-                sink.accept(classTree.root());
-            } else if (r instanceof JarFile jarFile) {
-                sink.accept(jarFile.path());
-            }
-        }).map(Path::toString).collect(Collectors.joining(File.pathSeparator));
+        var classpath = cpResources.stream().map(e -> e.toPath().toString())
+            .collect(Collectors.joining(File.pathSeparator));
         var javac = ToolProvider.getSystemJavaCompiler();
         var diagnostics = new DiagnosticCollector<JavaFileObject>();
         try (var fileManager

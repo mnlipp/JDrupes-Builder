@@ -23,7 +23,7 @@ import java.util.ServiceLoader;
 import java.util.stream.StreamSupport;
 
 /// Defines both an interface for factories that create [Resource]s and
-/// factory methods for invoking the an appropriate factory.
+/// factory methods for invoking an appropriate factory.
 ///
 @SuppressWarnings("PMD.ImplicitFunctionalInterface")
 public interface ResourceFactory {

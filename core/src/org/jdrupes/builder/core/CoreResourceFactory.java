@@ -27,7 +27,7 @@ import org.jdrupes.builder.api.Resource;
 import org.jdrupes.builder.api.ResourceFactory;
 import org.jdrupes.builder.api.ResourceType;
 import org.jdrupes.builder.api.Resources;
-import static org.jdrupes.builder.core.CoreTypes.ResourceFileType;
+import static org.jdrupes.builder.core.CoreTypes.*;
 
 /// A factory for creating the Core resource objects.
 ///
@@ -37,6 +37,10 @@ public class CoreResourceFactory implements ResourceFactory {
     @Override
     public <T extends Resource> Optional<T> newResource(ResourceType<T> type,
             Project project, Object... args) {
+        if (FileResourceType.equals(type)) {
+            return Optional.of((T) DefaultFileResource.create(
+                FileResourceType, (Path) args[0]));
+        }
         if (ResourceFileType.equals(type)) {
             return Optional.of((T) DefaultFileResource.create(
                 (ResourceType<? extends FileResource>) type, (Path) args[0]));
