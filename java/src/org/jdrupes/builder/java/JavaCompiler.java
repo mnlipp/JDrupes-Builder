@@ -151,11 +151,9 @@ public class JavaCompiler extends JavaTool<FileTree<ClassFile>> {
 
         // Get classpath for compilation.
         log.fine(() -> "Getting classpath for " + project());
-        var cpResources = project().create(
-            new ResourceType<Resources<ClasspathElement>>() {
-            }).addAll(
-                project().provided(EnumSet.of(Intend.Consume, Intend.Expose),
-                    new ResourceRequest<>(ClasspathElementType)));
+        var cpResources = project().create(ClasspathType).addAll(
+            project().provided(EnumSet.of(Intend.Consume, Intend.Expose),
+                new ResourceRequest<>(ClasspathElementType)));
         log.finest(() -> project() + " uses classpath: " + cpResources.stream()
             .map(e -> e.toPath().toString())
             .collect(Collectors.joining(File.pathSeparator)));

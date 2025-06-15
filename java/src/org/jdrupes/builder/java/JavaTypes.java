@@ -20,6 +20,7 @@ package org.jdrupes.builder.java;
 
 import org.jdrupes.builder.api.FileTree;
 import org.jdrupes.builder.api.ResourceType;
+import org.jdrupes.builder.api.Resources;
 
 /// A collection of Java specific [ResourceType]s.
 ///
@@ -63,6 +64,12 @@ public final class JavaTypes {
 
     /// A resource that can be put on the classpath.
     public static final ResourceType<ClasspathElement> ClasspathElementType
+        = new ResourceType<>() {
+        };
+
+    /// A classpath.
+    @SuppressWarnings("PMD.LongVariable")
+    public static final ResourceType<Resources<ClasspathElement>> ClasspathType
         = new ResourceType<>() {
         };
 
