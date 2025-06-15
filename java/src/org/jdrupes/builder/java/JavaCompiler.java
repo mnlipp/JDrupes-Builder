@@ -143,7 +143,7 @@ public class JavaCompiler extends JavaTool<FileTree<ClassFile>> {
 
         // Get this project's previously generated classes (for checking)
         var destDir = project().buildDirectory().resolve(destination);
-        final var classSet = project().create(ClassTreeType, destDir, "**/*");
+        final var classSet = project().create(ClassTreeType, destDir);
         if (request.wants(Cleaniness)) {
             classSet.delete();
             return Stream.empty();

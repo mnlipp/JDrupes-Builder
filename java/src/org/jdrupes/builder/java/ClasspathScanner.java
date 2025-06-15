@@ -64,7 +64,7 @@ public class ClasspathScanner
             .map(Path::of).map(p -> {
                 if (p.toFile().isDirectory()) {
                     return (ClasspathElement) project().create(
-                        ClassTreeType, p.toAbsolutePath(), "**/*.class", false);
+                        ClassTreeType, p.toAbsolutePath());
                 } else {
                     return (ClasspathElement) project()
                         .create(JarFileType, p.toAbsolutePath());

@@ -39,7 +39,8 @@ public class DefaultFileResource extends ResourceObject
     /// @param type the type
     /// @param path the path
     ///
-    protected DefaultFileResource(ResourceType<?> type, Path path) {
+    protected DefaultFileResource(ResourceType<? extends FileResource> type,
+            Path path) {
         super(type);
         if (!path.isAbsolute()) {
             throw new BuildException("Path must be absolute, is " + path);
@@ -55,8 +56,8 @@ public class DefaultFileResource extends ResourceObject
     /// @return the t
     ///
     @SuppressWarnings({ "unchecked" })
-    public static <T extends FileResource> T create(ResourceType<T> type,
-            Path path) {
+    public static <T extends FileResource> T createFileResource(
+            ResourceType<T> type, Path path) {
         return (T) Proxy.newProxyInstance(type.type().getClassLoader(),
             new Class<?>[] { type.type() },
             new ForwardingHandler(new DefaultFileResource(type, path)));

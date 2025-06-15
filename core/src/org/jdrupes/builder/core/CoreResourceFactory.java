@@ -19,7 +19,11 @@
 package org.jdrupes.builder.core;
 
 import java.nio.file.Path;
+import java.util.Arrays;
 import java.util.Optional;
+import static java.util.function.Predicate.not;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 import org.jdrupes.builder.api.FileResource;
 import org.jdrupes.builder.api.FileTree;
 import org.jdrupes.builder.api.Project;
@@ -33,26 +37,59 @@ import static org.jdrupes.builder.core.CoreTypes.*;
 ///
 public class CoreResourceFactory implements ResourceFactory {
 
+    /// Gets all interfaces that the given class implements,
+    /// including the class itself.
+    ///
+    /// @param clazz the clazz
+    /// @return all interfaces
+    ///
+    public static Stream<Class<?>> getAllInterfaces(Class<?> clazz) {
+        return Stream.concat(Stream.of(clazz),
+            Arrays.stream(clazz.getInterfaces())
+                .map(CoreResourceFactory::getAllInterfaces).flatMap(s -> s));
+    }
+
+    /// Checks if the derived interface adds any methods to the
+    /// base interface.
+    ///
+    /// @param <T> the generic type
+    /// @param base the base
+    /// @param derived the derived
+    /// @return true, if successful
+    ///
+    public static <T> boolean addsMethod(
+            Class<T> base, Class<? extends T> derived) {
+        var baseItfs = getAllInterfaces(base).collect(Collectors.toSet());
+        return getAllInterfaces(derived).filter(not(baseItfs::contains))
+            .filter(itf -> itf.getDeclaredMethods().length > 0).findAny()
+            .isPresent();
+    }
+
     @SuppressWarnings("unchecked")
     @Override
     public <T extends Resource> Optional<T> newResource(ResourceType<T> type,
             Project project, Object... args) {
-        if (FileResourceType.equals(type)) {
-            return Optional.of((T) DefaultFileResource.create(
-                FileResourceType, (Path) args[0]));
-        }
-        if (ResourceFileType.equals(type)) {
-            return Optional.of((T) DefaultFileResource.create(
+        if (FileResourceType.isAssignableFrom(type)
+            && type.type().getSuperclass() == null
+            && !addsMethod(FileResource.class,
+                (Class<? extends FileResource>) type.type())) {
+            return Optional.of((T) DefaultFileResource.createFileResource(
                 (ResourceType<? extends FileResource>) type, (Path) args[0]));
         }
-        if (Resources.class.equals(type.type())) {
-            return Optional.of((T) DefaultResources.create(
+        if (Resources.class.equals(type.type())
+            && type.type().getSuperclass() == null
+            && !addsMethod(Resources.class,
+                (Class<? extends Resources<?>>) type.type())) {
+            return Optional.of((T) DefaultResources.createResources(
                 (ResourceType<? extends Resources<?>>) type));
         }
-        if (FileTree.class.equals(type.type())) {
+        if (FileTree.class.equals(type.type())
+            && type.type().getSuperclass() == null
+            && !addsMethod(FileTree.class,
+                (Class<? extends FileTree<?>>) type.type())) {
             return Optional.of(
-                (T) DefaultFileTree.create(project,
-                    (ResourceType<? extends FileTree<?>>) type,
+                (T) DefaultFileTree.createFileTree((ResourceType<? extends FileTree<?>>) type,
+                    project,
                     (Path) args[0], (String) args[1],
                     args.length > 2 && (boolean) args[2]));
         }

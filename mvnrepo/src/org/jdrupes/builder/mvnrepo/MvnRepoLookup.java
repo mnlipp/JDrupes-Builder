@@ -37,12 +37,12 @@ import org.jdrupes.builder.api.Resource;
 import org.jdrupes.builder.api.ResourceFactory;
 import org.jdrupes.builder.api.ResourceProvider;
 import org.jdrupes.builder.api.ResourceRequest;
-import org.jdrupes.builder.java.JarFile;
+import org.jdrupes.builder.java.DefaultJarFile;
 import static org.jdrupes.builder.java.JavaTypes.*;
 
 /// The Class MvnRepoLookup.
 ///
-public class MvnRepoLookup implements ResourceProvider<JarFile> {
+public class MvnRepoLookup implements ResourceProvider<DefaultJarFile> {
 
     private List<String> coordinates = new ArrayList<>();
 

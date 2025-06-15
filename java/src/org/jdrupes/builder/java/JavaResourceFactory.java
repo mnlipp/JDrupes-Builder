@@ -20,12 +20,11 @@ package org.jdrupes.builder.java;
 
 import java.nio.file.Path;
 import java.util.Optional;
-import org.jdrupes.builder.api.FileResource;
 import org.jdrupes.builder.api.Project;
 import org.jdrupes.builder.api.Resource;
 import org.jdrupes.builder.api.ResourceFactory;
 import org.jdrupes.builder.api.ResourceType;
-import org.jdrupes.builder.core.DefaultFileResource;
+import static org.jdrupes.builder.core.CoreResourceFactory.*;
 import static org.jdrupes.builder.java.JavaTypes.*;
 
 /// A factory for creating Java related resource objects.
@@ -36,20 +35,21 @@ public class JavaResourceFactory implements ResourceFactory {
     @Override
     public <T extends Resource> Optional<T> newResource(ResourceType<T> type,
             Project project, Object... args) {
-        if (JavaSourceFileType.equals(type) || ClassFileType.equals(type)
-            || JavadocDirectoryType.equals(type)) {
-            return Optional.of((T) DefaultFileResource.create(
-                (ResourceType<? extends FileResource>) type, (Path) args[0]));
+        if (ClassTreeType.isAssignableFrom(type)
+            && type.type().getSuperclass() == null
+            && !addsMethod(ClassTree.class,
+                (Class<? extends ClassTree>) type.type())) {
+            return Optional
+                .of((T) DefaultClassTree.createClassTree(
+                    (ResourceType<? extends ClassTree>) type, project,
+                    (Path) args[0]));
         }
-        if (ClassTreeType.equals(type)) {
-            return Optional.of((T) new ClassTree(null,
-                (Path) args[0], (String) args[1]));
-        }
-        if (JarFileType.equals(type)) {
-            return Optional.of((T) new JarFile((Path) args[0]));
-        }
-        if (AppJarFileType.equals(type)) {
-            return Optional.of((T) new AppJarFile((Path) args[0]));
+        if (JarFileType.isAssignableFrom(type)
+            && type.type().getSuperclass() == null
+            && !addsMethod(JarFile.class,
+                (Class<? extends JarFile>) type.type())) {
+            return Optional.of((T) DefaultJarFile.createJarFile(
+                (ResourceType<? extends JarFile>) type, (Path) args[0]));
         }
         if (JavaResourceTree.class.equals(type.type())) {
             return Optional.of((T) new JavaResourceTree(project,

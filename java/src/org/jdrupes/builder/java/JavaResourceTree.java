@@ -38,7 +38,7 @@ public class JavaResourceTree
     ///
     public JavaResourceTree(Project project, Path root,
             String pattern, boolean withDirs) {
-        super(project, JavaResourceTreeType, root, pattern, withDirs);
+        super(JavaResourceTreeType, project, root, pattern, withDirs);
     }
 
     @Override

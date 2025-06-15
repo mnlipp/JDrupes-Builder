@@ -61,15 +61,9 @@ public class DefaultFileTree<T extends FileResource> extends DefaultResources<T>
     ///
     /// if `project` is `null`, and `root` is a relative path,
     /// `root` is resolved against the current working directory.
-    ///
-    /// @param project the project
-    /// @param type the type
-    /// @param root the root of the file tree to search for files matching
     /// `pattern`
-    /// @param pattern the pattern
-    /// @param withDirs whether to include directories
     ///
-    public DefaultFileTree(Project project, ResourceType<?> type, Path root,
+    protected DefaultFileTree(ResourceType<?> type, Project project, Path root,
             String pattern, boolean withDirs) {
         super(type);
         this.project = project;
@@ -81,20 +75,20 @@ public class DefaultFileTree<T extends FileResource> extends DefaultResources<T>
     /// Creates the a new [FileTree].
     ///
     /// @param <T> the tree's type
-    /// @param project the project
     /// @param type the type
+    /// @param project the project
     /// @param root the root
     /// @param pattern the pattern
-    /// @param withDirs whether to include directories
+    /// @param withDirs the with dirs
     /// @return the file tree
     ///
     @SuppressWarnings("unchecked")
     public static <T extends FileTree<?>>
-            T create(Project project, ResourceType<T> type, Path root,
+            T createFileTree(ResourceType<T> type, Project project, Path root,
                     String pattern, boolean withDirs) {
         return (T) Proxy.newProxyInstance(type.type().getClassLoader(),
             new Class<?>[] { type.type() }, new ForwardingHandler(
-                new DefaultFileTree<>(project, type, root, pattern, withDirs)));
+                new DefaultFileTree<>(type, project, root, pattern, withDirs)));
     }
 
     @Override
