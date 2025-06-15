@@ -31,6 +31,7 @@ public class DefaultJarFile extends DefaultFileResource implements JarFile {
 
     /// Instantiates a new jar file.
     ///
+    /// @param type the resource type
     /// @param path the path
     ///
     protected DefaultJarFile(ResourceType<? extends JarFile> type, Path path) {
@@ -42,7 +43,7 @@ public class DefaultJarFile extends DefaultFileResource implements JarFile {
     /// @param <T> the generic type
     /// @param type the type
     /// @param path the path
-    /// @return the t
+    /// @return the jar file
     ///
     @SuppressWarnings({ "unchecked" })
     public static <T extends JarFile> T createJarFile(ResourceType<T> type,

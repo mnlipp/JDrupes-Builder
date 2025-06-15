@@ -44,11 +44,13 @@ import static org.jdrupes.builder.java.JavaTypes.*;
 ///
 public class MvnRepoLookup implements ResourceProvider<DefaultJarFile> {
 
-    private List<String> coordinates = new ArrayList<>();
+    private final List<String> coordinates = new ArrayList<>();
 
     /// Instantiates a new mvn repo lookup.
     ///
+    @SuppressWarnings("PMD.UnnecessaryConstructor")
     public MvnRepoLookup() {
+        // Make javadoc happy.
     }
 
     /// Artifact.
@@ -97,10 +99,12 @@ public class MvnRepoLookup implements ResourceProvider<DefaultJarFile> {
                 PreorderNodeListGenerator nlg = new PreorderNodeListGenerator();
                 rootNode.accept(nlg);
                 List<DependencyNode> dependencyNodes = nlg.getNodes();
-                return (Stream<T>) dependencyNodes.stream()
+                @SuppressWarnings("unchecked")
+                var result = (Stream<T>) dependencyNodes.stream()
                     .filter(d -> d.getArtifact() != null)
                     .map(d -> d.getArtifact().getFile().toPath())
                     .map(p -> ResourceFactory.create(JarFileType, p));
+                return result;
             } catch (DependencyResolutionException e) {
                 throw new BuildException(
                     "Cannot resolve: " + e.getMessage(), e);

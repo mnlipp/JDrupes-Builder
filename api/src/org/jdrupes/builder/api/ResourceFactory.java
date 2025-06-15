@@ -34,13 +34,14 @@ public interface ResourceFactory {
     /// resource, i.e. that does not return `Optional.empty()` when
     /// [newResource] is called.
     ///
-    /// @param <T> the generic type
-    /// @param type the type
-    /// @param args the args
-    /// @return the t
+    /// @param <T> the generic resource type
+    /// @param type the resource type
+    /// @param project the project
+    /// @param args the additional arguments
+    /// @return the resource
     ///
-    static <T extends Resource> T create(Project project,
-            ResourceType<T> type, Object... args) {
+    static <T extends Resource> T create(ResourceType<T> type,
+            Project project, Object... args) {
         return StreamSupport.stream(
             ServiceLoader.load(ResourceFactory.class).spliterator(), true)
             .map(f -> f.newResource(type, project, args))
@@ -49,22 +50,25 @@ public interface ResourceFactory {
                 () -> new BuildException("No resource factory for " + type));
     }
 
-    /// Short for `create(null, type, args)`.
+    /// Short for `create(type, null, args)`.
     ///
-    /// @param <T> the generic type
-    /// @param type the type
-    /// @param args the args
-    /// @return the t
+    /// @param <T> the generic resource type
+    /// @param type the resource type
+    /// @param args the additional arguments
+    /// @return the resource
     ///
     static <T extends Resource> T create(ResourceType<T> type,
             Object... args) {
-        return create(null, type, args);
+        return create(type, null, args);
     }
 
     /// Returns a new resource of the given type if the factory instance
     /// can create it.
     ///
-    /// @param <T> the resource type
+    /// @param <T> the generic resource type
+    /// @param type the resource type
+    /// @param project the project
+    /// @param args the additional arguments
     /// @return the result. `Optional.empty()` if the resource cannot
     /// be created by the factory instance.
     ///

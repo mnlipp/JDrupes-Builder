@@ -246,6 +246,6 @@ public interface Project extends ResourceProvider<Resource> {
     ///
     default <T extends Resource> T create(ResourceType<T> type,
             Object... args) {
-        return ResourceFactory.create(this, type, args);
+        return ResourceFactory.create(type, this, args);
     }
 }

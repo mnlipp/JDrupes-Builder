@@ -37,6 +37,13 @@ import static org.jdrupes.builder.core.CoreTypes.*;
 ///
 public class CoreResourceFactory implements ResourceFactory {
 
+    /// Instantiates a new core resource factory.
+    ///
+    @SuppressWarnings("PMD.UnnecessaryConstructor")
+    public CoreResourceFactory() {
+        // Make javadoc happy.
+    }
+
     /// Gets all interfaces that the given class implements,
     /// including the class itself.
     ///
@@ -88,7 +95,8 @@ public class CoreResourceFactory implements ResourceFactory {
             && !addsMethod(FileTree.class,
                 (Class<? extends FileTree<?>>) type.type())) {
             return Optional.of(
-                (T) DefaultFileTree.createFileTree((ResourceType<? extends FileTree<?>>) type,
+                (T) DefaultFileTree.createFileTree(
+                    (ResourceType<? extends FileTree<?>>) type,
                     project,
                     (Path) args[0], (String) args[1],
                     args.length > 2 && (boolean) args[2]));

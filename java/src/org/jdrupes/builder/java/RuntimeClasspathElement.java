@@ -16,6 +16,9 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-/// Provide resources from a Maven repository 
+package org.jdrupes.builder.java;
+
+/// The Interface RuntimeClasspathElement.
 ///
-package org.jdrupes.builder.mvnrepo;
+public interface RuntimeClasspathElement extends ClasspathElement {
+}
