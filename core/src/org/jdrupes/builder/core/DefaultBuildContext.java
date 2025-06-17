@@ -62,16 +62,16 @@ public class DefaultBuildContext implements BuildContext {
         this.executor = executor;
     }
 
-    /// Implements [Project#get].
+    /// Implements [Project#get(ResourceProvider, ResourceRequest)].
     ///
     /// @param <T> the generic type
     /// @param provider the provider
-    /// @param requested the requested
+    /// @param request the requested
     /// @return the stream
     ///
     public <T extends Resource> Stream<T> get(ResourceProvider<?> provider,
-            ResourceRequest<T> requested) {
-        return cache.computeIfAbsent(new Key<>(provider, requested),
+            ResourceRequest<T> request) {
+        return cache.computeIfAbsent(new Key<>(provider, request),
             k -> new FutureStream<T>(executor, k.provider(), k.requested()))
             .stream();
     }

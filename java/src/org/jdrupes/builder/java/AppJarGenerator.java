@@ -123,19 +123,14 @@ public class AppJarGenerator extends AbstractGenerator<JarFile> {
         return this;
     }
 
-    /// Provides the jar.
-    ///
-    /// @param <T> the generic type
-    /// @param request the requested
-    /// @return the stream
-    ///
     @Override
     @SuppressWarnings({ "PMD.AvoidCatchingGenericException",
         "PMD.CollapsibleIfStatements", "unchecked",
         "PMD.AvoidInstantiatingObjectsInLoops" })
     public <T extends Resource> Stream<T>
-            provide(ResourceRequest<T> request) {
-        if (!request.wants(AppJarFileType) && !request.wants(Cleaniness)) {
+            provide(ResourceRequest<T> requested) {
+        if (!requested.acceptsResources(AppJarFileType)
+            && !requested.accepts(Cleaniness)) {
             return Stream.empty();
         }
 
@@ -151,7 +146,7 @@ public class AppJarGenerator extends AbstractGenerator<JarFile> {
             destDir.resolve(project().name() + ".jar"));
 
         // Maybe only delete
-        if (request.wants(Cleaniness)) {
+        if (requested.accepts(Cleaniness)) {
             jarResource.delete();
             return Stream.empty();
         }
@@ -164,13 +159,11 @@ public class AppJarGenerator extends AbstractGenerator<JarFile> {
 
         // Get all content.
         log.fine(() -> "Getting app jar content for " + project().name());
-        Resources<ClasspathElement> toBeIncluded
-            = project().create(new ResourceType<>() {
-            });
-        providers.stream().forEach(provider -> {
-            toBeIncluded.addAll(project().get(provider,
-                new ResourceRequest<>(ClasspathElementType, Exposed)));
-        });
+        var toBeIncluded = project().create(ClasspathType)
+            .addAll(providers.stream().map(p -> project().get(p,
+                new ResourceRequest<ClasspathElement>(
+                    new ResourceType<RuntimeResources>() {}, None)))
+                .flatMap(s -> s));
 
         // Check if rebuild needed.
         if (jarResource.asOf().isAfter(toBeIncluded.asOf())) {

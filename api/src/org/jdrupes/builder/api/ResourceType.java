@@ -41,8 +41,7 @@ public class ResourceType<T extends Resource> {
     /// Used to request cleanup.
     @SuppressWarnings("PMD.FieldNamingConventions")
     public static final ResourceType<
-            Cleaniness> Cleaniness = new ResourceType<>() {
-            };
+            Cleaniness> Cleaniness = new ResourceType<>() {};
 
     private final Class<T> type;
     private final ResourceType<?> containedType;
@@ -84,7 +83,8 @@ public class ResourceType<T extends Resource> {
         this.containedType = Stream.concat(
             Optional.ofNullable(((Class<?>) type).getGenericSuperclass())
                 .stream(),
-            Arrays.stream(((Class<?>) type).getGenericInterfaces()))
+            getAllInterfaces((Class<?>) type).map(Class::getGenericInterfaces)
+                .map(Arrays::stream).flatMap(s -> s))
             .filter(t -> t instanceof ParameterizedType pType && Resources.class
                 .isAssignableFrom((Class<?>) pType.getRawType()))
             .map(t -> (ParameterizedType) t).findFirst()
@@ -92,6 +92,18 @@ public class ResourceType<T extends Resource> {
                 new ResourceType<>(t).containedType()))
             .orElseGet(() -> new ResourceType<>(Resources.class, null))
             .containedType();
+    }
+
+    /// Gets all interfaces that the given class implements,
+    /// including the class itself.
+    ///
+    /// @param clazz the clazz
+    /// @return all interfaces
+    ///
+    public static Stream<Class<?>> getAllInterfaces(Class<?> clazz) {
+        return Stream.concat(Stream.of(clazz),
+            Arrays.stream(clazz.getInterfaces())
+                .map(ResourceType::getAllInterfaces).flatMap(s -> s));
     }
 
     /// Instantiates a new resource type, using the information from a

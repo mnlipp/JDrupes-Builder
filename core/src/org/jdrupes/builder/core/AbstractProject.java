@@ -291,25 +291,19 @@ public abstract class AbstractProject implements Project {
     ///
     /// @param <T> the generic type
     /// @param intends the intends
-    /// @param requested the requested
+    /// @param request the requested
     /// @return the stream
     ///
     @Override
     public <T extends Resource> Stream<T> provided(Set<Intend> intends,
-            ResourceRequest<T> requested) {
+            ResourceRequest<T> request) {
         return providers.entrySet().stream()
             .filter(e -> intends.contains(e.getValue()))
-            .map(e -> context().get(e.getKey(), requested))
+            .map(e -> context().get(e.getKey(), request))
             // Terminate stream to start all tasks for evaluating the futures
             .toList().stream().flatMap(r -> r).map(r -> (T) r);
     }
 
-    /// Provide.
-    ///
-    /// @param <R> the generic type
-    /// @param requested the requested
-    /// @return the stream
-    ///
     @Override
     public <R extends Resource> Stream<R>
             provide(ResourceRequest<R> requested) {
@@ -326,27 +320,16 @@ public abstract class AbstractProject implements Project {
             .toList().stream().flatMap(r -> r);
     }
 
-    /// Context.
-    ///
-    /// @return the default build context
-    ///
     @Override
     @SuppressWarnings("PMD.AvoidSynchronizedStatement")
     public DefaultBuildContext context() {
         return ((AbstractProject) rootProject()).context;
     }
 
-    /// Returns the.
-    ///
-    /// @param <T> the generic type
-    /// @param provider the provider
-    /// @param requested the requested
-    /// @return the stream
-    ///
     @Override
     public <T extends Resource> Stream<T> get(ResourceProvider<?> provider,
-            ResourceRequest<T> requested) {
-        return context().get(provider, requested);
+            ResourceRequest<T> request) {
+        return context().get(provider, request);
     }
 
     /// Returns the.

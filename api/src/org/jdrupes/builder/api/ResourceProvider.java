@@ -29,17 +29,18 @@ import java.util.stream.Stream;
 @SuppressWarnings("PMD.ImplicitFunctionalInterface")
 public interface ResourceProvider<T extends Resource> {
 
-    /// Provide the requested resource. 
+    /// Provide the requested resources.
     /// 
-    /// This method is never invoked concurrently for the same requested
-    /// resource. It may, however, be invoked concurrently for different
-    /// requested resources. Providers that evaluate all resources anyway
-    /// should invoke themselves through [Project#get] with a request
-    /// for all resources to avoid concurrency and only filter the result
-    /// in the original thread.
+    /// This method is never invoked concurrently for the same request
+    /// when invoked through [Project#get]. It may, however, be invoked
+    /// concurrently for different requests. Providers that evaluate all
+    /// possibly provided resources anyway and return only a subset for
+    /// some kinds of request should therefore invoke themselves (through
+    /// [Project#get]) with a request for all resources and filter the
+    /// (automatically cached) result.
     ///
-    /// @param <R> the type of the requested (and provided) resources
-    /// @param requested the requested resource
+    /// @param <R> the type of the requested (and provided) resource
+    /// @param requested the requested resources
     /// @return the provided resource(s) as stream
     ///
     <R extends Resource> Stream<R> provide(ResourceRequest<R> requested);

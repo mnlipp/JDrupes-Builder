@@ -12,7 +12,7 @@ public class Root extends AbstractProject implements RootProject {
     }
 
     public void build() {
-        provide(new ResourceRequest<>(new ResourceType<JarFile>() {
-        })).forEach(System.out::println);
+        provide(new ResourceRequest<JarFile>(new ResourceType<>() {}))
+            .forEach(System.out::println);
     }
 }

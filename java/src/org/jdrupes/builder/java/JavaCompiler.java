@@ -36,6 +36,7 @@ import org.jdrupes.builder.api.Intend;
 import org.jdrupes.builder.api.Project;
 import org.jdrupes.builder.api.Resource;
 import org.jdrupes.builder.api.ResourceRequest;
+import org.jdrupes.builder.api.ResourceRequest.Restriction;
 import org.jdrupes.builder.api.ResourceType;
 import static org.jdrupes.builder.api.ResourceType.*;
 import org.jdrupes.builder.api.Resources;
@@ -54,8 +55,7 @@ import static org.jdrupes.builder.java.JavaTypes.*;
 public class JavaCompiler extends JavaTool<FileTree<ClassFile>> {
 
     private final Resources<FileTree<JavaSourceFile>> sources
-        = project().create(new ResourceType<>() {
-        });
+        = project().create(new ResourceType<>() {});
     private Path destination = Path.of("classes");
 
     /// Instantiates a new java compiler.
@@ -131,20 +131,30 @@ public class JavaCompiler extends JavaTool<FileTree<ClassFile>> {
 
     @Override
     public <T extends Resource> Stream<T>
-            provide(ResourceRequest<T> request) {
-        if (request.wants(JavaSourceTreeType)) {
-            @SuppressWarnings("unchecked")
+            provide(ResourceRequest<T> requested) {
+        if (requested.acceptsResources(JavaSourceTreeType)) {
+            @SuppressWarnings({ "unchecked", "PMD.AvoidDuplicateLiterals" })
             var result = (Stream<T>) sources.stream();
             return result;
         }
-        if (!request.wants(ClassTreeType) && !request.wants(Cleaniness)) {
+        if (!requested.acceptsResources(ClasspathElementType)
+            && !requested.accepts(Cleaniness)) {
             return Stream.empty();
         }
 
-        // Get this project's previously generated classes (for checking)
+        // Map special requests to the base request
+        if (RuntimeResourcesType.isAssignableFrom(requested.type())) {
+            @SuppressWarnings("unchecked")
+            var result = (Stream<T>) project().get(this,
+                new ResourceRequest<ClasspathElement>(new ResourceType<>() {}));
+            return result;
+        }
+
+        // Get this project's previously generated classes for checking
+        // or deleting.
         var destDir = project().buildDirectory().resolve(destination);
         final var classSet = project().create(ClassTreeType, destDir);
-        if (request.wants(Cleaniness)) {
+        if (requested.accepts(Cleaniness)) {
             classSet.delete();
             return Stream.empty();
         }
@@ -153,7 +163,9 @@ public class JavaCompiler extends JavaTool<FileTree<ClassFile>> {
         log.fine(() -> "Getting classpath for " + project());
         var cpResources = project().create(ClasspathType).addAll(
             project().provided(EnumSet.of(Intend.Consume, Intend.Expose),
-                new ResourceRequest<>(ClasspathElementType)));
+                new ResourceRequest<>(
+                    new ResourceType<CompilationResources>() {},
+                    Restriction.Exposed)));
         log.finest(() -> project() + " uses classpath: " + cpResources.stream()
             .map(e -> e.toPath().toString())
             .collect(Collectors.joining(File.pathSeparator)));

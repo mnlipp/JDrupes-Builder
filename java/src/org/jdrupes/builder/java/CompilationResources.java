@@ -16,12 +16,10 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package org.jdrupes.builder.api;
+package org.jdrupes.builder.java;
 
-/// A phony resource that (when requested) causes a generator to remove
-/// its generated outputs.
+/// The Interface CompilationResources.
 ///
-@SuppressWarnings("PMD.ImplicitFunctionalInterface")
-public interface Cleaniness extends Resource {
+public interface CompilationResources extends RuntimeResources {
 
 }

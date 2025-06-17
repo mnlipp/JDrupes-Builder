@@ -19,11 +19,9 @@
 package org.jdrupes.builder.core;
 
 import java.nio.file.Path;
-import java.util.Arrays;
 import java.util.Optional;
 import static java.util.function.Predicate.not;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 import org.jdrupes.builder.api.FileResource;
 import org.jdrupes.builder.api.FileTree;
 import org.jdrupes.builder.api.Project;
@@ -44,18 +42,6 @@ public class CoreResourceFactory implements ResourceFactory {
         // Make javadoc happy.
     }
 
-    /// Gets all interfaces that the given class implements,
-    /// including the class itself.
-    ///
-    /// @param clazz the clazz
-    /// @return all interfaces
-    ///
-    public static Stream<Class<?>> getAllInterfaces(Class<?> clazz) {
-        return Stream.concat(Stream.of(clazz),
-            Arrays.stream(clazz.getInterfaces())
-                .map(CoreResourceFactory::getAllInterfaces).flatMap(s -> s));
-    }
-
     /// Checks if the derived interface adds any methods to the
     /// base interface.
     ///
@@ -66,8 +52,10 @@ public class CoreResourceFactory implements ResourceFactory {
     ///
     public static <T> boolean addsMethod(
             Class<T> base, Class<? extends T> derived) {
-        var baseItfs = getAllInterfaces(base).collect(Collectors.toSet());
-        return getAllInterfaces(derived).filter(not(baseItfs::contains))
+        var baseItfs = ResourceType.getAllInterfaces(base)
+            .collect(Collectors.toSet());
+        return ResourceType.getAllInterfaces(derived)
+            .filter(not(baseItfs::contains))
             .filter(itf -> itf.getDeclaredMethods().length > 0).findAny()
             .isPresent();
     }
@@ -83,14 +71,14 @@ public class CoreResourceFactory implements ResourceFactory {
             return Optional.of((T) DefaultFileResource.createFileResource(
                 (ResourceType<? extends FileResource>) type, (Path) args[0]));
         }
-        if (Resources.class.equals(type.type())
+        if (Resources.class.isAssignableFrom(type.type())
             && type.type().getSuperclass() == null
             && !addsMethod(Resources.class,
                 (Class<? extends Resources<?>>) type.type())) {
             return Optional.of((T) DefaultResources.createResources(
                 (ResourceType<? extends Resources<?>>) type));
         }
-        if (FileTree.class.equals(type.type())
+        if (FileTree.class.isAssignableFrom(type.type())
             && type.type().getSuperclass() == null
             && !addsMethod(FileTree.class,
                 (Class<? extends FileTree<?>>) type.type())) {

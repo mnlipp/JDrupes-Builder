@@ -27,9 +27,10 @@ import org.jdrupes.builder.api.FileTree;
 import org.jdrupes.builder.api.Intend;
 import org.jdrupes.builder.api.Masked;
 import org.jdrupes.builder.api.ResourceRequest;
+import org.jdrupes.builder.api.ResourceType;
 import org.jdrupes.builder.api.RootProject;
 import org.jdrupes.builder.core.AbstractProject;
-import static org.jdrupes.builder.java.JavaTypes.*;
+import org.jdrupes.builder.java.ClasspathElement;
 
 /// The built-in root project associated with the root directory.
 ///
@@ -47,8 +48,8 @@ public class BootstrapRoot extends AbstractProject
     /// Bootstrap.
     ///
     public void bootstrap() {
-        var cpUrls = provide(new ResourceRequest<>(ClasspathElementType))
-            .map(cpe -> {
+        var cpUrls = provide(new ResourceRequest<ClasspathElement>(
+            new ResourceType<>() {})).map(cpe -> {
                 try {
                     if (cpe instanceof FileTree tree) {
                         return tree.root().toFile().toURI().toURL();

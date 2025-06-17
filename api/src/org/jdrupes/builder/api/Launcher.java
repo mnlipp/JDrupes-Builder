@@ -28,7 +28,7 @@ public interface Launcher {
     /// Provide the requested resources from the root project.
     ///
     /// @param <T> the requested type
-    /// @param requested the requested
+    /// @param requested the request
     /// @return the stream
     ///
     <T extends Resource> Stream<T> provide(ResourceRequest<T> requested);

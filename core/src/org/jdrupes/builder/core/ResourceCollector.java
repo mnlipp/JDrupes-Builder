@@ -49,8 +49,8 @@ public class ResourceCollector<T extends Resource>
     public ResourceCollector(Project project, ResourceType<T> type) {
         super(project);
         this.type = type;
-        resources = project().create(new ResourceType<>(Resources.class, type) {
-        });
+        resources
+            = project().create(new ResourceType<>(Resources.class, type) {});
     }
 
     /// Adds the given file tree with resource directories.
@@ -77,7 +77,7 @@ public class ResourceCollector<T extends Resource>
     @SuppressWarnings("unchecked")
     public <R extends Resource> Stream<R>
             provide(ResourceRequest<R> requested) {
-        if (!requested.type().isAssignableFrom(type)) {
+        if (!requested.type().containedType().isAssignableFrom(type)) {
             return Stream.empty();
         }
         return (Stream<R>) resources.stream();

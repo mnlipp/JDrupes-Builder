@@ -73,6 +73,19 @@ public final class JavaTypes {
         = new ResourceType<>() {
         };
 
+    /// Contributions to the compilation classpath.
+    @SuppressWarnings("PMD.LongVariable")
+    public static final ResourceType<
+            CompilationResources> CompilationResourcesType
+                = new ResourceType<>() {
+                };
+
+    /// Contributions to the runtime classpath.
+    @SuppressWarnings("PMD.LongVariable")
+    public static final ResourceType<RuntimeResources> RuntimeResourcesType
+        = new ResourceType<>() {
+        };
+
     /// The Java application jar file.
     public static final ResourceType<AppJarFile> AppJarFileType
         = new ResourceType<>() {

@@ -46,8 +46,7 @@ import static org.jdrupes.builder.java.JavaTypes.*;
 public class Javadoc extends JavaTool<FileTree<FileResource>> {
 
     private final Resources<FileTree<JavaSourceFile>> sources
-        = project().create(new ResourceType<>() {
-        });
+        = project().create(new ResourceType<>() {});
     private Path destination = Path.of("doc");
     private final Resources<ClasspathElement> tagletpath;
     private final List<String> taglets = new ArrayList<>();
@@ -60,8 +59,7 @@ public class Javadoc extends JavaTool<FileTree<FileResource>> {
     @SuppressWarnings("PMD.ConstructorCallsOverridableMethod")
     public Javadoc(Project project) {
         super(project);
-        tagletpath = project().create(new ResourceType<>() {
-        });
+        tagletpath = project().create(new ResourceType<>() {});
 
     }
 
@@ -173,16 +171,16 @@ public class Javadoc extends JavaTool<FileTree<FileResource>> {
     @SuppressWarnings({ "PMD.AvoidCatchingGenericException",
         "PMD.ExceptionAsFlowControl" })
     public <T extends Resource> Stream<T>
-            provide(ResourceRequest<T> request) {
-        if (!request.wants(JavadocDirectoryType)
-            && !request.wants(Cleaniness)) {
+            provide(ResourceRequest<T> requested) {
+        if (!requested.acceptsResources(JavadocDirectoryType)
+            && !requested.accepts(Cleaniness)) {
             return Stream.empty();
         }
 
         // Get destination and check if we only have to cleanup.
         var destDir = project().buildDirectory().resolve(destination);
         var generated = project().create(ClassTreeType, destDir, "**/*");
-        if (request.wants(Cleaniness)) {
+        if (requested.acceptsResources(Cleaniness)) {
             generated.delete();
             destDir.toFile().delete();
             return Stream.empty();

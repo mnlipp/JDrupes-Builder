@@ -19,6 +19,7 @@
 package org.jdrupes.builder.api;
 
 import java.util.Objects;
+import java.util.Optional;
 
 /// Represents a request for a resource of a given type, optionally
 /// with a given restriction on the resources to consider.
@@ -39,14 +40,14 @@ public class ResourceRequest<T extends Resource> {
         Exposed
     }
 
-    private final ResourceType<T> type;
+    private final ResourceType<? extends Resources<T>> type;
     private final Restriction restriction;
 
     /// Instantiates a new resource request without any restriction.
     ///
     /// @param type the requested type
     ///
-    public ResourceRequest(ResourceType<T> type) {
+    public ResourceRequest(ResourceType<? extends Resources<T>> type) {
         this(type, Restriction.None);
     }
 
@@ -55,7 +56,8 @@ public class ResourceRequest<T extends Resource> {
     /// @param type the type
     /// @param restriction the restriction
     ///
-    public ResourceRequest(ResourceType<T> type, Restriction restriction) {
+    public ResourceRequest(ResourceType<? extends Resources<T>> type,
+        Restriction restriction) {
         this.type = type;
         this.restriction = restriction;
     }
@@ -64,17 +66,29 @@ public class ResourceRequest<T extends Resource> {
     ///
     /// @return the resource type
     ///
-    public ResourceType<T> type() {
+    public ResourceType<? extends Resources<T>> type() {
         return type;
     }
 
-    /// Checks if this request requests a resource of the given type.
+    /// Checks if this request accepts a resource of the given type.
+    /// Short for `type().isAssignableFrom(other)`.
     ///
     /// @param other the other
     /// @return true, if successful
     ///
-    public boolean wants(ResourceType<?> other) {
+    public boolean accepts(ResourceType<?> other) {
         return type().isAssignableFrom(other);
+    }
+    
+    /// Checks if the requested resources container may contain
+    /// elements of the given type..
+    ///
+    /// @param other the other
+    /// @return true, if successful
+    ///
+    public boolean acceptsResources(ResourceType<?> other) {
+        return Optional.ofNullable(type().containedType())
+            .map(ct -> ct.isAssignableFrom(other)).orElse(false);
     }
     
     /// Return the restriction.

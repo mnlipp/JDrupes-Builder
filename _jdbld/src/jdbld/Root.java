@@ -6,17 +6,22 @@ import java.nio.file.Path;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import org.jdrupes.builder.api.FileTree;
 import org.jdrupes.builder.api.Intend;
 import org.jdrupes.builder.api.Project;
 import org.jdrupes.builder.api.ResourceRequest;
+import org.jdrupes.builder.api.ResourceType;
 import org.jdrupes.builder.api.RootProject;
 import org.jdrupes.builder.core.AbstractProject;
+import org.jdrupes.builder.java.AppJarFile;
 import org.jdrupes.builder.java.AppJarGenerator;
 import org.jdrupes.builder.java.JavaCompiler;
-import org.jdrupes.builder.java.JavaTypes;
 import org.jdrupes.builder.java.Javadoc;
+import org.jdrupes.builder.java.JavadocDirectory;
 import org.jdrupes.builder.java.JavaProject;
 import org.jdrupes.builder.java.JavaResourceCollector;
+import org.jdrupes.builder.java.JavaSourceFile;
+
 import static org.jdrupes.builder.java.JavaTypes.*;
 
 public class Root extends AbstractProject implements RootProject {
@@ -62,15 +67,16 @@ public class Root extends AbstractProject implements RootProject {
             .options("--add-stylesheet",
                 directory().resolve("misc/prism.css").toString())
             .options("-quiet")
-
-            .addSources(get(this,
-                new ResourceRequest<>(JavaTypes.JavaSourceTreeType)));
+            .addSources(get(this, new ResourceRequest<FileTree<JavaSourceFile>>(
+                new ResourceType<>() {})));
     }
 
     public void build() {
-        get(this, new ResourceRequest<>(JavaTypes.AppJarFileType))
-            .forEach(System.out::println);
-        get(this, new ResourceRequest<>(JavaTypes.JavadocDirectoryType))
-            .collect(Collectors.toSet()).stream().forEach(System.out::println);
+        get(this,
+            new ResourceRequest<AppJarFile>(new ResourceType<>() {}))
+                .forEach(System.out::println);
+        get(this, new ResourceRequest<JavadocDirectory>(
+            new ResourceType<>() {})).collect(Collectors.toSet()).stream()
+                .forEach(System.out::println);
     }
 }

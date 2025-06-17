@@ -50,13 +50,13 @@ public class ClasspathScanner
     /// requested resource id of type `FileTree<ClassFile>`.
     ///
     /// @param <T> the requested type
-    /// @param requested the requested
+    /// @param requested the requested resources
     /// @return the stream
     ///
     @Override
     public <T extends Resource> Stream<T>
             provide(ResourceRequest<T> requested) {
-        if (!ClasspathElementType.isAssignableFrom(requested.type())) {
+        if (!requested.acceptsResources(ClasspathElementType)) {
             return Stream.empty();
         }
         @SuppressWarnings("unchecked")

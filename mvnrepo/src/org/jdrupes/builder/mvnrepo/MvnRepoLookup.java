@@ -66,12 +66,14 @@ public class MvnRepoLookup implements ResourceProvider<DefaultJarFile> {
     /// Provide.
     ///
     /// @param <T> the generic type
-    /// @param request the request
+    /// @param requested the requested resources
     /// @return the stream
     ///
     @Override
-    public <T extends Resource> Stream<T> provide(ResourceRequest<T> request) {
-        if (!request.type().isAssignableFrom(JarFileType)) {
+    public <T extends Resource> Stream<T>
+            provide(ResourceRequest<T> requested) {
+        if (!requested.accepts(CompilationResourcesType)
+            || !requested.acceptsResources(JarFileType)) {
             return Stream.empty();
         }
 
@@ -82,7 +84,9 @@ public class MvnRepoLookup implements ResourceProvider<DefaultJarFile> {
             DefaultArtifact artifact = new DefaultArtifact(coordinates.get(0));
             CollectRequest collectRequest = new CollectRequest()
                 .setRepositories(context.remoteRepositories())
-                .addDependency(new Dependency(artifact, "runtime"));
+                .addDependency(new Dependency(artifact,
+                    requested.accepts(CompilationResourcesType) ? "compile"
+                        : "runtime"));
 
             DependencyRequest dependencyRequest
                 = new DependencyRequest(collectRequest, null);

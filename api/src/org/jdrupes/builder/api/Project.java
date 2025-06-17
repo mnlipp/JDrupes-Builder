@@ -181,11 +181,11 @@ public interface Project extends ResourceProvider<Resource> {
     ///
     /// @param <T> the requested type
     /// @param intends the type of usage that providers must match
-    /// @param requested the requested
+    /// @param request the requested
     /// @return the provided resources
     ///
     <T extends Resource> Stream<T> provided(Set<Intend> intends,
-            ResourceRequest<T> requested);
+            ResourceRequest<T> request);
 
     /// Short for `directory().relativize(other)`.
     ///
@@ -220,20 +220,20 @@ public interface Project extends ResourceProvider<Resource> {
     /// evaluated asynchronously and cached. Only when the returned
     /// stream is terminated will the invocation block until the
     /// result from the provider becomes available.
-    ///
+    /// 
     /// Strictly speaking, this method is not a method of [Project]
     /// as the it does not matter which instance of [Project] is
     /// used to invoke the method. Like the factory methods ("`new...`")
     /// this method is provided to simplify the implementation of a
     /// [Project]'s constructor.
     ///
-    /// @param <T> the requested resource type
+    /// @param <R> the type of the provided resources
     /// @param provider the provider
-    /// @param requested the requested resource
+    /// @param requested the request
     /// @return the stream of resources
     ///
-    <T extends Resource> Stream<T> get(ResourceProvider<?> provider,
-            ResourceRequest<T> requested);
+    <R extends Resource> Stream<R> get(ResourceProvider<?> provider,
+            ResourceRequest<R> requested);
 
     /// Returns a new resource with the given type. Short for invoking
     /// [ResourceFactory#create] with the current project as first argument
