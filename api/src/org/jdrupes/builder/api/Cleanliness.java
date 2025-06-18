@@ -22,6 +22,5 @@ package org.jdrupes.builder.api;
 /// its generated outputs.
 ///
 @SuppressWarnings("PMD.ImplicitFunctionalInterface")
-public interface Cleaniness extends Resource {
-
+public interface Cleanliness extends Resource {
 }

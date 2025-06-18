@@ -41,7 +41,7 @@ public class ResourceType<T extends Resource> {
     /// Used to request cleanup.
     @SuppressWarnings("PMD.FieldNamingConventions")
     public static final ResourceType<
-            Cleaniness> Cleaniness = new ResourceType<>() {};
+            Cleanliness> Cleaniness = new ResourceType<>() {};
 
     private final Class<T> type;
     private final ResourceType<?> containedType;

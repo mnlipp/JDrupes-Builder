@@ -21,7 +21,24 @@ package org.jdrupes.builder.api;
 import java.util.Objects;
 import java.util.Optional;
 
-/// Represents a request for [Resource]s that match given criteria.
+/// Represents a request for [Resource]s of a specified type.
+/// The specified type provides two kinds of type information:
+///
+/// 1. The type of the [Resource]s that are actually provided.
+/// 2. The type of the "context" in which the [Resource]s are to be provided.
+///
+/// As an example, consider requests for a compile time and a runtime
+/// classpath. In both cases, the actually provided [Resource]s are
+/// of type "classpath element". However, depending on the kind of
+/// classpath, a [ResourceProvider] may deliver different collections of
+/// instances of "classpath elements". So instead of requesting
+/// "classpath element", 
+///
+/// Not all requested resource types require context information. For
+/// example, a request for [Cleanliness] usually refers to all resources
+/// that a [Generator] has created and does not depend on a context.
+/// However, in order to keep the API simple, the context is always
+/// required. 
 ///
 /// @param <T> the generic type
 ///

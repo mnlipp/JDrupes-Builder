@@ -48,32 +48,76 @@ The project contains two generators. The first is a
 [org.jdrupes.builder.java.JavaCompiler], which provides resources of type
 [org.jdrupes.builder.java.ClassTree] to the project. The second
 generator is an [org.jdrupes.builder.java.AppJarGenerator]. This
-generator provides resources of type [org.jdrupes.builder.java.JarFile].
+generator provides resources of type [org.jdrupes.builder.java.AppJarFile].
 It uses the [org.jdrupes.builder.java.ClasspathElement]s provided by the
 project as source for the jar's content.
 
 You might wonder why the app jar generator goes back to the project
 to retrieve the classpath elements. Looking at the API, we could also have
 the app jar generator reference the Java compiler directly. There are two
-reasons for this. First, a user might request the class tree from the project
-(instead of the application jar). The second reason
-will become clear when we discuss a multi-project build configuration,
-in which a project can provide resources from another project in addition to
-those obtained from its generators.
+reasons for this. First, a user might want to request the class tree from
+the project (instead of the application jar) for whatever purpose. The
+second reason will become clear when we discuss a multi-project build
+configuration, in which a project can provide resources from another project
+in addition to those obtained from its generators.
 
 For further clarification, the diagram below shows the sequence of operations
 as they happen when a user requests the application jar from the project.  
 
 ![Simple app jar project](build-appjar-project.svg)
 
+## Resource requests
 
-The focus on resources usually works. It fails when you want
-the builder to do something that cannot really be described as
-creating a resource. The most prominent example of this is probably
-cleaning a build. What does this provide? Well, how about "cleanliness"?
+Resources are usually requested by type rather than by name.
+Therefore we need a consistent way to define resource types
+for queries. Let's use the Java class path as an example. A Java
+class path consist of elements. These elements can be jar files
+or trees of class files (which are denoted in the class path by their
+root directory).
+
+Using [org.jdrupes.builder.java.ClasspathElement] as common supertype
+for jar files and class trees, we could ask for the resource type
+[org.jdrupes.builder.java.ClasspathElement]. But actually, we cannot
+expect to get a single classpath element back. Instead, we should
+expect to get a collection of classpath elements. So it makes more sense
+to ask for a collection of classpath elements, which makes the requested
+type `Resources<ClasspathElement>`.
+
+![Java base types](java-base-types.svg)
+
+There is one more point to consider. There can be different kinds of
+classpaths such as a compile time and a runtime classpath. Both are 
+collections of [org.jdrupes.builder.java.ClasspathElement]s. However,
+depending on the kind of classpath, a
+[org.jdrupes.builder.api.ResourceProvider] may deliver different
+subsets of classpath elements. We can include this information in the
+resource type by using a specialized container whose type indicates
+the desired subset of instances. For Java classpaths, the specialized
+container types are [org.jdrupes.builder.java.CompilationResources] and
+[org.jdrupes.builder.java.RuntimeResources].
+
+From this example, we derive the common pattern for resource requests.
+
+ 1. The requested type is always a collection of resources, i.e.
+    [org.jdrupes.builder.api.Resources] or a type derived from it.
+ 2. The type of the elements in the container is the type of the
+    resource instances returned as [java.util.stream.Stream] by the
+    method [org.jdrupes.builder.api.ResourceProvider#provide].
+ 3. The type of the container may be used by providers to select
+    the instances they want to provide.
+
+The available resource types and the effect that the type of the
+container has on the provided resources can be found in the
+documentation of the respective providers.
+
+A commonly available resource that must be supported by all providers
+that generate resources is "[org.jdrupes.builder.api.Cleanliness]".
+Admittedly, this is pushing the concept of everything being a resource
+too its limits. It solves the problem of cleaning up after a build.
 Depending on your point of view, "cleanliness" may be the absence of
-something, but you could also argue that "cleanliness"
-provides something.
+something, but you could also argue that "cleanliness" is something
+that can be provided.
+
 
 @startuml project-provider-classes.svg
 interface ResourceProvider
@@ -109,13 +153,13 @@ appJarGenerator --> project : <<provider>>
 hide footbox
 
 actor User as user
-user -> project : provide(AppJarFileType)
+user -> project : provide(Resources<AppJarFile>)
 activate project
-project -> appJarGenerator : provide(AppJarFileType)
+project -> appJarGenerator : provide(Resources<AppJarFile>)
 activate appJarGenerator
-appJarGenerator -> project : provide(ClasspathElementType)
+appJarGenerator -> project : provide(Resources<ClasspathElement>)
 activate project
-project -> compiler : provide(ClasspathElementType)
+project -> compiler : provide(Resources<ClasspathElement>)
 activate compiler
 compiler --> project: ClassTree
 deactivate compiler
@@ -126,3 +170,21 @@ deactivate appJarGenerator
 project -> user : JarFile
 deactivate project
 @enduml
+
+@startuml java-base-types.svg
+class ClassTree
+class JarFile
+class ClasspathElement
+
+ClasspathElement <|-down- JarFile
+ClasspathElement <|-down- ClassTree
+
+class Resources<ClasspathElement>
+Resources *-left-> ClasspathElement
+
+class RuntimeResources
+Resources <|-- RuntimeResources
+class CompilationResources
+RuntimeResources <|-- CompilationResources
+@enduml
+

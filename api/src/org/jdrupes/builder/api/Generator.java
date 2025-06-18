@@ -21,7 +21,7 @@ package org.jdrupes.builder.api;
 /// Models a [ResourceProvider] that generates new [Resource]s (artifacts)
 /// and makes them available to a [Project].
 ///
-/// All generators must handle requests for [Cleaniness].
+/// All generators must handle requests for [Cleanliness].
 ///
 /// @param <T> the type of the resources that this generator provides
 ///
