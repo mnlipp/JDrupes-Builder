@@ -129,8 +129,8 @@ public class AppJarGenerator extends AbstractGenerator<JarFile> {
         "PMD.AvoidInstantiatingObjectsInLoops" })
     public <T extends Resource> Stream<T>
             provide(ResourceRequest<T> requested) {
-        if (!requested.acceptsResources(AppJarFileType)
-            && !requested.accepts(Cleaniness)) {
+        if (!requested.includes(AppJarFileType)
+            && !requested.includes(Cleaniness)) {
             return Stream.empty();
         }
 
@@ -146,7 +146,7 @@ public class AppJarGenerator extends AbstractGenerator<JarFile> {
             destDir.resolve(project().name() + ".jar"));
 
         // Maybe only delete
-        if (requested.accepts(Cleaniness)) {
+        if (requested.includes(Cleaniness)) {
             jarResource.delete();
             return Stream.empty();
         }

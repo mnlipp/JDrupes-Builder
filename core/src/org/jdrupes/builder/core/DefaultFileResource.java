@@ -58,8 +58,8 @@ public class DefaultFileResource extends ResourceObject
     @SuppressWarnings({ "unchecked" })
     public static <T extends FileResource> T createFileResource(
             ResourceType<T> type, Path path) {
-        return (T) Proxy.newProxyInstance(type.type().getClassLoader(),
-            new Class<?>[] { type.type() },
+        return (T) Proxy.newProxyInstance(type.rawType().getClassLoader(),
+            new Class<?>[] { type.rawType() },
             new ForwardingHandler(new DefaultFileResource(type, path)));
     }
 

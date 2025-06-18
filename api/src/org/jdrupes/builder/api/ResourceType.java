@@ -27,7 +27,7 @@ import java.util.Optional;
 import java.util.stream.Stream;
 
 /// A special kind of type token for representing a resource type.
-/// The method [type()] returns the type as [Class]. If this class
+/// The method [rawType()] returns the type as [Class]. If this class
 /// if derived from [Resources], [containedType()] returns the
 /// [ResourceType] of the contained elements.
 ///
@@ -117,7 +117,7 @@ public class ResourceType<T extends Resource> {
             Type theResource = ((ParameterizedType) resourceType)
                 .getActualTypeArguments()[0];
             var tempType = new ResourceType(theResource);
-            type = tempType.type();
+            type = tempType.rawType();
             containedType = tempType.containedType();
         } catch (Exception e) {
             throw new UnsupportedOperationException(
@@ -129,7 +129,7 @@ public class ResourceType<T extends Resource> {
     ///
     /// @return the class
     ///
-    public Class<T> type() {
+    public Class<T> rawType() {
         return type;
     }
 
@@ -162,6 +162,34 @@ public class ResourceType<T extends Resource> {
             return false;
         }
         return containedType.isAssignableFrom(other.containedType);
+    }
+
+    /// Returns a new [ResourceType] with the type (`this.type()`)
+    /// widened to the given type. While this method may be invoked
+    /// for any [ResourceType], it is intended to be used for
+    /// containers (`ResourceType<Resources<?>>`) only.
+    ///
+    /// @param <R> the new raw type
+    /// @param type the desired super type. This should actually be
+    /// declared as `Class <R>`, but there is no way to specify a 
+    /// parameterized type as actual parameter.
+    /// @return the new resource type
+    ///
+    public <R extends Resource> ResourceType<R> widened(
+            Class<? extends Resource> type) {
+        if (!type.isAssignableFrom(this.type)) {
+            throw new IllegalArgumentException("Cannot replace "
+                + this.type + " with " + type + " because it is not a "
+                + "super class");
+        }
+        if (Resources.class.isAssignableFrom(this.type)
+            && !Resources.class.isAssignableFrom(type)) {
+            throw new IllegalArgumentException("Cannot replace container"
+                + " type " + this.type + " with non-container type " + type);
+        }
+        @SuppressWarnings("unchecked")
+        var result = new ResourceType<>((Class<R>) type, containedType);
+        return result;
     }
 
     @Override

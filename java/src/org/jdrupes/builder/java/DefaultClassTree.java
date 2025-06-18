@@ -52,8 +52,8 @@ public class DefaultClassTree extends DefaultFileTree<ClassFile>
     @SuppressWarnings({ "unchecked" })
     public static <T extends ClassTree> T createClassTree(ResourceType<T> type,
             Project project, Path path) {
-        return (T) Proxy.newProxyInstance(type.type().getClassLoader(),
-            new Class<?>[] { type.type() },
+        return (T) Proxy.newProxyInstance(type.rawType().getClassLoader(),
+            new Class<?>[] { type.rawType() },
             new ForwardingHandler(new DefaultClassTree(type, project, path)));
     }
 

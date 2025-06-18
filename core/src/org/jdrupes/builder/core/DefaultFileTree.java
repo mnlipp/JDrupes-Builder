@@ -92,8 +92,8 @@ public class DefaultFileTree<T extends FileResource> extends DefaultResources<T>
     public static <T extends FileTree<?>>
             T createFileTree(ResourceType<T> type, Project project, Path root,
                     String pattern, boolean withDirs) {
-        return (T) Proxy.newProxyInstance(type.type().getClassLoader(),
-            new Class<?>[] { type.type() }, new ForwardingHandler(
+        return (T) Proxy.newProxyInstance(type.rawType().getClassLoader(),
+            new Class<?>[] { type.rawType() }, new ForwardingHandler(
                 new DefaultFileTree<>(type, project, root, pattern, withDirs)));
     }
 
@@ -300,6 +300,9 @@ public class DefaultFileTree<T extends FileResource> extends DefaultResources<T>
         String str = type().toString() + " (" + asOfLocalized()
             + ") from " + Path.of("").toAbsolutePath().relativize(root())
             + " with " + stream().count() + " elements";
+        if (!wasFilled) {
+            clear();
+        }
         filled = wasFilled;
         return str;
     }

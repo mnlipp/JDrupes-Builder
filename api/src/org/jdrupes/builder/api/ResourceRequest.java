@@ -21,8 +21,7 @@ package org.jdrupes.builder.api;
 import java.util.Objects;
 import java.util.Optional;
 
-/// Represents a request for a resource of a given type, optionally
-/// with a given restriction on the resources to consider.
+/// Represents a request for [Resource]s that match given criteria.
 ///
 /// @param <T> the generic type
 ///
@@ -62,6 +61,21 @@ public class ResourceRequest<T extends Resource> {
         this.restriction = restriction;
     }
 
+    /// Create a widened resource request by replacing the requested
+    /// top-level type with the given super type, thus widening the
+    /// request.
+    ///
+    /// @param <R> the generic type
+    /// @param type the desired super type. This should actually be
+    /// declared as `Class <R>`, but there is no way to specify a 
+    /// parameterized type as actual parameter.
+    /// @return the new resource request
+    ///
+    public <R extends Resources<T>> ResourceRequest<T> widened(
+            @SuppressWarnings("rawtypes") Class<? extends Resources> type) {
+        return new ResourceRequest<>(type().widened(type), restriction);
+    }
+    
     /// Return the requested type.
     ///
     /// @return the resource type
@@ -76,19 +90,18 @@ public class ResourceRequest<T extends Resource> {
     /// @param other the other
     /// @return true, if successful
     ///
-    public boolean accepts(ResourceType<?> other) {
+    public boolean wants(ResourceType<?> other) {
         return type().isAssignableFrom(other);
     }
     
-    /// Checks if the requested resources container may contain
-    /// elements of the given type..
+    /// Checks if the requested resource type includes the given type.
     ///
-    /// @param other the other
+    /// @param type the type to check
     /// @return true, if successful
     ///
-    public boolean acceptsResources(ResourceType<?> other) {
+    public boolean includes(ResourceType<?> type) {
         return Optional.ofNullable(type().containedType())
-            .map(ct -> ct.isAssignableFrom(other)).orElse(false);
+            .map(ct -> ct.isAssignableFrom(type)).orElse(false);
     }
     
     /// Return the restriction.

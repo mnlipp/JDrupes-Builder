@@ -56,9 +56,18 @@ public class ClasspathScanner
     @Override
     public <T extends Resource> Stream<T>
             provide(ResourceRequest<T> requested) {
-        if (!requested.acceptsResources(ClasspathElementType)) {
+        // This supports requests for classpath elements only.
+        if (!requested.includes(ClasspathElementType)) {
             return Stream.empty();
         }
+
+        // Map special requests ([RuntimeResources], [CompilationResources])
+        // to the base request
+        if (!ClasspathType.rawType().equals(requested.type().rawType())) {
+            return project().get(this,
+                requested.widened(ClasspathType.rawType()));
+        }
+
         @SuppressWarnings("unchecked")
         var result = (Stream<T>) Stream.of(path.split(File.pathSeparator))
             .map(Path::of).map(p -> {
@@ -69,7 +78,7 @@ public class ClasspathScanner
                     return (ClasspathElement) project()
                         .create(JarFileType, p.toAbsolutePath());
                 }
-            }).filter(e -> requested.type().isAssignableFrom(e.type()));
+            }).filter(e -> requested.includes(e.type()));
         return result;
     }
 

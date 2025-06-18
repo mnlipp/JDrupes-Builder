@@ -40,14 +40,13 @@ public class BootstrapBuild extends AbstractProject implements Masked {
     @SuppressWarnings("PMD.ConstructorCallsOverridableMethod")
     public BootstrapBuild() {
         super(parent(BootstrapRoot.class), jdbldDirectory());
-        dependency(
-            new ClasspathScanner(this, System.getProperty("java.class.path")),
-            Intend.Consume);
+        dependency(new ClasspathScanner(this,
+            System.getProperty("java.class.path")), Intend.Consume);
 
         // Collect directories with "build configuration", derive source
         // trees and use as java sources.
-        var bldrDirs = create(new ResourceType<FileTree<FileResource>>() {
-        }, Path.of("").toAbsolutePath(),
+        var bldrDirs = create(new ResourceType<FileTree<FileResource>>() {},
+            Path.of("").toAbsolutePath(),
             "**/" + context().jdbldDirectory().toString(), true);
         var srcTrees = bldrDirs.stream()
             .map(r -> create(JavaSourceTreeType, r.path().resolve("src"),

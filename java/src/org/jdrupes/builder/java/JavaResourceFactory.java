@@ -43,22 +43,22 @@ public class JavaResourceFactory implements ResourceFactory {
     public <T extends Resource> Optional<T> newResource(ResourceType<T> type,
             Project project, Object... args) {
         if (ClassTreeType.isAssignableFrom(type)
-            && type.type().getSuperclass() == null
+            && type.rawType().getSuperclass() == null
             && !addsMethod(ClassTree.class,
-                (Class<? extends ClassTree>) type.type())) {
+                (Class<? extends ClassTree>) type.rawType())) {
             return Optional
                 .of((T) DefaultClassTree.createClassTree(
                     (ResourceType<? extends ClassTree>) type, project,
                     (Path) args[0]));
         }
         if (JarFileType.isAssignableFrom(type)
-            && type.type().getSuperclass() == null
+            && type.rawType().getSuperclass() == null
             && !addsMethod(JarFile.class,
-                (Class<? extends JarFile>) type.type())) {
+                (Class<? extends JarFile>) type.rawType())) {
             return Optional.of((T) DefaultJarFile.createJarFile(
                 (ResourceType<? extends JarFile>) type, (Path) args[0]));
         }
-        if (JavaResourceTree.class.equals(type.type())) {
+        if (JavaResourceTree.class.equals(type.rawType())) {
             return Optional.of((T) new JavaResourceTree(project,
                 (Path) args[0], (String) args[1], false));
         }

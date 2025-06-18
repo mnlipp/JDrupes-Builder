@@ -72,8 +72,8 @@ public class MvnRepoLookup implements ResourceProvider<DefaultJarFile> {
     @Override
     public <T extends Resource> Stream<T>
             provide(ResourceRequest<T> requested) {
-        if (!requested.accepts(CompilationResourcesType)
-            || !requested.acceptsResources(JarFileType)) {
+        if (!requested.wants(CompilationResourcesType)
+            || !requested.includes(JarFileType)) {
             return Stream.empty();
         }
 
@@ -85,7 +85,7 @@ public class MvnRepoLookup implements ResourceProvider<DefaultJarFile> {
             CollectRequest collectRequest = new CollectRequest()
                 .setRepositories(context.remoteRepositories())
                 .addDependency(new Dependency(artifact,
-                    requested.accepts(CompilationResourcesType) ? "compile"
+                    requested.wants(CompilationResourcesType) ? "compile"
                         : "runtime"));
 
             DependencyRequest dependencyRequest

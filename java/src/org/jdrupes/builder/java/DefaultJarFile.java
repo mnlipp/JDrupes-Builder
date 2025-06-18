@@ -48,8 +48,8 @@ public class DefaultJarFile extends DefaultFileResource implements JarFile {
     @SuppressWarnings({ "unchecked" })
     public static <T extends JarFile> T createJarFile(ResourceType<T> type,
             Path path) {
-        return (T) Proxy.newProxyInstance(type.type().getClassLoader(),
-            new Class<?>[] { type.type() },
+        return (T) Proxy.newProxyInstance(type.rawType().getClassLoader(),
+            new Class<?>[] { type.rawType() },
             new ForwardingHandler(new DefaultJarFile(type, path)));
     }
 

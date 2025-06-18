@@ -54,8 +54,8 @@ public class DefaultResources<T extends Resource> extends ResourceObject
 
     /* default */ @SuppressWarnings("unchecked")
     static <T extends Resources<?>> T createResources(ResourceType<T> type) {
-        return (T) Proxy.newProxyInstance(type.type().getClassLoader(),
-            new Class<?>[] { type.type() },
+        return (T) Proxy.newProxyInstance(type.rawType().getClassLoader(),
+            new Class<?>[] { type.rawType() },
             new ForwardingHandler(new DefaultResources<>(type)));
     }
 

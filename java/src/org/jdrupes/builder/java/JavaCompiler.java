@@ -132,40 +132,40 @@ public class JavaCompiler extends JavaTool<FileTree<ClassFile>> {
     @Override
     public <T extends Resource> Stream<T>
             provide(ResourceRequest<T> requested) {
-        if (requested.acceptsResources(JavaSourceTreeType)) {
+        if (requested.includes(JavaSourceTreeType)) {
             @SuppressWarnings({ "unchecked", "PMD.AvoidDuplicateLiterals" })
             var result = (Stream<T>) sources.stream();
             return result;
         }
-        if (!requested.acceptsResources(ClasspathElementType)
-            && !requested.accepts(Cleaniness)) {
+
+        if (!requested.includes(ClasspathElementType)
+            && !requested.includes(Cleaniness)) {
             return Stream.empty();
         }
 
-        // Map special requests to the base request
-        if (RuntimeResourcesType.isAssignableFrom(requested.type())) {
-            @SuppressWarnings("unchecked")
-            var result = (Stream<T>) project().get(this,
-                new ResourceRequest<ClasspathElement>(new ResourceType<>() {}));
-            return result;
+        // Map special requests ([RuntimeResources], [CompilationResources])
+        // to the base request
+        if (!ClasspathType.rawType().equals(requested.type().rawType())) {
+            return project().get(this,
+                requested.widened(ClasspathType.rawType()));
         }
 
         // Get this project's previously generated classes for checking
         // or deleting.
         var destDir = project().buildDirectory().resolve(destination);
         final var classSet = project().create(ClassTreeType, destDir);
-        if (requested.accepts(Cleaniness)) {
+        if (requested.includes(Cleaniness)) {
             classSet.delete();
             return Stream.empty();
         }
 
         // Get classpath for compilation.
         log.fine(() -> "Getting classpath for " + project());
+        @SuppressWarnings("PMD.UseDiamondOperator")
         var cpResources = project().create(ClasspathType).addAll(
             project().provided(EnumSet.of(Intend.Consume, Intend.Expose),
-                new ResourceRequest<>(
-                    new ResourceType<CompilationResources>() {},
-                    Restriction.Exposed)));
+                new ResourceRequest<ClasspathElement>(
+                    CompilationResourcesType, Restriction.Exposed)));
         log.finest(() -> project() + " uses classpath: " + cpResources.stream()
             .map(e -> e.toPath().toString())
             .collect(Collectors.joining(File.pathSeparator)));

@@ -65,23 +65,23 @@ public class CoreResourceFactory implements ResourceFactory {
     public <T extends Resource> Optional<T> newResource(ResourceType<T> type,
             Project project, Object... args) {
         if (FileResourceType.isAssignableFrom(type)
-            && type.type().getSuperclass() == null
+            && type.rawType().getSuperclass() == null
             && !addsMethod(FileResource.class,
-                (Class<? extends FileResource>) type.type())) {
+                (Class<? extends FileResource>) type.rawType())) {
             return Optional.of((T) DefaultFileResource.createFileResource(
                 (ResourceType<? extends FileResource>) type, (Path) args[0]));
         }
-        if (Resources.class.isAssignableFrom(type.type())
-            && type.type().getSuperclass() == null
+        if (Resources.class.isAssignableFrom(type.rawType())
+            && type.rawType().getSuperclass() == null
             && !addsMethod(Resources.class,
-                (Class<? extends Resources<?>>) type.type())) {
+                (Class<? extends Resources<?>>) type.rawType())) {
             return Optional.of((T) DefaultResources.createResources(
                 (ResourceType<? extends Resources<?>>) type));
         }
-        if (FileTree.class.isAssignableFrom(type.type())
-            && type.type().getSuperclass() == null
+        if (FileTree.class.isAssignableFrom(type.rawType())
+            && type.rawType().getSuperclass() == null
             && !addsMethod(FileTree.class,
-                (Class<? extends FileTree<?>>) type.type())) {
+                (Class<? extends FileTree<?>>) type.rawType())) {
             return Optional.of(
                 (T) DefaultFileTree.createFileTree(
                     (ResourceType<? extends FileTree<?>>) type,
