@@ -47,7 +47,7 @@ code above.
 The project contains two generators. The first is a
 [org.jdrupes.builder.java.JavaCompiler], which provides resources of type
 [org.jdrupes.builder.java.ClassTree] to the project. The second
-generator is an [org.jdrupes.builder.java.AppJarGenerator]. This
+generator is an [org.jdrupes.builder.java.UberJarGenerator]. This
 generator provides resources of type [org.jdrupes.builder.java.AppJarFile].
 It uses the [org.jdrupes.builder.java.ClasspathElement]s provided by the
 project as source for the jar's content.

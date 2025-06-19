@@ -38,6 +38,7 @@ import org.jdrupes.builder.api.BuildException;
 import org.jdrupes.builder.api.FileResource;
 import org.jdrupes.builder.api.FileTree;
 import org.jdrupes.builder.api.Project;
+import org.jdrupes.builder.api.Proxyable;
 import org.jdrupes.builder.api.ResourceFactory;
 import org.jdrupes.builder.api.ResourceType;
 
@@ -93,7 +94,7 @@ public class DefaultFileTree<T extends FileResource> extends DefaultResources<T>
             T createFileTree(ResourceType<T> type, Project project, Path root,
                     String pattern, boolean withDirs) {
         return (T) Proxy.newProxyInstance(type.rawType().getClassLoader(),
-            new Class<?>[] { type.rawType(), Proxied.class },
+            new Class<?>[] { type.rawType(), Proxyable.class },
             new ForwardingHandler(
                 new DefaultFileTree<>(type, project, root, pattern, withDirs)));
     }

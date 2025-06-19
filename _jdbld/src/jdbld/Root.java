@@ -15,6 +15,7 @@ import org.jdrupes.builder.api.RootProject;
 import org.jdrupes.builder.core.AbstractProject;
 import org.jdrupes.builder.java.AppJarFile;
 import org.jdrupes.builder.java.UberJarGenerator;
+import org.jdrupes.builder.mvnrepo.MvnRepoLookup;
 import org.jdrupes.builder.java.JavaCompiler;
 import org.jdrupes.builder.java.Javadoc;
 import org.jdrupes.builder.java.JavadocDirectory;
@@ -46,7 +47,12 @@ public class Root extends AbstractProject implements RootProject {
         dependency(project(Startup.class), Expose);
 
         // Build app jar
-        generator(UberJarGenerator::new).addAll(providers(Intend.CONTRIBUTORS))
+        generator(UberJarGenerator::new).addAll(providers(Intend.Expose))
+            .add(new MvnRepoLookup().artifact(
+                "eu.maveniverse.maven.mima.runtime:standalone-static:2.4.29")
+                .artifact("commons-logging:commons-logging:1.3.5")
+                .artifact("org.slf4j:slf4j-api:2.0.17")
+                .artifact("org.slf4j:slf4j-jdk14:2.0.17"))
             .mainClass("org.jdrupes.builder.startup.BootstrapLauncher")
             .destination(directory().resolve(Path.of("_jdbld", "app")));
 

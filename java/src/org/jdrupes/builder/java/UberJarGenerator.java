@@ -62,7 +62,7 @@ public class UberJarGenerator extends AbstractGenerator<JarFile> {
     private Path destination;
     private String mainClass;
 
-    /// Instantiates a new app jar generator.
+    /// Instantiates a new uber jar generator.
     ///
     /// @param project the project
     ///
@@ -100,7 +100,7 @@ public class UberJarGenerator extends AbstractGenerator<JarFile> {
     /// Sets the main class.
     ///
     /// @param mainClass the new main class
-    /// @return the app jar builder for method chaining
+    /// @return the uber jar generator for method chaining
     ///
     public UberJarGenerator mainClass(String mainClass) {
         this.mainClass = mainClass;
@@ -109,10 +109,10 @@ public class UberJarGenerator extends AbstractGenerator<JarFile> {
 
     /// Adds the given providers. Each provider is asked to provide
     /// resources of type [ClasspathElement]. All file trees and the
-    /// content of all jars returned is added to the app jar.
+    /// content of all jars returned is added to the uber jar.
     ///
     /// @param providers the providers
-    /// @return the app jar builder
+    /// @return the uber jar builder
     ///
     public UberJarGenerator add(ResourceProvider<?>... providers) {
         this.providers.add(Stream.of(providers));
@@ -122,7 +122,7 @@ public class UberJarGenerator extends AbstractGenerator<JarFile> {
     /// Adds the providers from the stream, see [add].
     ///
     /// @param providers the providers
-    /// @return the app jar builder
+    /// @return the uber jar generator
     ///
     public UberJarGenerator
             addAll(Stream<? extends ResourceProvider<?>> providers) {
@@ -136,21 +136,23 @@ public class UberJarGenerator extends AbstractGenerator<JarFile> {
         "PMD.AvoidInstantiatingObjectsInLoops" })
     public <T extends Resource> Stream<T>
             provide(ResourceRequest<T> requested) {
-        if (!requested.includes(AppJarFileType)
+        boolean wantAppJar = requested.includes(AppJarFileType);
+        if (!wantAppJar && !requested.includes(JarFileType)
             && !requested.includes(Cleaniness)) {
             return Stream.empty();
         }
 
         // Prepare jar file
         var destDir = Optional.ofNullable(destination)
-            .orElseGet(() -> project().buildDirectory().resolve("app"));
+            .orElseGet(() -> project().buildDirectory().resolve(
+                wantAppJar ? "app" : "libs"));
         if (!destDir.toFile().exists()) {
             if (!destDir.toFile().mkdirs()) {
                 throw new BuildException("Cannot create directory " + destDir);
             }
         }
-        var jarResource = project().create(AppJarFileType,
-            destDir.resolve(project().name() + ".jar"));
+        var jarResource = (JarFile) project().create(requested.type()
+            .containedType(), destDir.resolve(project().name() + ".jar"));
 
         // Maybe only delete
         if (requested.includes(Cleaniness)) {
@@ -159,18 +161,21 @@ public class UberJarGenerator extends AbstractGenerator<JarFile> {
         }
 
         // Make sure mainClass is set
-        if (mainClass == null) {
+        if (wantAppJar && mainClass == null) {
             throw new BuildException("Main class must be set for "
                 + name() + " in " + project());
         }
 
         // Get all content.
-        log.fine(() -> "Getting app jar content for " + project().name());
+        log.fine(() -> "Getting uber jar content for " + project().name());
         var toBeIncluded = project().create(ClasspathType)
             .addAll(providers.stream().map(p -> project().get(p,
                 new ResourceRequest<ClasspathElement>(
                     new ResourceType<RuntimeResources>() {}, None)))
                 .flatMap(s -> s));
+        log.fine(() -> "Uber jar content: " + toBeIncluded.stream()
+            .map(e -> project().relativize(e.toPath()).toString())
+            .collect(Collectors.joining(":")));
 
         // Check if rebuild needed.
         if (jarResource.asOf().isAfter(toBeIncluded.asOf())) {
@@ -180,7 +185,7 @@ public class UberJarGenerator extends AbstractGenerator<JarFile> {
         return Stream.of((T) jarResource);
     }
 
-    private void buildJar(AppJarFile jarResource,
+    private void buildJar(JarFile jarResource,
             Resources<ClasspathElement> classpathElements) {
         // Build jar
         log.info(() -> "Building application jar in " + project().name());
@@ -248,7 +253,7 @@ public class UberJarGenerator extends AbstractGenerator<JarFile> {
             Map<Path, java.util.jar.JarFile> openJars) {
         @SuppressWarnings("PMD.PreserveStackTrace")
         java.util.jar.JarFile jar
-            = openJars.computeIfAbsent(jarFile.path(), k -> {
+            = openJars.computeIfAbsent(jarFile.path(), _ -> {
                 try {
                     return new java.util.jar.JarFile(jarFile.path().toFile());
                 } catch (IOException e) {
@@ -267,7 +272,8 @@ public class UberJarGenerator extends AbstractGenerator<JarFile> {
             });
     }
 
-    @SuppressWarnings("PMD.AvoidLiteralsInIfCondition")
+    @SuppressWarnings({ "PMD.AvoidLiteralsInIfCondition",
+        "PMD.PreserveStackTrace" })
     private void resolveDuplicates(Map<Path, Queue<Noted>> entries) {
         entries.entrySet().parallelStream().forEach(entry -> {
             var queue = entry.getValue();
@@ -304,18 +310,41 @@ public class UberJarGenerator extends AbstractGenerator<JarFile> {
         });
     }
 
+    /// A Noted entry.
+    ///
     private interface Noted {
+
+        /// Origin.
+        ///
+        /// @return the path
+        ///
         Path origin();
 
+        /// Input stream.
+        ///
+        /// @return the input stream
+        /// @throws IOException Signals that an I/O exception has occurred.
+        ///
         InputStream inputStream() throws IOException;
 
+        /// Last modified.
+        ///
+        /// @return the long
+        ///
         long lastModified();
     }
 
+    /// The Class NotedFileTreeEntry.
+    ///
     private class NotedFileTreeEntry implements Noted {
-        private Path root;
-        private Path entry;
+        private final Path root;
+        private final Path entry;
 
+        /// Instantiates a new noted file tree entry.
+        ///
+        /// @param root the root
+        /// @param entry the entry
+        ///
         public NotedFileTreeEntry(Path root, Path entry) {
             this.root = root;
             this.entry = entry;
@@ -338,11 +367,19 @@ public class UberJarGenerator extends AbstractGenerator<JarFile> {
 
     }
 
+    /// The Class NotedJarFileEntry.
+    ///
     private class NotedJarFileEntry implements Noted {
-        private Path jarPath;
-        private java.util.jar.JarFile jarFile;
-        private JarEntry entry;
+        private final Path jarPath;
+        private final java.util.jar.JarFile jarFile;
+        private final JarEntry entry;
 
+        /// Instantiates a new noted jar file entry.
+        ///
+        /// @param jarPath the jar path
+        /// @param jarFile the jar file
+        /// @param entry the entry
+        ///
         public NotedJarFileEntry(Path jarPath, java.util.jar.JarFile jarFile,
                 JarEntry entry) {
             this.jarPath = jarPath;
@@ -367,11 +404,18 @@ public class UberJarGenerator extends AbstractGenerator<JarFile> {
 
     }
 
-    private class NotedServicesEntry implements Noted {
+    /// The Class NotedServicesEntry.
+    ///
+    private final class NotedServicesEntry implements Noted {
 
         @SuppressWarnings("PMD.AvoidStringBufferField")
         private final StringBuilder content = new StringBuilder();
 
+        /// Adds the input.
+        ///
+        /// @param input the input
+        /// @throws IOException Signals that an I/O exception has occurred.
+        ///
         public void add(InputStream input) throws IOException {
             try (InputStream toRead = input) {
                 new String(toRead.readAllBytes(), StandardCharsets.UTF_8)

@@ -22,7 +22,7 @@ import java.util.Objects;
 
 /// A base class for [Resource]s.
 ///
-public abstract class ResourceObject implements Resource {
+public abstract class ResourceObject implements Resource, Proxyable {
 
     private final ResourceType<?> type;
 

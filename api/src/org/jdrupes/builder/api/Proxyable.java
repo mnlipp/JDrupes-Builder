@@ -16,17 +16,19 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package org.jdrupes.builder.core;
+package org.jdrupes.builder.api;
 
 /// Returns the implementing object of a proxied object.
 ///
 @SuppressWarnings("PMD.ImplicitFunctionalInterface")
-public interface Proxied {
+public interface Proxyable {
 
     /// Returns the implementing object.
     ///
     /// @return the object
     ///
-    Object implementedBy();
+    default Object backing() {
+        return this;
+    }
 
 }

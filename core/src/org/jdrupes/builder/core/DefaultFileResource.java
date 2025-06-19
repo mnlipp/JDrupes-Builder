@@ -24,6 +24,7 @@ import java.time.Instant;
 import java.util.Objects;
 import org.jdrupes.builder.api.BuildException;
 import org.jdrupes.builder.api.FileResource;
+import org.jdrupes.builder.api.Proxyable;
 import org.jdrupes.builder.api.ResourceObject;
 import org.jdrupes.builder.api.ResourceType;
 
@@ -59,7 +60,7 @@ public class DefaultFileResource extends ResourceObject
     public static <T extends FileResource> T createFileResource(
             ResourceType<T> type, Path path) {
         return (T) Proxy.newProxyInstance(type.rawType().getClassLoader(),
-            new Class<?>[] { type.rawType(), Proxied.class },
+            new Class<?>[] { type.rawType(), Proxyable.class },
             new ForwardingHandler(new DefaultFileResource(type, path)));
     }
 

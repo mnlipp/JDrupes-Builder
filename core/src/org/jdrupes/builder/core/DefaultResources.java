@@ -24,6 +24,8 @@ import java.util.Objects;
 import java.util.Set;
 import java.util.logging.Logger;
 import java.util.stream.Stream;
+
+import org.jdrupes.builder.api.Proxyable;
 import org.jdrupes.builder.api.Resource;
 import org.jdrupes.builder.api.ResourceObject;
 import org.jdrupes.builder.api.ResourceType;
@@ -55,7 +57,7 @@ public class DefaultResources<T extends Resource> extends ResourceObject
     /* default */ @SuppressWarnings("unchecked")
     static <T extends Resources<?>> T createResources(ResourceType<T> type) {
         return (T) Proxy.newProxyInstance(type.rawType().getClassLoader(),
-            new Class<?>[] { type.rawType(), Proxied.class },
+            new Class<?>[] { type.rawType(), Proxyable.class },
             new ForwardingHandler(new DefaultResources<>(type)));
     }
 

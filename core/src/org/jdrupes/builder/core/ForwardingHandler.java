@@ -20,6 +20,8 @@ package org.jdrupes.builder.core;
 
 import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.Method;
+import java.lang.reflect.Proxy;
+import org.jdrupes.builder.api.Proxyable;
 
 /// A [InvocationHandler] that simply forwards all invocations to the
 /// proxied object.
@@ -40,8 +42,9 @@ public class ForwardingHandler implements InvocationHandler {
     public Object invoke(Object proxy, Method method, Object[] args)
             throws Throwable {
         if ("equals".equals(method.getName())
-            && args[0] instanceof Proxied proxied) {
-            return method.invoke(proxied, proxied.implementedBy());
+            && Proxy.isProxyClass(args[0].getClass())
+            && args[0] instanceof Proxyable other) {
+            return method.invoke(proxied, other.backing());
         }
         return method.invoke(proxied, args);
     }

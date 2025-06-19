@@ -21,10 +21,10 @@ package org.jdrupes.builder.java;
 import java.lang.reflect.Proxy;
 import java.nio.file.Path;
 import org.jdrupes.builder.api.Project;
+import org.jdrupes.builder.api.Proxyable;
 import org.jdrupes.builder.api.ResourceType;
 import org.jdrupes.builder.core.DefaultFileTree;
 import org.jdrupes.builder.core.ForwardingHandler;
-import org.jdrupes.builder.core.Proxied;
 
 /// The type ClassTree.
 ///
@@ -54,7 +54,7 @@ public class DefaultClassTree extends DefaultFileTree<ClassFile>
     public static <T extends ClassTree> T createClassTree(ResourceType<T> type,
             Project project, Path path) {
         return (T) Proxy.newProxyInstance(type.rawType().getClassLoader(),
-            new Class<?>[] { type.rawType(), Proxied.class },
+            new Class<?>[] { type.rawType(), Proxyable.class },
             new ForwardingHandler(new DefaultClassTree(type, project, path)));
     }
 
