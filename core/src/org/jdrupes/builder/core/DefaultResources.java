@@ -24,7 +24,6 @@ import java.util.Objects;
 import java.util.Set;
 import java.util.logging.Logger;
 import java.util.stream.Stream;
-
 import org.jdrupes.builder.api.Proxyable;
 import org.jdrupes.builder.api.Resource;
 import org.jdrupes.builder.api.ResourceObject;
