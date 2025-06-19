@@ -263,7 +263,14 @@ public class UberJarGenerator extends AbstractGenerator<JarFile> {
 
             });
         jar.stream().filter(Predicate.not(JarEntry::isDirectory))
-            .filter(e -> !"META-INF/MANIFEST.MF".equals(e.getRealName()))
+            .filter(e -> {
+                var segs = Path.of(e.getRealName()).iterator();
+                if (segs.next().equals(Path.of("META-INF"))) {
+                    segs.next();
+                    return segs.hasNext();
+                }
+                return true;
+            })
             .forEach(e -> {
                 var relPath = Path.of(e.getRealName());
                 entries.computeIfAbsent(relPath,
