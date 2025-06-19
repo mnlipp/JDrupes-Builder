@@ -24,6 +24,7 @@ import org.jdrupes.builder.api.FileResource;
 import org.jdrupes.builder.api.ResourceType;
 import org.jdrupes.builder.core.DefaultFileResource;
 import org.jdrupes.builder.core.ForwardingHandler;
+import org.jdrupes.builder.core.Proxied;
 
 /// A [FileResource] that represents a Java jar.
 ///
@@ -49,7 +50,7 @@ public class DefaultJarFile extends DefaultFileResource implements JarFile {
     public static <T extends JarFile> T createJarFile(ResourceType<T> type,
             Path path) {
         return (T) Proxy.newProxyInstance(type.rawType().getClassLoader(),
-            new Class<?>[] { type.rawType() },
+            new Class<?>[] { type.rawType(), Proxied.class },
             new ForwardingHandler(new DefaultJarFile(type, path)));
     }
 

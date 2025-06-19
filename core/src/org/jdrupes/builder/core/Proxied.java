@@ -18,32 +18,15 @@
 
 package org.jdrupes.builder.core;
 
-import java.lang.reflect.InvocationHandler;
-import java.lang.reflect.Method;
-
-/// A [InvocationHandler] that simply forwards all invocations to the
-/// proxied object.
+/// Returns the implementing object of a proxied object.
 ///
-public class ForwardingHandler implements InvocationHandler {
+@SuppressWarnings("PMD.ImplicitFunctionalInterface")
+public interface Proxied {
 
-    private final Object proxied;
-
-    /// Instantiates a new forwarding handler.
+    /// Returns the implementing object.
     ///
-    /// @param proxied the proxied object
+    /// @return the object
     ///
-    public ForwardingHandler(Object proxied) {
-        this.proxied = proxied;
-    }
-
-    @Override
-    public Object invoke(Object proxy, Method method, Object[] args)
-            throws Throwable {
-        if ("equals".equals(method.getName())
-            && args[0] instanceof Proxied proxied) {
-            return method.invoke(proxied, proxied.implementedBy());
-        }
-        return method.invoke(proxied, args);
-    }
+    Object implementedBy();
 
 }

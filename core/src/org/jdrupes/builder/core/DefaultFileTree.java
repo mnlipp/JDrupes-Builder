@@ -93,7 +93,8 @@ public class DefaultFileTree<T extends FileResource> extends DefaultResources<T>
             T createFileTree(ResourceType<T> type, Project project, Path root,
                     String pattern, boolean withDirs) {
         return (T) Proxy.newProxyInstance(type.rawType().getClassLoader(),
-            new Class<?>[] { type.rawType() }, new ForwardingHandler(
+            new Class<?>[] { type.rawType(), Proxied.class },
+            new ForwardingHandler(
                 new DefaultFileTree<>(type, project, root, pattern, withDirs)));
     }
 
@@ -269,20 +270,13 @@ public class DefaultFileTree<T extends FileResource> extends DefaultResources<T>
 
     @Override
     public int hashCode() {
-        final int prime = 31;
-        int result = super.hashCode();
-        result = prime * result
-            + Objects.hash(pattern, root(), withDirs);
-        return result;
+        return Objects.hash(pattern, root(), withDirs);
     }
 
     @Override
     public boolean equals(Object obj) {
         if (this == obj) {
             return true;
-        }
-        if (!super.equals(obj)) {
-            return false;
         }
         if (getClass() != obj.getClass()) {
             return false;

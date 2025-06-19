@@ -59,7 +59,7 @@ public class DefaultFileResource extends ResourceObject
     public static <T extends FileResource> T createFileResource(
             ResourceType<T> type, Path path) {
         return (T) Proxy.newProxyInstance(type.rawType().getClassLoader(),
-            new Class<?>[] { type.rawType() },
+            new Class<?>[] { type.rawType(), Proxied.class },
             new ForwardingHandler(new DefaultFileResource(type, path)));
     }
 
