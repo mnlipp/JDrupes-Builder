@@ -32,7 +32,6 @@ import org.jdrupes.builder.api.RootProject;
 import org.jdrupes.builder.core.AbstractProject;
 import org.jdrupes.builder.java.ClasspathElement;
 import org.jdrupes.builder.java.CompilationResources;
-import org.jdrupes.builder.java.RuntimeResources;
 
 /// The built-in root project associated with the root directory.
 ///
@@ -50,6 +49,7 @@ public class BootstrapRoot extends AbstractProject
     /// Bootstrap.
     ///
     public void bootstrap() {
+        @SuppressWarnings("PMD.UseDiamondOperator")
         var cpUrls = provide(new ResourceRequest<ClasspathElement>(
             new ResourceType<CompilationResources>() {})).map(cpe -> {
                 try {
