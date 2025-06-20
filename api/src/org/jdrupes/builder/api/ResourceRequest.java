@@ -44,38 +44,14 @@ import java.util.Optional;
 ///
 public class ResourceRequest<T extends Resource> {
 
-    /// Restrict the resource to be returned.
-    ///
-    @SuppressWarnings("PMD.FieldNamingConventions")
-    public enum Restriction {
-        
-        /// No restriction. Provide all resources of the requested type.
-        None, 
-        
-        /// Request only resources that are exposed.
-        Exposed
-    }
-
     private final ResourceType<? extends Resources<T>> type;
-    private final Restriction restriction;
 
     /// Instantiates a new resource request without any restriction.
     ///
     /// @param type the requested type
     ///
     public ResourceRequest(ResourceType<? extends Resources<T>> type) {
-        this(type, Restriction.None);
-    }
-
-    /// Instantiates a new resource request with the given restriction.
-    ///
-    /// @param type the type
-    /// @param restriction the restriction
-    ///
-    public ResourceRequest(ResourceType<? extends Resources<T>> type,
-        Restriction restriction) {
         this.type = type;
-        this.restriction = restriction;
     }
 
     /// Create a widened resource request by replacing the requested
@@ -90,9 +66,9 @@ public class ResourceRequest<T extends Resource> {
     ///
     public <R extends Resources<T>> ResourceRequest<T> widened(
             @SuppressWarnings("rawtypes") Class<? extends Resources> type) {
-        return new ResourceRequest<>(type().widened(type), restriction);
+        return new ResourceRequest<>(type().widened(type));
     }
-    
+
     /// Return the requested type.
     ///
     /// @return the resource type
@@ -110,7 +86,7 @@ public class ResourceRequest<T extends Resource> {
     public boolean wants(ResourceType<?> other) {
         return type().isAssignableFrom(other);
     }
-    
+
     /// Checks if the requested resource type includes the given type.
     ///
     /// @param type the type to check
@@ -120,18 +96,10 @@ public class ResourceRequest<T extends Resource> {
         return Optional.ofNullable(type().containedType())
             .map(ct -> ct.isAssignableFrom(type)).orElse(false);
     }
-    
-    /// Return the restriction.
-    ///
-    /// @return the restriction
-    ///
-    public Restriction restriction() {
-        return restriction;
-    }
 
     @Override
     public int hashCode() {
-        return Objects.hash(restriction, type);
+        return Objects.hash(type);
     }
 
     @Override
@@ -146,14 +114,12 @@ public class ResourceRequest<T extends Resource> {
             return false;
         }
         ResourceRequest<?> other = (ResourceRequest<?>) obj;
-        return restriction == other.restriction
-            && Objects.equals(type, other.type);
+        return Objects.equals(type, other.type);
     }
 
     @Override
     public String toString() {
-        return "ResourceRequest [type=" + type + ", restriction=" + restriction
-            + "]";
+        return "ResourceRequest [type=" + type + "]";
     }
 
 }

@@ -16,13 +16,9 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package org.jdrupes.builder.java;
+package org.jdrupes.builder.api;
 
-import org.jdrupes.builder.api.IncludeConsumed;
-
-/// The Interface CompilationResources.
+/// The Interface IncludeConsumed.
 ///
-public interface CompilationResources
-        extends RuntimeResources, IncludeConsumed {
-
+public interface IncludeConsumed {
 }

@@ -24,20 +24,47 @@ import java.util.Set;
 /// Attributes the relationship between a [Project] ("this project")
 /// and an associated [ResourceProvider].
 ///
+/// <table>
+///   <thead>
+///     <tr>
+///       <td></td><td></td><th colspan="2">Input for generators</th>
+///     </tr>
+///     <tr>
+///       <td></td><td></td><th> yes </th><th> no </th>
+///     </tr>
+///   </thead>
+///   <tbody>
+///     <tr>
+///       <th rowspan="2">Provided</th><th> yes </th><td></td><td></td>
+///     </tr>
+///     <tr>
+///       <th> no </th><td></td><td></td>
+///     </tr>
+///   </tbody>
+/// </table>
+///
+/// | Intend   ||
+/// |  Consume | Don't consume |
+/// |:--------:|:-------------:|
+/// |  Expose  | Don't expose  |
+///
 @SuppressWarnings("PMD.FieldNamingConventions")
 public enum Intend {
     
     /// The project should ignore the resources from the provider.
     /// This is the default relationship between a project and its
-    /// sub projects. Note that the dependency relationship still
-    /// has an effect because [ResourceRequest]s are propagated to
-    /// the associated provider.
+    /// sub projects.
     Ignore,
     
     /// The project consumes the resources from the associated
     /// provider, but it does not expose them, i.e. the project
     /// in its role as provider does not provide them to others.
     Consume,
+    
+    /// The resources from the provider are forwarded (exposed) to
+    /// other projects that have this project as a dependency but
+    /// are not used (consumed) by this project.
+    Forward,
     
     /// The project consumes the resources from the associated
     /// provider and makes them available to other projects that
@@ -50,17 +77,12 @@ public enum Intend {
     /// generators. It implies that the resources obtained through
     /// this dependency are exposed to projects that have this
     /// project as a dependency.
-    Supply,
-    
-    /// The resources from the provider are forwarded (exposed) to
-    /// other projects that have this project as a dependency but
-    /// are not used (consumed) by this project.
-    Forward;
+    Supply;
     
     /// All providers.
     public static final Set<Intend> ALL = EnumSet.allOf(Intend.class);
     
     /// All providers of resources that are (or can be) used by a project's
     /// generators ([Intend#Consume] and [Intend#Expose]).
-    public static final Set<Intend> CONTRIBUTORS = EnumSet.of(Consume, Expose);
+    public static final Set<Intend> PROVIDED = EnumSet.of(Consume, Expose);
 }

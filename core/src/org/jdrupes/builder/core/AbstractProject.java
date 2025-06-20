@@ -22,7 +22,6 @@ import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.nio.file.Path;
 import java.util.Collections;
-import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.Map;
@@ -42,7 +41,6 @@ import org.jdrupes.builder.api.PropertyKey;
 import org.jdrupes.builder.api.Resource;
 import org.jdrupes.builder.api.ResourceProvider;
 import org.jdrupes.builder.api.ResourceRequest;
-import org.jdrupes.builder.api.ResourceRequest.Restriction;
 import org.jdrupes.builder.api.RootProject;
 
 /// A default implementation of a [Project].
@@ -203,7 +201,7 @@ public abstract class AbstractProject implements Project {
     ///
     @Override
     @SuppressWarnings("PMD.AvoidSynchronizedStatement")
-    public Project project(Class<? extends Project> prjCls) {
+    public ResourceProvider<Resource> project(Class<? extends Project> prjCls) {
         if (this.getClass().equals(prjCls)) {
             return this;
         }
@@ -275,7 +273,7 @@ public abstract class AbstractProject implements Project {
             .filter(e -> intends.contains(e.getValue())).map(Entry::getKey);
     }
 
-    /// Dependency.
+    /// Add a dependency on another provider with the given intend.
     ///
     /// @param provider the provider
     /// @param intend the intend
@@ -287,18 +285,10 @@ public abstract class AbstractProject implements Project {
         return this;
     }
 
-    /// Provided.
-    ///
-    /// @param <T> the generic type
-    /// @param intends the intends
-    /// @param request the requested
-    /// @return the stream
-    ///
     @Override
-    public <T extends Resource> Stream<T> provided(Set<Intend> intends,
-            ResourceRequest<T> request) {
+    public <T extends Resource> Stream<T> provided(ResourceRequest<T> request) {
         return providers.entrySet().stream()
-            .filter(e -> intends.contains(e.getValue()))
+            .filter(e -> PROVIDED.contains(e.getValue()))
             .map(e -> context().get(e.getKey(), request))
             // Terminate stream to start all tasks for evaluating the futures
             .toList().stream().flatMap(r -> r).map(r -> (T) r);
@@ -312,9 +302,7 @@ public abstract class AbstractProject implements Project {
             // else the project would not be used as provider.
             providers(Supply).map(p -> context().get(p, requested)),
             // Considered dependencies depend on the type of the resource.
-            Stream.of(provided(requested.restriction() == Restriction.Exposed
-                ? EnumSet.of(Expose)
-                : EnumSet.of(Expose, Consume, Forward, Ignore), requested)))
+            Stream.of(provided(requested)))
             // Terminate stream to start all tasks for evaluating the
             // futures
             .toList().stream().flatMap(r -> r);

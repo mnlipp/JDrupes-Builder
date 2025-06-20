@@ -1,0 +1,282 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<svg
+   contentStyleType="text/css"
+   height="164px"
+   preserveAspectRatio="none"
+   style="width:490px;height:164px;background:#FFFFFF;"
+   version="1.1"
+   viewBox="0 0 490 164"
+   width="490px"
+   zoomAndPan="magnify"
+   id="svg10"
+   sodipodi:docname="expose-demo.svg"
+   inkscape:version="1.4.2 (ebf0e940d0, 2025-05-08)"
+   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:svg="http://www.w3.org/2000/svg">
+  <sodipodi:namedview
+     id="namedview10"
+     pagecolor="#ffffff"
+     bordercolor="#666666"
+     borderopacity="1.0"
+     inkscape:showpageshadow="2"
+     inkscape:pageopacity="0.0"
+     inkscape:pagecheckerboard="0"
+     inkscape:deskcolor="#d1d1d1"
+     inkscape:zoom="1.8010204"
+     inkscape:cx="159.90935"
+     inkscape:cy="76.90085"
+     inkscape:window-width="1920"
+     inkscape:window-height="1008"
+     inkscape:window-x="1920"
+     inkscape:window-y="35"
+     inkscape:window-maximized="1"
+     inkscape:current-layer="svg10" />
+  <defs
+     id="defs1">
+    <marker
+       style="overflow:visible"
+       id="Triangle"
+       refX="0"
+       refY="0"
+       orient="auto-start-reverse"
+       inkscape:stockid="Triangle arrow"
+       markerWidth="1"
+       markerHeight="1"
+       viewBox="0 0 1 1"
+       inkscape:isstock="true"
+       inkscape:collect="always"
+       preserveAspectRatio="xMidYMid">
+      <path
+         transform="scale(0.5)"
+         style="fill:context-stroke;fill-rule:evenodd;stroke:context-stroke;stroke-width:1pt"
+         d="M 5.77,0 -2.88,5 V -5 Z"
+         id="path135" />
+    </marker>
+  </defs>
+  <g
+     id="g10">
+    <g
+       id="elem_project">
+      <rect
+         fill="#F1F1F1"
+         height="36.2969"
+         style="stroke:#181818;stroke-width:0.5;"
+         width="119"
+         x="132.5"
+         y="8.4259"
+         id="rect1" />
+      <text
+         fill="#000000"
+         font-family="sans-serif"
+         font-size="14"
+         lengthAdjust="spacing"
+         textLength="105"
+         x="139.5"
+         y="23.421"
+         id="text1">project: Project</text>
+      <line
+         style="stroke:#181818;stroke-width:0.5;"
+         x1="133.5"
+         x2="250.5"
+         y1="28.7228"
+         y2="28.7228"
+         id="line1" />
+    </g>
+    <g
+       id="elem_dependant">
+      <rect
+         fill="#F1F1F1"
+         height="36.2969"
+         style="stroke:#181818;stroke-width:0.5;"
+         width="90"
+         x="7"
+         y="8.4259"
+         id="rect2" />
+      <text
+         fill="#000000"
+         font-family="sans-serif"
+         font-size="14"
+         lengthAdjust="spacing"
+         textLength="76"
+         x="14"
+         y="23.421"
+         id="text2">dependant</text>
+      <line
+         style="stroke:#181818;stroke-width:0.5;"
+         x1="8"
+         x2="96"
+         y1="28.7228"
+         y2="28.7228"
+         id="line2" />
+    </g>
+    <g
+       id="elem_providing">
+      <rect
+         fill="#F1F1F1"
+         height="36.2969"
+         style="stroke:#181818;stroke-width:0.5;"
+         width="134"
+         x="350"
+         y="8.4259"
+         id="rect3" />
+      <text
+         fill="#000000"
+         font-family="sans-serif"
+         font-size="14"
+         lengthAdjust="spacing"
+         textLength="120"
+         x="357"
+         y="23.421"
+         id="text3">providing: Project</text>
+      <line
+         style="stroke:#181818;stroke-width:0.5;"
+         x1="351"
+         x2="483"
+         y1="28.7228"
+         y2="28.7228"
+         id="line3" />
+    </g>
+    <g
+       id="elem_generator">
+      <rect
+         fill="#F1F1F1"
+         height="36.2969"
+         style="stroke:#181818;stroke-width:0.5;"
+         width="161"
+         x="111.5"
+         y="121.7159"
+         id="rect4" />
+      <text
+         fill="#000000"
+         font-family="sans-serif"
+         font-size="14"
+         lengthAdjust="spacing"
+         textLength="147"
+         x="118.5"
+         y="136.711"
+         id="text4">generator: Generator</text>
+      <line
+         style="stroke:#181818;stroke-width:0.5;"
+         x1="112.5"
+         x2="271.5"
+         y1="142.0128"
+         y2="142.0128"
+         id="line4" />
+    </g>
+    <!--link dependant to project-->
+    <g
+       id="link_dependant_project">
+      <path
+         codeLine="3"
+         d="M97.39,26.5659 C108.97,26.5659 114.55,26.5659 126.13,26.5659 "
+         fill="none"
+         id="dependant-to-project"
+         style="stroke:#181818;stroke-width:1.0;" />
+      <polygon
+         fill="#181818"
+         points="132.13,26.5659,123.13,22.5659,127.13,26.5659,123.13,30.5659,132.13,26.5659"
+         style="stroke:#181818;stroke-width:1.0;"
+         id="polygon4" />
+    </g>
+    <!--link project to providing-->
+    <g
+       id="link_project_providing">
+      <path
+         codeLine="5"
+         d="M263.71,26.5659 C293.91,26.5659 312.68,26.5659 343.86,26.5659 "
+         fill="none"
+         id="project-providing"
+         style="stroke:#181818;stroke-width:1.0;" />
+      <polygon
+         fill="#181818"
+         points="251.71,26.5659,257.71,30.5659,263.71,26.5659,257.71,22.5659,251.71,26.5659"
+         style="stroke:#181818;stroke-width:1.0;"
+         id="polygon5" />
+      <polygon
+         fill="#181818"
+         points="349.86,26.5659,340.86,22.5659,344.86,26.5659,340.86,30.5659,349.86,26.5659"
+         style="stroke:#181818;stroke-width:1.0;"
+         id="polygon6" />
+      <text
+         fill="#000000"
+         font-family="sans-serif"
+         font-size="13"
+         lengthAdjust="spacing"
+         textLength="62"
+         x="269.75"
+         y="19.6328"
+         id="text6">«Expose»</text>
+    </g>
+    <!--link project to generator-->
+    <g
+       id="link_project_generator">
+      <path
+         codeLine="7"
+         d="M168.8975,54.5339 C159.3675,67.1239 157.19,75.1959 162,91.7159 C165.09,102.3359 167.8849,107.969 173.9049,116.369 "
+         fill="none"
+         id="project-generator"
+         style="stroke:#181818;stroke-width:1.0;" />
+      <polygon
+         fill="#181818"
+         points="176.14,44.9659,169.3294,47.3357,168.8975,54.5339,175.7081,52.1641,176.14,44.9659"
+         style="stroke:#181818;stroke-width:1.0;"
+         id="polygon7" />
+      <polygon
+         fill="#181818"
+         points="177.4,121.2459,175.4086,111.6005,174.4874,117.1818,168.9061,116.2606,177.4,121.2459"
+         style="stroke:#181818;stroke-width:1.0;"
+         id="polygon8" />
+      <text
+         fill="#000000"
+         font-family="sans-serif"
+         font-size="13"
+         lengthAdjust="spacing"
+         textLength="24"
+         x="163"
+         y="87.7828"
+         id="text8">   </text>
+    </g>
+    <!--reverse link project to generator-->
+    <g
+       id="g9">
+      <path
+         codeLine="8"
+         d="M192,50.9559 C192,71.7459 192,100.3359 192,121.2359 "
+         fill="none"
+         id="project-backto-generator"
+         style="stroke:#181818;stroke-width:1.0;stroke-dasharray:7.0,7.0;" />
+      <polygon
+         fill="#181818"
+         points="192,44.9559,188,53.9559,192,49.9559,196,53.9559,192,44.9559"
+         style="stroke:#181818;stroke-width:1.0;"
+         id="polygon9" />
+      <text
+         fill="#000000"
+         font-family="sans-serif"
+         font-size="13"
+         lengthAdjust="spacing"
+         textLength="55"
+         x="193"
+         y="87.7828"
+         id="text9">provided</text>
+    </g>
+    <!--SRC=[POvB3iCW34JtdCBoib9o01Ingxhj5MYnA5rWHEZd-4aBM4ZPZMSyp-RRa-u5C6N-2GtNAX3i2irKt9OS9OhEnfhAf4J1b8D_bCaSglly3Yv4VxXGRTKAS1eHlOBBSlucNiaO5AIdIDaMpXekNVwX4WnGnv-uCuSE0W0gCM1-fLd-rlrZShW1]-->
+  </g>
+  <path
+     style="fill:none;fill-rule:evenodd;stroke:#ff0000;stroke-width:2.94099;stroke-linecap:butt;stroke-linejoin:miter;stroke-dasharray:none;stroke-opacity:1;marker-end:url(#Triangle)"
+     d="M 182.17041,36.357965 58.44349,37.081819"
+     id="path6"
+     sodipodi:nodetypes="cc" />
+  <path
+     style="fill:none;fill-rule:evenodd;stroke:#ff0000;stroke-width:2.94877;stroke-linecap:butt;stroke-linejoin:miter;stroke-dasharray:none;stroke-opacity:1;marker-end:url(#Triangle)"
+     d="m 186.17344,43.772965 -0.60161,69.379955"
+     id="path5"
+     sodipodi:nodetypes="cc" />
+  <path
+     style="fill:none;fill-rule:evenodd;stroke:#ff0000;stroke-width:2.97826;stroke-linecap:butt;stroke-linejoin:miter;stroke-dasharray:none;stroke-opacity:1;marker-end:url(#Triangle)"
+     d="M 399.82774,36.465193 201.38608,36.412126"
+     id="path10"
+     sodipodi:nodetypes="cc" />
+</svg>

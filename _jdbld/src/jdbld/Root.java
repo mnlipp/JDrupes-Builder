@@ -45,14 +45,14 @@ public class Root extends AbstractProject implements RootProject {
         dependency(project(Java.class), Expose);
         dependency(project(MvnRepo.class), Expose);
         dependency(project(Startup.class), Expose);
-        dependency(new MvnRepoLookup().artifact(
-            "eu.maveniverse.maven.mima.runtime:standalone-static:2.4.29")
-            .artifact("commons-logging:commons-logging:1.3.5")
-            .artifact("org.slf4j:slf4j-api:2.0.17")
-            .artifact("org.slf4j:slf4j-jdk14:2.0.17"), Forward);
 
         // Build app jar
         generator(UberJarGenerator::new).addAll(providers(Intend.Expose))
+            .add(new MvnRepoLookup().artifact(
+                "eu.maveniverse.maven.mima.runtime:standalone-static:2.4.29")
+                .artifact("commons-logging:commons-logging:1.3.5")
+                .artifact("org.slf4j:slf4j-api:2.0.17")
+                .artifact("org.slf4j:slf4j-jdk14:2.0.17"))
             .mainClass("org.jdrupes.builder.startup.BootstrapLauncher")
             .destination(directory().resolve(Path.of("_jdbld", "app")));
 

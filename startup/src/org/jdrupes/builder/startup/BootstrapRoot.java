@@ -31,6 +31,8 @@ import org.jdrupes.builder.api.ResourceType;
 import org.jdrupes.builder.api.RootProject;
 import org.jdrupes.builder.core.AbstractProject;
 import org.jdrupes.builder.java.ClasspathElement;
+import org.jdrupes.builder.java.CompilationResources;
+import org.jdrupes.builder.java.RuntimeResources;
 
 /// The built-in root project associated with the root directory.
 ///
@@ -42,14 +44,14 @@ public class BootstrapRoot extends AbstractProject
     ///
     @SuppressWarnings("PMD.ConstructorCallsOverridableMethod")
     public BootstrapRoot() {
-        dependency(project(BootstrapBuild.class), Intend.Ignore);
+        dependency(project(BootstrapBuild.class), Intend.Expose);
     }
 
     /// Bootstrap.
     ///
     public void bootstrap() {
         var cpUrls = provide(new ResourceRequest<ClasspathElement>(
-            new ResourceType<>() {})).map(cpe -> {
+            new ResourceType<CompilationResources>() {})).map(cpe -> {
                 try {
                     if (cpe instanceof FileTree tree) {
                         return tree.root().toFile().toURI().toURL();

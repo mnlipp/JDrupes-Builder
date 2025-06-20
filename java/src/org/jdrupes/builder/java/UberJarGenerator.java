@@ -45,7 +45,6 @@ import org.jdrupes.builder.api.Project;
 import org.jdrupes.builder.api.Resource;
 import org.jdrupes.builder.api.ResourceProvider;
 import org.jdrupes.builder.api.ResourceRequest;
-import static org.jdrupes.builder.api.ResourceRequest.Restriction.*;
 import org.jdrupes.builder.api.ResourceType;
 import static org.jdrupes.builder.api.ResourceType.*;
 import org.jdrupes.builder.api.Resources;
@@ -171,7 +170,7 @@ public class UberJarGenerator extends AbstractGenerator<JarFile> {
         var toBeIncluded = project().create(ClasspathType)
             .addAll(providers.stream().map(p -> project().get(p,
                 new ResourceRequest<ClasspathElement>(
-                    new ResourceType<RuntimeResources>() {}, None)))
+                    new ResourceType<RuntimeResources>() {})))
                 .flatMap(s -> s));
         log.fine(() -> "Uber jar content: " + toBeIncluded.stream()
             .map(e -> project().relativize(e.toPath()).toString())

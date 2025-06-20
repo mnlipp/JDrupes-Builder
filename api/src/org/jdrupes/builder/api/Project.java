@@ -26,18 +26,98 @@ import java.util.stream.Stream;
 /// [Project]s are used to structure the build configuration. Every
 /// build configuration has a single root project and can have
 /// sub-projects. The root project is the entry point for the build.
-/// The resources provided by the builder are actually provided by the
-/// root project.
+/// The resources provided by the builder are usually provided by the
+/// root project that serves as n entry point to the build configuration.
 ///
-/// Projects obtain resources from [ResourceProvider]s. Either from 
-/// [Generator]s or from other projects. Resources from [Generator]s
-/// are always included in the resources that a project provides.
-/// The usage of resources from other [Project]s depends on the type
-/// of the relationship between the projects, which is specified
-/// by the [Intend].
+/// Projects are [ResourceProvider]s that obtain resources from related
+/// [ResourceProvider]s. Projects can be thought of as routers for
+/// resources with their behavior depending on the intended usage of the
+/// resources from the related providers. The intended usage is specified
+/// by the [Intend] that attributes the relationship between a project
+/// and its related resource providers.
+///
+/// ## Attributing relationships to providers
+///
+/// ### Intend Supply
+///
+/// ![Intend Supply](doc-files/supply-demo.svg)
+///
+/// Resources from a provider added with [Intend#Supply] are provided
+/// by the project to entities that depend on the project. [Intend#Supply]
+/// implies that the resources are genuinely generated for the project
+/// (typically by a [Generator] that belongs to the project).
+///
+/// ### Intend Consume
+///
+/// ![Intend Consume](doc-files/consume-demo.svg)
+///
+/// Resources from a provider added with [Intend#Consume] (typically
+/// another project) are only available to a project's generators
+/// through [Project#provided].   
+///
+/// ### Intend Expose
+///
+/// ![Intend Expose](doc-files/expose-demo.svg)
+///
+/// Resources from a provider added with [Intend#Expose] (typically
+/// another project) are provided by the project to entities that
+/// depend on the project. They are also available to a project's
+/// generators through [Project#provided].
+///
+/// ### Intend Forward
+///
+/// ![Intend Forward](doc-files/forward-demo.svg)
+///
+/// Resources from a provider added with [Intend#Forward] (typically
+/// another project) are provided by the project to entities that
+/// depend on the project. They are not intended to be used by a
+/// project's generators, although these cannot be prevented from
+/// accessing them through [Project#provide].
+///
+/// ## Factory methods
 ///
 /// As a convenience, the interface also defines factory methods
 /// for objects used for defining the project.
+///
+/// @startuml supply-demo.svg
+/// object "project: Project" as project
+/// object "dependant" as dependant
+/// dependant -right-> project
+/// object "generator: Generator" as generator
+/// project *-down-> generator: "<<Supply>>"
+/// @enduml
+///
+/// @startuml expose-demo.svg
+/// object "project: Project" as project
+/// object "dependant" as dependant
+/// dependant -right-> project
+/// object "providing: Project" as providing
+/// project *-right-> providing: "<<Expose>>"
+/// object "generator: Generator" as generator
+/// project *-down-> generator: "   "
+/// generator .up.> project: "provided"
+/// @enduml
+///
+/// @startuml consume-demo.svg
+/// object "project: Project" as project
+/// object "dependant" as dependant
+/// dependant -right-> project
+/// object "providing: Project" as providing
+/// project *-right-> providing: "<<Consume>>"
+/// object "generator: Generator" as generator
+/// project *-down-> generator: "   "
+/// generator .up.> project: "provided"
+/// @enduml
+///
+/// @startuml forward-demo.svg
+/// object "project: Project" as project
+/// object "dependant" as dependant
+/// dependant -right-> project
+/// object "providing: Project" as providing
+/// project *-right-> providing: "<<Forward>>"
+/// object "generator: Generator" as generator
+/// project *-down-> generator
+/// @enduml
 ///
 @SuppressWarnings("PMD.TooManyMethods")
 public interface Project extends ResourceProvider<Resource> {
@@ -76,7 +156,7 @@ public interface Project extends ResourceProvider<Resource> {
     /// @param project the requested project's type
     /// @return the project
     ///
-    Project project(Class<? extends Project> project);
+    ResourceProvider<Resource> project(Class<? extends Project> project);
 
     /// Returns the project's name. 
     ///
@@ -175,17 +255,14 @@ public interface Project extends ResourceProvider<Resource> {
     ///
     Project dependency(ResourceProvider<?> provider, Intend intend);
 
-    /// Retrieves all providers of the project with the given intended usage,
-    /// and returns all resources that are provided by these providers for
-    /// the given request.
+    /// Returns all resources that are provided for the given request
+    /// by providers associated with [Intend#Consume] or [Intend#Expose].
     ///
     /// @param <T> the requested type
-    /// @param intends the type of usage that providers must match
-    /// @param request the requested
+    /// @param request the request
     /// @return the provided resources
     ///
-    <T extends Resource> Stream<T> provided(Set<Intend> intends,
-            ResourceRequest<T> request);
+    <T extends Resource> Stream<T> provided(ResourceRequest<T> request);
 
     /// Short for `directory().relativize(other)`.
     ///
