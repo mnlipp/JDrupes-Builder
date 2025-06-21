@@ -20,6 +20,7 @@ package org.jdrupes.builder.startup;
 
 import java.util.ArrayList;
 import java.util.stream.Stream;
+import org.jdrupes.builder.api.BuildException;
 import org.jdrupes.builder.api.Launcher;
 import org.jdrupes.builder.api.Masked;
 import org.jdrupes.builder.api.Project;
@@ -45,7 +46,8 @@ public class DirectLauncher extends AbstractLauncher {
     /// @param classloader the classloader
     /// @param args the arguments
     ///
-    @SuppressWarnings("PMD.UseVarargs")
+    @SuppressWarnings({ "PMD.UseVarargs",
+        "PMD.AvoidInstantiatingObjectsInLoops", "PMD.SystemPrintln" })
     public DirectLauncher(ClassLoader classloader, String[] args) {
         unwrapBuildException(() -> {
             var rootProjects = new ArrayList<Class<? extends RootProject>>();
@@ -54,7 +56,14 @@ public class DirectLauncher extends AbstractLauncher {
             rootProject = LauncherSupport
                 .createProjects(rootProjects.get(0), subprojects, jdbldProps);
             for (var arg : args) {
-                rootProject.execute(arg);
+                var reqs = LauncherSupport.lookupCommand(rootProject, arg);
+                if (reqs.length == 0) {
+                    new BuildException("Unknown command: " + arg);
+                }
+                for (var req : reqs) {
+                    rootProject.provide(req)
+                        .forEach(r -> System.out.println(r.toString()));
+                }
             }
             return null;
         });

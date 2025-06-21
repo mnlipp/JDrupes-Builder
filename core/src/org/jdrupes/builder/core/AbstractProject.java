@@ -19,7 +19,6 @@
 package org.jdrupes.builder.core;
 
 import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Method;
 import java.nio.file.Path;
 import java.util.Collections;
 import java.util.HashMap;
@@ -32,6 +31,7 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 import java.util.stream.Stream;
 import org.jdrupes.builder.api.BuildException;
+import org.jdrupes.builder.api.Cleanliness;
 import org.jdrupes.builder.api.Generator;
 import org.jdrupes.builder.api.Intend;
 import static org.jdrupes.builder.api.Intend.*;
@@ -41,6 +41,7 @@ import org.jdrupes.builder.api.PropertyKey;
 import org.jdrupes.builder.api.Resource;
 import org.jdrupes.builder.api.ResourceProvider;
 import org.jdrupes.builder.api.ResourceRequest;
+import org.jdrupes.builder.api.ResourceType;
 import org.jdrupes.builder.api.RootProject;
 
 /// A default implementation of a [Project].
@@ -64,6 +65,7 @@ public abstract class AbstractProject implements Project {
     private final Map<PropertyKey, Object> properties = new HashMap<>();
     // Only non null in the root project
     private DefaultBuildContext context;
+    private Map<String, ResourceRequest<?>[]> commands;
 
     /// Named parameter for specifying the parent project.
     ///
@@ -144,6 +146,10 @@ public abstract class AbstractProject implements Project {
                 // ConcurrentHashMap does not support null values.
                 projects = Collections.synchronizedMap(new HashMap<>());
                 context = new DefaultBuildContext();
+                commands = new HashMap<>(Map.of(
+                    "clean", new ResourceRequest<?>[] {
+                        new ResourceRequest<Cleanliness>(
+                            new ResourceType<>() {}) }));
             }
         } else {
             parent = (AbstractProject) project(parentProject);
@@ -353,21 +359,24 @@ public abstract class AbstractProject implements Project {
         return this;
     }
 
-    /// Implements [RootProject#execute].
+    /// Define command, see [RootProject#defineCommand].
     ///
     /// @param name the name
+    /// @param requests the requests
+    /// @return the root project
     ///
-    public void execute(String name) {
-        try {
-            Method method = getClass().getMethod(name);
-            method.invoke(this);
-        } catch (NoSuchMethodException e) {
-            throw new BuildException(this + " does not support " + name, e);
-        } catch (SecurityException | IllegalAccessException
-                | IllegalArgumentException | InvocationTargetException e) {
-            throw new BuildException("Problem invoking " + name + " on " + this
-                + (e.getMessage() == null ? "" : (": " + e.getMessage())), e);
+    public RootProject defineCommand(String name,
+            ResourceRequest<?>... requests) {
+        if (commands == null) {
+            throw new BuildException("Commands can only be defined for"
+                + " the root project.");
         }
+        commands.put(name, requests);
+        return (RootProject) this;
+    }
+
+    /* default */ ResourceRequest<?>[] lookupCommand(String name) {
+        return commands.getOrDefault(name, new ResourceRequest[0]);
     }
 
     /// To string.

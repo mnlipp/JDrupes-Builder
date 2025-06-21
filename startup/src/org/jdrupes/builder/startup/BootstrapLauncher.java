@@ -18,14 +18,23 @@
 
 package org.jdrupes.builder.startup;
 
+import java.net.MalformedURLException;
+import java.net.URL;
+import java.net.URLClassLoader;
 import java.util.Collections;
 import java.util.logging.Logger;
 import java.util.stream.Stream;
+import org.jdrupes.builder.api.BuildException;
+import org.jdrupes.builder.api.FileResource;
+import org.jdrupes.builder.api.FileTree;
 import org.jdrupes.builder.api.Launcher;
 import org.jdrupes.builder.api.Resource;
 import org.jdrupes.builder.api.ResourceRequest;
+import org.jdrupes.builder.api.ResourceType;
 import org.jdrupes.builder.api.RootProject;
 import org.jdrupes.builder.core.LauncherSupport;
+import org.jdrupes.builder.java.ClasspathElement;
+import org.jdrupes.builder.java.CompilationResources;
 
 /// A default implementation of a [Launcher]. The launcher first builds
 /// the user's JDrupes Builder project, using the JDrupes Builder project
@@ -38,24 +47,43 @@ public class BootstrapLauncher extends AbstractLauncher {
     /// The log.
     protected final Logger log = Logger.getLogger(getClass().getName());
     /* default */@SuppressWarnings("PMD.MutableStaticState")
-    static String[] forwardedArgs;
     private RootProject rootProject;
 
     /// Instantiates a new bootstrap launcher. An instance of the class
     /// passed as argument is created and used as root project for the
     /// build.
-    ///
+    /// 
     /// Unless the root project is the only project, the root project
     /// must declare dependencies, else the subprojects won't be
     /// instantiated.
     ///
-    /// @param rootProject the root project
+    /// @param rootPrjCls the root project
+    /// @param args the args
     ///
-    public BootstrapLauncher(Class<? extends RootProject> rootProject) {
+    @SuppressWarnings("PMD.UseVarargs")
+    public BootstrapLauncher(
+            Class<? extends RootProject> rootPrjCls, String[] args) {
         unwrapBuildException(() -> {
-            this.rootProject = LauncherSupport.createProjects(rootProject,
-                Collections.emptyList(), jdbldProps);
-            this.rootProject.execute("bootstrap");
+            rootProject = LauncherSupport.createProjects(
+                rootPrjCls, Collections.emptyList(), jdbldProps);
+            @SuppressWarnings("PMD.UseDiamondOperator")
+            var cpUrls = rootProject.provide(
+                new ResourceRequest<ClasspathElement>(
+                    new ResourceType<CompilationResources>() {}))
+                .map(cpe -> {
+                    try {
+                        if (cpe instanceof FileTree tree) {
+                            return tree.root().toFile().toURI().toURL();
+                        }
+                        return ((FileResource) cpe).path().toFile().toURI()
+                            .toURL();
+                    } catch (MalformedURLException e) {
+                        // Cannot happen
+                        throw new BuildException(e);
+                    }
+                }).toArray(URL[]::new);
+            new DirectLauncher(new URLClassLoader(cpUrls,
+                Thread.currentThread().getContextClassLoader()), args);
             return null;
         });
     }
@@ -74,7 +102,6 @@ public class BootstrapLauncher extends AbstractLauncher {
     /// @param args the arguments
     ///
     public static void main(String[] args) {
-        forwardedArgs = args;
-        new BootstrapLauncher(BootstrapRoot.class);
+        new BootstrapLauncher(BootstrapRoot.class, args);
     }
 }

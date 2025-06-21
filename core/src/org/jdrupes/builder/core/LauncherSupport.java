@@ -22,6 +22,7 @@ import java.lang.reflect.InvocationTargetException;
 import java.util.List;
 import java.util.Properties;
 import org.jdrupes.builder.api.Project;
+import org.jdrupes.builder.api.ResourceRequest;
 import org.jdrupes.builder.api.RootProject;
 
 /// Provides support for creating projects based on [AbstractProject].
@@ -64,4 +65,14 @@ public final class LauncherSupport {
         return jdbldProps;
     }
 
+    /// Lookup the command in the given root project.
+    ///
+    /// @param project the project
+    /// @param name the name
+    /// @return the optional
+    ///
+    public static ResourceRequest<?>[]
+            lookupCommand(RootProject project, String name) {
+        return ((AbstractProject) project).lookupCommand(name);
+    }
 }

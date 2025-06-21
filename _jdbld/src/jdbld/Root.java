@@ -3,9 +3,7 @@ package jdbld;
 import static org.jdrupes.builder.api.Intend.*;
 
 import java.nio.file.Path;
-import java.util.stream.Collectors;
 import java.util.stream.Stream;
-
 import org.jdrupes.builder.api.FileTree;
 import org.jdrupes.builder.api.Intend;
 import org.jdrupes.builder.api.Project;
@@ -75,14 +73,11 @@ public class Root extends AbstractProject implements RootProject {
             .options("-quiet")
             .addSources(get(this, new ResourceRequest<FileTree<JavaSourceFile>>(
                 new ResourceType<>() {})));
-    }
 
-    public void build() {
-        get(this,
-            new ResourceRequest<AppJarFile>(new ResourceType<>() {}))
-                .forEach(System.out::println);
-        get(this, new ResourceRequest<JavadocDirectory>(
-            new ResourceType<>() {})).collect(Collectors.toSet()).stream()
-                .forEach(System.out::println);
+        // Commands
+        defineCommand("build",
+            new ResourceRequest<AppJarFile>(new ResourceType<>() {}),
+            new ResourceRequest<JavadocDirectory>(
+                new ResourceType<>() {}));
     }
 }

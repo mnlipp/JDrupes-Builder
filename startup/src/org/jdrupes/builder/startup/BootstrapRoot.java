@@ -18,20 +18,10 @@
 
 package org.jdrupes.builder.startup;
 
-import java.net.MalformedURLException;
-import java.net.URL;
-import java.net.URLClassLoader;
-import org.jdrupes.builder.api.BuildException;
-import org.jdrupes.builder.api.FileResource;
-import org.jdrupes.builder.api.FileTree;
 import org.jdrupes.builder.api.Intend;
 import org.jdrupes.builder.api.Masked;
-import org.jdrupes.builder.api.ResourceRequest;
-import org.jdrupes.builder.api.ResourceType;
 import org.jdrupes.builder.api.RootProject;
 import org.jdrupes.builder.core.AbstractProject;
-import org.jdrupes.builder.java.ClasspathElement;
-import org.jdrupes.builder.java.CompilationResources;
 
 /// The built-in root project associated with the root directory.
 ///
@@ -44,26 +34,5 @@ public class BootstrapRoot extends AbstractProject
     @SuppressWarnings("PMD.ConstructorCallsOverridableMethod")
     public BootstrapRoot() {
         dependency(project(BootstrapBuild.class), Intend.Expose);
-    }
-
-    /// Bootstrap.
-    ///
-    public void bootstrap() {
-        @SuppressWarnings("PMD.UseDiamondOperator")
-        var cpUrls = provide(new ResourceRequest<ClasspathElement>(
-            new ResourceType<CompilationResources>() {})).map(cpe -> {
-                try {
-                    if (cpe instanceof FileTree tree) {
-                        return tree.root().toFile().toURI().toURL();
-                    }
-                    return ((FileResource) cpe).path().toFile().toURI().toURL();
-                } catch (MalformedURLException e) {
-                    // Cannot happen
-                    throw new BuildException(e);
-                }
-            }).toArray(URL[]::new);
-        new DirectLauncher(new URLClassLoader(cpUrls,
-            Thread.currentThread().getContextClassLoader()),
-            BootstrapLauncher.forwardedArgs);
     }
 }

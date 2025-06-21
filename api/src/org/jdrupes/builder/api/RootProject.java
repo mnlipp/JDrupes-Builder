@@ -35,16 +35,14 @@ public interface RootProject extends Project {
         // Default does nothing
     }
 
-    /// By default, every root project has a clean target.
-    ///
-    default void clean() {
-        get(this, new ResourceRequest<Cleanliness>(new ResourceType<>() {}))
-            .forEach(System.out::println);
-    }
-
-    /// Execute the project's public method with the given name.
+    /// Define an alias for requesting one more more specific resources.
     ///
     /// @param name the name
+    /// @param requests the requests
+    /// @return the root project
     ///
-    void execute(String name);
+    default RootProject defineCommand(String name,
+            ResourceRequest<?>... requests) {
+        throw new UnsupportedOperationException();
+    }
 }
