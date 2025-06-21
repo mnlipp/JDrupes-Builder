@@ -16,9 +16,13 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package org.jdrupes.builder.api;
+package org.jdrupes.builder.core;
 
+import java.lang.reflect.Proxy;
 import java.util.Objects;
+import org.jdrupes.builder.api.Proxyable;
+import org.jdrupes.builder.api.Resource;
+import org.jdrupes.builder.api.ResourceType;
 
 /// A base class for [Resource]s.
 ///
@@ -38,6 +42,13 @@ public abstract class ResourceObject implements Resource, Proxyable {
     ///
     protected ResourceObject(ResourceType<?> type) {
         this.type = type;
+    }
+
+    /* default */ @SuppressWarnings("unchecked")
+    static <T extends Resource> T createResource(ResourceType<T> type) {
+        return (T) Proxy.newProxyInstance(type.rawType().getClassLoader(),
+            new Class<?>[] { type.rawType(), Proxyable.class },
+            new ForwardingHandler(new DefaultResources<>(type)));
     }
 
     @Override

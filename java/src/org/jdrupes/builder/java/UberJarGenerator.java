@@ -150,12 +150,11 @@ public class UberJarGenerator extends AbstractGenerator<JarFile> {
                 throw new BuildException("Cannot create directory " + destDir);
             }
         }
-        var jarResource = (JarFile) project().create(requested.type()
-            .containedType(), destDir.resolve(project().name() + ".jar"));
 
         // Maybe only delete
         if (requested.includes(Cleaniness)) {
-            jarResource.delete();
+            project().create(JarFileType,
+                destDir.resolve(project().name() + ".jar")).delete();
             return Stream.empty();
         }
 
@@ -177,6 +176,8 @@ public class UberJarGenerator extends AbstractGenerator<JarFile> {
             .collect(Collectors.joining(":")));
 
         // Check if rebuild needed.
+        var jarResource = (JarFile) project().create(requested.type()
+            .containedType(), destDir.resolve(project().name() + ".jar"));
         if (jarResource.asOf().isAfter(toBeIncluded.asOf())) {
             return Stream.of((T) jarResource);
         }

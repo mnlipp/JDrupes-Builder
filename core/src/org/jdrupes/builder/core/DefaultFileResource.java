@@ -25,7 +25,6 @@ import java.util.Objects;
 import org.jdrupes.builder.api.BuildException;
 import org.jdrupes.builder.api.FileResource;
 import org.jdrupes.builder.api.Proxyable;
-import org.jdrupes.builder.api.ResourceObject;
 import org.jdrupes.builder.api.ResourceType;
 
 /// A resource that represents a file.

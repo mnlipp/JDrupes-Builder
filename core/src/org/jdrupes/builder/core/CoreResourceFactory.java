@@ -60,8 +60,8 @@ public class CoreResourceFactory implements ResourceFactory {
             .isPresent();
     }
 
-    @SuppressWarnings("unchecked")
     @Override
+    @SuppressWarnings({ "unchecked", "PMD.NPathComplexity" })
     public <T extends Resource> Optional<T> newResource(ResourceType<T> type,
             Project project, Object... args) {
         if (FileResourceType.isAssignableFrom(type)
@@ -85,9 +85,15 @@ public class CoreResourceFactory implements ResourceFactory {
             return Optional.of(
                 (T) DefaultFileTree.createFileTree(
                     (ResourceType<? extends FileTree<?>>) type,
-                    project,
-                    (Path) args[0], (String) args[1],
+                    project, (Path) args[0], (String) args[1],
                     args.length > 2 && (boolean) args[2]));
+        }
+        if (Resource.class.isAssignableFrom(type.rawType())
+            && type.rawType().getSuperclass() == null
+            && !addsMethod(Resource.class,
+                (Class<? extends Resource>) type.rawType())) {
+            return Optional.of((T) ResourceObject.createResource(
+                (ResourceType<?>) type));
         }
         return Optional.empty();
     }
