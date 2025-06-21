@@ -70,6 +70,7 @@ public class MvnRepoLookup implements ResourceProvider<DefaultJarFile> {
     /// @return the stream
     ///
     @Override
+    @SuppressWarnings("PMD.AvoidInstantiatingObjectsInLoops")
     public <T extends Resource> Stream<T>
             provide(ResourceRequest<T> requested) {
         if (!requested.wants(CompilationResourcesType)
@@ -81,12 +82,14 @@ public class MvnRepoLookup implements ResourceProvider<DefaultJarFile> {
             .withUserSettings(true).build();
         Runtime runtime = Runtimes.INSTANCE.getRuntime();
         try (Context context = runtime.create(overrides)) {
-            DefaultArtifact artifact = new DefaultArtifact(coordinates.get(0));
             CollectRequest collectRequest = new CollectRequest()
-                .setRepositories(context.remoteRepositories())
-                .addDependency(new Dependency(artifact,
-                    requested.wants(CompilationResourcesType) ? "compile"
-                        : "runtime"));
+                .setRepositories(context.remoteRepositories());
+            for (var coord : coordinates) {
+                collectRequest.addDependency(
+                    new Dependency(new DefaultArtifact(coord),
+                        requested.wants(CompilationResourcesType) ? "compile"
+                            : "runtime"));
+            }
 
             DependencyRequest dependencyRequest
                 = new DependencyRequest(collectRequest, null);
