@@ -24,36 +24,14 @@ import java.util.Set;
 /// Attributes the relationship between a [Project] ("this project")
 /// and an associated [ResourceProvider].
 ///
-/// <table>
-///   <thead>
-///     <tr>
-///       <td></td><td></td><th colspan="2">Input for generators</th>
-///     </tr>
-///     <tr>
-///       <td></td><td></td><th> yes </th><th> no </th>
-///     </tr>
-///   </thead>
-///   <tbody>
-///     <tr>
-///       <th rowspan="2">Provided</th><th> yes </th><td></td><td></td>
-///     </tr>
-///     <tr>
-///       <th> no </th><td></td><td></td>
-///     </tr>
-///   </tbody>
-/// </table>
-///
-/// | Intend   ||
-/// |  Consume | Don't consume |
-/// |:--------:|:-------------:|
-/// |  Expose  | Don't expose  |
-///
 @SuppressWarnings("PMD.FieldNamingConventions")
 public enum Intend {
     
     /// The project should ignore the resources from the provider.
     /// This is the default relationship between a project and its
-    /// sub projects.
+    /// sub projects. Note that the dependency relationship still
+    /// has an effect because [ResourceRequest]s are propagated to
+    /// the associated provider.
     Ignore,
     
     /// The project consumes the resources from the associated
