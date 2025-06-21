@@ -135,13 +135,13 @@ public class UberJarGenerator extends AbstractGenerator<JarFile> {
         "PMD.AvoidInstantiatingObjectsInLoops" })
     public <T extends Resource> Stream<T>
             provide(ResourceRequest<T> requested) {
-        boolean wantAppJar = requested.includes(AppJarFileType);
-        if (!wantAppJar && !requested.includes(JarFileType)
+        if (!requested.includes(JarFileType)
             && !requested.includes(Cleaniness)) {
             return Stream.empty();
         }
 
         // Prepare jar file
+        boolean wantAppJar = AppJarFileType.isAssignableFrom(requested.type());
         var destDir = Optional.ofNullable(destination)
             .orElseGet(() -> project().buildDirectory().resolve(
                 wantAppJar ? "app" : "libs"));
