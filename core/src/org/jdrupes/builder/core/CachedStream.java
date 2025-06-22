@@ -34,8 +34,8 @@ import java.util.stream.Stream;
 ///
 public class CachedStream<T> {
 
-    private List<Stream<? extends T>> sources = new ArrayList<>();
-    private List<? extends T> cache;
+    private List<Stream<T>> sources = new ArrayList<>();
+    private List<T> cache;
 
     /// Instantiates a new cached stream.
     ///
@@ -49,7 +49,7 @@ public class CachedStream<T> {
     /// @param sources the sources
     ///
     @SafeVarargs
-    public final void add(Stream<? extends T>... sources) {
+    public final void add(Stream<T>... sources) {
         if (sources == null) {
             throw new IllegalStateException(
                 "Cannot add sources after stream() has been called.");
@@ -62,7 +62,7 @@ public class CachedStream<T> {
     /// @return the stream<? extends t>
     ///
     @SuppressWarnings("PMD.AvoidSynchronizedStatement")
-    public Stream<? extends T> stream() {
+    public Stream<T> stream() {
         synchronized (this) {
             if (cache == null) {
                 cache = sources.stream().flatMap(s -> s).toList();

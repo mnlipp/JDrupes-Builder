@@ -9,10 +9,8 @@ import org.jdrupes.builder.java.JarFile;
 public class Root extends AbstractProject implements RootProject {
 
     public Root() {
+        defineCommand("build",
+            new ResourceRequest<JarFile>(new ResourceType<>() {}));
     }
 
-    public void build() {
-        provide(new ResourceRequest<JarFile>(new ResourceType<>() {}))
-            .forEach(System.out::println);
-    }
 }

@@ -18,29 +18,19 @@
 
 package org.jdrupes.builder.api;
 
-import java.util.EnumSet;
-import java.util.Set;
-
 /// Attributes the relationship between a [Project] ("this project")
 /// and an associated [ResourceProvider].
 ///
 @SuppressWarnings("PMD.FieldNamingConventions")
 public enum Intend {
     
-    /// The project should ignore the resources from the provider.
-    /// This is the default relationship between a project and its
-    /// sub projects. Note that the dependency relationship still
-    /// has an effect because [ResourceRequest]s are propagated to
-    /// the associated provider.
-    Ignore,
-    
     /// The project consumes the resources from the associated
     /// provider, but it does not expose them, i.e. the project
     /// in its role as provider does not provide them to others.
     Consume,
     
-    /// The resources from the provider are forwarded (exposed) to
-    /// other projects that have this project as a dependency but
+    /// The resources from the provider are forwarded to other
+    /// projects that have this project as a dependency but
     /// are not used (consumed) by this project.
     Forward,
     
@@ -56,11 +46,4 @@ public enum Intend {
     /// this dependency are exposed to projects that have this
     /// project as a dependency.
     Supply;
-    
-    /// All providers.
-    public static final Set<Intend> ALL = EnumSet.allOf(Intend.class);
-    
-    /// All providers of resources that are (or can be) used by a project's
-    /// generators ([Intend#Consume] and [Intend#Expose]).
-    public static final Set<Intend> PROVIDED = EnumSet.of(Consume, Expose);
 }

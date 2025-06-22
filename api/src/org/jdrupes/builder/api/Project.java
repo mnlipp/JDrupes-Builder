@@ -19,9 +19,14 @@
 package org.jdrupes.builder.api;
 
 import java.nio.file.Path;
+import java.util.EnumSet;
 import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Stream;
+import static org.jdrupes.builder.api.Intend.Consume;
+import static org.jdrupes.builder.api.Intend.Expose;
+import static org.jdrupes.builder.api.Intend.Forward;
+import static org.jdrupes.builder.api.Intend.Supply;
 
 /// [Project]s are used to structure the build configuration. Every
 /// build configuration has a single root project and can have
@@ -220,6 +225,21 @@ public interface Project extends ResourceProvider<Resource> {
         return provider;
     }
 
+    /// Adds a provider that contributes resources to the project with
+    /// the given intended usage.
+    ///
+    /// While this could be used to add a [Generator] to the project
+    /// as a provider with [Intend#Supply], it is recommended to use
+    /// one of the "generator" methods for better readability.
+    ///
+    /// @param provider the provider
+    /// @param intend the dependency type
+    /// @return the project for method chaining
+    /// @see generator(Generator)
+    /// @see generator(Function)
+    ///
+    Project dependency(ResourceProvider<?> provider, Intend intend);
+
     /// Returns the providers that have been added with one of the given 
     /// intended usages as [Stream]. The stream may only be terminated
     /// after all projects have been created.
@@ -240,29 +260,37 @@ public interface Project extends ResourceProvider<Resource> {
         return providers(Set.of(intend));
     }
 
-    /// Adds a provider that contributes resources to the project with
-    /// the given intended usage.
+    /// Invoke the given providers for the given request and return the
+    /// resulting stream. This method terminates the stream of providers.
     ///
-    /// While this could be used to add a [Generator] to the project
-    /// as a provider with [Intend#Supply], it is recommended to use
-    /// one of the "generator" methods for better readability.
+    /// @param <T> the generic type
+    /// @param providers the providers
+    /// @param request the request
+    /// @return the stream
     ///
-    /// @param provider the provider
-    /// @param intend the dependency type
-    /// @return the project for method chaining
-    /// @see generator(Generator)
-    /// @see generator(Function)
-    ///
-    Project dependency(ResourceProvider<?> provider, Intend intend);
+    <T extends Resource> Stream<T> invokeProviders(
+            Stream<ResourceProvider<?>> providers, ResourceRequest<T> request);
 
     /// Returns all resources that are provided for the given request
     /// by providers associated with [Intend#Consume] or [Intend#Expose].
     ///
     /// @param <T> the requested type
-    /// @param request the request
+    /// @param requested the requested
     /// @return the provided resources
     ///
-    <T extends Resource> Stream<T> provided(ResourceRequest<T> request);
+    default <T extends Resource> Stream<T>
+            provided(ResourceRequest<T> requested) {
+        return invokeProviders(
+            providers(EnumSet.of(Consume, Expose)), requested);
+    }
+
+    @Override
+    default <R extends Resource> Stream<R>
+            provide(ResourceRequest<R> requested) {
+        return invokeProviders(
+            providers(EnumSet.of(Forward, Expose, Supply)), requested);
+}
+
 
     /// Short for `directory().relativize(other)`.
     ///

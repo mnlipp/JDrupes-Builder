@@ -43,6 +43,7 @@ public class Root extends AbstractProject implements RootProject {
         dependency(project(Java.class), Expose);
         dependency(project(MvnRepo.class), Expose);
         dependency(project(Startup.class), Expose);
+        dependency(project(Eclipse.class), Expose);
 
         // Build app jar
         generator(UberJarGenerator::new).addAll(providers(Intend.Expose))
@@ -70,6 +71,9 @@ public class Root extends AbstractProject implements RootProject {
                 directory().resolve("misc/prism.js").toString())
             .options("--add-stylesheet",
                 directory().resolve("misc/prism.css").toString())
+            .options("-linksource")
+            .options("-link",
+                "https://docs.oracle.com/en/java/javase/23/docs/api/")
             .options("-quiet")
             .addSources(get(this, new ResourceRequest<FileTree<JavaSourceFile>>(
                 new ResourceType<>() {})));

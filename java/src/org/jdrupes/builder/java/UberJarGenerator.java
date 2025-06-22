@@ -41,6 +41,7 @@ import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 import org.jdrupes.builder.api.BuildException;
 import org.jdrupes.builder.api.FileTree;
+import org.jdrupes.builder.api.Generator;
 import org.jdrupes.builder.api.Project;
 import org.jdrupes.builder.api.Resource;
 import org.jdrupes.builder.api.ResourceProvider;
@@ -52,7 +53,53 @@ import org.jdrupes.builder.core.AbstractGenerator;
 import org.jdrupes.builder.core.CachedStream;
 import static org.jdrupes.builder.java.JavaTypes.*;
 
-/// The Class UberJarGenerator.
+/// A [Generator] for uber jars.
+///
+/// The generator takes a simple approach:
+/// 
+///   * Add the content of the [ClasspathElement]s added with [add][#add]
+///     or [addAll][#addAll] to the resulting uber jar.
+///   * Filter out any direct child files of `META-INF`. These files often
+///     contain information related to the origin jar that is not applicable
+///     to the uber jar.
+///   * Merge the files in `META-INF/services` that have the same name by
+///     concatenating them.
+///
+/// Note that the output resource type of the uber jar generator matches
+/// the resource type of its inputs, because uber jars can also be used
+/// as [ClasspathElement]. Therefore, if you want to create an uber jar
+/// from all resources provided by a project, you must not add the
+/// generator to the project like this:
+/// ```java
+///     generator(UberJarGenerator::new).add(this); // Circular dependency
+/// ```
+///
+/// This would add the project as provider and thus make the uber jar
+/// generator as supplier to the project its own provider (via
+/// [Project.provide][Project#provide]). Rather, you have to use this
+/// slightly more complicated approach to adding providers to the uber
+/// jar generator:
+/// ```java
+///     generator(UberJarGenerator::new)
+///         .addAll(providers(EnumSet.of(Forward, Expose, Supply)));
+/// ```
+/// This requests the same providers from the project as 
+/// [Project.provide][Project#provide] does, but allows the uber jar
+/// generator's [addAll][#addAll] method to filter out the uber jar
+/// generator itself from the providers. The given intends can
+/// vary depending on the requirements.
+///
+/// If you don't want the generated uber jar to be available to other
+/// generators of your project, you can also add it to a project like this:
+/// ```java
+///     dependency(new UberJarGenerator(this)
+///         .addAll(providers(EnumSet.of(Forward, Expose, Supply))), Intend.Forward)
+/// ```
+///
+/// Of course, the easiest thing to do is separate the generation of
+/// class trees or library jars from the generation of the uber jar by
+/// generating the uber jar in a project of its own. Often the root
+/// project can be used for this purpose.  
 ///
 public class UberJarGenerator extends AbstractGenerator<JarFile> {
 
@@ -106,26 +153,31 @@ public class UberJarGenerator extends AbstractGenerator<JarFile> {
         return this;
     }
 
-    /// Adds the given providers. Each provider is asked to provide
-    /// resources of type [ClasspathElement]. All file trees and the
-    /// content of all jars returned is added to the uber jar.
+    /// Adds the given providers. Each provider will be asked to provide
+    /// resources of type [ClasspathElement] when [#provide] is invoked.
+    /// All file trees and the content of all jars returned in response
+    /// are added to the uber jar.
     ///
-    /// @param providers the providers
-    /// @return the uber jar builder
-    ///
-    public UberJarGenerator add(ResourceProvider<?>... providers) {
-        this.providers.add(Stream.of(providers));
-        return this;
-    }
-
-    /// Adds the providers from the stream, see [add].
+    /// Because an uber jar is also a [ClasspathElement] this
+    /// [UberJarGenerator] is also a provider for [ClasspathElement]s.
+    /// To avoid loops, `this` is therefore automatically filtered
+    /// from the given providers.
     ///
     /// @param providers the providers
     /// @return the uber jar generator
     ///
-    public UberJarGenerator
-            addAll(Stream<? extends ResourceProvider<?>> providers) {
-        this.providers.add(providers);
+    public UberJarGenerator addAll(Stream<ResourceProvider<?>> providers) {
+        this.providers.add(providers.filter(p -> !p.equals(this)));
+        return this;
+    }
+
+    /// Adds the given providers, see [addAll].
+    ///
+    /// @param providers the providers
+    /// @return the uber jar generator
+    ///
+    public UberJarGenerator add(ResourceProvider<?>... providers) {
+        addAll(Stream.of(providers));
         return this;
     }
 
@@ -135,7 +187,7 @@ public class UberJarGenerator extends AbstractGenerator<JarFile> {
         "PMD.AvoidInstantiatingObjectsInLoops" })
     public <T extends Resource> Stream<T>
             provide(ResourceRequest<T> requested) {
-        if (!requested.includes(JarFileType)
+        if (!requested.includes(AppJarFileType)
             && !requested.includes(Cleaniness)) {
             return Stream.empty();
         }
@@ -166,11 +218,11 @@ public class UberJarGenerator extends AbstractGenerator<JarFile> {
 
         // Get all content.
         log.fine(() -> "Getting uber jar content for " + project().name());
+        @SuppressWarnings("PMD.UseDiamondOperator")
         var toBeIncluded = project().create(ClasspathType)
-            .addAll(providers.stream().map(p -> project().get(p,
+            .addAll(project().invokeProviders(providers.stream(),
                 new ResourceRequest<ClasspathElement>(
-                    new ResourceType<RuntimeResources>() {})))
-                .flatMap(s -> s));
+                    new ResourceType<RuntimeResources>() {})));
         log.fine(() -> "Uber jar content: " + toBeIncluded.stream()
             .map(e -> project().relativize(e.toPath()).toString())
             .collect(Collectors.joining(":")));
