@@ -68,7 +68,7 @@ public class JavaCompiler extends JavaTool<FileTree<ClassFile>> {
     /// @return the destination
     ///
     public Path destination() {
-        return destination;
+        return project().buildDirectory().resolve(destination);
     }
 
     /// Sets the destination directory. The [Path] is resolved against
@@ -114,6 +114,14 @@ public class JavaCompiler extends JavaTool<FileTree<ClassFile>> {
             addSources(Stream<FileTree<JavaSourceFile>> sources) {
         this.sources.addAll(sources);
         return this;
+    }
+
+    /// Return the source trees configured for the compiler.
+    ///
+    /// @return the resources
+    ///
+    public Resources<FileTree<JavaSourceFile>> sources() {
+        return sources;
     }
 
     /// Source paths.

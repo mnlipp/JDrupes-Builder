@@ -19,8 +19,13 @@
 package org.jdrupes.builder.java;
 
 import java.nio.file.Path;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 import java.util.Locale;
+import java.util.Optional;
 import java.util.logging.Level;
+import java.util.stream.Stream;
 import javax.tools.Diagnostic;
 import javax.tools.DiagnosticCollector;
 import javax.tools.JavaFileObject;
@@ -35,12 +40,59 @@ import org.jdrupes.builder.core.AbstractGenerator;
 public abstract class JavaTool<T extends Resource>
         extends AbstractGenerator<T> {
 
+    private final List<String> options = new ArrayList<>();
+
     /// Instantiates a new java tool.
     ///
     /// @param project the project
     ///
     public JavaTool(Project project) {
         super(project);
+    }
+
+    /// Adds the given options.
+    ///
+    /// @param options the options
+    /// @return the javadoc
+    ///
+    protected JavaTool<T> options(Stream<String> options) {
+        this.options.addAll(options.toList());
+        return this;
+    }
+
+    /// Adds the given options.
+    ///
+    /// @param options the options
+    /// @return the javadoc
+    ///
+    protected JavaTool<T> options(String... options) {
+        this.options.addAll(Arrays.asList(options));
+        return this;
+    }
+
+    /// Return the options.
+    ///
+    /// @return the stream
+    ///
+    public List<String> options() {
+        return options;
+    }
+
+    /// Find the argument for the given option. As some options are
+    /// allows in different styles, several names can be specified. 
+    ///
+    /// @param names the names
+    /// @return the optional
+    ///
+    public Optional<String> optionArgument(String... names) {
+        var itr = options.iterator();
+        if (itr.hasNext()) {
+            String opt = itr.next();
+            if (Arrays.stream(names).anyMatch(opt::equals) && itr.hasNext()) {
+                return Optional.of(itr.next());
+            }
+        }
+        return Optional.empty();
     }
 
     /// Log diagnostic.
