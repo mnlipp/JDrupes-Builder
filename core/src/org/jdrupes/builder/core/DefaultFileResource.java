@@ -107,7 +107,7 @@ public class DefaultFileResource extends ResourceObject
     @Override
     public String toString() {
         var relPath = Path.of("").toAbsolutePath().relativize(path);
-        return type() + ": " + relPath.toString()
-            + " (" + asOfLocalized() + ")";
+        return type() + ": " + (relPath.equals(Path.of("")) ? "."
+            : relPath.toString()) + " (" + asOfLocalized() + ")";
     }
 }
