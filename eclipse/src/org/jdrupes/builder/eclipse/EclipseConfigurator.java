@@ -226,8 +226,7 @@ public class EclipseConfigurator
 
         // Add projects
         project()
-            .providers(Intend.Consume, Intend.Supply, Intend.Forward,
-                Intend.Expose)
+            .providers(Intend.Consume, Intend.Forward, Intend.Expose)
             .filter(p -> p instanceof Project).map(p -> (Project) p)
             .forEach(p -> {
                 var entry = (Element) classpath
