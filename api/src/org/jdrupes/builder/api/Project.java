@@ -134,7 +134,10 @@ public interface Project extends ResourceProvider<Resource> {
 
         /// The Build directory. Created artifacts should be put there.
         /// Defaults to [Path] "build".
-        BuildDirectory(Path.of("build"));
+        BuildDirectory(Path.of("build")),
+        
+        /// The Encoding of files in the project.
+        Encoding("UTF-8");
 
         private final Object defaultValue;
 
@@ -180,7 +183,7 @@ public interface Project extends ResourceProvider<Resource> {
     /// @return the builder configuration
     ///
     BuildContext context();
-    
+
     /// Returns the directory where the project's [Generator]s should
     /// create the artifacts. This is short for 
     /// `directory().resolve((Path) get(Properties.BuildDirectory))`.
@@ -254,10 +257,12 @@ public interface Project extends ResourceProvider<Resource> {
     /// `providers(Set.of(intend))`.
     ///
     /// @param intend the intend
+    /// @param intends more intends
     /// @return the stream
     ///
-    default Stream<ResourceProvider<?>> providers(Intend intend) {
-        return providers(Set.of(intend));
+    default Stream<ResourceProvider<?>> providers(
+            Intend intend, Intend... intends) {
+        return providers(EnumSet.of(intend, intends));
     }
 
     /// Invoke the given providers for the given request and return the
@@ -289,8 +294,7 @@ public interface Project extends ResourceProvider<Resource> {
             provide(ResourceRequest<R> requested) {
         return invokeProviders(
             providers(EnumSet.of(Forward, Expose, Supply)), requested);
-}
-
+    }
 
     /// Short for `directory().relativize(other)`.
     ///
@@ -307,7 +311,7 @@ public interface Project extends ResourceProvider<Resource> {
     ///
     /// A method for setting a property is is not part of the public API.
     /// It must be provided by the project's implementation as
-    /// `protected T set(ProjectProperty property, Object value)`,
+    /// `protected T set(PropertyKey property, Object value)`,
     /// where `T` is the type of the implementing class.
     ///
     /// Regrettably, there is no way to enforce at compile time that the
