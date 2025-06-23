@@ -22,6 +22,7 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.util.Properties;
 import java.util.function.Consumer;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
@@ -39,9 +40,12 @@ import org.jdrupes.builder.api.Resource;
 import org.jdrupes.builder.api.ResourceRequest;
 import org.jdrupes.builder.api.ResourceType;
 import org.jdrupes.builder.core.AbstractGenerator;
+import org.jdrupes.builder.java.ClasspathElement;
+import org.jdrupes.builder.java.JarFile;
 import org.jdrupes.builder.java.JavaCompiler;
 import org.jdrupes.builder.java.JavaProject;
 import org.jdrupes.builder.java.JavaResourceCollector;
+import static org.jdrupes.builder.java.JavaTypes.CompilationResourcesType;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.Node;
@@ -186,7 +190,8 @@ public class EclipseConfigurator
     ///
     /// @param doc the doc
     ///
-    @SuppressWarnings("PMD.AvoidDuplicateLiterals")
+    @SuppressWarnings({ "PMD.AvoidDuplicateLiterals",
+        "PMD.UseDiamondOperator" })
     protected void generateClasspathConfiguration(Document doc) {
         var classpath = doc.appendChild(doc.createElement("classpath"));
         project().providers(Intend.Supply)
@@ -225,9 +230,7 @@ public class EclipseConfigurator
             });
 
         // Add projects
-        project()
-            .providers(Intend.Consume, Intend.Forward, Intend.Expose)
-            .filter(p -> p instanceof Project).map(p -> (Project) p)
+        collectContributing(project()).collect(Collectors.toSet()).stream()
             .forEach(p -> {
                 var entry = (Element) classpath
                     .appendChild(doc.createElement("classpathentry"));
@@ -240,8 +243,25 @@ public class EclipseConfigurator
                 attribute.setAttribute("without_test_code", "true");
             });
 
+        // Add jars
+        project().provide(new ResourceRequest<ClasspathElement>(
+            CompilationResourcesType)).filter(p -> p instanceof JarFile)
+            .map(jf -> (JarFile) jf).forEach(jf -> {
+                var entry = (Element) classpath
+                    .appendChild(doc.createElement("classpathentry"));
+                entry.setAttribute("kind", "lib");
+                entry.setAttribute("path", jf.path().toString());
+            });
+
         // Allow derived class to override
         adaptClasspathConfiguration(doc, classpath);
+    }
+
+    private Stream<Project> collectContributing(Project project) {
+        return project.providers(Intend.Consume, Intend.Forward, Intend.Expose)
+            .filter(p -> p instanceof Project).map(p -> (Project) p)
+            .map(p -> Stream.concat(Stream.of(p), collectContributing(p)))
+            .flatMap(s -> s);
     }
 
     private void addSpecificJre(Document doc, Node classpath,
