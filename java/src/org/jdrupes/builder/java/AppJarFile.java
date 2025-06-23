@@ -22,5 +22,6 @@ import org.jdrupes.builder.api.FileResource;
 
 /// A [FileResource] that represents an application jar.
 ///
+@SuppressWarnings("PMD.ImplicitFunctionalInterface")
 public interface AppJarFile extends JarFile {
 }
