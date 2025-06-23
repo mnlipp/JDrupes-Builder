@@ -74,6 +74,9 @@ public class ProjectPreparation {
 
             @Override
             protected void adaptConfiguration() throws IOException {
+                if (!(project() instanceof JavaProject)) {
+                    return;
+                }
                 Files.copy(
                     Root.class.getResourceAsStream("net.sf.jautodoc.prefs"),
                     project.directory()
