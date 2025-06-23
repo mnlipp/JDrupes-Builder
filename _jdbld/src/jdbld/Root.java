@@ -11,14 +11,12 @@ import org.jdrupes.builder.api.ResourceRequest;
 import org.jdrupes.builder.api.ResourceType;
 import org.jdrupes.builder.api.RootProject;
 import org.jdrupes.builder.core.AbstractProject;
+import org.jdrupes.builder.eclipse.EclipseConfiguration;
 import org.jdrupes.builder.java.AppJarFile;
 import org.jdrupes.builder.java.UberJarGenerator;
 import org.jdrupes.builder.mvnrepo.MvnRepoLookup;
-import org.jdrupes.builder.java.JavaCompiler;
 import org.jdrupes.builder.java.Javadoc;
 import org.jdrupes.builder.java.JavadocDirectory;
-import org.jdrupes.builder.java.JavaProject;
-import org.jdrupes.builder.java.JavaResourceCollector;
 import org.jdrupes.builder.java.JavaSourceFile;
 
 import static org.jdrupes.builder.java.JavaTypes.*;
@@ -27,12 +25,8 @@ public class Root extends AbstractProject implements RootProject {
 
     @Override
     public void prepareProject(Project project) {
-        if (project instanceof JavaProject) {
-            project.generator(JavaCompiler::new)
-                .addSources(Path.of("src"), "**/*.java");
-            project.generator(JavaResourceCollector::new)
-                .add(Path.of("resources"), "**/*");
-        }
+        ProjectPreparation.setupCommonGenerators(project);
+        ProjectPreparation.setupEclipseConfigurator(project);
     }
 
     public Root() {
@@ -83,5 +77,7 @@ public class Root extends AbstractProject implements RootProject {
             new ResourceRequest<AppJarFile>(new ResourceType<>() {}),
             new ResourceRequest<JavadocDirectory>(
                 new ResourceType<>() {}));
+        defineCommand("eclipse",
+            new ResourceRequest<EclipseConfiguration>(new ResourceType<>() {}));
     }
 }
