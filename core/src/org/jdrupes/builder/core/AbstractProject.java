@@ -25,6 +25,7 @@ import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.ExecutionException;
@@ -362,6 +363,27 @@ public abstract class AbstractProject implements Project {
 
     /* default */ ResourceRequest<?>[] lookupCommand(String name) {
         return commands.getOrDefault(name, new ResourceRequest[0]);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(projectDirectory, projectName);
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        if (this == obj) {
+            return true;
+        }
+        if (obj == null) {
+            return false;
+        }
+        if (getClass() != obj.getClass()) {
+            return false;
+        }
+        AbstractProject other = (AbstractProject) obj;
+        return Objects.equals(projectDirectory, other.projectDirectory)
+            && Objects.equals(projectName, other.projectName);
     }
 
     /// To string.
