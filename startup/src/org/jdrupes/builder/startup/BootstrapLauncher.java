@@ -46,7 +46,7 @@ public class BootstrapLauncher extends AbstractLauncher {
 
     /// The log.
     protected final Logger log = Logger.getLogger(getClass().getName());
-    /* default */@SuppressWarnings("PMD.MutableStaticState")
+    @SuppressWarnings("PMD.MutableStaticState")
     private RootProject rootProject;
 
     /// Instantiates a new bootstrap launcher. An instance of the class
@@ -65,7 +65,7 @@ public class BootstrapLauncher extends AbstractLauncher {
             Class<? extends RootProject> rootPrjCls, String[] args) {
         unwrapBuildException(() -> {
             rootProject = LauncherSupport.createProjects(
-                rootPrjCls, Collections.emptyList(), jdbldProps);
+                rootPrjCls, Collections.emptyList(), jdbldProps, args);
             @SuppressWarnings("PMD.UseDiamondOperator")
             var cpUrls = rootProject.provide(
                 new ResourceRequest<ClasspathElement>(

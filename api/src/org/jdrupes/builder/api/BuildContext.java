@@ -32,4 +32,9 @@ public interface BuildContext {
     ///
     Path jdbldDirectory();
 
+    /// The arguments passed to the comand line.
+    ///
+    /// @return the string[]
+    ///
+    String[] commandArgs();
 }

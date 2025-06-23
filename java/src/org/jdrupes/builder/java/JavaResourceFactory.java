@@ -60,7 +60,7 @@ public class JavaResourceFactory implements ResourceFactory {
         }
         if (JavaResourceTree.class.equals(type.rawType())) {
             return Optional.of((T) new JavaResourceTree(project,
-                (Path) args[0], (String) args[1], false));
+                (Path) args[0], (String) args[1]));
         }
         return Optional.empty();
     }

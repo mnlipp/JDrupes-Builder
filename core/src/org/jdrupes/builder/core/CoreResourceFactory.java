@@ -85,8 +85,7 @@ public class CoreResourceFactory implements ResourceFactory {
             return Optional.of(
                 (T) DefaultFileTree.createFileTree(
                     (ResourceType<? extends FileTree<?>>) type,
-                    project, (Path) args[0], (String) args[1],
-                    args.length > 2 && (boolean) args[2]));
+                    project, (Path) args[0], (String) args[1]));
         }
         if (Resource.class.isAssignableFrom(type.rawType())
             && type.rawType().getSuperclass() == null

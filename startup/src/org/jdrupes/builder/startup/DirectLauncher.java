@@ -53,8 +53,8 @@ public class DirectLauncher extends AbstractLauncher {
             var rootProjects = new ArrayList<Class<? extends RootProject>>();
             var subprojects = new ArrayList<Class<? extends Project>>();
             findProjects(classloader, rootProjects, subprojects);
-            rootProject = LauncherSupport
-                .createProjects(rootProjects.get(0), subprojects, jdbldProps);
+            rootProject = LauncherSupport.createProjects(rootProjects.get(0),
+                subprojects, jdbldProps, args);
             for (var arg : args) {
                 var reqs = LauncherSupport.lookupCommand(rootProject, arg);
                 if (reqs.length == 0) {

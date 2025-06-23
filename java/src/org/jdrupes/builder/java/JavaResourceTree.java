@@ -34,11 +34,10 @@ public class JavaResourceTree
     /// @param project the project
     /// @param root the root
     /// @param pattern the pattern
-    /// @param withDirs the with dirs
     ///
     public JavaResourceTree(Project project, Path root,
-            String pattern, boolean withDirs) {
-        super(JavaResourceTreeType, project, root, pattern, withDirs);
+            String pattern) {
+        super(JavaResourceTreeType, project, root, pattern);
     }
 
     @Override

@@ -19,6 +19,7 @@
 package org.jdrupes.builder.startup;
 
 import java.nio.file.Path;
+import java.util.Arrays;
 import org.jdrupes.builder.api.FileResource;
 import org.jdrupes.builder.api.FileTree;
 import org.jdrupes.builder.api.Intend;
@@ -47,7 +48,8 @@ public class BootstrapBuild extends AbstractProject implements Masked {
         // trees and use as java sources.
         var bldrDirs = create(new ResourceType<FileTree<FileResource>>() {},
             Path.of("").toAbsolutePath(),
-            "**/" + context().jdbldDirectory().toString(), true);
+            "**/" + context().jdbldDirectory().toString()).withDirectories();
+        addExcludes(bldrDirs);
         var srcTrees = bldrDirs.stream()
             .map(r -> create(JavaSourceTreeType, r.path().resolve("src"),
                 "**/*.java"));
@@ -59,6 +61,16 @@ public class BootstrapBuild extends AbstractProject implements Masked {
                 r.path().resolve("resources"), "**/*"));
         generator(new ResourceCollector<>(this, JavaResourceTreeType)
             .add(resourceTrees));
+    }
+
+    private void addExcludes(FileTree<FileResource> bldrDirs) {
+        var itr = Arrays.asList(context().commandArgs()).iterator();
+        while (itr.hasNext()) {
+            var arg = itr.next();
+            if ("-x".equals(arg) && itr.hasNext()) {
+                bldrDirs.exclude(itr.next());
+            }
+        }
     }
 
 }

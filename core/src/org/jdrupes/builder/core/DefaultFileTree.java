@@ -29,6 +29,8 @@ import java.nio.file.PathMatcher;
 import java.nio.file.SimpleFileVisitor;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.time.Instant;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Objects;
 import java.util.Spliterators;
 import java.util.function.Consumer;
@@ -52,7 +54,8 @@ public class DefaultFileTree<T extends FileResource> extends DefaultResources<T>
     private final Project project;
     private final Path root;
     private final String pattern;
-    private final boolean withDirs;
+    private final List<String> excludes = new ArrayList<>();
+    private boolean withDirs;
     private boolean filled;
 
     /// Returns a new file tree. The file tree includes all files
@@ -68,15 +71,13 @@ public class DefaultFileTree<T extends FileResource> extends DefaultResources<T>
     /// @param project the project
     /// @param root the root
     /// @param pattern the pattern
-    /// @param withDirs whether to include directories
     ///
     protected DefaultFileTree(ResourceType<?> type, Project project, Path root,
-            String pattern, boolean withDirs) {
+            String pattern) {
         super(type);
         this.project = project;
         this.root = root;
         this.pattern = pattern;
-        this.withDirs = withDirs;
     }
 
     /// Creates the a new [FileTree].
@@ -86,17 +87,28 @@ public class DefaultFileTree<T extends FileResource> extends DefaultResources<T>
     /// @param project the project
     /// @param root the root
     /// @param pattern the pattern
-    /// @param withDirs the with dirs
     /// @return the file tree
     ///
     @SuppressWarnings("unchecked")
     public static <T extends FileTree<?>>
             T createFileTree(ResourceType<T> type, Project project, Path root,
-                    String pattern, boolean withDirs) {
+                    String pattern) {
         return (T) Proxy.newProxyInstance(type.rawType().getClassLoader(),
             new Class<?>[] { type.rawType(), Proxyable.class },
             new ForwardingHandler(
-                new DefaultFileTree<>(type, project, root, pattern, withDirs)));
+                new DefaultFileTree<>(type, project, root, pattern)));
+    }
+
+    @Override
+    public FileTree<T> withDirectories() {
+        withDirs = true;
+        return this;
+    }
+
+    @Override
+    public FileTree<T> exclude(String pattern) {
+        excludes.add(pattern);
+        return this;
     }
 
     @Override
@@ -136,19 +148,32 @@ public class DefaultFileTree<T extends FileResource> extends DefaultResources<T>
         return latestChange;
     }
 
+    @SuppressWarnings("PMD.CognitiveComplexity")
     private void find(Path root, String pattern) throws IOException {
         final PathMatcher pathMatcher = FileSystems.getDefault()
             .getPathMatcher("glob:" + pattern);
+        final var excludeMatchers = excludes.parallelStream()
+            .map(e -> FileSystems.getDefault()
+                .getPathMatcher("glob:" + e))
+            .toList();
         Files.walkFileTree(root, new SimpleFileVisitor<>() {
 
             @Override
             public FileVisitResult visitFile(Path path,
                     BasicFileAttributes attrs) throws IOException {
-                testAndAdd(path);
-                return FileVisitResult.CONTINUE;
+                return testAndAdd(path);
             }
 
-            private void testAndAdd(Path path) {
+            @SuppressWarnings("PMD.AvoidDeeplyNestedIfStmts")
+            private FileVisitResult testAndAdd(Path path) {
+                if (excludeMatchers.parallelStream()
+                    .filter(em -> em.matches(root.relativize(path)))
+                    .findAny().isPresent()) {
+                    if (path.toFile().isDirectory()) {
+                        return FileVisitResult.SKIP_SUBTREE;
+                    }
+                    return FileVisitResult.CONTINUE;
+                }
                 if (pathMatcher.matches(path)) {
                     @SuppressWarnings("unchecked")
                     T resource = (T) ResourceFactory
@@ -157,14 +182,16 @@ public class DefaultFileTree<T extends FileResource> extends DefaultResources<T>
                     if (resource.asOf().isAfter(latestChange)) {
                         latestChange = resource.asOf();
                     }
+                    return FileVisitResult.CONTINUE;
                 }
+                return FileVisitResult.CONTINUE;
             }
 
             @Override
             public FileVisitResult preVisitDirectory(Path dir,
                     BasicFileAttributes attrs) throws IOException {
                 if (withDirs) {
-                    testAndAdd(dir);
+                    return testAndAdd(dir);
                 }
                 return FileVisitResult.CONTINUE;
             }

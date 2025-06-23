@@ -38,12 +38,14 @@ public class DefaultBuildContext implements BuildContext {
     private final FutureStreamCache cache;
     private ExecutorService executor
         = Executors.newVirtualThreadPerTaskExecutor();
+    private final String[] commandArgs;
 
     /// Instantiates a new default build. By default, the build uses
     /// a virtual thread per task executor.
     ///
     /* default */ DefaultBuildContext() {
         cache = new FutureStreamCache();
+        commandArgs = LauncherSupport.commandArgs();
     }
 
     /// Returns the executor service used by this build to create futures.
@@ -80,6 +82,12 @@ public class DefaultBuildContext implements BuildContext {
     public Path jdbldDirectory() {
         return Path
             .of(LauncherSupport.jdbldProperties().getProperty(JDBLD_DIRECTORY));
+    }
+
+    @Override
+    @SuppressWarnings("PMD.MethodReturnsInternalArray")
+    public String[] commandArgs() {
+        return commandArgs;
     }
 
 }

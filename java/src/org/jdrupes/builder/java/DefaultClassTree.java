@@ -39,7 +39,7 @@ public class DefaultClassTree extends DefaultFileTree<ClassFile>
     ///
     protected DefaultClassTree(ResourceType<? extends ClassTree> type,
             Project project, Path root) {
-        super(type, project, root, "**/*.class", false);
+        super(type, project, root, "**/*.class");
     }
 
     /// Creates the class tree.

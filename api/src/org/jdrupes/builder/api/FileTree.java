@@ -44,6 +44,19 @@ import java.util.stream.Stream;
 ///
 public interface FileTree<T extends FileResource> extends Resources<T> {
 
+    /// Includes directories in the file tree.
+    ///
+    /// @return the file tree
+    ///
+    FileTree<T> withDirectories();
+
+    /// Add a file name pattern to exclude from the tree.
+    ///
+    /// @param pattern the pattern
+    /// @return the file tree
+    ///
+    FileTree<T> exclude(String pattern);
+
     /// Returns the root of the file tree containing the files.
     ///
     /// @param relativize whether to return a path relative to the project's
