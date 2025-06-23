@@ -108,7 +108,9 @@ public class EclipseConfigurator
         project().directory().toFile().mkdirs();
         generateResourcesPrefs();
         generateRuntimePrefs();
-        generateJdtCorePrefs();
+        if (project() instanceof JavaProject) {
+            generateJdtCorePrefs();
+        }
 
         // General overrides
         try {
