@@ -1,0 +1,6 @@
+.settings/
+.project
+.classpath
+!_jdbld/.settings/
+!_jdbld/.project
+!_jdbld/.classpath
