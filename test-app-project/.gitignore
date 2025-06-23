@@ -1,6 +1,10 @@
 .settings/
 .project
 .classpath
+.checkstyle
+.eclipse-pmd
 !_jdbld/.settings/
 !_jdbld/.project
 !_jdbld/.classpath
+!_jdbld/.checkstyle
+!_jdbld/.eclipse-pmd

@@ -79,6 +79,12 @@ public class ProjectPreparation {
                     project.directory()
                         .resolve(".settings/net.sf.jautodoc.prefs"),
                     StandardCopyOption.REPLACE_EXISTING);
+                Files.copy(Root.class.getResourceAsStream("checkstyle"),
+                    project.directory().resolve(".checkstyle"),
+                    StandardCopyOption.REPLACE_EXISTING);
+                Files.copy(Root.class.getResourceAsStream("eclipse-pmd"),
+                    project.directory().resolve(".eclipse-pmd"),
+                    StandardCopyOption.REPLACE_EXISTING);
             }
         });
 
