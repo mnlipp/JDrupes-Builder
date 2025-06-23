@@ -20,6 +20,7 @@ package org.jdrupes.builder.java;
 
 import java.io.File;
 import java.nio.file.Path;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.function.Function;
@@ -32,6 +33,7 @@ import org.jdrupes.builder.api.BuildException;
 import org.jdrupes.builder.api.FileResource;
 import org.jdrupes.builder.api.FileTree;
 import org.jdrupes.builder.api.Project;
+import static org.jdrupes.builder.api.Project.Properties.*;
 import org.jdrupes.builder.api.Resource;
 import org.jdrupes.builder.api.ResourceRequest;
 import org.jdrupes.builder.api.ResourceType;
@@ -206,6 +208,11 @@ public class JavaCompiler extends JavaTool<FileTree<ClassFile>> {
             = javac.getStandardFileManager(diagnostics, null, null)) {
             var compilationUnits
                 = fileManager.getJavaFileObjectsFromPaths(sourcePaths());
+            List<String> allOptions = new ArrayList<>(options());
+            allOptions.addAll(List.of(
+                "-d", destDir.toString(),
+                "-cp", classpath,
+                "-encoding", project().get(Encoding).toString()));
             if (!javac.getTask(null, fileManager, null,
                 List.of("-d", destDir.toString(),
                     "-cp", classpath),

@@ -55,7 +55,7 @@ public abstract class JavaTool<T extends Resource>
     /// @param options the options
     /// @return the javadoc
     ///
-    protected JavaTool<T> options(Stream<String> options) {
+    public JavaTool<T> options(Stream<String> options) {
         this.options.addAll(options.toList());
         return this;
     }
@@ -65,7 +65,7 @@ public abstract class JavaTool<T extends Resource>
     /// @param options the options
     /// @return the javadoc
     ///
-    protected JavaTool<T> options(String... options) {
+    public JavaTool<T> options(String... options) {
         this.options.addAll(Arrays.asList(options));
         return this;
     }
