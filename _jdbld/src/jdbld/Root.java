@@ -64,6 +64,8 @@ public class Root extends AbstractProject implements RootProject {
             .taglets(Stream.of("org.jdrupes.taglets.plantUml.PlantUml",
                 "org.jdrupes.taglets.plantUml.StartUml",
                 "org.jdrupes.taglets.plantUml.EndUml"))
+            .addSources(get(this, new ResourceRequest<FileTree<JavaSourceFile>>(
+                new ResourceType<>() {})))
             .options("-overview", directory().resolve("overview.md").toString())
             .options("--add-stylesheet",
                 directory().resolve("misc/javadoc-overwrites.css").toString())
@@ -74,9 +76,7 @@ public class Root extends AbstractProject implements RootProject {
             .options("-linksource")
             .options("-link",
                 "https://docs.oracle.com/en/java/javase/23/docs/api/")
-            .options("-quiet")
-            .addSources(get(this, new ResourceRequest<FileTree<JavaSourceFile>>(
-                new ResourceType<>() {})));
+            .options("-quiet");
 
         // Commands
         defineCommand("build",
