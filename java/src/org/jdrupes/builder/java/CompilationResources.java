@@ -18,11 +18,8 @@
 
 package org.jdrupes.builder.java;
 
-import org.jdrupes.builder.api.IncludeConsumed;
-
 /// The Interface CompilationResources.
 ///
-public interface CompilationResources
-        extends RuntimeResources, IncludeConsumed {
+public interface CompilationResources extends RuntimeResources {
 
 }
