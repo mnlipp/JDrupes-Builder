@@ -73,6 +73,14 @@ public class ResourceCollector<T extends Resource>
         return this;
     }
 
+    /// Return the resources to collect.
+    ///
+    /// @return the resources
+    ///
+    public final Resources<T> resources() {
+        return resources;
+    }
+
     @Override
     @SuppressWarnings("unchecked")
     public <R extends Resource> Stream<R>
