@@ -24,6 +24,7 @@ import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import static java.nio.file.StandardOpenOption.*;
 import java.time.Instant;
 import java.util.Comparator;
 import java.util.Map;
@@ -252,8 +253,8 @@ public class UberJarGenerator extends AbstractGenerator<JarFile> {
         Attributes attributes = manifest.getMainAttributes();
         attributes.put(Attributes.Name.MANIFEST_VERSION, "1.0");
         attributes.put(Attributes.Name.MAIN_CLASS, mainClass);
-        try (JarOutputStream jos = new JarOutputStream(
-            Files.newOutputStream(jarResource.path()), manifest)) {
+        try (JarOutputStream jos = new JarOutputStream(Files.newOutputStream(
+            jarResource.path(), CREATE, TRUNCATE_EXISTING), manifest)) {
             for (var entry : entries.entrySet()) {
                 if (entry.getValue().isEmpty()) {
                     continue;
