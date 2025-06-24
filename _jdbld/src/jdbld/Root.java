@@ -40,14 +40,14 @@ public class Root extends AbstractProject implements RootProject {
         dependency(project(Eclipse.class), Expose);
 
         // Build app jar
-        generator(UberJarGenerator::new).addAll(providers(Intend.Expose))
+        dependency(new UberJarGenerator(this).addAll(providers(Intend.Expose))
             .add(new MvnRepoLookup().artifact(
                 "eu.maveniverse.maven.mima.runtime:standalone-static:2.4.29")
-                .artifact("commons-logging:commons-logging:1.3.5")
                 .artifact("org.slf4j:slf4j-api:2.0.17")
                 .artifact("org.slf4j:slf4j-jdk14:2.0.17"))
             .mainClass("org.jdrupes.builder.startup.BootstrapLauncher")
-            .destination(directory().resolve(Path.of("_jdbld", "app")));
+            .destination(directory().resolve(Path.of("_jdbld", "app"))),
+            Intend.Forward);
 
         // Build javadoc
         generator(Javadoc::new).tagletpath(Stream.of(
