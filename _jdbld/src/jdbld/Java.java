@@ -1,6 +1,6 @@
 package jdbld;
 
-import org.jdrupes.builder.api.Intend;
+import static org.jdrupes.builder.api.Intend.*;
 import org.jdrupes.builder.core.AbstractProject;
 import org.jdrupes.builder.java.JavaProject;
 
@@ -8,7 +8,7 @@ public class Java extends AbstractProject implements JavaProject {
 
     public Java() {
         super(name("java"));
-        dependency(project(Core.class), Intend.Consume);
+        dependency(Consume, project(Core.class));
     }
 
 }

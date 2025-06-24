@@ -178,7 +178,7 @@ public abstract class AbstractProject implements Project {
             projectDirectory = parent.directory().resolve(directory);
             // Fallback, will be replaced when the parent explicitly adds a
             // dependency.
-            parent.dependency(this, Forward);
+            parent.dependency(Forward, this);
         }
         rootProject().prepareProject(this);
     }
@@ -271,12 +271,12 @@ public abstract class AbstractProject implements Project {
 
     /// Add a dependency on another provider with the given intend.
     ///
-    /// @param provider the provider
     /// @param intend the intend
+    /// @param provider the provider
     /// @return the project
     ///
     @Override
-    public Project dependency(ResourceProvider<?> provider, Intend intend) {
+    public Project dependency(Intend intend, ResourceProvider<?> provider) {
         providers.put(provider, intend);
         return this;
     }

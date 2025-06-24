@@ -235,13 +235,13 @@ public interface Project extends ResourceProvider<Resource> {
     /// as a provider with [Intend#Supply], it is recommended to use
     /// one of the "generator" methods for better readability.
     ///
-    /// @param provider the provider
     /// @param intend the dependency type
+    /// @param provider the provider
     /// @return the project for method chaining
     /// @see generator(Generator)
     /// @see generator(Function)
     ///
-    Project dependency(ResourceProvider<?> provider, Intend intend);
+    Project dependency(Intend intend, ResourceProvider<?> provider);
 
     /// Returns the providers that have been added with one of the given 
     /// intended usages as [Stream]. The stream may only be terminated

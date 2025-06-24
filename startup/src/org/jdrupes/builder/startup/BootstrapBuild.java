@@ -22,7 +22,7 @@ import java.nio.file.Path;
 import java.util.Arrays;
 import org.jdrupes.builder.api.FileResource;
 import org.jdrupes.builder.api.FileTree;
-import org.jdrupes.builder.api.Intend;
+import static org.jdrupes.builder.api.Intend.*;
 import org.jdrupes.builder.api.Masked;
 import org.jdrupes.builder.api.ResourceType;
 import org.jdrupes.builder.core.AbstractProject;
@@ -41,8 +41,8 @@ public class BootstrapBuild extends AbstractProject implements Masked {
     @SuppressWarnings("PMD.ConstructorCallsOverridableMethod")
     public BootstrapBuild() {
         super(parent(BootstrapRoot.class), jdbldDirectory());
-        dependency(new ClasspathScanner(this,
-            System.getProperty("java.class.path")), Intend.Consume);
+        dependency(Consume, new ClasspathScanner(this,
+                System.getProperty("java.class.path")));
 
         // Collect directories with "build configuration", derive source
         // trees and use as java sources.

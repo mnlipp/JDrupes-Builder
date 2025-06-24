@@ -18,7 +18,7 @@
 
 package org.jdrupes.builder.startup;
 
-import org.jdrupes.builder.api.Intend;
+import static org.jdrupes.builder.api.Intend.*;
 import org.jdrupes.builder.api.Masked;
 import org.jdrupes.builder.api.RootProject;
 import org.jdrupes.builder.core.AbstractProject;
@@ -33,6 +33,6 @@ public class BootstrapRoot extends AbstractProject
     ///
     @SuppressWarnings("PMD.ConstructorCallsOverridableMethod")
     public BootstrapRoot() {
-        dependency(project(BootstrapBuild.class), Intend.Expose);
+        dependency(Expose, project(BootstrapBuild.class));
     }
 }

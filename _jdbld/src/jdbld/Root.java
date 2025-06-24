@@ -1,11 +1,9 @@
 package jdbld;
 
-import static org.jdrupes.builder.api.Intend.*;
-
 import java.nio.file.Path;
 import java.util.stream.Stream;
 import org.jdrupes.builder.api.FileTree;
-import org.jdrupes.builder.api.Intend;
+import static org.jdrupes.builder.api.Intend.*;
 import org.jdrupes.builder.api.Project;
 import org.jdrupes.builder.api.ResourceRequest;
 import org.jdrupes.builder.api.ResourceType;
@@ -18,7 +16,6 @@ import org.jdrupes.builder.mvnrepo.MvnRepoLookup;
 import org.jdrupes.builder.java.Javadoc;
 import org.jdrupes.builder.java.JavadocDirectory;
 import org.jdrupes.builder.java.JavaSourceFile;
-
 import static org.jdrupes.builder.java.JavaTypes.*;
 
 public class Root extends AbstractProject implements RootProject {
@@ -32,22 +29,21 @@ public class Root extends AbstractProject implements RootProject {
     public Root() {
         super(name("jdrupes-builder"));
 
-        dependency(project(Api.class), Expose);
-        dependency(project(Core.class), Expose);
-        dependency(project(Java.class), Expose);
-        dependency(project(MvnRepo.class), Expose);
-        dependency(project(Startup.class), Expose);
-        dependency(project(Eclipse.class), Expose);
+        dependency(Expose, project(Api.class));
+        dependency(Expose, project(Core.class));
+        dependency(Expose, project(Java.class));
+        dependency(Expose, project(MvnRepo.class));
+        dependency(Expose, project(Startup.class));
+        dependency(Expose, project(Eclipse.class));
 
         // Build app jar
-        dependency(new UberJarGenerator(this).addAll(providers(Intend.Expose))
+        dependency(Forward, new UberJarGenerator(this).addAll(providers(Expose))
             .add(new MvnRepoLookup().artifact(
                 "eu.maveniverse.maven.mima.runtime:standalone-static:2.4.29")
                 .artifact("org.slf4j:slf4j-api:2.0.17")
                 .artifact("org.slf4j:slf4j-jdk14:2.0.17"))
             .mainClass("org.jdrupes.builder.startup.BootstrapLauncher")
-            .destination(directory().resolve(Path.of("_jdbld", "app"))),
-            Intend.Forward);
+            .destination(directory().resolve(Path.of("_jdbld", "app"))));
 
         // Build javadoc
         generator(Javadoc::new).tagletpath(Stream.of(
