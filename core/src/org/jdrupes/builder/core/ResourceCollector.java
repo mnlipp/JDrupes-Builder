@@ -25,7 +25,7 @@ import org.jdrupes.builder.api.ResourceRequest;
 import org.jdrupes.builder.api.ResourceType;
 import org.jdrupes.builder.api.Resources;
 
-/// A provider for resources to be included in a project. This
+/// A provider of resources to be included in a project. This
 /// implementation can be used for all kinds of resources. Usually
 /// language specific packages derive specializations that bind
 /// this class to a specific type of resource. These specializations

@@ -18,7 +18,7 @@ public class SimpleAppBuilder extends AbstractProject {
 }
 ```
 
-In jdbld's terminology, a build system is a provider for resources.
+In jdbld's terminology, a build system is a provider of resources.
 It is implemented as a graph of [org.jdrupes.builder.api.ResourceProvider]s,
 which provide [org.jdrupes.builder.api.Resource]s in response to
 [org.jdrupes.builder.api.ResourceRequest]s. The topmost layer of the

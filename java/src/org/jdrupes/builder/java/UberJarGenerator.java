@@ -160,7 +160,7 @@ public class UberJarGenerator extends AbstractGenerator<JarFile> {
     /// are added to the uber jar.
     ///
     /// Because an uber jar is also a [ClasspathElement] this
-    /// [UberJarGenerator] is also a provider for [ClasspathElement]s.
+    /// [UberJarGenerator] is also a provider of [ClasspathElement]s.
     /// To avoid loops, `this` is therefore automatically filtered
     /// from the given providers.
     ///
