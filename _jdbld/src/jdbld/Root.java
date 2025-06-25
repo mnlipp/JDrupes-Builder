@@ -60,9 +60,11 @@ public class Root extends AbstractProject implements RootProject {
             .options("--add-stylesheet",
                 directory().resolve("misc/javadoc-overwrites.css").toString())
             .options("--add-script",
-                directory().resolve("misc/prism.js").toString())
+                directory().resolve("misc/highlight.min.js").toString())
+            .options("--add-script",
+                directory().resolve("misc/highlight-all.js").toString())
             .options("--add-stylesheet",
-                directory().resolve("misc/prism.css").toString())
+                directory().resolve("misc/highlight-github.css").toString())
             .options("-linksource")
             .options("-link",
                 "https://docs.oracle.com/en/java/javase/23/docs/api/")
