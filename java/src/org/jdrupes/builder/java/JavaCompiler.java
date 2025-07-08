@@ -54,7 +54,7 @@ import static org.jdrupes.builder.java.JavaTypes.*;
 public class JavaCompiler extends JavaTool<FileTree<ClassFile>> {
 
     private final Resources<FileTree<JavaSourceFile>> sources
-        = project().create(new ResourceType<>() {});
+        = project().resource(new ResourceType<>() {});
     private Path destination = Path.of("classes");
 
     /// Instantiates a new java compiler.
@@ -103,7 +103,7 @@ public class JavaCompiler extends JavaTool<FileTree<ClassFile>> {
     /// @return the resources collector
     ///
     public final JavaCompiler addSources(Path directory, String pattern) {
-        addSources(project().create(JavaSourceTreeType, directory, pattern));
+        addSources(project().resource(JavaSourceTreeType, directory, pattern));
         return this;
     }
 
@@ -160,7 +160,7 @@ public class JavaCompiler extends JavaTool<FileTree<ClassFile>> {
         // Get this project's previously generated classes for checking
         // or deleting.
         var destDir = project().buildDirectory().resolve(destination);
-        final var classSet = project().create(ClassTreeType, destDir);
+        final var classSet = project().resource(ClassTreeType, destDir);
         if (requested.includes(Cleaniness)) {
             classSet.delete();
             return Stream.empty();
@@ -169,7 +169,7 @@ public class JavaCompiler extends JavaTool<FileTree<ClassFile>> {
         // Get classpath for compilation.
         log.fine(() -> "Getting classpath for " + project());
         @SuppressWarnings("PMD.UseDiamondOperator")
-        var cpResources = project().create(ClasspathType).addAll(
+        var cpResources = project().resource(ClasspathType).addAll(
             project().provided(new ResourceRequest<ClasspathElement>(
                 CompilationResourcesType)));
         log.finest(() -> project() + " uses classpath: " + cpResources.stream()

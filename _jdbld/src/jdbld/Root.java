@@ -49,9 +49,9 @@ public class Root extends AbstractProject implements RootProject {
         generator(Javadoc::new)
             .destination(rootProject().directory().resolve("webpages/javadoc"))
             .tagletpath(Stream.of(
-                create(JarFileType, directory().resolve(
+                resource(JarFileType, directory().resolve(
                     Path.of("_jdbld/lib/plantuml-taglet-3.1.0.jar"))),
-                create(JarFileType, directory().resolve(
+                resource(JarFileType, directory().resolve(
                     Path.of("_jdbld/lib/plantuml-1.2023.11.jar")))))
             .taglets(Stream.of("org.jdrupes.taglets.plantUml.PlantUml",
                 "org.jdrupes.taglets.plantUml.StartUml",

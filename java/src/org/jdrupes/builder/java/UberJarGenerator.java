@@ -206,7 +206,7 @@ public class UberJarGenerator extends AbstractGenerator<JarFile> {
 
         // Maybe only delete
         if (requested.includes(Cleaniness)) {
-            project().create(JarFileType,
+            project().resource(JarFileType,
                 destDir.resolve(project().name() + ".jar")).delete();
             return Stream.empty();
         }
@@ -220,7 +220,7 @@ public class UberJarGenerator extends AbstractGenerator<JarFile> {
         // Get all content.
         log.fine(() -> "Getting uber jar content for " + project().name());
         @SuppressWarnings("PMD.UseDiamondOperator")
-        var toBeIncluded = project().create(ClasspathType)
+        var toBeIncluded = project().resource(ClasspathType)
             .addAll(project().invokeProviders(providers.stream(),
                 new ResourceRequest<ClasspathElement>(
                     new ResourceType<RuntimeResources>() {})));
@@ -229,7 +229,7 @@ public class UberJarGenerator extends AbstractGenerator<JarFile> {
             .collect(Collectors.joining(":")));
 
         // Check if rebuild needed.
-        var jarResource = (JarFile) project().create(requested.type()
+        var jarResource = (JarFile) project().resource(requested.type()
             .containedType(), destDir.resolve(project().name() + ".jar"));
         if (jarResource.asOf().isAfter(toBeIncluded.asOf())) {
             return Stream.of((T) jarResource);

@@ -353,7 +353,7 @@ public interface Project extends ResourceProvider<Resource> {
     /// @param args the args
     /// @return the t
     ///
-    default <T extends Resource> T create(ResourceType<T> type,
+    default <T extends Resource> T resource(ResourceType<T> type,
             Object... args) {
         return ResourceFactory.create(type, this, args);
     }

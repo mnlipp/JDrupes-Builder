@@ -50,7 +50,7 @@ public class ResourceCollector<T extends Resource>
         super(project);
         this.type = type;
         resources
-            = project().create(new ResourceType<>(Resources.class, type) {});
+            = project().resource(new ResourceType<>(Resources.class, type) {});
     }
 
     /// Adds the given file tree with resource directories.

@@ -120,7 +120,7 @@ public class EclipseConfigurator
                 "Problem adapting Eclipse configuration", e);
         }
         @SuppressWarnings({ "unchecked", "PMD.UseDiamondOperator" })
-        var result = (Stream<T>) Stream.of(project().create(
+        var result = (Stream<T>) Stream.of(project().resource(
             new ResourceType<EclipseConfiguration>() {},
             project().directory()));
         return result;

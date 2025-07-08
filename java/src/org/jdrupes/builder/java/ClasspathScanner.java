@@ -72,11 +72,11 @@ public class ClasspathScanner
         var result = (Stream<T>) Stream.of(path.split(File.pathSeparator))
             .map(Path::of).map(p -> {
                 if (p.toFile().isDirectory()) {
-                    return (ClasspathElement) project().create(
+                    return (ClasspathElement) project().resource(
                         ClassTreeType, p.toAbsolutePath());
                 } else {
                     return (ClasspathElement) project()
-                        .create(JarFileType, p.toAbsolutePath());
+                        .resource(JarFileType, p.toAbsolutePath());
                 }
             }).filter(e -> requested.includes(e.type()));
         return result;
