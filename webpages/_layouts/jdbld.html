@@ -1,0 +1,99 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="chrome=1">
+    <meta name="referrer" content="no-referrer">
+    <link rel="icon" type="image/svg+xml" href="favicon.svg" sizes="any">
+    <link rel="stylesheet" href="stylesheets/styles.css">
+    <link rel="stylesheet" href="stylesheets/github.css">
+    <meta name="viewport" content="width=device-width">
+    {% include umami.html %}
+    <!--[if lt IE 9]>
+    <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+    <![endif]-->
+    <link href="pagefind/pagefind-ui.css" rel="stylesheet">
+    <script src="pagefind/pagefind-ui.js"></script>
+    <script>
+        window.addEventListener('DOMContentLoaded', (event) => {
+          new PagefindUI({ element: "#search", showSubResults: true,
+          // Regrettably works with absolute path only
+          bundlePath: "/pagefind/",
+          // See https://github.com/CloudCannon/pagefind/issues/530
+          processResult: function (result) {
+              if (result?.meta?.image) {
+                  let resultBase = new URL(result.url, window.location);
+                  let remappedImage = new URL(result.meta.image, resultBase);
+                  if (remappedImage.hostname !== window.location.hostname) {
+                      result.meta.image = remappedImage.toString();
+                  } else {
+                      result.meta.image = remappedImage.pathname;
+                  }
+              }
+          }
+				 });
+        });
+    </script>
+   {% seo %}
+  </head>
+  <body>
+    <div class="wrapper">
+      <div id="search"></div>
+      <header>
+        <div>
+        <div style="float: left;">
+          <div class="index-title"><a style="color: #222;" href="https://builder.jdrupes.org/">JDrupes Builder</a></div>
+          <div class="index-subtitle">By <a href="https://github.com/mnlipp/">Michael N. Lipp</a></div>
+          <p><a rel="me" href="https://fosstodon.org/@mnl"><img alt="Mastodon Follow" 
+            src="https://img.shields.io/mastodon/follow/108843609567976408?domain=https%3A%2F%2Ffosstodon.org&style=social"></a></p>
+        </div>
+        <div style="float: right; width: 7em;">
+          <img alt="JDrupes Builder Logo" src="JDrupes-Builder.svg">
+        </div>
+        <div style="clear:both;"></div>
+        </div>
+        <p></p>
+
+        <p class="view"><a href="https://github.com/mnlipp/JDrupes-Builder">View GitHub Project</a></p>
+
+        <p></p>
+
+        <p class="part-entry"><a href="index.html">Overview</a></p>
+        <p class="part-list-title"><a href="javadoc/index.html">Javadoc</a></p>
+
+      </header>
+      <section>
+        <div class="post-date"><span class="post-meta">{{ page.date | date: "%b %-d, %Y" }}</span></div>
+        {% if page.tocTitle %}
+          <h1>{{ page.tocTitle }}</h1>
+          {% include toc.html html=content %}
+        {% endif %}
+
+        {{ content }}
+      </section>
+      <footer>
+        <!-- Optional footer data -->
+        <p id=githubfooter style="display: none"><small>
+          Hosted on GitHub Pages &mdash;
+          <a href="https://github.com/site/terms" target="_top">Terms</a>
+          &mdash; <a href="https://github.com/site/privacy" target="_top">Privacy</a>
+          &mdash; Theme derived from <a href="https://github.com/orderedlist/minimal">minimal</a></small>
+        </p>
+        <p id=readthedocsfooter style="display: none"><small>
+          Hosted on Readthedocs &mdash; 
+          <a href="https://docs.readthedocs.io/page/terms-of-service.html" target="_top">Terms</a>
+          &mdash; <a href="https://docs.readthedocs.io/page/privacy-policy.html" target="_top">Privacy</a>
+          &mdash; Theme derived from <a href="https://github.com/orderedlist/minimal">minimal</a></small>
+        </p>
+        <script type="text/javascript">
+        if (location.hostname.indexOf("github") !== -1 || location.hostname.indexOf("jdrupes.org") !== -1) {
+            document.getElementById("githubfooter").style.display="inherit";
+        } else if (location.hostname.indexOf("readthedocs") !== -1) {
+          document.getElementById("readthedocsfooter").style.display="inherit";
+        }
+        </script>
+      </footer>
+    </div>
+
+  </body>
+</html lang="en">

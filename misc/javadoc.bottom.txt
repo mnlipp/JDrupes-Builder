@@ -1,0 +1,15 @@
+<div>
+    <!-- Optional footer data -->
+    <p id=githubfooter style="padding: 5px 6px; visibility: hidden">Hosted on GitHub Pages &mdash; 
+    <a href="https://github.com/site/terms" target="_top">Terms</a>
+    &mdash; <a href="https://github.com/site/privacy" target="_top">Privacy</a></p>
+    <script type="text/javascript">
+    if (location.hostname.indexOf("github") !== -1 || location.hostname.indexOf("jdrupes.org") !== -1) {
+        document.getElementById("githubfooter").style.visibility="visible";
+    }
+    </script>
+    <noscript>
+        <div>JavaScript is disabled on your browser, terms and privacy links may not be shown correctly.</div>
+    </noscript>
+    <script defer src="https://gotit.mnl.de/script.js" data-website-id="5ee00ec4-826a-4372-9d19-4c432faac380"></script>
+</div>

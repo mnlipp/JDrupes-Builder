@@ -1,0 +1,14 @@
+plugins:
+  - jekyll-seo-tag
+
+url: "https://jdbld.jdrupes.org"
+    
+author: Michael N. Lipp
+
+logo: JDrupes-Builder.svg
+
+tagline: JDrupes Builder by mnlipp 
+
+description: >-
+  JDrupes Builder ("jdbld" for short) is a build automation tool
+  that uses Java for its configuration and centers around resources.

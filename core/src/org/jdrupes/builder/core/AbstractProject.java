@@ -18,7 +18,9 @@
 
 package org.jdrupes.builder.core;
 
+import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Collections;
 import java.util.HashMap;
@@ -363,6 +365,21 @@ public abstract class AbstractProject implements Project {
 
     /* default */ ResourceRequest<?>[] lookupCommand(String name) {
         return commands.getOrDefault(name, new ResourceRequest[0]);
+    }
+
+    /// Convenience method for reading the content of a file into a
+    /// String.
+    ///
+    /// @param path the path
+    /// @return the string
+    ///
+    @SuppressWarnings("PMD.PreserveStackTrace")
+    public String readString(Path path) {
+        try {
+            return Files.readString(path);
+        } catch (IOException e) {
+            throw new BuildException("Cannot read file: " + e.getMessage());
+        }
     }
 
     @Override

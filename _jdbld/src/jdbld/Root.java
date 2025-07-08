@@ -46,11 +46,13 @@ public class Root extends AbstractProject implements RootProject {
             .destination(directory().resolve(Path.of("_jdbld", "app"))));
 
         // Build javadoc
-        generator(Javadoc::new).tagletpath(Stream.of(
-            create(JarFileType, directory().resolve(
-                Path.of("_jdbld/lib/plantuml-taglet-3.1.0.jar"))),
-            create(JarFileType, directory().resolve(
-                Path.of("_jdbld/lib/plantuml-1.2023.11.jar")))))
+        generator(Javadoc::new)
+            .destination(rootProject().directory().resolve("webpages/javadoc"))
+            .tagletpath(Stream.of(
+                create(JarFileType, directory().resolve(
+                    Path.of("_jdbld/lib/plantuml-taglet-3.1.0.jar"))),
+                create(JarFileType, directory().resolve(
+                    Path.of("_jdbld/lib/plantuml-1.2023.11.jar")))))
             .taglets(Stream.of("org.jdrupes.taglets.plantUml.PlantUml",
                 "org.jdrupes.taglets.plantUml.StartUml",
                 "org.jdrupes.taglets.plantUml.EndUml"))
@@ -64,7 +66,10 @@ public class Root extends AbstractProject implements RootProject {
             .options("--add-script",
                 directory().resolve("misc/highlight-all.js").toString())
             .options("--add-stylesheet",
-                directory().resolve("misc/highlight-github.css").toString())
+                directory().resolve("misc/highlight-default.css").toString())
+            .options("-bottom",
+                readString(directory().resolve("misc/javadoc.bottom.txt")))
+            .options("--allow-script-in-comments")
             .options("-linksource")
             .options("-link",
                 "https://docs.oracle.com/en/java/javase/23/docs/api/")
