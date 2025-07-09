@@ -124,7 +124,6 @@ import static org.jdrupes.builder.api.Intend.Supply;
 /// project *-down-> generator
 /// @enduml
 ///
-@SuppressWarnings("PMD.TooManyMethods")
 public interface Project extends ResourceProvider<Resource> {
 
     /// The common project properties.
