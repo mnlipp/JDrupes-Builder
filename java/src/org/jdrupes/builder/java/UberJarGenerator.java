@@ -192,11 +192,8 @@ public class UberJarGenerator extends AbstractGenerator<JarFile> {
         }
 
         // Prepare jar file
-        boolean wantAppJar
-            = AppJarFileType.isAssignableFrom(requested.type().containedType());
         var destDir = Optional.ofNullable(destination)
-            .orElseGet(() -> project().buildDirectory().resolve(
-                wantAppJar ? "app" : "libs"));
+            .orElseGet(() -> project().buildDirectory().resolve("libs"));
         if (!destDir.toFile().exists()) {
             if (!destDir.toFile().mkdirs()) {
                 throw new BuildException("Cannot create directory " + destDir);
@@ -211,7 +208,8 @@ public class UberJarGenerator extends AbstractGenerator<JarFile> {
         }
 
         // Make sure mainClass is set
-        if (wantAppJar && mainClass == null) {
+        if (AppJarFileType.isAssignableFrom(requested.type().containedType())
+            && mainClass == null) {
             throw new BuildException("Main class must be set for "
                 + name() + " in " + project());
         }
