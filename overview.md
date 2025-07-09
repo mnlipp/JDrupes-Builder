@@ -28,6 +28,8 @@ SimpleAppProject *--> "*" Generator
 @enduml
 
 @startuml simple-appjar-project.svg
+scale 1.075
+
 object "project: SimpleAppBuilder" as project
 object "compiler: JavaCompiler" as compiler
 object "appJarGenerator: UberJarGenerator" as appJarGenerator
@@ -37,6 +39,7 @@ appJarGenerator --> project : provider
 @enduml
 
 @startuml build-appjar-project.svg
+scale 1.075
 hide footbox
 
 actor User as user
