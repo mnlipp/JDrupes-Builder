@@ -192,7 +192,8 @@ public class UberJarGenerator extends AbstractGenerator<JarFile> {
         }
 
         // Prepare jar file
-        boolean wantAppJar = AppJarFileType.isAssignableFrom(requested.type());
+        boolean wantAppJar
+            = AppJarFileType.isAssignableFrom(requested.type().containedType());
         var destDir = Optional.ofNullable(destination)
             .orElseGet(() -> project().buildDirectory().resolve(
                 wantAppJar ? "app" : "libs"));
