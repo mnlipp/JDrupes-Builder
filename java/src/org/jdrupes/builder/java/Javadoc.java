@@ -98,7 +98,6 @@ public class Javadoc extends JavaTool<FileTree<FileResource>> {
     /// @param pattern the pattern
     /// @return the resources collector
     ///
-    @SuppressWarnings("PMD.UseDiamondOperator")
     public final Javadoc addSources(Path directory, String pattern) {
         addSources(
             project().resource(JavaSourceTreeType, directory, pattern));

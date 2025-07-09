@@ -140,7 +140,7 @@ public class JavaCompiler extends JavaTool<FileTree<ClassFile>> {
     public <T extends Resource> Stream<T>
             provide(ResourceRequest<T> requested) {
         if (requested.includes(JavaSourceTreeType)) {
-            @SuppressWarnings({ "unchecked", "PMD.AvoidDuplicateLiterals" })
+            @SuppressWarnings({ "unchecked" })
             var result = (Stream<T>) sources.stream();
             return result;
         }

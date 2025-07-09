@@ -183,9 +183,7 @@ public class UberJarGenerator extends AbstractGenerator<JarFile> {
     }
 
     @Override
-    @SuppressWarnings({ "PMD.AvoidCatchingGenericException",
-        "PMD.CollapsibleIfStatements", "unchecked",
-        "PMD.AvoidInstantiatingObjectsInLoops" })
+    @SuppressWarnings({ "PMD.CollapsibleIfStatements", "unchecked" })
     public <T extends Resource> Stream<T>
             provide(ResourceRequest<T> requested) {
         if (!requested.includes(AppJarFileType)
