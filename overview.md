@@ -30,7 +30,7 @@ SimpleAppProject *--> "*" Generator
 @startuml simple-appjar-project.svg
 object "project: SimpleAppBuilder" as project
 object "compiler: JavaCompiler" as compiler
-object "appJarGenerator: AppJarGenerator" as appJarGenerator
+object "appJarGenerator: UberJarGenerator" as appJarGenerator
 project *-right-> compiler : generator
 project *--> appJarGenerator : generator
 appJarGenerator --> project : provider
@@ -74,4 +74,3 @@ Resources <|-- RuntimeResources
 class CompilationResources
 RuntimeResources <|-- CompilationResources
 @enduml
-
