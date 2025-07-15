@@ -14,10 +14,10 @@ consists of elements. These elements can be jar files or trees
 of class files (which are denoted in the classpath by their root
 directory).
 
-Using [ClasspathElement](javadoc/org/jdrupes/builder/api/ClasspathElement)
+Using [ClasspathElement](javadoc/org/jdrupes/builder/java/ClasspathElement.html)
 as common supertype for jar files and class trees, we could ask for the
 resource type
-[ClasspathElement](javadoc/org/jdrupes/builder/api/ClasspathElement).
+[ClasspathElement](javadoc/org/jdrupes/builder/java/ClasspathElement.html).
 However, we cannot expect to receive a single classpath element.
 Instead, we should expect to get a collection of classpath elements.
 Therefore it makes more sense to ask for a collection of classpath
@@ -29,29 +29,29 @@ elements, which results in the requested type being
 Another point to consider is that there are different kinds of
 classpaths such as compile-time and a runtime classpaths. Both are 
 collections of
-[ClasspathElement](javadoc/org/jdrupes/builder/api/ClasspathElement)s.
+[ClasspathElement](javadoc/org/jdrupes/builder/java/ClasspathElement.html)s.
 However, depending on the kind of classpath, a
-[ResourceProvider](javadoc/org/jdrupes/builder/api/) may deliver different
-subsets of these elements. We can include this information in the
-requested resource type by using a specialized container whose type
-indicates the desired subset of instances. For Java classpaths, the
-specialized container types are
-[CompilationResources](javadoc/org/jdrupes/builder/api/CompilationResources)
-and [RuntimeResources](javadoc/org/jdrupes/builder/api/RuntimeResources).
+[ResourceProvider](javadoc/org/jdrupes/builder/api/ResourceProvider.html)
+may deliver different subsets of these elements. We can include this
+information in the requested resource type by using a specialized
+container whose type indicates the desired subset of instances. For Java
+classpaths, the specialized container types are
+[CompilationResources](javadoc/org/jdrupes/builder/java/CompilationResources.html)
+and [RuntimeResources](javadoc/org/jdrupes/builder/java/RuntimeResources.html).
 
 From this example, we derive the common pattern for resource requests.
 
  1. The requested type is always a collection of resources, i.e.
-    [Resources](javadoc/org/jdrupes/builder/api/Resources) or a type
+    [Resources](javadoc/org/jdrupes/builder/api/Resources.html) or a type
     derived from it.
  2. The type contained in
-    [Resources](javadoc/org/jdrupes/builder/api/Resources) (its type
+    [Resources](javadoc/org/jdrupes/builder/api/Resources.html) (its type
     paramter) must match the type parameter of
-    [ResourceRequest](javadoc/org/jdrupes/builder/api/ResourceRequest)
+    [ResourceRequest](javadoc/org/jdrupes/builder/api/ResourceRequest.html)
     and is the type of the elements of the Java `Stream` that is returned
     by the
-    [ResourceProvider](javadoc/org/jdrupes/builder/api/ResourceProvider)'s
-    [provide](javadoc/org/jdrupes/builder/api/ResourceProvider#provide)
+    [ResourceProvider](javadoc/org/jdrupes/builder/api/ResourceProvider.html)'s
+    [provide](javadoc/org/jdrupes/builder/api/ResourceProvider.html#provide)
     when handling the request.
  3. The type of the collection of resources may be used by providers
     to select the instances they want to provide.
@@ -62,7 +62,7 @@ documentation of the respective providers.
 
 A commonly available resource that must be supported by all providers
 that generate resources is 
-"[Cleanliness](javadoc/org/jdrupes/builder/api/Cleanliness)".
+"[Cleanliness](javadoc/org/jdrupes/builder/api/Cleanliness.html)".
 Admittedly, this pushes the concept of everything being a resource
 to its limits. It solves the problem of cleaning up after a build.
 Depending on your point of view, "cleanliness" may be the absence of
@@ -87,4 +87,4 @@ when invoking the builder. This is shown in the sample project:
  
 Note that the command argument "`clean`" is predefined and can always
 be used to request
-"[Cleanliness](javadoc/org/jdrupes/builder/api/Cleanliness)".
+"[Cleanliness](javadoc/org/jdrupes/builder/api/Cleanliness.html)".
