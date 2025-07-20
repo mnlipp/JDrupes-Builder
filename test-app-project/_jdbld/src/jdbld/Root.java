@@ -18,9 +18,9 @@ public class Root extends AbstractProject implements RootProject {
 
     public Root() {
         super(name("test-app-project"));
-        defineCommand("build",
+        commandAlias("build",
             new ResourceRequest<JarFile>(new ResourceType<>() {}));
-        defineCommand("eclipse",
+        commandAlias("eclipse",
             new ResourceRequest<EclipseConfiguration>(new ResourceType<>() {}));
     }
 

@@ -347,13 +347,13 @@ public abstract class AbstractProject implements Project {
         return this;
     }
 
-    /// Define command, see [RootProject#defineCommand].
+    /// Define command, see [RootProject#commandAlias].
     ///
     /// @param name the name
     /// @param requests the requests
     /// @return the root project
     ///
-    public RootProject defineCommand(String name,
+    public RootProject commandAlias(String name,
             ResourceRequest<?>... requests) {
         if (commands == null) {
             throw new BuildException("Commands can only be defined for"

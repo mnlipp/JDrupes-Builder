@@ -81,7 +81,7 @@ when invoking the builder. This is shown in the sample project:
 
 ```java
         // Command arguments
-        defineCommand("build",
+        commandAlias("build",
             new ResourceRequest<AppJarFile>(new ResourceType<>() {}));
 ```
  

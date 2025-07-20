@@ -41,7 +41,7 @@ public interface RootProject extends Project {
     /// @param requests the requests
     /// @return the root project
     ///
-    default RootProject defineCommand(String name,
+    default RootProject commandAlias(String name,
             ResourceRequest<?>... requests) {
         throw new UnsupportedOperationException();
     }

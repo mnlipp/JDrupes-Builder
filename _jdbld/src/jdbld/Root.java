@@ -76,11 +76,11 @@ public class Root extends AbstractProject implements RootProject {
             .options("-quiet");
 
         // Commands
-        defineCommand("build",
+        commandAlias("build",
             new ResourceRequest<AppJarFile>(new ResourceType<>() {}),
             new ResourceRequest<JavadocDirectory>(
                 new ResourceType<>() {}));
-        defineCommand("eclipse",
+        commandAlias("eclipse",
             new ResourceRequest<EclipseConfiguration>(new ResourceType<>() {}));
     }
 }
