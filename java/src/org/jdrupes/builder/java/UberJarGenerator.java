@@ -102,7 +102,7 @@ import static org.jdrupes.builder.java.JavaTypes.*;
 /// generating the uber jar in a project of its own. Often the root
 /// project can be used for this purpose.  
 ///
-public class UberJarGenerator extends AbstractGenerator<JarFile> {
+public class UberJarGenerator extends AbstractGenerator {
 
     private final CachedStream<ResourceProvider> providers
         = new CachedStream<>();

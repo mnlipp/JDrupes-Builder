@@ -23,9 +23,7 @@ package org.jdrupes.builder.api;
 ///
 /// All generators must handle requests for [Cleanliness].
 ///
-/// @param <T> the type of the resources that this generator provides
-///
-public interface Generator<T extends Resource> extends ResourceProvider {
+public interface Generator extends ResourceProvider {
 
     /// Returns the generator's name.
     ///

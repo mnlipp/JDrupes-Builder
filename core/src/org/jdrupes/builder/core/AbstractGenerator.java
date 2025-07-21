@@ -21,16 +21,10 @@ package org.jdrupes.builder.core;
 import java.util.logging.Logger;
 import org.jdrupes.builder.api.Generator;
 import org.jdrupes.builder.api.Project;
-import org.jdrupes.builder.api.Resource;
-import org.jdrupes.builder.api.Resources;
 
 /// A base implementation of a [Generator].
 ///
-/// @param <T> the type of resource in the [Resources] container that
-/// this generator provides
-///
-public abstract class AbstractGenerator<T extends Resource>
-        implements Generator<T> {
+public abstract class AbstractGenerator implements Generator {
 
     /// The log.
     protected final Logger log = Logger.getLogger(getClass().getName());
@@ -49,14 +43,12 @@ public abstract class AbstractGenerator<T extends Resource>
 
     /// Sets the name of the generator.
     ///
-    /// @param <G> the generator's type
     /// @param name the name
     /// @return the generator
     ///
-    @SuppressWarnings("unchecked")
-    public <G extends AbstractGenerator<T>> G name(String name) {
+    public AbstractGenerator name(String name) {
         this.name = name;
-        return (G) this;
+        return this;
     }
 
     @Override

@@ -32,10 +32,9 @@ import org.jdrupes.builder.api.Resources;
 /// often also offer methods that ease the specification of resources
 /// to be included.
 ///
-/// @param <T> the resource type type
+/// @param <T> the resource type
 ///
-public class ResourceCollector<T extends Resource>
-        extends AbstractGenerator<T> {
+public class ResourceCollector<T extends Resource> extends AbstractGenerator {
 
     private final ResourceType<T> type;
     private final Resources<T> resources;

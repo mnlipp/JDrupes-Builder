@@ -200,7 +200,7 @@ public interface Project extends ResourceProvider {
     /// @param generator the provider
     /// @return the project
     ///
-    Project generator(Generator<?> generator);
+    Project generator(Generator generator);
 
     /// Uses the supplier to create a provider, passing this project as 
     /// argument and adds the result as a generator to this project. This
@@ -220,7 +220,7 @@ public interface Project extends ResourceProvider {
     /// @param supplier the supplier
     /// @return the project for method chaining
     ///
-    default <T extends Generator<?>> T
+    default <T extends Generator> T
             generator(Function<Project, T> supplier) {
         var provider = supplier.apply(this);
         generator(provider);

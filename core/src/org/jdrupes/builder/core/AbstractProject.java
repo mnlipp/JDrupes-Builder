@@ -263,7 +263,7 @@ public abstract class AbstractProject implements Project {
     /// @return the project
     ///
     @Override
-    public Project generator(Generator<?> provider) {
+    public Project generator(Generator provider) {
         providers.put(provider, Supply);
         return this;
     }

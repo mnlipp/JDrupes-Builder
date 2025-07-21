@@ -30,15 +30,11 @@ import javax.tools.Diagnostic;
 import javax.tools.DiagnosticCollector;
 import javax.tools.JavaFileObject;
 import org.jdrupes.builder.api.Project;
-import org.jdrupes.builder.api.Resource;
 import org.jdrupes.builder.core.AbstractGenerator;
 
 /// A base class for generators that invoke java tools.
 ///
-/// @param <T> the generic type
-///
-public abstract class JavaTool<T extends Resource>
-        extends AbstractGenerator<T> {
+public abstract class JavaTool extends AbstractGenerator {
 
     private final List<String> options = new ArrayList<>();
 
@@ -55,7 +51,7 @@ public abstract class JavaTool<T extends Resource>
     /// @param options the options
     /// @return the javadoc
     ///
-    public JavaTool<T> options(Stream<String> options) {
+    public JavaTool options(Stream<String> options) {
         this.options.addAll(options.toList());
         return this;
     }
@@ -65,7 +61,7 @@ public abstract class JavaTool<T extends Resource>
     /// @param options the options
     /// @return the javadoc
     ///
-    public JavaTool<T> options(String... options) {
+    public JavaTool options(String... options) {
         this.options.addAll(Arrays.asList(options));
         return this;
     }

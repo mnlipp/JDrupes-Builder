@@ -51,7 +51,7 @@ import static org.jdrupes.builder.java.JavaTypes.*;
 ///    to a [ResourceRequest] with [ResourceType]
 ///    [JavaTypes#ClassTreeType].
 ///
-public class JavaCompiler extends JavaTool<Resource> {
+public class JavaCompiler extends JavaTool {
 
     private final Resources<FileTree<JavaSourceFile>> sources
         = project().resource(new ResourceType<>() {});

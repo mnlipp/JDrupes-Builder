@@ -30,8 +30,7 @@ import static org.jdrupes.builder.java.JavaTypes.*;
 
 /// Provides [FileTree]s with classes from a given classpath.
 ///
-public class ClasspathScanner
-        extends AbstractGenerator<FileTree<ClassFile>> {
+public class ClasspathScanner extends AbstractGenerator {
 
     private final String path;
 

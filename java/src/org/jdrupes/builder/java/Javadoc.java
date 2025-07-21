@@ -49,7 +49,7 @@ import static org.jdrupes.builder.java.JavaTypes.*;
 /// exceptions for options that are directly related to resource
 /// types (files, directory trees, paths) from the builder context.
 ///
-public class Javadoc extends JavaTool<FileTree<FileResource>> {
+public class Javadoc extends JavaTool {
 
     private final Resources<FileTree<JavaSourceFile>> sources
         = project().resource(new ResourceType<>() {});
