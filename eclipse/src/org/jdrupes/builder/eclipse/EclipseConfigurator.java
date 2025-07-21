@@ -50,9 +50,11 @@ import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.Node;
 
-/// Generate the Eclipse configuration files for a given project.
-/// The generator generates the following files as W3C DOM documents
-/// (for XML files) or as [Properties] for a given project:
+/// The [EclipseConfigurator] provides the resource [EclipseConfiguration].
+/// "The configuration" consists of the Eclipse configuration files
+/// for a given project. The configurator generates the following
+/// files as W3C DOM documents (for XML files) or as [Properties]
+/// for a given project:
 ///
 ///   * `.project`,
 ///   * `.classpath`,
@@ -82,7 +84,7 @@ public class EclipseConfigurator
         super(project);
     }
 
-    /// Provide.
+    /// Provides an [EclipseConfiguration].
     ///
     /// @param <T> the generic type
     /// @param requested the requested

@@ -40,7 +40,14 @@ import static org.jdrupes.builder.api.ResourceType.*;
 import org.jdrupes.builder.api.Resources;
 import static org.jdrupes.builder.java.JavaTypes.*;
 
-/// A generator for creating the Javadoc.
+/// The [Javadoc] generator provides the resource [JavadocDirectory],
+/// a directory that contains the generated javadoc files.
+///
+/// No attempt has been made to define types for the options of
+/// the javadoc tool. Rather, the options are passed as strings
+/// as the [ToolProvider] API suggests. There are some noteworthy
+/// exceptions for options that are directly related to resource
+/// types (files, directory trees, paths) from the builder context.
 ///
 public class Javadoc extends JavaTool<FileTree<FileResource>> {
 
@@ -58,7 +65,6 @@ public class Javadoc extends JavaTool<FileTree<FileResource>> {
     public Javadoc(Project project) {
         super(project);
         tagletpath = project().resource(new ResourceType<>() {});
-
     }
 
     /// Returns the destination directory. Defaults to "`doc`".
