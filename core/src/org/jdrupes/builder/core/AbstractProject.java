@@ -49,12 +49,10 @@ import org.jdrupes.builder.api.RootProject;
 
 /// A default implementation of a [Project].
 ///
-@SuppressWarnings({ "PMD.TooManyMethods", "PMD.CouplingBetweenObjects",
-    "PMD.GodClass" })
+@SuppressWarnings({ "PMD.CouplingBetweenObjects", "PMD.GodClass" })
 public abstract class AbstractProject implements Project {
 
     private Map<Class<? extends Project>, Future<Project>> projects;
-    @SuppressWarnings("PMD.FieldNamingConventions")
     private static ThreadLocal<AbstractProject> fallbackParent
         = new ThreadLocal<>();
     private static Path jdbldDirectory = Path.of("marker:jdbldDirectory");
@@ -62,7 +60,7 @@ public abstract class AbstractProject implements Project {
     private final String projectName;
     private final Path projectDirectory;
     @SuppressWarnings("PMD.UseConcurrentHashMap")
-    private final Map<ResourceProvider<?>, Intend> providers
+    private final Map<ResourceProvider, Intend> providers
         = new LinkedHashMap<>();
     @SuppressWarnings("PMD.UseConcurrentHashMap")
     private final Map<PropertyKey, Object> properties = new HashMap<>();
@@ -133,7 +131,7 @@ public abstract class AbstractProject implements Project {
     ///     the directory is always set to the current working
     ///
     @SuppressWarnings({ "PMD.ConstructorCallsOverridableMethod",
-        "PMD.UseLocaleWithCaseConversions", "PMD.UnusedFormalParameter" })
+        "PMD.UseLocaleWithCaseConversions" })
     protected AbstractProject(NamedParameter<?>... params) {
         // Evaluate patent project
         var parentProject = NamedParameter.<
@@ -209,8 +207,7 @@ public abstract class AbstractProject implements Project {
     /// @return the project
     ///
     @Override
-    @SuppressWarnings("PMD.AvoidSynchronizedStatement")
-    public ResourceProvider<Resource> project(Class<? extends Project> prjCls) {
+    public ResourceProvider project(Class<? extends Project> prjCls) {
         if (this.getClass().equals(prjCls)) {
             return this;
         }
@@ -278,7 +275,7 @@ public abstract class AbstractProject implements Project {
     /// @return the project
     ///
     @Override
-    public Project dependency(Intend intend, ResourceProvider<?> provider) {
+    public Project dependency(Intend intend, ResourceProvider provider) {
         providers.put(provider, intend);
         return this;
     }
@@ -289,27 +286,26 @@ public abstract class AbstractProject implements Project {
     /// @return the stream
     ///
     @Override
-    public Stream<ResourceProvider<?>> providers(Set<Intend> intends) {
+    public Stream<ResourceProvider> providers(Set<Intend> intends) {
         return providers.entrySet().stream()
             .filter(e -> intends.contains(e.getValue())).map(Entry::getKey);
     }
 
     @Override
     public <T extends Resource> Stream<T> invokeProviders(
-            Stream<ResourceProvider<?>> providers, ResourceRequest<T> request) {
+            Stream<ResourceProvider> providers, ResourceRequest<T> request) {
         return providers.map(p -> context().<T> get(p, request))
             // Terminate stream to start all tasks for evaluating the futures
             .toList().stream().flatMap(s -> s);
     }
 
     @Override
-    @SuppressWarnings("PMD.AvoidSynchronizedStatement")
     public DefaultBuildContext context() {
         return ((AbstractProject) rootProject()).context;
     }
 
     @Override
-    public <T extends Resource> Stream<T> get(ResourceProvider<?> provider,
+    public <T extends Resource> Stream<T> get(ResourceProvider provider,
             ResourceRequest<T> request) {
         return context().get(provider, request);
     }

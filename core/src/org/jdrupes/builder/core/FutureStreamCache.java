@@ -39,7 +39,7 @@ public class FutureStreamCache {
     /// @param provider the provider
     /// @param requested the requested resources
     ///
-    public record Key<T extends Resource>(ResourceProvider<?> provider,
+    public record Key<T extends Resource>(ResourceProvider provider,
             ResourceRequest<T> requested) {
     }
 

@@ -124,7 +124,7 @@ import static org.jdrupes.builder.api.Intend.Supply;
 /// project *-down-> generator
 /// @enduml
 ///
-public interface Project extends ResourceProvider<Resource> {
+public interface Project extends ResourceProvider {
 
     /// The common project properties.
     ///
@@ -163,7 +163,7 @@ public interface Project extends ResourceProvider<Resource> {
     /// @param project the requested project's type
     /// @return the project
     ///
-    ResourceProvider<Resource> project(Class<? extends Project> project);
+    ResourceProvider project(Class<? extends Project> project);
 
     /// Returns the project's name. 
     ///
@@ -240,7 +240,7 @@ public interface Project extends ResourceProvider<Resource> {
     /// @see generator(Generator)
     /// @see generator(Function)
     ///
-    Project dependency(Intend intend, ResourceProvider<?> provider);
+    Project dependency(Intend intend, ResourceProvider provider);
 
     /// Returns the providers that have been added with one of the given 
     /// intended usages as [Stream]. The stream may only be terminated
@@ -249,7 +249,7 @@ public interface Project extends ResourceProvider<Resource> {
     /// @param intends the intends
     /// @return the stream
     ///
-    Stream<ResourceProvider<?>> providers(Set<Intend> intends);
+    Stream<ResourceProvider> providers(Set<Intend> intends);
 
     /// Returns the providers that have been added with the given 
     /// intended usage as [Stream]. This is short for
@@ -259,7 +259,7 @@ public interface Project extends ResourceProvider<Resource> {
     /// @param intends more intends
     /// @return the stream
     ///
-    default Stream<ResourceProvider<?>> providers(
+    default Stream<ResourceProvider> providers(
             Intend intend, Intend... intends) {
         return providers(EnumSet.of(intend, intends));
     }
@@ -273,7 +273,7 @@ public interface Project extends ResourceProvider<Resource> {
     /// @return the stream
     ///
     <T extends Resource> Stream<T> invokeProviders(
-            Stream<ResourceProvider<?>> providers, ResourceRequest<T> request);
+            Stream<ResourceProvider> providers, ResourceRequest<T> request);
 
     /// Returns all resources that are provided for the given request
     /// by providers associated with [Intend#Consume] or [Intend#Expose].
@@ -340,7 +340,7 @@ public interface Project extends ResourceProvider<Resource> {
     /// @param requested the request
     /// @return the stream of resources
     ///
-    <R extends Resource> Stream<R> get(ResourceProvider<?> provider,
+    <R extends Resource> Stream<R> get(ResourceProvider provider,
             ResourceRequest<R> requested);
 
     /// Returns a new resource with the given type. Short for invoking

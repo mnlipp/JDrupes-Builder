@@ -25,8 +25,7 @@ package org.jdrupes.builder.api;
 ///
 /// @param <T> the type of the resources that this generator provides
 ///
-@SuppressWarnings("PMD.ShortClassName")
-public interface Generator<T extends Resource> extends ResourceProvider<T> {
+public interface Generator<T extends Resource> extends ResourceProvider {
 
     /// Returns the generator's name.
     ///

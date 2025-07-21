@@ -24,10 +24,8 @@ import java.util.stream.Stream;
 /// by providers. It is not intended to be invoked directly. Rather, it 
 /// must be invoked via [Project#get].
 ///
-/// @param <T> the provided type of [Resource]
-///
 @SuppressWarnings("PMD.ImplicitFunctionalInterface")
-public interface ResourceProvider<T extends Resource> {
+public interface ResourceProvider {
 
     /// Provide the requested resources.
     /// 
@@ -39,9 +37,9 @@ public interface ResourceProvider<T extends Resource> {
     /// [Project#get]) with a request for all resources and filter the
     /// (automatically cached) result.
     ///
-    /// @param <R> the type of the requested (and provided) resource
+    /// @param <T> the type of the requested (and provided) resource
     /// @param requested the requested resources
     /// @return the provided resource(s) as stream
     ///
-    <R extends Resource> Stream<R> provide(ResourceRequest<R> requested);
+    <T extends Resource> Stream<T> provide(ResourceRequest<T> requested);
 }

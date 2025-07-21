@@ -48,7 +48,7 @@ public class FutureStream<T extends Resource> {
     /// @param provider the provider
     /// @param requested the requested
     ///
-    public FutureStream(ExecutorService executor, ResourceProvider<?> provider,
+    public FutureStream(ExecutorService executor, ResourceProvider provider,
             ResourceRequest<T> requested) {
         source = executor.submit(() -> {
             try {

@@ -104,7 +104,7 @@ import static org.jdrupes.builder.java.JavaTypes.*;
 ///
 public class UberJarGenerator extends AbstractGenerator<JarFile> {
 
-    private final CachedStream<ResourceProvider<?>> providers
+    private final CachedStream<ResourceProvider> providers
         = new CachedStream<>();
     private Path destination;
     private String mainClass;
@@ -167,7 +167,7 @@ public class UberJarGenerator extends AbstractGenerator<JarFile> {
     /// @param providers the providers
     /// @return the uber jar generator
     ///
-    public UberJarGenerator addAll(Stream<ResourceProvider<?>> providers) {
+    public UberJarGenerator addAll(Stream<ResourceProvider> providers) {
         this.providers.add(providers.filter(p -> !p.equals(this)));
         return this;
     }
@@ -177,7 +177,7 @@ public class UberJarGenerator extends AbstractGenerator<JarFile> {
     /// @param providers the providers
     /// @return the uber jar generator
     ///
-    public UberJarGenerator add(ResourceProvider<?>... providers) {
+    public UberJarGenerator add(ResourceProvider... providers) {
         addAll(Stream.of(providers));
         return this;
     }
