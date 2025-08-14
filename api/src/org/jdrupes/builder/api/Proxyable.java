@@ -20,7 +20,6 @@ package org.jdrupes.builder.api;
 
 /// Returns the implementing object of a proxied object.
 ///
-@SuppressWarnings("PMD.ImplicitFunctionalInterface")
 public interface Proxyable {
 
     /// Returns the implementing object.

@@ -164,7 +164,6 @@ public class DefaultFileTree<T extends FileResource> extends DefaultResources<T>
                 return testAndAdd(path);
             }
 
-            @SuppressWarnings("PMD.AvoidDeeplyNestedIfStmts")
             private FileVisitResult testAndAdd(Path path) {
                 if (excludeMatchers.parallelStream()
                     .filter(em -> em.matches(root.relativize(path)))

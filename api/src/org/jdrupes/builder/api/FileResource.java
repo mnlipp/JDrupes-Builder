@@ -22,7 +22,6 @@ import java.nio.file.Path;
 
 /// A resource that represents a file.
 ///
-@SuppressWarnings("PMD.ImplicitFunctionalInterface")
 public interface FileResource extends Resource {
 
     /// Return the file's path.

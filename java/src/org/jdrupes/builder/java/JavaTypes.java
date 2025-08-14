@@ -61,18 +61,15 @@ public final class JavaTypes {
         = new ResourceType<>() {};
 
     /// The most general representation of a classpath.
-    @SuppressWarnings("PMD.LongVariable")
     public static final ResourceType<Resources<ClasspathElement>> ClasspathType
         = new ResourceType<>() {};
 
     /// Contributions to the compilation classpath.
-    @SuppressWarnings("PMD.LongVariable")
     public static final ResourceType<
             CompilationResources> CompilationResourcesType
                 = new ResourceType<>() {};
 
     /// Contributions to the runtime classpath.
-    @SuppressWarnings("PMD.LongVariable")
     public static final ResourceType<RuntimeResources> RuntimeResourcesType
         = new ResourceType<>() {};
 

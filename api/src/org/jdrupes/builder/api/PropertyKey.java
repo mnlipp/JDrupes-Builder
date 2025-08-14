@@ -22,7 +22,6 @@ package org.jdrupes.builder.api;
 /// Implementations of this interface should extends [Enum]. See
 /// [Project.Properties] for an example.
 ///
-@SuppressWarnings("PMD.ImplicitFunctionalInterface")
 public interface PropertyKey {
 
     /// The property's name.

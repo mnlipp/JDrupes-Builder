@@ -61,7 +61,7 @@ public class CoreResourceFactory implements ResourceFactory {
     }
 
     @Override
-    @SuppressWarnings({ "unchecked", "PMD.NPathComplexity" })
+    @SuppressWarnings({ "unchecked" })
     public <T extends Resource> Optional<T> newResource(ResourceType<T> type,
             Project project, Object... args) {
         if (FileResourceType.isAssignableFrom(type)

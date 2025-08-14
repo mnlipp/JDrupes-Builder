@@ -22,7 +22,6 @@ import java.nio.file.Path;
 
 /// The context of a build.
 ///
-@SuppressWarnings("PMD.ImplicitFunctionalInterface")
 public interface BuildContext {
 
     /// The relative path to the JDrupes Builder directory from a 

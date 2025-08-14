@@ -166,9 +166,8 @@ public abstract class AbstractLauncher implements Launcher {
     /// @param todo the todo
     /// @return the t
     ///
-    @SuppressWarnings({ "PMD.AvoidReassigningCatchVariables",
-        "PMD.DoNotTerminateVM", "PMD.AvoidCatchingGenericException",
-        "PMD.AvoidInstanceofChecksInCatchClause" })
+    @SuppressWarnings({ "PMD.DoNotTerminateVM",
+        "PMD.AvoidCatchingGenericException" })
     protected final <T> T unwrapBuildException(Callable<T> todo) {
         try {
             return todo.call();

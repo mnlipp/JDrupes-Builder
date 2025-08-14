@@ -27,7 +27,6 @@ package org.jdrupes.builder.api;
 /// `JarFile` has). It's just a file providing some kind of resource,
 /// which makes it a `ResourceFile`.
 ///
-@SuppressWarnings("PMD.ImplicitFunctionalInterface")
 public interface ResourceFile extends FileResource {
 
 }

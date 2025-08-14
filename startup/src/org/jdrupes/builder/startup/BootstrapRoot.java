@@ -25,7 +25,6 @@ import org.jdrupes.builder.core.AbstractProject;
 
 /// The built-in root project associated with the root directory.
 ///
-@SuppressWarnings("PMD.ShortClassName")
 public class BootstrapRoot extends AbstractProject
         implements RootProject, Masked {
 

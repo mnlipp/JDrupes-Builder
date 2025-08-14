@@ -22,7 +22,6 @@ import org.jdrupes.builder.api.FileResource;
 
 /// A [FileResource] that represents a Java class.
 ///
-@SuppressWarnings("PMD.ImplicitFunctionalInterface")
 public interface JavaSourceFile extends FileResource {
 
 }
