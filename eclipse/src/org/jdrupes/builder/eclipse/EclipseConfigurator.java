@@ -246,7 +246,7 @@ public class EclipseConfigurator extends AbstractGenerator {
             });
 
         // Add jars
-        project().provide(new ResourceRequest<ClasspathElement>(
+        project().provided(new ResourceRequest<ClasspathElement>(
             CompilationResourcesType)).filter(p -> p instanceof JarFile)
             .map(jf -> (JarFile) jf).forEach(jf -> {
                 var entry = (Element) classpath
