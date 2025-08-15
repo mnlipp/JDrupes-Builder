@@ -19,6 +19,7 @@
 package org.jdrupes.builder.api;
 
 import java.nio.file.Path;
+import java.util.stream.Stream;
 
 /// The context of a build.
 ///
@@ -36,4 +37,18 @@ public interface BuildContext {
     /// @return the string[]
     ///
     String[] commandArgs();
+
+    /// Obtains the resource stream for the given resource from the
+    /// given provider. The result from invoking the provider is
+    /// evaluated asynchronously and cached. Only when the returned
+    /// stream is terminated will the invocation block until the
+    /// result from the provider becomes available.
+    ///
+    /// @param <T> the resource type
+    /// @param provider the provider
+    /// @param request the request
+    /// @return the results
+    ///
+    <T extends Resource> Stream<T> get(ResourceProvider provider,
+            ResourceRequest<T> request);
 }

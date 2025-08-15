@@ -23,7 +23,6 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.stream.Stream;
 import org.jdrupes.builder.api.BuildContext;
-import org.jdrupes.builder.api.Project;
 import org.jdrupes.builder.api.Resource;
 import org.jdrupes.builder.api.ResourceProvider;
 import org.jdrupes.builder.api.ResourceRequest;
@@ -64,13 +63,7 @@ public class DefaultBuildContext implements BuildContext {
         this.executor = executor;
     }
 
-    /// Implements [Project#get(ResourceProvider, ResourceRequest)].
-    ///
-    /// @param <T> the generic type
-    /// @param provider the provider
-    /// @param request the requested
-    /// @return the stream
-    ///
+    @Override
     public <T extends Resource> Stream<T> get(ResourceProvider provider,
             ResourceRequest<T> request) {
         return cache.computeIfAbsent(new Key<>(provider, request),

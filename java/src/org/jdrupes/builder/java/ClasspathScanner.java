@@ -63,8 +63,8 @@ public class ClasspathScanner extends AbstractGenerator {
         // Map special requests ([RuntimeResources], [CompilationResources])
         // to the base request
         if (!ClasspathType.rawType().equals(requested.type().rawType())) {
-            return project().get(this,
-                requested.widened(ClasspathType.rawType()));
+            return project().from(this)
+                .get(requested.widened(ClasspathType.rawType()));
         }
 
         @SuppressWarnings("unchecked")

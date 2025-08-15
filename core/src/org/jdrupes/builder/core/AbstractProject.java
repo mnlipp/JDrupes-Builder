@@ -49,7 +49,7 @@ import org.jdrupes.builder.api.RootProject;
 
 /// A default implementation of a [Project].
 ///
-@SuppressWarnings({ "PMD.CouplingBetweenObjects", "PMD.GodClass" })
+@SuppressWarnings({ "PMD.CouplingBetweenObjects" })
 public abstract class AbstractProject implements Project {
 
     private Map<Class<? extends Project>, Future<Project>> projects;
@@ -302,12 +302,6 @@ public abstract class AbstractProject implements Project {
     @Override
     public DefaultBuildContext context() {
         return ((AbstractProject) rootProject()).context;
-    }
-
-    @Override
-    public <T extends Resource> Stream<T> get(ResourceProvider provider,
-            ResourceRequest<T> request) {
-        return context().get(provider, request);
     }
 
     /// Returns the.

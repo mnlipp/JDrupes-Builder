@@ -323,25 +323,27 @@ public interface Project extends ResourceProvider {
     ///
     <T> T get(PropertyKey property);
 
-    /// Obtains the resource stream for the given resource from the
-    /// given provider. The result from invoking the provider is
-    /// evaluated asynchronously and cached. Only when the returned
-    /// stream is terminated will the invocation block until the
-    /// result from the provider becomes available.
-    /// 
-    /// Strictly speaking, this method is not a method of [Project]
-    /// as the it does not matter which instance of [Project] is
-    /// used to invoke the method. Like the factory methods ("`new...`")
-    /// this method is provided to simplify the implementation of a
-    /// [Project]'s constructor.
+    /// Returns resources provided by the project. Short for
+    /// `context().get(this, request)`.
     ///
-    /// @param <R> the type of the provided resources
+    /// @param <T> the generic type
+    /// @param request the request
+    /// @return the stream
+    ///
+    default <T extends Resource> Stream<T> get(ResourceRequest<T> request) {
+        return context().get(this, request);
+    }
+    
+    /// "Syntactic sugar" that allows to obtain resources from a provider
+    /// with `from(provider).get(resourceRequest)` instead of
+    /// `context().get(provider, resourceRequest)`.
+    ///
     /// @param provider the provider
-    /// @param requested the request
     /// @return the stream of resources
     ///
-    <R extends Resource> Stream<R> get(ResourceProvider provider,
-            ResourceRequest<R> requested);
+    default FromHelper from(ResourceProvider provider) {
+        return new FromHelper(context(), provider);
+    }
 
     /// Returns a new resource with the given type. Short for invoking
     /// [ResourceFactory#create] with the current project as first argument

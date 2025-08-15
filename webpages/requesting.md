@@ -1,11 +1,41 @@
 ---
 title: "Requesting Resources"
 description: >-
-  Describes a consistent way to define resource types for queries.
+  Describes a consistent way to define queries for resource types.
 layout: jdbld
 ---
 
 # Requesting Resources
+
+## Resource providers
+
+Resources are never directly requested from a
+[ResourceProvider](javadoc/org/jdrupes/builder/api/ResourceProvider.html).
+Instead, requests must be passed through the 
+[BuildContext](javadoc/org/jdrupes/builder/api/BuildContext.html)'s
+[get](javadoc/org/jdrupes/builder/api/BuildContext.html#get(org.jdrupes.builder.api.ResourceProvider,org.jdrupes.builder.api.ResourceRequest))
+method. This allows the `BuildContext` to synchronize the requests and 
+to cache the results.
+
+Resources are returned as a lazily evaluated Java `Stream` of resources of
+the requested type. This delays the evaluation of the request until the
+`Stream` is terminated. The `Stream`s must never be terminated in the
+constructor of a [Project](javadoc/org/jdrupes/builder/api/Project.html)
+as the evaluation may require resources from other projects that are not
+available yet.
+
+There are two methods that simplify requesting resources in the project
+configuration. The first is to use the
+[Project](javadoc/org/jdrupes/builder/api/Project.html)'s
+[from](javadoc/org/jdrupes/builder/api/Project.html#from(org.jdrupes.builder.api.ResourceProvider))
+method. This allows you to write `project.from(provider).get(resourceType)`
+instead of `project.context().get(provider, resourceType)`. The second method
+is the [Project](javadoc/org/jdrupes/builder/api/Project.html)'s
+[get](javadoc/org/jdrupes/builder/api/Project.html#get(org.jdrupes.builder.api.ResourceRequest))
+method that allows you to easily get resources provided by the
+[Project](javadoc/org/jdrupes/builder/api/Project.html) itself.
+
+## Resource requests
 
 Resources are usually requested by type rather than by name.
 Therefore we need a consistent way to define resource types for

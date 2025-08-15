@@ -22,7 +22,7 @@ import java.util.stream.Stream;
 
 /// A provider of a resource. This interface is intended to be implemented
 /// by providers. It is not intended to be invoked directly. Rather, it 
-/// must be invoked via [Project#get].
+/// must be invoked via [BuildContext#get].
 ///
 @SuppressWarnings("PMD.ImplicitFunctionalInterface")
 public interface ResourceProvider {

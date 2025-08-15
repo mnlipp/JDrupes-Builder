@@ -49,14 +49,15 @@ public class Root extends AbstractProject implements RootProject {
         // Build javadoc
         generator(Javadoc::new)
             .destination(rootProject().directory().resolve("webpages/javadoc"))
-            .tagletpath(get(new MvnRepoLookup()
+            .tagletpath(from(new MvnRepoLookup()
                 .artifact("org.jdrupes.taglets:plantuml-taglet:3.1.0")
-                .artifact("net.sourceforge.plantuml:plantuml:1.2023.11"),
-                new ResourceRequest<ClasspathElement>(RuntimeResourcesType)))
+                .artifact("net.sourceforge.plantuml:plantuml:1.2023.11"))
+                    .get(new ResourceRequest<ClasspathElement>(
+                        RuntimeResourcesType)))
             .taglets(Stream.of("org.jdrupes.taglets.plantUml.PlantUml",
                 "org.jdrupes.taglets.plantUml.StartUml",
                 "org.jdrupes.taglets.plantUml.EndUml"))
-            .addSources(get(this, new ResourceRequest<FileTree<JavaSourceFile>>(
+            .addSources(get(new ResourceRequest<FileTree<JavaSourceFile>>(
                 new ResourceType<>() {})))
             .options("-overview", directory().resolve("overview.md").toString())
             .options("--add-stylesheet",
