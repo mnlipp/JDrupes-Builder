@@ -18,16 +18,36 @@
 
 package org.jdrupes.builder.startup;
 
+import eu.maveniverse.maven.mima.context.Context;
+import eu.maveniverse.maven.mima.context.ContextOverrides;
+import eu.maveniverse.maven.mima.context.Runtime;
+import eu.maveniverse.maven.mima.context.Runtimes;
+import java.net.MalformedURLException;
+import java.net.URL;
+import java.net.URLClassLoader;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+import java.util.logging.Level;
 import java.util.stream.Stream;
+import org.eclipse.aether.artifact.DefaultArtifact;
+import org.eclipse.aether.collection.CollectRequest;
+import org.eclipse.aether.graph.Dependency;
+import org.eclipse.aether.graph.DependencyNode;
+import org.eclipse.aether.resolution.DependencyRequest;
+import org.eclipse.aether.resolution.DependencyResolutionException;
+import org.eclipse.aether.util.graph.visitor.PreorderNodeListGenerator;
 import org.jdrupes.builder.api.BuildException;
 import org.jdrupes.builder.api.Launcher;
 import org.jdrupes.builder.api.Masked;
 import org.jdrupes.builder.api.Project;
 import org.jdrupes.builder.api.Resource;
+import org.jdrupes.builder.api.ResourceFactory;
 import org.jdrupes.builder.api.ResourceRequest;
 import org.jdrupes.builder.api.RootProject;
 import org.jdrupes.builder.core.LauncherSupport;
+import org.jdrupes.builder.java.JarFile;
+import static org.jdrupes.builder.java.JavaTypes.*;
 
 /// An implementation of a [Launcher] that expects that the JDrupes
 /// Builder project already been compiled and its classes are available
@@ -35,6 +55,7 @@ import org.jdrupes.builder.core.LauncherSupport;
 ///
 public class DirectLauncher extends AbstractLauncher {
 
+    private static final String RUNTIME_EXTENSIONS = "runtimeExtensions";
     private RootProject rootProject;
 
     /// Instantiates a new direct launcher. The classpath is scanned for
@@ -50,9 +71,10 @@ public class DirectLauncher extends AbstractLauncher {
         "PMD.AvoidInstantiatingObjectsInLoops", "PMD.SystemPrintln" })
     public DirectLauncher(ClassLoader classloader, String[] args) {
         unwrapBuildException(() -> {
+            final var extClsLdr = addRuntimeExtensions(classloader);
             var rootProjects = new ArrayList<Class<? extends RootProject>>();
             var subprojects = new ArrayList<Class<? extends Project>>();
-            findProjects(classloader, rootProjects, subprojects);
+            findProjects(extClsLdr, rootProjects, subprojects);
             rootProject = LauncherSupport.createProjects(rootProjects.get(0),
                 subprojects, jdbldProps, args);
             for (var arg : args) {
@@ -67,6 +89,67 @@ public class DirectLauncher extends AbstractLauncher {
             }
             return null;
         });
+    }
+
+    private ClassLoader addRuntimeExtensions(ClassLoader classloader) {
+        String[] coordinates = Arrays
+            .asList(jdbldProps.getProperty(RUNTIME_EXTENSIONS, "").split(","))
+            .stream().map(String::trim).toArray(String[]::new);
+        if (coordinates.length == 0
+            || coordinates.length == 1 && coordinates[0].isBlank()) {
+            return classloader;
+        }
+
+        // Resolve using maven repo
+        var cpUrls = resolveRequested(coordinates).mapMulti((jf, consumer) -> {
+            try {
+                consumer.accept(jf.path().toFile().toURI().toURL());
+            } catch (MalformedURLException e) {
+                log.log(Level.WARNING, e, () -> "Cannot convert " + jf
+                    + " to URL: " + e.getMessage());
+            }
+        }).toArray(URL[]::new);
+
+        // Return augmented classloader
+        return new URLClassLoader(cpUrls,
+            Thread.currentThread().getContextClassLoader());
+    }
+
+    @SuppressWarnings({ "PMD.UseVarargs",
+        "PMD.AvoidInstantiatingObjectsInLoops" })
+    private Stream<JarFile> resolveRequested(String[] coordinates) {
+        ContextOverrides overrides = ContextOverrides.create()
+            .withUserSettings(true).build();
+        Runtime runtime = Runtimes.INSTANCE.getRuntime();
+        try (Context context = runtime.create(overrides)) {
+            CollectRequest collectRequest = new CollectRequest()
+                .setRepositories(context.remoteRepositories());
+            for (var coord : coordinates) {
+                collectRequest.addDependency(
+                    new Dependency(new DefaultArtifact(coord), "runtime"));
+            }
+
+            DependencyRequest dependencyRequest
+                = new DependencyRequest(collectRequest, null);
+            DependencyNode rootNode;
+            try {
+                rootNode = context.repositorySystem()
+                    .resolveDependencies(context.repositorySystemSession(),
+                        dependencyRequest)
+                    .getRoot();
+                PreorderNodeListGenerator nlg = new PreorderNodeListGenerator();
+                rootNode.accept(nlg);
+                List<DependencyNode> dependencyNodes = nlg.getNodes();
+                return dependencyNodes.stream()
+                    .filter(d -> d.getArtifact() != null)
+                    .map(d -> d.getArtifact().getFile().toPath())
+                    .map(p -> ResourceFactory
+                        .create(JarFileType, p));
+            } catch (DependencyResolutionException e) {
+                throw new BuildException(
+                    "Cannot resolve: " + e.getMessage(), e);
+            }
+        }
     }
 
     @Override
