@@ -5,6 +5,7 @@ import java.util.stream.Stream;
 import org.jdrupes.builder.api.FileTree;
 import static org.jdrupes.builder.api.Intend.*;
 import org.jdrupes.builder.api.Project;
+import static org.jdrupes.builder.api.Project.Properties.*;
 import org.jdrupes.builder.api.ResourceRequest;
 import org.jdrupes.builder.api.ResourceType;
 import org.jdrupes.builder.api.RootProject;
@@ -29,6 +30,7 @@ public class Root extends AbstractProject implements RootProject {
 
     public Root() {
         super(name("jdrupes-builder"));
+        set(Version, "0.0.1");
 
         dependency(Expose, project(Api.class));
         dependency(Expose, project(Core.class));

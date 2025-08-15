@@ -24,9 +24,11 @@ if [ ! -z "JAVA_HOME" ]; then
   javaCmd="$JAVA_HOME/bin/java"
 fi
 
-if [ ! -r "$jdbldDirectory/app/jdrupes-builder.jar" ]; then
+builderJar="$jdbldDirectory/app/jdrupes-builder-0.0.1.jar"
+
+if [ ! -r "$builderJar" ]; then
   echo >&2 "JDrupes Builder's executable jar not found."
   exit 1
 fi
 
-$javaCmd -Duser.language=en_US -jar "$jdbldDirectory/app/jdrupes-builder.jar" "$@"
+$javaCmd -Duser.language=en_US -jar "$builderJar" "$@"

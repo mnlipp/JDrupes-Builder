@@ -33,6 +33,7 @@ import java.util.Queue;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.function.Predicate;
+import java.util.function.Supplier;
 import java.util.jar.Attributes;
 import java.util.jar.JarEntry;
 import java.util.jar.JarOutputStream;
@@ -44,6 +45,7 @@ import org.jdrupes.builder.api.BuildException;
 import org.jdrupes.builder.api.FileTree;
 import org.jdrupes.builder.api.Generator;
 import org.jdrupes.builder.api.Project;
+import static org.jdrupes.builder.api.Project.Properties.*;
 import org.jdrupes.builder.api.Resource;
 import org.jdrupes.builder.api.ResourceProvider;
 import org.jdrupes.builder.api.ResourceRequest;
@@ -108,6 +110,8 @@ public class UberJarGenerator extends AbstractGenerator {
         = new CachedStream<>();
     private Path destination;
     private String mainClass;
+    private Supplier<String> jarName
+        = () -> project().name() + "-" + project().get(Version) + ".jar";
 
     /// Instantiates a new uber jar generator.
     ///
@@ -134,6 +138,35 @@ public class UberJarGenerator extends AbstractGenerator {
     public UberJarGenerator destination(Path destination) {
         this.destination = destination;
         return this;
+    }
+
+    /// Returns the name of the generated jar file. Defaults to
+    /// the project's name followed by its version and `.jar`.
+    ///
+    /// @return the string
+    ///
+    public String jarName() {
+        return jarName.get();
+    }
+
+    /// Sets the supplier for obtaining the name of the generated jar file
+    /// in [#provide].
+    ///
+    /// @param jarName the jar name
+    /// @return the uber jar generator
+    ///
+    public UberJarGenerator jarName(Supplier<String> jarName) {
+        this.jarName = jarName;
+        return this;
+    }
+
+    /// Sets the name of the generated jar file.
+    ///
+    /// @param jarName the jar name
+    /// @return the uber jar generator
+    ///
+    public UberJarGenerator jarName(String jarName) {
+        return jarName(() -> jarName);
     }
 
     /// Returns the main class.
@@ -203,7 +236,7 @@ public class UberJarGenerator extends AbstractGenerator {
         // Maybe only delete
         if (requested.includes(Cleaniness)) {
             project().resource(JarFileType,
-                destDir.resolve(project().name() + ".jar")).delete();
+                destDir.resolve(jarName())).delete();
             return Stream.empty();
         }
 
@@ -215,7 +248,7 @@ public class UberJarGenerator extends AbstractGenerator {
         }
 
         // Get all content.
-        log.fine(() -> "Getting uber jar content for " + project().name());
+        log.fine(() -> "Getting uber jar content for " + jarName());
         @SuppressWarnings("PMD.UseDiamondOperator")
         var toBeIncluded = project().resource(ClasspathType)
             .addAll(project().invokeProviders(providers.stream(),
@@ -227,7 +260,7 @@ public class UberJarGenerator extends AbstractGenerator {
 
         // Check if rebuild needed.
         var jarResource = (JarFile) project().resource(requested.type()
-            .containedType(), destDir.resolve(project().name() + ".jar"));
+            .containedType(), destDir.resolve(jarName()));
         if (jarResource.asOf().isAfter(toBeIncluded.asOf())) {
             return Stream.of((T) jarResource);
         }

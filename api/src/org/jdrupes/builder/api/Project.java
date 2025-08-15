@@ -136,7 +136,14 @@ public interface Project extends ResourceProvider {
         BuildDirectory(Path.of("build")),
         
         /// The Encoding of files in the project.
-        Encoding("UTF-8");
+        Encoding("UTF-8"),
+        
+        /// The version of the project. Surprisingly, there is no
+        /// agreed upon version type for Java (see e.g. 
+        /// ["Version Comparison in Java"](https://www.baeldung.com/java-comparing-versions)).
+        /// Therefore the version is represented as a string with "0.0.0"
+        /// as default.
+        Version("0.0.0");
 
         private final Object defaultValue;
 
