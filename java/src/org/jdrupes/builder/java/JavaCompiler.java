@@ -172,9 +172,9 @@ public class JavaCompiler extends JavaTool {
         var cpResources = project().resource(ClasspathType).addAll(
             project().provided(new ResourceRequest<ClasspathElement>(
                 CompilationResourcesType)));
-        log.finest(() -> project() + " uses classpath: " + cpResources.stream()
-            .map(e -> e.toPath().toString())
-            .collect(Collectors.joining(File.pathSeparator)));
+        log.finest(() -> "Compiling in " + project() + " with classpath "
+            + cpResources.stream().map(e -> e.toPath().toString())
+                .collect(Collectors.joining(File.pathSeparator)));
 
         // (Re-)compile only if necessary
         var classesAsOf = classSet.asOf();
