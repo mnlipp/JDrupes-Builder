@@ -7,6 +7,8 @@
 **/.classpath
 **/.project
 **/.settings/
+*/.checkstyle
+*/.eclipse-pmd
 !_jdbld/.project
 !_jdbld/.classpath
 !_jdbld/.settings/
