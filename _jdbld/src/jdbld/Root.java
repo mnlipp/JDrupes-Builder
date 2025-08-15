@@ -11,6 +11,7 @@ import org.jdrupes.builder.api.RootProject;
 import org.jdrupes.builder.core.AbstractProject;
 import org.jdrupes.builder.eclipse.EclipseConfiguration;
 import org.jdrupes.builder.java.AppJarFile;
+import org.jdrupes.builder.java.ClasspathElement;
 import org.jdrupes.builder.java.UberJarGenerator;
 import org.jdrupes.builder.mvnrepo.MvnRepoLookup;
 import org.jdrupes.builder.java.Javadoc;
@@ -48,11 +49,10 @@ public class Root extends AbstractProject implements RootProject {
         // Build javadoc
         generator(Javadoc::new)
             .destination(rootProject().directory().resolve("webpages/javadoc"))
-            .tagletpath(Stream.of(
-                resource(JarFileType, directory().resolve(
-                    Path.of("_jdbld/lib/plantuml-taglet-3.1.0.jar"))),
-                resource(JarFileType, directory().resolve(
-                    Path.of("_jdbld/lib/plantuml-1.2023.11.jar")))))
+            .tagletpath(get(new MvnRepoLookup()
+                .artifact("org.jdrupes.taglets:plantuml-taglet:3.1.0")
+                .artifact("net.sourceforge.plantuml:plantuml:1.2023.11"),
+                new ResourceRequest<ClasspathElement>(RuntimeResourcesType)))
             .taglets(Stream.of("org.jdrupes.taglets.plantUml.PlantUml",
                 "org.jdrupes.taglets.plantUml.StartUml",
                 "org.jdrupes.taglets.plantUml.EndUml"))
