@@ -34,11 +34,12 @@ public class ClasspathScanner extends AbstractGenerator {
 
     private final String path;
 
-    /// Instantiates a new classpath provider.
+    /// Instantiates a new classpath provider. The `path` is a list of
+    /// directories or jar files separated by the system's path separator.
+    /// Relative paths are resolved against the project's directory.
     ///
     /// @param project the project
-    /// @param path the path (directories separated by the system's
-    /// path separator)
+    /// @param path the path
     ///
     public ClasspathScanner(Project project, String path) {
         super(project);
@@ -46,7 +47,8 @@ public class ClasspathScanner extends AbstractGenerator {
     }
 
     /// Provide [FileTree]s with classes from a given classpath if the
-    /// requested resource id of type `FileTree<ClassFile>`.
+    /// requested resource is of type 
+    /// [ClasspathElement](javadoc/org/jdrupes/builder/java/ClasspathElement.html).
     ///
     /// @param <T> the requested type
     /// @param requested the requested resources
@@ -69,7 +71,7 @@ public class ClasspathScanner extends AbstractGenerator {
 
         @SuppressWarnings("unchecked")
         var result = (Stream<T>) Stream.of(path.split(File.pathSeparator))
-            .map(Path::of).map(p -> {
+            .map(Path::of).map(p -> project().directory().resolve(p)).map(p -> {
                 if (p.toFile().isDirectory()) {
                     return (ClasspathElement) project().resource(
                         ClassTreeType, p.toAbsolutePath());
