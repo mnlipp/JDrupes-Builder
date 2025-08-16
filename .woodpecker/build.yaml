@@ -14,14 +14,14 @@ steps:
 - name: build-jars
   image: fedora
   commands:
-    - cat <<EOF > /etc/yum.repos.d/adoptium.repo |
-      [Adoptium]
-      name=Adoptium
-      baseurl=https://packages.adoptium.net/artifactory/rpm/${DISTRIBUTION_NAME:-$(. /etc/os-release; echo $ID)}/\$releasever/\$basearch
-      enabled=1
-      gpgcheck=1
-      gpgkey=https://packages.adoptium.net/artifactory/api/gpg/key/public
-      EOF
+    - cat <<EOF > /etc/yum.repos.d/adoptium.repo
+    - "[Adoptium]"
+    - name=Adoptium
+    - baseurl=https://packages.adoptium.net/artifactory/rpm/${DISTRIBUTION_NAME:-$(. /etc/os-release; echo $ID)}/\$releasever/\$basearch
+    - enabled=1
+    - gpgcheck=1
+    - gpgkey=https://packages.adoptium.net/artifactory/api/gpg/key/public
+    - EOF
     - dnf install -y graphviz temurin-24-jdk
     - ./jdbld -B-x 'test-*-project' build
  
