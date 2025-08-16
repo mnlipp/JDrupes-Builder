@@ -16,3 +16,4 @@ steps:
   commands:
     - dnf install -y graphviz temurin-24-jdk
     - ./jdbld -B-x 'test-*-project' build
+ 
