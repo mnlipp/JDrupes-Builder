@@ -18,12 +18,16 @@
 
 package org.jdrupes.builder.startup;
 
+import java.net.URISyntaxException;
 import java.nio.file.Path;
 import java.util.Arrays;
+import java.util.logging.Logger;
+import org.jdrupes.builder.api.BuildException;
 import org.jdrupes.builder.api.FileResource;
 import org.jdrupes.builder.api.FileTree;
 import static org.jdrupes.builder.api.Intend.*;
 import org.jdrupes.builder.api.Masked;
+import org.jdrupes.builder.api.Project;
 import org.jdrupes.builder.api.ResourceType;
 import org.jdrupes.builder.core.AbstractProject;
 import org.jdrupes.builder.core.ResourceCollector;
@@ -36,13 +40,29 @@ import static org.jdrupes.builder.java.JavaTypes.*;
 ///
 public class BootstrapBuild extends AbstractProject implements Masked {
 
+    /// The log.
+    protected final Logger log = Logger.getLogger(getClass().getName());
+
     /// Instantiates a new bootstrap project.
     ///
     @SuppressWarnings("PMD.ConstructorCallsOverridableMethod")
     public BootstrapBuild() {
         super(parent(BootstrapRoot.class), jdbldDirectory());
-        dependency(Consume, new ClasspathScanner(this,
-                System.getProperty("java.class.path")));
+
+        var jcp = System.getProperty("java.class.path");
+        log.fine(() -> "Using java.class.path " + jcp + " for compilation");
+        dependency(Consume, new ClasspathScanner(this, jcp));
+        try {
+            var jdbldJar = Path.of(Project.class.getProtectionDomain()
+                .getCodeSource().getLocation().toURI().getPath());
+            if (!jdbldJar.toFile().isDirectory()) {
+                log.fine(() -> "Using jar " + jdbldJar + " for compilation");
+                dependency(Consume,
+                    new ClasspathScanner(this, jdbldJar.toString()));
+            }
+        } catch (URISyntaxException e) {
+            throw new BuildException(e);
+        }
 
         // Collect directories with "build configuration", derive source
         // trees and use as java sources.
