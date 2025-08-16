@@ -1,0 +1,18 @@
+when:
+- event: push
+  evaluate: 'CI_SYSTEM_HOST == "woodpecker.mnl.de"'
+
+clone:
+- name: git
+  image: woodpeckerci/plugin-git
+  settings:
+    partial: false
+    tags: true
+    depth: 0
+
+steps:
+- name: build-jars
+  image: fedora
+  commands:
+    - dnf install -y graphviz temurin-24-jdk
+    - ./jdbld -B-x 'test-*-project' build
