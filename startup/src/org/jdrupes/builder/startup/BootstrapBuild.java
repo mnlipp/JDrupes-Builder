@@ -49,10 +49,11 @@ public class BootstrapBuild extends AbstractProject implements Masked {
     public BootstrapBuild() {
         super(parent(BootstrapRoot.class), jdbldDirectory());
 
-        var jcp = System.getProperty("java.class.path");
+        var jcp = Path.of(System.getProperty("java.class.path"))
+            .toAbsolutePath().toString();
         log.fine(() -> "Using java.class.path " + jcp
             + " for builder project compilation");
-//        dependency(Consume, new ClasspathScanner(this, jcp));
+        dependency(Consume, new ClasspathScanner(this, jcp));
 //        try {
 //            var jdbldJar = Path.of(Project.class.getProtectionDomain()
 //                .getCodeSource().getLocation().toURI().getPath());
