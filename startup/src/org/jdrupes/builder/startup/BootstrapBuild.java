@@ -50,19 +50,20 @@ public class BootstrapBuild extends AbstractProject implements Masked {
         super(parent(BootstrapRoot.class), jdbldDirectory());
 
         var jcp = System.getProperty("java.class.path");
-        log.fine(() -> "Using java.class.path " + jcp + " for compilation");
-        dependency(Consume, new ClasspathScanner(this, jcp));
-        try {
-            var jdbldJar = Path.of(Project.class.getProtectionDomain()
-                .getCodeSource().getLocation().toURI().getPath());
-            if (!jdbldJar.toFile().isDirectory()) {
-                log.fine(() -> "Using jar " + jdbldJar + " for compilation");
-                dependency(Consume,
-                    new ClasspathScanner(this, jdbldJar.toString()));
-            }
-        } catch (URISyntaxException e) {
-            throw new BuildException(e);
-        }
+        log.fine(() -> "Using java.class.path " + jcp
+            + " for builder project compilation");
+//        dependency(Consume, new ClasspathScanner(this, jcp));
+//        try {
+//            var jdbldJar = Path.of(Project.class.getProtectionDomain()
+//                .getCodeSource().getLocation().toURI().getPath());
+//            if (!jdbldJar.toFile().isDirectory()) {
+//                log.fine(() -> "Using jar " + jdbldJar + " for compilation");
+//                dependency(Consume,
+//                    new ClasspathScanner(this, jdbldJar.toString()));
+//            }
+//        } catch (URISyntaxException e) {
+//            throw new BuildException(e);
+//        }
 
         // Collect directories with "build configuration", derive source
         // trees and use as java sources.
