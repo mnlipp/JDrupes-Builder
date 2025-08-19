@@ -68,11 +68,11 @@ jobs:
           base-url-path: https://vm-operator.jdrupes.org
       - name: Index pagefind
         run: cd webpages && npx pagefind --source "_site"          
-      # - name: Upload artifact
-      #   # Automatically uploads an artifact from the './_site' directory by default
-      #   uses: actions/upload-pages-artifact@v3
-      #   with:
-      #     path: './webpages/_site'
+      - name: Upload artifact
+        # Automatically uploads an artifact from the './_site' directory by default
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: './webpages/_site'
 
   # Deployment job
   deploy:
