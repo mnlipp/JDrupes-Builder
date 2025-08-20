@@ -133,7 +133,7 @@ public abstract class AbstractProject implements Project {
     @SuppressWarnings({ "PMD.ConstructorCallsOverridableMethod",
         "PMD.UseLocaleWithCaseConversions" })
     protected AbstractProject(NamedParameter<?>... params) {
-        // Evaluate patent project
+        // Evaluate parent project
         var parentProject = NamedParameter.<
                 Class<? extends Project>> get(params, "parent", null);
         if (parentProject == null) {
