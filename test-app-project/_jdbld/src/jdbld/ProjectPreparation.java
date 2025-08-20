@@ -22,11 +22,13 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
+import static org.jdrupes.builder.api.Intend.*;
 import org.jdrupes.builder.api.Project;
 import org.jdrupes.builder.eclipse.EclipseConfigurator;
 import org.jdrupes.builder.java.JavaCompiler;
 import org.jdrupes.builder.java.JavaProject;
 import org.jdrupes.builder.java.JavaResourceCollector;
+import org.jdrupes.builder.java.LibraryGenerator;
 import org.w3c.dom.Document;
 import org.w3c.dom.Node;
 
@@ -41,6 +43,8 @@ public class ProjectPreparation {
                 .options("--release", "23");
             project.generator(JavaResourceCollector::new)
                 .add(Path.of("resources"), "**/*");
+            project.generator(LibraryGenerator::new)
+                .addAll(project.providers(Supply));
         }
     }
 
