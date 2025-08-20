@@ -49,7 +49,7 @@ public class ResourceCollector<T extends Resource> extends AbstractGenerator {
         super(project);
         this.type = type;
         resources
-            = project().resource(new ResourceType<>(Resources.class, type) {});
+            = project().newResource(new ResourceType<>(Resources.class, type) {});
     }
 
     /// Adds the given file tree with resource directories.

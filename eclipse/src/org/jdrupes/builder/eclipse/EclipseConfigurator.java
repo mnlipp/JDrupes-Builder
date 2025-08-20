@@ -120,7 +120,7 @@ public class EclipseConfigurator extends AbstractGenerator {
                 "Problem adapting Eclipse configuration", e);
         }
         @SuppressWarnings({ "unchecked", "PMD.UseDiamondOperator" })
-        var result = (Stream<T>) Stream.of(project().resource(
+        var result = (Stream<T>) Stream.of(project().newResource(
             new ResourceType<EclipseConfiguration>() {},
             project().directory()));
         return result;

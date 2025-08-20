@@ -30,7 +30,7 @@ public class Root extends AbstractProject implements RootProject {
 
     public Root() {
         super(name("jdrupes-builder"));
-        set(Version, "0.0.1");
+        set(Version, "0.0.2");
 
         dependency(Expose, project(Api.class));
         dependency(Expose, project(Core.class));

@@ -52,7 +52,7 @@ import static org.jdrupes.builder.java.JavaTypes.*;
 public class Javadoc extends JavaTool {
 
     private final Resources<FileTree<JavaSourceFile>> sources
-        = project().resource(new ResourceType<>() {});
+        = project().newResource(new ResourceType<>() {});
     private Path destination = Path.of("doc");
     private final Resources<ClasspathElement> tagletpath;
     private final List<String> taglets = new ArrayList<>();
@@ -64,7 +64,7 @@ public class Javadoc extends JavaTool {
     @SuppressWarnings("PMD.ConstructorCallsOverridableMethod")
     public Javadoc(Project project) {
         super(project);
-        tagletpath = project().resource(new ResourceType<>() {});
+        tagletpath = project().newResource(new ResourceType<>() {});
     }
 
     /// Returns the destination directory. Defaults to "`doc`".
@@ -106,7 +106,7 @@ public class Javadoc extends JavaTool {
     ///
     public final Javadoc addSources(Path directory, String pattern) {
         addSources(
-            project().resource(JavaSourceTreeType, directory, pattern));
+            project().newResource(JavaSourceTreeType, directory, pattern));
         return this;
     }
 
@@ -162,7 +162,7 @@ public class Javadoc extends JavaTool {
 
         // Get destination and check if we only have to cleanup.
         var destDir = project().buildDirectory().resolve(destination);
-        var generated = project().resource(ClassTreeType, destDir, "**/*");
+        var generated = project().newResource(ClassTreeType, destDir, "**/*");
         if (requested.includes(Cleaniness)) {
             generated.delete();
             destDir.toFile().delete();
@@ -204,7 +204,7 @@ public class Javadoc extends JavaTool {
         }
         @SuppressWarnings("unchecked")
         var result = (Stream<T>) Stream
-            .of(project().resource(JavadocDirectoryType, destDir));
+            .of(project().newResource(JavadocDirectoryType, destDir));
         return result;
     }
 

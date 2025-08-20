@@ -73,11 +73,11 @@ public class ClasspathScanner extends AbstractGenerator {
         var result = (Stream<T>) Stream.of(path.split(File.pathSeparator))
             .map(Path::of).map(p -> project().directory().resolve(p)).map(p -> {
                 if (p.toFile().isDirectory()) {
-                    return (ClasspathElement) project().resource(
+                    return (ClasspathElement) project().newResource(
                         ClassTreeType, p.toAbsolutePath());
                 } else {
                     return (ClasspathElement) project()
-                        .resource(JarFileType, p.toAbsolutePath());
+                        .newResource(JarFileType, p.toAbsolutePath());
                 }
             }).filter(e -> requested.includes(e.type()));
         return result;
