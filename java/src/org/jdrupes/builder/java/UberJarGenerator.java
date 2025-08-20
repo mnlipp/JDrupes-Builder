@@ -58,6 +58,13 @@ import static org.jdrupes.builder.java.JavaTypes.*;
 
 /// A [Generator] for uber jars.
 ///
+/// Depending on the request, the generator provides two types of resources.
+/// 
+/// 1. A [JarFile]. This type of resource is also returned if a more
+///    general [ResourceType] such as [ClasspathElement] is requested.
+///
+/// 2. An [AppJarFile].
+///
 /// The generator takes a simple approach:
 /// 
 ///   * Add the content of the [ClasspathElement]s added with [add][#add]
@@ -68,8 +75,8 @@ import static org.jdrupes.builder.java.JavaTypes.*;
 ///   * Merge the files in `META-INF/services` that have the same name by
 ///     concatenating them.
 ///
-/// Note that the output resource type of the uber jar generator matches
-/// the resource type of its inputs, because uber jars can also be used
+/// Note that the resource type of the uber jar generator's output is one
+/// of the resource types of its inputs, because uber jars can also be used
 /// as [ClasspathElement]. Therefore, if you want to create an uber jar
 /// from all resources provided by a project, you must not add the
 /// generator to the project like this:
@@ -258,9 +265,15 @@ public class UberJarGenerator extends AbstractGenerator {
             .map(e -> project().relativize(e.toPath()).toString())
             .collect(Collectors.joining(":")));
 
+        // Narrow too general requests
+        var requestedResource = requested.type().containedType();
+        if (!JarFile.class.isAssignableFrom(requestedResource.getClass())) {
+            requestedResource = JarFileType;
+        }
+
         // Check if rebuild needed.
-        var jarResource = (JarFile) project().newResource(requested.type()
-            .containedType(), destDir.resolve(jarName()));
+        var jarResource = (JarFile) project().newResource(requestedResource,
+            destDir.resolve(jarName()));
         if (jarResource.asOf().isAfter(toBeIncluded.asOf())) {
             return Stream.of((T) jarResource);
         }
