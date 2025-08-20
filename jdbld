@@ -11,16 +11,26 @@ if [ ! -r "$propertiesFile" ]; then
   exit 1
 fi
 
-jdbldDirectory="_jdbld"
-cat "$propertiesFile" | while read line; do
-  if expr match "$line" "^ *jdbldDirectory[ \t]*=" > /dev/null; then
-    _jdbldDirectory=$(echo $line \
-      | sed -E 's/^[[:space:]]*jdbldDirectory[[:space:]]*=[[:space:]]*(.*\S)[[:space:]]*$/\1/')
+getProperty() {
+  cat "$propertiesFile" | while read line; do
+    if expr match "$line" "^ *$1[ \t]*=" > /dev/null; then
+      echo $line \
+        | sed -E 's/^[[:space:]]*'$1'[[:space:]]*=[[:space:]]*(.*\S)[[:space:]]*$/\1/'
+      return 1
+    fi
+  done
+  if [ $? != 1 ]; then
+    echo "$2"
   fi
-done
+}
+
+jdbldDirectory=$(getProperty "jdbldDirectory" "_jdbld")
 
 javaCmd=java
-if [ ! -z "JAVA_HOME" ]; then
+if [ -z "$JAVA_HOME" ]; then
+  JAVA_HOME=$(getProperty "javaHome" "")
+fi
+if [ ! -z "$JAVA_HOME" ]; then
   javaCmd="$JAVA_HOME/bin/java"
 fi
 
