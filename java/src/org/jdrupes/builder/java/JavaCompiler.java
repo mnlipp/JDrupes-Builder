@@ -45,11 +45,12 @@ import static org.jdrupes.builder.java.JavaTypes.*;
 /// 
 /// 1. The [JavaSourceFile]s of the project as configured with [addSources]
 ///    in response to a [ResourceRequest] with [ResourceType]
-///    [JavaTypes#JavaSourceTreeType].
+///    [JavaTypes#JavaSourceTreeType] (or a more general type).
 ///
 /// 2. The [ClassFile]s that result from compiling the sources in response
 ///    to a [ResourceRequest] with [ResourceType]
-///    [JavaTypes#ClassTreeType].
+///    [JavaTypes#ClassTreeType] (or a more general type such as
+///    [JavaTypes#ClasspathElementType]).
 ///
 public class JavaCompiler extends JavaTool {
 
@@ -103,7 +104,8 @@ public class JavaCompiler extends JavaTool {
     /// @return the resources collector
     ///
     public final JavaCompiler addSources(Path directory, String pattern) {
-        addSources(project().newResource(JavaSourceTreeType, directory, pattern));
+        addSources(
+            project().newResource(JavaSourceTreeType, directory, pattern));
         return this;
     }
 
@@ -145,7 +147,7 @@ public class JavaCompiler extends JavaTool {
             return result;
         }
 
-        if (!requested.includes(ClasspathElementType)
+        if (!requested.includes(ClassTreeType)
             && !requested.includes(Cleaniness)) {
             return Stream.empty();
         }
