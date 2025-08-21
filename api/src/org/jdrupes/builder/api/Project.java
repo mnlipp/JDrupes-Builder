@@ -227,8 +227,7 @@ public interface Project extends ResourceProvider {
     /// @param supplier the supplier
     /// @return the project for method chaining
     ///
-    default <T extends Generator> T
-            generator(Function<Project, T> supplier) {
+    default <T extends Generator> T generator(Function<Project, T> supplier) {
         var provider = supplier.apply(this);
         generator(provider);
         return provider;
