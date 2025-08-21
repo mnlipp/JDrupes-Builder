@@ -35,6 +35,9 @@ public interface PropertyKey {
     /// @return the class
     ///
     default Class<?> type() {
+        if (defaultValue() == null) {
+            return Object.class;
+        }
         return defaultValue().getClass();
     }
 
