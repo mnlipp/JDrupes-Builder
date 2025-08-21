@@ -37,6 +37,7 @@ import static org.jdrupes.builder.java.JavaTypes.*;
 ///
 public class BootstrapBuild extends AbstractProject implements Masked {
 
+    /* default */ static final String BUILD_EXTENSIONS = "buildExtensions";
     /// The log.
     protected final Logger log = Logger.getLogger(getClass().getName());
 
@@ -46,6 +47,9 @@ public class BootstrapBuild extends AbstractProject implements Masked {
     public BootstrapBuild() {
         super(parent(BootstrapRoot.class), jdbldDirectory());
 
+        // Add this (the builder) to the class path. (Build extensions
+        // will be added by the bootstrap launcher, because we don't have
+        // access to the properties file here.)
         var jcp = Path.of(System.getProperty("java.class.path"))
             .toAbsolutePath().toString();
         log.fine(() -> "Using java.class.path " + jcp
@@ -54,9 +58,11 @@ public class BootstrapBuild extends AbstractProject implements Masked {
 
         // Collect directories with "build configuration", derive source
         // trees and use as java sources.
-        var bldrDirs = newResource(new ResourceType<FileTree<FileResource>>() {},
-            Path.of("").toAbsolutePath(),
-            "**/" + context().jdbldDirectory().toString()).withDirectories();
+        var bldrDirs
+            = newResource(new ResourceType<FileTree<FileResource>>() {},
+                Path.of("").toAbsolutePath(),
+                "**/" + context().jdbldDirectory().toString())
+                    .withDirectories();
         addExcludes(bldrDirs);
         var srcTrees = bldrDirs.stream()
             .map(r -> newResource(JavaSourceTreeType, r.path().resolve("src"),

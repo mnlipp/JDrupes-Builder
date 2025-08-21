@@ -74,10 +74,9 @@ public abstract class AbstractLauncher implements Launcher {
         // Get logging configuration
         InputStream props;
         try {
-            props = Files.newInputStream(
-                Path.of(
-                    jdbldProps.getProperty(DefaultBuildContext.JDBLD_DIRECTORY),
-                    "logging.properties"));
+            props = Files.newInputStream(Path.of(
+                jdbldProps.getProperty(DefaultBuildContext.JDBLD_DIRECTORY),
+                "logging.properties"));
         } catch (IOException e) {
             props = BootstrapLauncher.class
                 .getResourceAsStream("logging.properties");

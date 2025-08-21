@@ -71,7 +71,7 @@ public class DirectLauncher extends AbstractLauncher {
         "PMD.AvoidInstantiatingObjectsInLoops", "PMD.SystemPrintln" })
     public DirectLauncher(ClassLoader classloader, String[] args) {
         unwrapBuildException(() -> {
-            final var extClsLdr = addRuntimeExtensions(classloader);
+            final var extClsLdr = addExtensions(classloader);
             var rootProjects = new ArrayList<Class<? extends RootProject>>();
             var subprojects = new ArrayList<Class<? extends Project>>();
             findProjects(extClsLdr, rootProjects, subprojects);
@@ -91,12 +91,14 @@ public class DirectLauncher extends AbstractLauncher {
         });
     }
 
-    private ClassLoader addRuntimeExtensions(ClassLoader classloader) {
-        String[] coordinates = Arrays
-            .asList(jdbldProps.getProperty(RUNTIME_EXTENSIONS, "").split(","))
-            .stream().map(String::trim).toArray(String[]::new);
-        if (coordinates.length == 0
-            || coordinates.length == 1 && coordinates[0].isBlank()) {
+    private ClassLoader addExtensions(ClassLoader classloader) {
+        String[] coordinates = Stream.concat(Arrays.asList(jdbldProps
+            .getProperty(BootstrapBuild.BUILD_EXTENSIONS, "").split(","))
+            .stream(),
+            Arrays.asList(jdbldProps.getProperty(RUNTIME_EXTENSIONS, "")
+                .split(",")).stream())
+            .map(String::trim).filter(c -> !c.isBlank()).toArray(String[]::new);
+        if (coordinates.length == 0) {
             return classloader;
         }
 
@@ -111,8 +113,7 @@ public class DirectLauncher extends AbstractLauncher {
         }).toArray(URL[]::new);
 
         // Return augmented classloader
-        return new URLClassLoader(cpUrls,
-            Thread.currentThread().getContextClassLoader());
+        return new URLClassLoader(cpUrls, classloader);
     }
 
     @SuppressWarnings({ "PMD.UseVarargs",
