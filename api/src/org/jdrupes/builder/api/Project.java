@@ -152,8 +152,9 @@ public interface Project extends ResourceProvider {
         }
 
         @Override
-        public Object defaultValue() {
-            return defaultValue;
+        @SuppressWarnings("unchecked")
+        public <T> T defaultValue() {
+            return (T)defaultValue;
         }
     }
 
@@ -310,18 +311,22 @@ public interface Project extends ResourceProvider {
         return directory().relativize(other);
     }
 
+    /// Sets the given property to the given value.
+    /// 
+    /// Regrettably, there is no way to enforce at compile time that the
+    /// type of the value passed to `set` matches the type of the property.
+    /// An implementation must check this at runtime by verifying that the
+    /// given value is assignable to the default value. 
+    ///
+    /// @param property the property
+    /// @param value the value
+    /// @return the project
+    ///
+    Project set(PropertyKey property, Object value);
+    
     /// Returns value of the given property of the project. If the
     /// property is not set, the parent project's value is returned.
     /// If neither is set, the property's default value is returned.
-    ///
-    /// A method for setting a property is is not part of the public API.
-    /// It must be provided by the project's implementation as
-    /// `protected T set(PropertyKey property, Object value)`,
-    /// where `T` is the type of the implementing class.
-    ///
-    /// Regrettably, there is no way to enforce at compile time that the
-    /// type of the value passed to `set` matches the type of the property.
-    /// An implementation must check this at runtime.
     ///
     /// @param <T> the generic type
     /// @param property the property

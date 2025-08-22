@@ -30,7 +30,8 @@ public interface PropertyKey {
     ///
     String name();
 
-    /// The property's type.
+    /// The property's type. Returns `Object.class` if the default value
+    /// `null`.
     ///
     /// @return the class
     ///
@@ -43,8 +44,9 @@ public interface PropertyKey {
 
     /// The property's default value. This value must not be `null`.
     ///
+    /// @param <T> the generic type
     /// @return the object
     ///
-    Object defaultValue();
+    <T> T defaultValue();
 
 }

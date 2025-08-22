@@ -31,8 +31,10 @@ public interface RootProject extends Project {
     /// invoked by the user.
     ///
     /// @param project the project to prepare
+    /// @throws Exception the exception
     ///
-    default void prepareProject(Project project) {
+    @SuppressWarnings("PMD.SignatureDeclareThrowsException")
+    default void prepareProject(Project project) throws Exception {
         // Default does nothing
     }
 

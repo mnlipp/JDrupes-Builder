@@ -49,7 +49,7 @@ import org.jdrupes.builder.api.RootProject;
 
 /// A default implementation of a [Project].
 ///
-@SuppressWarnings({ "PMD.CouplingBetweenObjects" })
+@SuppressWarnings({ "PMD.CouplingBetweenObjects", "PMD.GodClass" })
 public abstract class AbstractProject implements Project {
 
     private Map<Class<? extends Project>, Future<Project>> projects;
@@ -131,7 +131,8 @@ public abstract class AbstractProject implements Project {
     ///     the directory is always set to the current working
     ///
     @SuppressWarnings({ "PMD.ConstructorCallsOverridableMethod",
-        "PMD.UseLocaleWithCaseConversions" })
+        "PMD.UseLocaleWithCaseConversions", "PMD.AvoidCatchingGenericException",
+        "PMD.CognitiveComplexity" })
     protected AbstractProject(NamedParameter<?>... params) {
         // Evaluate parent project
         var parentProject = NamedParameter.<
@@ -180,7 +181,11 @@ public abstract class AbstractProject implements Project {
             // dependency.
             parent.dependency(Forward, this);
         }
-        rootProject().prepareProject(this);
+        try {
+            rootProject().prepareProject(this);
+        } catch (Exception e) {
+            throw new BuildException(e);
+        }
     }
 
     /// Root project.
@@ -328,7 +333,8 @@ public abstract class AbstractProject implements Project {
     /// @param value the value
     /// @return the abstract project for method chaining
     ///
-    protected AbstractProject set(PropertyKey property, Object value) {
+    @Override
+    public AbstractProject set(PropertyKey property, Object value) {
         if (!property.type().isAssignableFrom(value.getClass())) {
             throw new IllegalArgumentException("Value for " + property
                 + " must be of type " + property.type());
