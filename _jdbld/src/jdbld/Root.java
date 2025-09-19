@@ -15,6 +15,7 @@ import org.jdrupes.builder.java.AppJarFile;
 import org.jdrupes.builder.java.ClasspathElement;
 import org.jdrupes.builder.java.UberJarGenerator;
 import org.jdrupes.builder.mvnrepo.MvnRepoLookup;
+import static org.jdrupes.builder.mvnrepo.MvnProperties.*;
 import org.jdrupes.builder.java.Javadoc;
 import org.jdrupes.builder.java.JavadocDirectory;
 import org.jdrupes.builder.java.JavaSourceFile;
@@ -30,7 +31,8 @@ public class Root extends AbstractProject implements RootProject {
 
     public Root() {
         super(name("jdrupes-builder"));
-        set(Version, "0.0.2");
+        set(Group, "org.jdrupes");
+        set(Version, "0.0.3-SNAPSHOT");
 
         dependency(Expose, project(Api.class));
         dependency(Expose, project(Core.class));
