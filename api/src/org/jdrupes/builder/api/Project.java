@@ -45,7 +45,7 @@ import static org.jdrupes.builder.api.Intend.Supply;
 ///
 /// ### Intend Supply
 ///
-/// ![Intend Supply](doc-files/supply-demo.svg)
+/// ![Intend Supply](supply-demo.svg)
 ///
 /// Resources from a provider added with [Intend#Supply] are provided
 /// by the project to entities that depend on the project. [Intend#Supply]
@@ -54,7 +54,7 @@ import static org.jdrupes.builder.api.Intend.Supply;
 ///
 /// ### Intend Consume
 ///
-/// ![Intend Consume](doc-files/consume-demo.svg)
+/// ![Intend Consume](consume-demo.svg)
 ///
 /// Resources from a provider added with [Intend#Consume] (typically
 /// another project) are only available to a project's generators
@@ -62,7 +62,7 @@ import static org.jdrupes.builder.api.Intend.Supply;
 ///
 /// ### Intend Expose
 ///
-/// ![Intend Expose](doc-files/expose-demo.svg)
+/// ![Intend Expose](expose-demo.svg)
 ///
 /// Resources from a provider added with [Intend#Expose] (typically
 /// another project) are provided by the project to entities that
@@ -71,7 +71,7 @@ import static org.jdrupes.builder.api.Intend.Supply;
 ///
 /// ### Intend Forward
 ///
-/// ![Intend Forward](doc-files/forward-demo.svg)
+/// ![Intend Forward](forward-demo.svg)
 ///
 /// Resources from a provider added with [Intend#Forward] (typically
 /// another project) are provided by the project to entities that
