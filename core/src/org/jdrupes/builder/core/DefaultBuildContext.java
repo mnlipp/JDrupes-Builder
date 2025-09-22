@@ -22,6 +22,8 @@ import java.nio.file.Path;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.stream.Stream;
+
+import org.apache.commons.cli.CommandLine;
 import org.jdrupes.builder.api.BuildContext;
 import org.jdrupes.builder.api.Resource;
 import org.jdrupes.builder.api.ResourceProvider;
@@ -37,14 +39,14 @@ public class DefaultBuildContext implements BuildContext {
     private final FutureStreamCache cache;
     private ExecutorService executor
         = Executors.newVirtualThreadPerTaskExecutor();
-    private final String[] commandArgs;
+    private final CommandLine commandLine;
 
     /// Instantiates a new default build. By default, the build uses
     /// a virtual thread per task executor.
     ///
     /* default */ DefaultBuildContext() {
         cache = new FutureStreamCache();
-        commandArgs = LauncherSupport.commandArgs();
+        commandLine = LauncherSupport.commandLine();
     }
 
     /// Returns the executor service used by this build to create futures.
@@ -78,9 +80,8 @@ public class DefaultBuildContext implements BuildContext {
     }
 
     @Override
-    @SuppressWarnings("PMD.MethodReturnsInternalArray")
-    public String[] commandArgs() {
-        return commandArgs;
+    public CommandLine commandLine() {
+        return commandLine;
     }
 
 }

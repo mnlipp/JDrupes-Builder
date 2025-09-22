@@ -34,6 +34,11 @@ import java.util.logging.Level;
 import java.util.logging.LogManager;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
+import org.apache.commons.cli.CommandLine;
+import org.apache.commons.cli.DefaultParser;
+import org.apache.commons.cli.Option;
+import org.apache.commons.cli.Options;
+import org.apache.commons.cli.ParseException;
 import org.jdrupes.builder.api.BuildException;
 import org.jdrupes.builder.api.FileTree;
 import org.jdrupes.builder.api.Launcher;
@@ -46,6 +51,7 @@ import static org.jdrupes.builder.java.JavaTypes.*;
 
 /// A default implementation of a [Launcher].
 ///
+@SuppressWarnings("PMD.AvoidInstantiatingObjectsInLoops")
 public abstract class AbstractLauncher implements Launcher {
 
     /// The JDrupes Builder properties read from the file
@@ -54,22 +60,28 @@ public abstract class AbstractLauncher implements Launcher {
     protected static final Properties jdbldProps;
     /// The log.
     protected final Logger log = Logger.getLogger(getClass().getName());
+    /// The command line.
+    protected final CommandLine commandLine;
 
     static {
         // Get builder configuration
         Properties fallbacks = new Properties();
         fallbacks.putAll(Map.of(DefaultBuildContext.JDBLD_DIRECTORY, "_jdbld"));
-        jdbldProps = new Properties(fallbacks);
-        var propsPath
-            = Path.of("").toAbsolutePath().resolve(".jdbld.properties");
-        if (propsPath.toFile().canRead()) {
+        for (Path propsPath : List.of(
+            Path.of(System.getProperty("user.dir"))
+                .resolve(".jdbld").resolve("jdbld.properties"),
+            Path.of("").toAbsolutePath().resolve(".jdbld.properties"))) {
             try {
-                jdbldProps.load(Files.newBufferedReader(propsPath));
+                if (propsPath.toFile().canRead()) {
+                    fallbacks = new Properties(fallbacks);
+                    fallbacks.load(Files.newBufferedReader(propsPath));
+                }
             } catch (IOException e) {
                 throw new BuildException(
                     "Cannot read properties from " + propsPath, e);
             }
         }
+        jdbldProps = new Properties(fallbacks);
 
         // Get logging configuration
         InputStream props;
@@ -91,9 +103,22 @@ public abstract class AbstractLauncher implements Launcher {
 
     /// Instantiates a new abstract launcher.
     ///
-    @SuppressWarnings("PMD.UnnecessaryConstructor")
-    public AbstractLauncher() {
-        // Makes javadoc happy.
+    /// @param args the command line arguments
+    ///
+    @SuppressWarnings("PMD.UseVarargs")
+    public AbstractLauncher(String[] args) {
+        Options options = new Options();
+        options.addOption("B-x", true, "Exclude from project scan");
+        options.addOption(Option.builder("P").hasArgs().valueSeparator('=')
+            .desc("Property in form key=value").get());
+        try {
+            commandLine = new DefaultParser().parse(options, args);
+        } catch (ParseException e) {
+            throw new BuildException(e);
+        }
+
+        // Set properties from command line
+        jdbldProps.putAll(commandLine.getOptionProperties("P"));
     }
 
     /// Find projects. The classpath is scanned for classes that implement
@@ -149,10 +174,10 @@ public abstract class AbstractLauncher implements Launcher {
         }
         if (rootProjects.size() > 1) {
             StringBuilder msg = new StringBuilder(50);
-            msg.append("More than one project implements RootProject: ");
-            rootProjects.stream().map(Class::getName)
-                .collect(Collectors.joining(", "));
-            throw new BuildException("No project implements RootProject");
+            msg.append("More than one project implements RootProject: ")
+                .append(rootProjects.stream().map(Class::getName)
+                    .collect(Collectors.joining(", ")));
+            throw new BuildException(msg.toString());
         }
     }
 

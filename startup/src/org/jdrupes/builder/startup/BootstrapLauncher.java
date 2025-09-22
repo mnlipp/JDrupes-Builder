@@ -66,9 +66,10 @@ public class BootstrapLauncher extends AbstractLauncher {
     @SuppressWarnings("PMD.UseVarargs")
     public BootstrapLauncher(
             Class<? extends RootProject> rootPrjCls, String[] args) {
+        super(args);
         unwrapBuildException(() -> {
             rootProject = LauncherSupport.createProjects(
-                rootPrjCls, Collections.emptyList(), jdbldProps, args);
+                rootPrjCls, Collections.emptyList(), jdbldProps, commandLine);
 
             // Add build extensions to the build project.
             var mvnLookup = new MvnRepoLookup();

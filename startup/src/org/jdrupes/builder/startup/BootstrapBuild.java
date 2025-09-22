@@ -19,7 +19,6 @@
 package org.jdrupes.builder.startup;
 
 import java.nio.file.Path;
-import java.util.Arrays;
 import java.util.logging.Logger;
 import org.jdrupes.builder.api.FileResource;
 import org.jdrupes.builder.api.FileTree;
@@ -78,12 +77,8 @@ public class BootstrapBuild extends AbstractProject implements Masked {
     }
 
     private void addExcludes(FileTree<FileResource> bldrDirs) {
-        var itr = Arrays.asList(context().commandArgs()).iterator();
-        while (itr.hasNext()) {
-            var arg = itr.next();
-            if ("-x".equals(arg) && itr.hasNext()) {
-                bldrDirs.exclude(itr.next());
-            }
+        for (var dir : context().commandLine().getOptionValues("B-x")) {
+            bldrDirs.exclude(dir);
         }
     }
 

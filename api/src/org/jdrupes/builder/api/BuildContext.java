@@ -20,6 +20,7 @@ package org.jdrupes.builder.api;
 
 import java.nio.file.Path;
 import java.util.stream.Stream;
+import org.apache.commons.cli.CommandLine;
 
 /// The context of a build.
 ///
@@ -32,11 +33,11 @@ public interface BuildContext {
     ///
     Path jdbldDirectory();
 
-    /// The arguments passed to the comand line.
+    /// The command line as processed by Apache Commons CLI.
     ///
     /// @return the string[]
     ///
-    String[] commandArgs();
+    CommandLine commandLine();
 
     /// Obtains the resource stream for the given resource from the
     /// given provider. The result from invoking the provider is

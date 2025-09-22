@@ -70,13 +70,14 @@ public class DirectLauncher extends AbstractLauncher {
     @SuppressWarnings({ "PMD.UseVarargs",
         "PMD.AvoidInstantiatingObjectsInLoops", "PMD.SystemPrintln" })
     public DirectLauncher(ClassLoader classloader, String[] args) {
+        super(args);
         unwrapBuildException(() -> {
             final var extClsLdr = addExtensions(classloader);
             var rootProjects = new ArrayList<Class<? extends RootProject>>();
             var subprojects = new ArrayList<Class<? extends Project>>();
             findProjects(extClsLdr, rootProjects, subprojects);
             rootProject = LauncherSupport.createProjects(rootProjects.get(0),
-                subprojects, jdbldProps, args);
+                subprojects, jdbldProps, commandLine);
             for (var arg : args) {
                 var reqs = LauncherSupport.lookupCommand(rootProject, arg);
                 if (reqs.length == 0) {

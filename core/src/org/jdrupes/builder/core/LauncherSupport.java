@@ -19,10 +19,9 @@
 package org.jdrupes.builder.core;
 
 import java.lang.reflect.InvocationTargetException;
-import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 import java.util.Properties;
+import org.apache.commons.cli.CommandLine;
 import org.jdrupes.builder.api.Project;
 import org.jdrupes.builder.api.ResourceRequest;
 import org.jdrupes.builder.api.RootProject;
@@ -32,7 +31,7 @@ import org.jdrupes.builder.api.RootProject;
 public final class LauncherSupport {
 
     private static Properties jdbldProps;
-    private static String[] commandArgs;
+    private static CommandLine commandLine;
 
     private LauncherSupport() {
     }
@@ -46,17 +45,16 @@ public final class LauncherSupport {
     /// @param rootProject the root project
     /// @param subprojects the sub projects
     /// @param jdbldProps the builder properties
-    /// @param args the arg list
+    /// @param commandLine the command line
     /// @return the root project
     ///
-    @SuppressWarnings("PMD.UseVarargs")
     public static RootProject createProjects(
             Class<? extends RootProject> rootProject,
             List<Class<? extends Project>> subprojects,
-            Properties jdbldProps, String[] args) {
+            Properties jdbldProps, CommandLine commandLine) {
         try {
             LauncherSupport.jdbldProps = jdbldProps;
-            scanArgs(args);
+            LauncherSupport.commandLine = commandLine;
             var result = rootProject.getConstructor().newInstance();
             subprojects.forEach(result::project);
             return result;
@@ -72,23 +70,9 @@ public final class LauncherSupport {
         return jdbldProps;
     }
 
-    @SuppressWarnings("PMD.UseVarargs")
-    private static void scanArgs(String[] args) {
-        var bootstrapArgs = new ArrayList<String>();
-        var itr = Arrays.asList(args).iterator();
-        while (itr.hasNext()) {
-            var arg = itr.next();
-            if (arg.startsWith("-B-x") && itr.hasNext()) {
-                bootstrapArgs.add("-x");
-                bootstrapArgs.add(itr.next());
-            }
-        }
-        commandArgs = bootstrapArgs.toArray(new String[0]);
-    }
-
-    /* default */ @SuppressWarnings("PMD.MethodReturnsInternalArray")
-    static String[] commandArgs() {
-        return commandArgs;
+    /* default */
+    static CommandLine commandLine() {
+        return commandLine;
     }
 
     /// Lookup the command in the given root project.
