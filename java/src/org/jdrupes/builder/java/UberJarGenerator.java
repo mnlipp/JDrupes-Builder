@@ -281,6 +281,7 @@ public class UberJarGenerator extends AbstractGenerator {
         return Stream.of((T) jarResource);
     }
 
+    @SuppressWarnings("PMD.CloseResource")
     private void buildJar(JarFile jarResource,
             Resources<ClasspathElement> classpathElements) {
         // Build jar
@@ -347,7 +348,7 @@ public class UberJarGenerator extends AbstractGenerator {
 
     private void addJarFile(Map<Path, Queue<Noted>> entries, JarFile jarFile,
             Map<Path, java.util.jar.JarFile> openJars) {
-        @SuppressWarnings("PMD.PreserveStackTrace")
+        @SuppressWarnings({ "PMD.PreserveStackTrace", "PMD.CloseResource" })
         java.util.jar.JarFile jar
             = openJars.computeIfAbsent(jarFile.path(), _ -> {
                 try {
@@ -376,7 +377,7 @@ public class UberJarGenerator extends AbstractGenerator {
     }
 
     @SuppressWarnings({ "PMD.AvoidLiteralsInIfCondition",
-        "PMD.PreserveStackTrace" })
+        "PMD.PreserveStackTrace", "PMD.UselessPureMethodCall" })
     private void resolveDuplicates(Map<Path, Queue<Noted>> entries) {
         entries.entrySet().parallelStream().forEach(entry -> {
             var queue = entry.getValue();
@@ -534,7 +535,8 @@ public class UberJarGenerator extends AbstractGenerator {
 
         @Override
         public InputStream inputStream() throws IOException {
-            return new ByteArrayInputStream(content.toString().getBytes());
+            return new ByteArrayInputStream(
+                content.toString().getBytes(StandardCharsets.UTF_8));
         }
 
         @Override
