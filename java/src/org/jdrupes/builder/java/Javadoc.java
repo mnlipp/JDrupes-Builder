@@ -209,13 +209,6 @@ public class Javadoc extends JavaTool {
     }
 
     private String tagletPath() {
-        tagletpath.stream().<Path> mapMulti((e, consumer) -> {
-            if (e instanceof ClassTree classTree) {
-                consumer.accept(classTree.root());
-            } else if (e instanceof JarFile jarFile) {
-                consumer.accept(jarFile.path());
-            }
-        }).map(Path::toString).collect(Collectors.joining(File.pathSeparator));
         return tagletpath.stream().<Path> mapMulti((e, consumer) -> {
             if (e instanceof ClassTree classTree) {
                 consumer.accept(classTree.root());
