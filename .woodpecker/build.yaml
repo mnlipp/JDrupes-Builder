@@ -22,6 +22,6 @@ steps:
     - echo gpgcheck=1 >> /etc/yum.repos.d/adoptium.repo
     - echo gpgkey=https://packages.adoptium.net/artifactory/api/gpg/key/public >> /etc/yum.repos.d/adoptium.repo
     - cat /etc/yum.repos.d/adoptium.repo
-    - dnf install -y graphviz temurin-25-jdk
-    - JAVA_HOME=/usr/lib/jvm/temurin-25-jdk ./jdbld -B-x 'test-*-project' build
+    - dnf install -y graphviz temurin-21-jdk
+    - JAVA_HOME=/usr/lib/jvm/temurin-21-jdk ./jdbld -B-x 'test-*-project' build
  
