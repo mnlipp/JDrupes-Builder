@@ -45,12 +45,13 @@ public class Root extends AbstractProject
         dependency(Expose, project(Eclipse.class));
 
         // Build app jar
-        dependency(Forward, new UberJarGenerator(this).addAll(providers(Expose))
+        dependency(Forward, new UberJarGenerator(this)
+            .mainClass("org.jdrupes.builder.startup.BootstrapLauncher")
+            .addAll(providers(Expose))
             .add(new MvnRepoLookup().artifact(
                 "eu.maveniverse.maven.mima.runtime:standalone-static:2.4.29")
                 .artifact("org.slf4j:slf4j-api:2.0.17")
                 .artifact("org.slf4j:slf4j-jdk14:2.0.17"))
-            .mainClass("org.jdrupes.builder.startup.BootstrapLauncher")
             .destination(directory().resolve(Path.of("_jdbld", "app"))));
 
         // Build javadoc
