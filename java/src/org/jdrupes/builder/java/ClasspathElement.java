@@ -25,7 +25,7 @@ import org.jdrupes.builder.api.Resource;
 ///
 public interface ClasspathElement extends Resource {
 
-    /// Return the representation of the element as as it must appear
+    /// Return the representation of the element as it must appear
     /// on the classpath.
     ///
     /// @return the path
