@@ -71,6 +71,14 @@ public abstract class JarGenerator extends AbstractGenerator {
         super(project);
     }
 
+    /// return the cached providers.
+    ///
+    /// @return the cached stream
+    ///
+    protected CachedStream<ResourceProvider> providers() {
+        return providers;
+    }
+
     /// Returns the destination directory. Defaults to "`libs`".
     ///
     /// @return the destination
