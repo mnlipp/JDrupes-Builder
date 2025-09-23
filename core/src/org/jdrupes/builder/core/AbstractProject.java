@@ -188,10 +188,6 @@ public abstract class AbstractProject implements Project {
         }
     }
 
-    /// Root project.
-    ///
-    /// @return the root project
-    ///
     @Override
     public final RootProject rootProject() {
         if (this instanceof RootProject root) {
@@ -206,11 +202,6 @@ public abstract class AbstractProject implements Project {
             .rootProject();
     }
 
-    /// Project.
-    ///
-    /// @param prjCls the prj cls
-    /// @return the project
-    ///
     @Override
     public ResourceProvider project(Class<? extends Project> prjCls) {
         if (this.getClass().equals(prjCls)) {
@@ -242,20 +233,12 @@ public abstract class AbstractProject implements Project {
         }
     }
 
-    /// Returns the project's name.
-    ///
-    /// @return the string
-    ///
     @Override
     @SuppressWarnings("checkstyle:OverloadMethodsDeclarationOrder")
     public String name() {
         return projectName;
     }
 
-    /// Returns the project's directory.
-    ///
-    /// @return the path
-    ///
     @Override
     @SuppressWarnings("checkstyle:OverloadMethodsDeclarationOrder")
     public Path directory() {
@@ -273,23 +256,12 @@ public abstract class AbstractProject implements Project {
         return this;
     }
 
-    /// Add a dependency on another provider with the given intend.
-    ///
-    /// @param intend the intend
-    /// @param provider the provider
-    /// @return the project
-    ///
     @Override
     public Project dependency(Intend intend, ResourceProvider provider) {
         providers.put(provider, intend);
         return this;
     }
 
-    /// Providers.
-    ///
-    /// @param intends the intends
-    /// @return the stream
-    ///
     @Override
     public Stream<ResourceProvider> providers(Set<Intend> intends) {
         return providers.entrySet().stream()
@@ -309,12 +281,6 @@ public abstract class AbstractProject implements Project {
         return ((AbstractProject) rootProject()).context;
     }
 
-    /// Returns the.
-    ///
-    /// @param <T> the generic type
-    /// @param property the property
-    /// @return the t
-    ///
     @Override
     @SuppressWarnings("unchecked")
     public <T> T get(PropertyKey property) {
@@ -327,12 +293,6 @@ public abstract class AbstractProject implements Project {
             });
     }
 
-    /// Sets the given property to the given value.
-    ///
-    /// @param property the property
-    /// @param value the value
-    /// @return the abstract project for method chaining
-    ///
     @Override
     public AbstractProject set(PropertyKey property, Object value) {
         if (!property.type().isAssignableFrom(value.getClass())) {
