@@ -25,8 +25,6 @@ import java.util.function.Function;
 import java.util.stream.Stream;
 import static org.jdrupes.builder.api.Intend.Consume;
 import static org.jdrupes.builder.api.Intend.Expose;
-import static org.jdrupes.builder.api.Intend.Forward;
-import static org.jdrupes.builder.api.Intend.Supply;
 
 /// [Project]s are used to structure the build configuration. Every
 /// build configuration has a single root project and can have
@@ -295,11 +293,18 @@ public interface Project extends ResourceProvider {
             providers(EnumSet.of(Consume, Expose)), requested);
     }
 
+    /// A project itself does not provide any resources. Rather, requests
+    /// for resources are forwarded to the project's providers. The types
+    /// of providers used is determined by the request.
+    ///
+    /// @param <R> the generic type
+    /// @param requested the requested
+    /// @return the provided resources
+    ///
     @Override
     default <R extends Resource> Stream<R>
             provide(ResourceRequest<R> requested) {
-        return invokeProviders(
-            providers(EnumSet.of(Forward, Expose, Supply)), requested);
+        return invokeProviders(providers(requested.forwardTo()), requested);
     }
 
     /// Short for `directory().relativize(other)`.

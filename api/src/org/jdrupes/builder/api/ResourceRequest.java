@@ -18,8 +18,13 @@
 
 package org.jdrupes.builder.api;
 
+import java.util.EnumSet;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.Set;
+import static org.jdrupes.builder.api.Intend.Expose;
+import static org.jdrupes.builder.api.Intend.Forward;
+import static org.jdrupes.builder.api.Intend.Supply;
 
 /// Represents a request for [Resource]s of a specified type.
 /// The specified type provides two kinds of type information:
@@ -44,7 +49,10 @@ import java.util.Optional;
 ///
 public class ResourceRequest<T extends Resource> {
 
+    private static final Set<Intend> DEFAULT_FORWARDS
+        = EnumSet.of(Forward, Expose, Supply);
     private final ResourceType<? extends Resources<T>> type;
+    private Set<Intend> intends = DEFAULT_FORWARDS;
 
     /// Instantiates a new resource request without any restriction.
     ///
@@ -95,6 +103,26 @@ public class ResourceRequest<T extends Resource> {
     public boolean includes(ResourceType<?> type) {
         return Optional.ofNullable(type().containedType())
             .map(ct -> ct.isAssignableFrom(type)).orElse(false);
+    }
+
+    /// Sets the dependency types to which this request is forwarded
+    /// (@see [Project#provide]).
+    ///
+    /// @param intends the intends
+    /// @return the resource request
+    ///
+    public ResourceRequest<T> forwardTo(Set<Intend> intends) {
+        this.intends = intends;
+        return this;
+    }
+
+    /// Returns the dependency types to which this request is forwarded.
+    /// Defauts to [Intend#Forward], [Intend#Expose] and [Intend#Supply].
+    ///
+    /// @return the set with intends
+    ///
+    public Set<Intend> forwardTo() {
+        return intends;
     }
 
     @Override
