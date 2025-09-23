@@ -38,6 +38,7 @@ import org.jdrupes.builder.api.ResourceFactory;
 import org.jdrupes.builder.api.ResourceProvider;
 import org.jdrupes.builder.api.ResourceRequest;
 import static org.jdrupes.builder.java.JavaTypes.*;
+import static org.jdrupes.builder.mvnrepo.MvnRepoTypes.*;
 
 /// The Class MvnRepoLookup.
 ///
@@ -69,14 +70,24 @@ public class MvnRepoLookup implements ResourceProvider {
     /// @return the stream
     ///
     @Override
-    @SuppressWarnings("PMD.AvoidInstantiatingObjectsInLoops")
     public <T extends Resource> Stream<T>
             provide(ResourceRequest<T> requested) {
-        if (!requested.wants(CompilationResourcesType)
-            || !requested.includes(JarFileType)) {
-            return Stream.empty();
+        if (requested.wants(MvnRepoDependenciesType)) {
+            @SuppressWarnings("unchecked")
+            var result = (Stream<T>) coordinates.stream()
+                .map(DefaultMvnRepoDependency::new);
+            return result;
         }
+        if (requested.wants(CompilationResourcesType)
+            && requested.includes(JarFileType)) {
+            return provideJars(requested);
+        }
+        return Stream.empty();
+    }
 
+    @SuppressWarnings("PMD.AvoidInstantiatingObjectsInLoops")
+    private <T extends Resource> Stream<T>
+            provideJars(ResourceRequest<T> requested) {
         ContextOverrides overrides = ContextOverrides.create()
             .withUserSettings(true).build();
         Runtime runtime = Runtimes.INSTANCE.getRuntime();

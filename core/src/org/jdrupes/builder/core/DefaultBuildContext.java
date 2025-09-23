@@ -22,7 +22,6 @@ import java.nio.file.Path;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.stream.Stream;
-
 import org.apache.commons.cli.CommandLine;
 import org.jdrupes.builder.api.BuildContext;
 import org.jdrupes.builder.api.Resource;

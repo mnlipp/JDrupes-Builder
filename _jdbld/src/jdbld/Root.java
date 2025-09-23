@@ -15,6 +15,7 @@ import org.jdrupes.builder.java.AppJarFile;
 import org.jdrupes.builder.java.ClasspathElement;
 import org.jdrupes.builder.java.UberJarGenerator;
 import org.jdrupes.builder.mvnrepo.MvnRepoLookup;
+import org.jdrupes.builder.mvnrepo.PomFile;
 import static org.jdrupes.builder.mvnrepo.MvnProperties.*;
 import org.jdrupes.builder.java.Javadoc;
 import org.jdrupes.builder.java.JavadocDirectory;
@@ -87,5 +88,7 @@ public class Root extends AbstractProject implements RootProject {
                 new ResourceType<>() {}));
         commandAlias("eclipse",
             new ResourceRequest<EclipseConfiguration>(new ResourceType<>() {}));
+        commandAlias("pomFile",
+            new ResourceRequest<PomFile>(new ResourceType<>() {}));
     }
 }
