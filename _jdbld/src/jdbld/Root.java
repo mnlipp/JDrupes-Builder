@@ -14,6 +14,7 @@ import org.jdrupes.builder.eclipse.EclipseConfiguration;
 import org.jdrupes.builder.java.AppJarFile;
 import org.jdrupes.builder.java.ClasspathElement;
 import org.jdrupes.builder.java.UberJarGenerator;
+import org.jdrupes.builder.mvnrepo.MavenArtifactProject;
 import org.jdrupes.builder.mvnrepo.MvnRepoLookup;
 import org.jdrupes.builder.mvnrepo.PomFile;
 import static org.jdrupes.builder.mvnrepo.MvnProperties.*;
@@ -22,7 +23,8 @@ import org.jdrupes.builder.java.JavadocDirectory;
 import org.jdrupes.builder.java.JavaSourceFile;
 import static org.jdrupes.builder.java.JavaTypes.*;
 
-public class Root extends AbstractProject implements RootProject {
+public class Root extends AbstractProject
+        implements RootProject, MavenArtifactProject {
 
     @Override
     public void prepareProject(Project project) {
@@ -32,7 +34,7 @@ public class Root extends AbstractProject implements RootProject {
 
     public Root() {
         super(name("jdrupes-builder"));
-        set(Group, "org.jdrupes");
+        set(GroupId, "org.jdrupes");
         set(Version, "0.0.3-SNAPSHOT");
 
         dependency(Expose, project(Api.class));

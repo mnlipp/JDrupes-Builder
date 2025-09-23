@@ -31,7 +31,7 @@ public interface PropertyKey {
     String name();
 
     /// The property's type. Returns `Object.class` if the default value
-    /// `null`.
+    /// is `null`.
     ///
     /// @return the class
     ///
