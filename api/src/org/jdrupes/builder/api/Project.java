@@ -247,6 +247,32 @@ public interface Project extends ResourceProvider {
     ///
     Project dependency(Intend intend, ResourceProvider provider);
 
+    /// Uses the supplier to create a provider, passing this project as 
+    /// argument and adds the result as a dependency to this project. This
+    /// is a convenience method to add a provider to the project by writing
+    /// (in a project's constructor):
+    /// 
+    /// ```java
+    /// dependency(intend, Provider::new);
+    /// ```
+    /// instead of:
+    /// 
+    /// ```java
+    /// dependency(intend, new Provider(this));
+    /// ```
+    ///
+    /// @param <T> the generic type
+    /// @param intend the intend
+    /// @param supplier the supplier
+    /// @return the project for method chaining
+    ///
+    default <T extends ResourceProvider> T dependency(Intend intend,
+            Function<Project, T> supplier) {
+        var provider = supplier.apply(this);
+        dependency(intend, provider);
+        return provider;
+    }
+    
     /// Returns the providers that have been added with one of the given 
     /// intended usages as [Stream]. The stream may only be terminated
     /// after all projects have been created.
