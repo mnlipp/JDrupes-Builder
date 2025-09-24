@@ -22,6 +22,8 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import static java.nio.file.StandardOpenOption.*;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Queue;
@@ -58,6 +60,9 @@ public abstract class JarGenerator extends AbstractGenerator {
     private Supplier<String> jarName
         = () -> project().name() + "-" + project().get(Version) + ".jar";
     private Stream<Entry<Name, String>> attributes;
+    private final List<Stream<
+            ? extends Map.Entry<Path, ? extends IOResource>>> additional
+                = new ArrayList<>();
 
     /// Instantiates a new library generator.
     ///
@@ -157,6 +162,17 @@ public abstract class JarGenerator extends AbstractGenerator {
         return this;
     }
 
+    /// Adds resources to the jar that are not classpath entries.
+    ///
+    /// @param entries the entries
+    /// @return the jar generator
+    ///
+    public JarGenerator add(
+            Stream<? extends Map.Entry<Path, ? extends IOResource>> entries) {
+        additional.add(entries);
+        return this;
+    }
+
     /// Builds the jar.
     ///
     /// @param jarResource the jar resource
@@ -170,6 +186,7 @@ public abstract class JarGenerator extends AbstractGenerator {
         var openJars = new ConcurrentHashMap<Path, java.util.jar.JarFile>();
         var entries = new ConcurrentHashMap<Path, Queue<IOResource>>();
         addEntries(entries, classpathElements.stream(), openJars);
+        addAdditional(entries);
         resolveDuplicates(entries);
 
         // Add content to jar
@@ -254,6 +271,14 @@ public abstract class JarGenerator extends AbstractGenerator {
                     _ -> new ConcurrentLinkedQueue<IOResource>())
                     .add(new JarFileEntry(jar, e));
             });
+    }
+
+    private void addAdditional(Map<Path, Queue<IOResource>> entries) {
+        additional.stream().flatMap(s -> s).forEach(entry -> {
+            entries.computeIfAbsent(entry.getKey(),
+                _ -> new ConcurrentLinkedQueue<IOResource>())
+                .add(entry.getValue());
+        });
     }
 
     /// Resolve duplicates. The default implementation outputs a warning

@@ -1,6 +1,7 @@
 package jdbld;
 
 import java.nio.file.Path;
+import java.util.Map;
 import java.util.stream.Stream;
 import org.jdrupes.builder.api.FileTree;
 import static org.jdrupes.builder.api.Intend.*;
@@ -52,6 +53,11 @@ public class Root extends AbstractProject
                 "eu.maveniverse.maven.mima.runtime:standalone-static:2.4.29")
                 .artifact("org.slf4j:slf4j-api:2.0.17")
                 .artifact("org.slf4j:slf4j-jdk14:2.0.17"))
+            .add(get(new ResourceRequest<PomFile>(new ResourceType<>() {})
+                .forwardTo(Supply))
+                    .map(pomFile -> Map.entry(Path.of("META-INF/maven")
+                        .resolve((String) get(GroupId)).resolve(name())
+                        .resolve("pom.xml"), pomFile)))
             .destination(directory().resolve(Path.of("_jdbld", "app"))));
 
         // Build javadoc
