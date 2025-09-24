@@ -108,7 +108,7 @@ public class PomFileGenerator extends AbstractGenerator {
 
         var deps = project().newResource(MvnRepoDependenciesType).addAll(
             project().provided(new ResourceRequest<>(
-                MvnRepoDependenciesType).forwardTo(EnumSet.of(Supply))));
+                MvnRepoDependenciesType).forwardTo(Supply)));
         pomPath.getParent().toFile().mkdirs();
         generateXmlFile(this::generatePomFile, pomPath);
         @SuppressWarnings("unchecked")

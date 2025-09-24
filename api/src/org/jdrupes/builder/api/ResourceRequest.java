@@ -18,6 +18,7 @@
 
 package org.jdrupes.builder.api;
 
+import java.util.Arrays;
 import java.util.EnumSet;
 import java.util.Objects;
 import java.util.Optional;
@@ -111,8 +112,8 @@ public class ResourceRequest<T extends Resource> {
     /// @param intends the intends
     /// @return the resource request
     ///
-    public ResourceRequest<T> forwardTo(Set<Intend> intends) {
-        this.intends = intends;
+    public ResourceRequest<T> forwardTo(Intend... intends) {
+        this.intends = EnumSet.copyOf(Arrays.asList(intends));
         return this;
     }
 
