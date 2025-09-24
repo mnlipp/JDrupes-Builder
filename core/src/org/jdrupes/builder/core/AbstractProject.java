@@ -24,12 +24,12 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Collections;
 import java.util.HashMap;
-import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 import java.util.stream.Stream;
@@ -59,9 +59,8 @@ public abstract class AbstractProject implements Project {
     private final AbstractProject parent;
     private final String projectName;
     private final Path projectDirectory;
-    @SuppressWarnings("PMD.UseConcurrentHashMap")
     private final Map<ResourceProvider, Intend> providers
-        = new LinkedHashMap<>();
+        = new ConcurrentHashMap<>();
     @SuppressWarnings("PMD.UseConcurrentHashMap")
     private final Map<PropertyKey, Object> properties = new HashMap<>();
     // Only non null in the root project
