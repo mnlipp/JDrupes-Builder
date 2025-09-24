@@ -28,7 +28,7 @@ import org.jdrupes.builder.eclipse.EclipseConfigurator;
 import org.jdrupes.builder.java.JavaCompiler;
 import org.jdrupes.builder.java.JavaProject;
 import org.jdrupes.builder.java.JavaResourceCollector;
-import org.jdrupes.builder.java.LibraryGenerator;
+import org.jdrupes.builder.java.JarGenerator;
 import org.w3c.dom.Document;
 import org.w3c.dom.Node;
 
@@ -43,7 +43,7 @@ public class ProjectPreparation {
                 .options("--release", "23");
             project.generator(JavaResourceCollector::new)
                 .add(Path.of("resources"), "**/*");
-            project.generator(LibraryGenerator::new)
+            project.generator(JarGenerator::new)
                 .addAll(project.providers(Supply));
         }
     }

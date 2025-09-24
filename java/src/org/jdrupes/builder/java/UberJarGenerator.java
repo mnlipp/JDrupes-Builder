@@ -23,7 +23,6 @@ import java.nio.file.Path;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Queue;
-import java.util.jar.Attributes;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import org.jdrupes.builder.api.BuildException;
@@ -91,9 +90,7 @@ import static org.jdrupes.builder.java.JavaTypes.*;
 /// generating the uber jar in a project of its own. Often the root
 /// project can be used for this purpose.  
 ///
-public class UberJarGenerator extends JarGenerator {
-
-    private String mainClass;
+public class UberJarGenerator extends AbstractJarGenerator {
 
     /// Instantiates a new uber jar generator.
     ///
@@ -101,24 +98,6 @@ public class UberJarGenerator extends JarGenerator {
     ///
     public UberJarGenerator(Project project) {
         super(project);
-    }
-
-    /// Returns the main class.
-    ///
-    /// @return the main class
-    ///
-    public String mainClass() {
-        return mainClass;
-    }
-
-    /// Sets the main class.
-    ///
-    /// @param mainClass the new main class
-    /// @return the uber jar generator for method chaining
-    ///
-    public UberJarGenerator mainClass(String mainClass) {
-        this.mainClass = mainClass;
-        return this;
     }
 
     @Override
@@ -146,9 +125,9 @@ public class UberJarGenerator extends JarGenerator {
             return Stream.empty();
         }
 
-        // Make sure mainClass is set
+        // Make sure mainClass is set for app jar
         if (AppJarFileType.isAssignableFrom(requested.type().containedType())
-            && mainClass == null) {
+            && mainClass() == null) {
             throw new BuildException("Main class must be set for "
                 + name() + " in " + project());
         }
@@ -176,8 +155,6 @@ public class UberJarGenerator extends JarGenerator {
         if (jarResource.asOf().isAfter(toBeIncluded.asOf())) {
             return Stream.of((T) jarResource);
         }
-        attributes(
-            Map.of(Attributes.Name.MAIN_CLASS, mainClass).entrySet().stream());
 
         buildJar(jarResource, toBeIncluded);
         return Stream.of((T) jarResource);
