@@ -49,7 +49,7 @@ public class Root extends AbstractProject
         dependency(Forward, new UberJarGenerator(this)
             .mainClass("org.jdrupes.builder.startup.BootstrapLauncher")
             .addAll(providers(Expose))
-            .add(new MvnRepoLookup().artifact(
+            .add(new MvnRepoLookup(this).artifact(
                 "eu.maveniverse.maven.mima.runtime:standalone-static:2.4.29")
                 .artifact("org.slf4j:slf4j-api:2.0.17")
                 .artifact("org.slf4j:slf4j-jdk14:2.0.17"))
@@ -63,7 +63,7 @@ public class Root extends AbstractProject
         // Build javadoc
         generator(Javadoc::new)
             .destination(rootProject().directory().resolve("webpages/javadoc"))
-            .tagletpath(from(new MvnRepoLookup()
+            .tagletpath(from(new MvnRepoLookup(this)
                 .artifact("org.jdrupes.taglets:plantuml-taglet:3.1.0")
                 .artifact("net.sourceforge.plantuml:plantuml:1.2023.11"))
                     .get(new ResourceRequest<ClasspathElement>(
