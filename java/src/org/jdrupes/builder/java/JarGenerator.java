@@ -18,15 +18,10 @@
 
 package org.jdrupes.builder.java;
 
-import java.io.ByteArrayInputStream;
 import java.io.IOException;
-import java.io.InputStream;
-import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import static java.nio.file.StandardOpenOption.*;
-import java.time.Instant;
-import java.util.Comparator;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Queue;
@@ -44,6 +39,7 @@ import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 import org.jdrupes.builder.api.BuildException;
 import org.jdrupes.builder.api.FileTree;
+import org.jdrupes.builder.api.IOResource;
 import org.jdrupes.builder.api.Project;
 import static org.jdrupes.builder.api.Project.Properties.*;
 import org.jdrupes.builder.api.Resource;
@@ -172,7 +168,7 @@ public abstract class JarGenerator extends AbstractGenerator {
         // Build jar
         log.info(() -> "Building jar in " + project().name());
         var openJars = new ConcurrentHashMap<Path, java.util.jar.JarFile>();
-        var entries = new ConcurrentHashMap<Path, Queue<Noted>>();
+        var entries = new ConcurrentHashMap<Path, Queue<IOResource>>();
         addEntries(entries, classpathElements.stream(), openJars);
         resolveDuplicates(entries);
 
@@ -193,7 +189,7 @@ public abstract class JarGenerator extends AbstractGenerator {
                         .map(Path::toString).collect(Collectors.joining("/"));
                 @SuppressWarnings("PMD.AvoidInstantiatingObjectsInLoops")
                 JarEntry jarEntry = new JarEntry(entryName);
-                jarEntry.setTime(entry.getValue().peek().lastModified());
+                jarEntry.setTime(entry.getValue().peek().asOf().toEpochMilli());
                 jos.putNextEntry(jarEntry);
                 try (var input = entry.getValue().peek().inputStream()) {
                     input.transferTo(jos);
@@ -208,7 +204,7 @@ public abstract class JarGenerator extends AbstractGenerator {
         }
     }
 
-    private void addEntries(Map<Path, Queue<Noted>> entries,
+    private void addEntries(Map<Path, Queue<IOResource>> entries,
             Stream<? extends Resource> classpathElements,
             Map<Path, java.util.jar.JarFile> openJars) {
         classpathElements.parallel().forEach(cpe -> {
@@ -220,19 +216,18 @@ public abstract class JarGenerator extends AbstractGenerator {
         });
     }
 
-    private void addFileTree(Map<Path, Queue<Noted>> entries,
+    private void addFileTree(Map<Path, Queue<IOResource>> entries,
             FileTree<?> fileTree) {
         var root = fileTree.root();
         fileTree.stream().forEach(file -> {
             var relPath = root.relativize(file.path());
             entries.computeIfAbsent(relPath,
-                _ -> new ConcurrentLinkedQueue<Noted>())
-                .add(new NotedFileTreeEntry(root, file.path()));
+                _ -> new ConcurrentLinkedQueue<IOResource>()).add(file);
         });
     }
 
-    private void addJarFile(Map<Path, Queue<Noted>> entries, JarFile jarFile,
-            Map<Path, java.util.jar.JarFile> openJars) {
+    private void addJarFile(Map<Path, Queue<IOResource>> entries,
+            JarFile jarFile, Map<Path, java.util.jar.JarFile> openJars) {
         @SuppressWarnings({ "PMD.PreserveStackTrace", "PMD.CloseResource" })
         java.util.jar.JarFile jar
             = openJars.computeIfAbsent(jarFile.path(), _ -> {
@@ -256,179 +251,30 @@ public abstract class JarGenerator extends AbstractGenerator {
             .forEach(e -> {
                 var relPath = Path.of(e.getRealName());
                 entries.computeIfAbsent(relPath,
-                    _ -> new ConcurrentLinkedQueue<Noted>())
-                    .add(new NotedJarFileEntry(jarFile.path(), jar, e));
+                    _ -> new ConcurrentLinkedQueue<IOResource>())
+                    .add(new JarFileEntry(jar, e));
             });
     }
 
+    /// Resolve duplicates. The default implementation outputs a warning
+    /// and skips the duplicate entry. 
+    ///
+    /// @param entries the entries
+    ///
     @SuppressWarnings({ "PMD.AvoidLiteralsInIfCondition",
-        "PMD.PreserveStackTrace", "PMD.UselessPureMethodCall" })
-    private void resolveDuplicates(Map<Path, Queue<Noted>> entries) {
-        entries.entrySet().parallelStream().forEach(entry -> {
-            var queue = entry.getValue();
+        "PMD.UselessPureMethodCall" })
+    protected void resolveDuplicates(Map<Path, Queue<IOResource>> entries) {
+        entries.entrySet().parallelStream().forEach(item -> {
+            var queue = item.getValue();
             if (queue.size() == 1) {
                 return;
             }
-            var path = entry.getKey();
-            if (path.startsWith("META-INF/services")) {
-                var combined = new NotedServicesEntry();
-                for (var noted : queue) {
-                    try {
-                        combined.add(noted.inputStream());
-                    } catch (IOException e) {
-                        throw new BuildException("Cannot read " + path
-                            + " in " + noted.origin());
-                    }
-                }
-                queue.clear();
-                queue.add(combined);
-                return;
-            }
-            if (path.startsWith("META-INF")) {
-                queue.clear();
-            }
-            queue.stream().sorted(Comparator.comparing(Noted::origin))
-                .reduce((a, b) -> {
-                    log.warning(() -> "Entry " + path + " from "
-                        + project().rootProject().relativize(b.origin())
-                        + " duplicates entry from "
-                        + project().rootProject().relativize(a.origin())
-                        + " and is skipped.");
-                    return a;
-                });
+            var entryName = item.getKey();
+            queue.stream().reduce((a, b) -> {
+                log.warning(() -> "Entry " + entryName + " from " + a
+                    + " duplicates entry from " + b + " and is skipped.");
+                return a;
+            });
         });
     }
-
-    /// A Noted entry.
-    ///
-    private interface Noted {
-
-        /// Origin.
-        ///
-        /// @return the path
-        ///
-        Path origin();
-
-        /// Input stream.
-        ///
-        /// @return the input stream
-        /// @throws IOException Signals that an I/O exception has occurred.
-        ///
-        InputStream inputStream() throws IOException;
-
-        /// Last modified.
-        ///
-        /// @return the long
-        ///
-        long lastModified();
-    }
-
-    /// The Class NotedFileTreeEntry.
-    ///
-    private class NotedFileTreeEntry implements Noted {
-        private final Path root;
-        private final Path entry;
-
-        /// Instantiates a new noted file tree entry.
-        ///
-        /// @param root the root
-        /// @param entry the entry
-        ///
-        public NotedFileTreeEntry(Path root, Path entry) {
-            this.root = root;
-            this.entry = entry;
-        }
-
-        @Override
-        public Path origin() {
-            return root;
-        }
-
-        @Override
-        public InputStream inputStream() throws IOException {
-            return Files.newInputStream(root.resolve(entry));
-        }
-
-        @Override
-        public long lastModified() {
-            return root.resolve(entry).toFile().lastModified();
-        }
-
-    }
-
-    /// The Class NotedJarFileEntry.
-    ///
-    private class NotedJarFileEntry implements Noted {
-        private final Path jarPath;
-        private final java.util.jar.JarFile jarFile;
-        private final JarEntry entry;
-
-        /// Instantiates a new noted jar file entry.
-        ///
-        /// @param jarPath the jar path
-        /// @param jarFile the jar file
-        /// @param entry the entry
-        ///
-        public NotedJarFileEntry(Path jarPath, java.util.jar.JarFile jarFile,
-                JarEntry entry) {
-            this.jarPath = jarPath;
-            this.entry = entry;
-            this.jarFile = jarFile;
-        }
-
-        @Override
-        public Path origin() {
-            return jarPath;
-        }
-
-        @Override
-        public InputStream inputStream() throws IOException {
-            return jarFile.getInputStream(entry);
-        }
-
-        @Override
-        public long lastModified() {
-            return entry.getLastModifiedTime().toMillis();
-        }
-
-    }
-
-    /// The Class NotedServicesEntry.
-    ///
-    private final class NotedServicesEntry implements Noted {
-
-        @SuppressWarnings("PMD.AvoidStringBufferField")
-        private final StringBuilder content = new StringBuilder();
-
-        /// Adds the input.
-        ///
-        /// @param input the input
-        /// @throws IOException Signals that an I/O exception has occurred.
-        ///
-        public void add(InputStream input) throws IOException {
-            try (InputStream toRead = input) {
-                new String(toRead.readAllBytes(), StandardCharsets.UTF_8)
-                    .lines().filter(Predicate.not(String::isBlank))
-                    .forEach(l -> content.append(l).append('\n'));
-            }
-        }
-
-        @Override
-        public Path origin() {
-            return Path.of("");
-        }
-
-        @Override
-        public InputStream inputStream() throws IOException {
-            return new ByteArrayInputStream(
-                content.toString().getBytes(StandardCharsets.UTF_8));
-        }
-
-        @Override
-        public long lastModified() {
-            return Instant.now().toEpochMilli();
-        }
-
-    }
-
 }

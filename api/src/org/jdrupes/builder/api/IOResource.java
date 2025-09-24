@@ -18,21 +18,26 @@
 
 package org.jdrupes.builder.api;
 
-import java.nio.file.Path;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
 
-/// A resource that represents a file.
+/// Represents a resource that has readable (or writable) contents.
 ///
-public interface FileResource extends IOResource {
+public interface IOResource extends Resource {
 
-    /// Return the file's path.
+    /// Returns the input stream.
     ///
-    /// @return the path
+    /// @return the input stream
+    /// @throws IOException Signals that an I/O exception has occurred.
     ///
-    Path path();
+    InputStream inputStream() throws IOException;
 
-    /// Convenience method for deleting the file.
+    /// Returns the output stream.
     ///
-    default void delete() {
-        path().toFile().delete();
-    }
+    /// @return the output stream
+    /// @throws IOException Signals that an I/O exception has occurred.
+    ///
+    OutputStream outputStream() throws IOException;
+
 }

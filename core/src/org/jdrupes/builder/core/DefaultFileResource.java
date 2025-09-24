@@ -18,7 +18,11 @@
 
 package org.jdrupes.builder.core;
 
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.lang.reflect.Proxy;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.Instant;
 import java.util.Objects;
@@ -78,6 +82,16 @@ public class DefaultFileResource extends ResourceObject
             return Instant.MIN;
         }
         return Instant.ofEpochMilli(path.toFile().lastModified());
+    }
+
+    @Override
+    public InputStream inputStream() throws IOException {
+        return Files.newInputStream(path);
+    }
+
+    @Override
+    public OutputStream outputStream() throws IOException {
+        return Files.newOutputStream(path);
     }
 
     @Override
