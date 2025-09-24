@@ -18,8 +18,29 @@
 
 package org.jdrupes.builder.mvnrepo;
 
+import org.jdrupes.builder.api.Resource;
+
 /// Represents a dependency on a maven artifact obtainable from a
 /// maven repository.
 ///
-public interface MvnRepoDependency extends MvnRepoResource {
+public interface MvnRepoResource extends Resource {
+
+    /// Group id.
+    ///
+    /// @return the string
+    ///
+    String groupId();
+
+    /// Artifact id.
+    ///
+    /// @return the string
+    ///
+    String artifactId();
+
+    /// Version.
+    ///
+    /// @return the string
+    ///
+    String version();
+
 }

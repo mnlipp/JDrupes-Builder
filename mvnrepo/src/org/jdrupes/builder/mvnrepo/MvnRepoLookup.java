@@ -33,6 +33,7 @@ import org.eclipse.aether.resolution.DependencyRequest;
 import org.eclipse.aether.resolution.DependencyResolutionException;
 import org.eclipse.aether.util.graph.visitor.PreorderNodeListGenerator;
 import org.jdrupes.builder.api.BuildException;
+import org.jdrupes.builder.api.Project;
 import org.jdrupes.builder.api.Resource;
 import org.jdrupes.builder.api.ResourceFactory;
 import org.jdrupes.builder.api.ResourceProvider;
@@ -44,13 +45,15 @@ import static org.jdrupes.builder.mvnrepo.MvnRepoTypes.*;
 ///
 public class MvnRepoLookup implements ResourceProvider {
 
+    private final Project project;
     private final List<String> coordinates = new ArrayList<>();
 
     /// Instantiates a new mvn repo lookup.
     ///
-    @SuppressWarnings("PMD.UnnecessaryConstructor")
-    public MvnRepoLookup() {
-        // Make javadoc happy.
+    /// @param project the project
+    ///
+    public MvnRepoLookup(Project project) {
+        this.project = project;
     }
 
     /// Artifact.
@@ -75,7 +78,7 @@ public class MvnRepoLookup implements ResourceProvider {
         if (requested.wants(MvnRepoDependenciesType)) {
             @SuppressWarnings("unchecked")
             var result = (Stream<T>) coordinates.stream()
-                .map(DefaultMvnRepoDependency::new);
+                .map(c -> project.newResource(MvnRepoDependencyType, c));
             return result;
         }
         if (requested.wants(CompilationResourcesType)

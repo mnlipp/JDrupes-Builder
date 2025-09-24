@@ -22,11 +22,15 @@ import org.jdrupes.builder.api.ResourceType;
 
 /// A collection of Maven specific [ResourceType]s.
 ///
-@SuppressWarnings({ "PMD.FieldNamingConventions" })
+@SuppressWarnings({ "PMD.FieldNamingConventions", "PMD.DataClass" })
 public final class MvnRepoTypes {
 
     private MvnRepoTypes() {
     }
+
+    /// The maven repository resource type.
+    public static final ResourceType<MvnRepoResource> MvnRepoResourceType
+        = new ResourceType<>() {};
 
     /// The maven repository dependency type.
     public static final ResourceType<
@@ -37,7 +41,12 @@ public final class MvnRepoTypes {
             MvnRepoDependencies> MvnRepoDependenciesType
                 = new ResourceType<>() {};
 
+    /// The maven publication type.
+    public static final ResourceType<MvnPublication> MvnPublicationType
+        = new ResourceType<>() {};
+
     /// The POM file type.
     public static final ResourceType<PomFile> PomFileType
         = new ResourceType<>() {};
+
 }

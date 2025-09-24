@@ -72,7 +72,7 @@ public class BootstrapLauncher extends AbstractLauncher {
                 rootPrjCls, Collections.emptyList(), jdbldProps, commandLine);
 
             // Add build extensions to the build project.
-            var mvnLookup = new MvnRepoLookup();
+            var mvnLookup = new MvnRepoLookup(rootProject);
             Arrays.asList(jdbldProps
                 .getProperty(BootstrapBuild.BUILD_EXTENSIONS, "").split(","))
                 .stream().map(String::trim).filter(c -> !c.isBlank())

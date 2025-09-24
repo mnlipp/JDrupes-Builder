@@ -18,8 +18,7 @@
 
 package org.jdrupes.builder.mvnrepo;
 
-/// Represents a dependency on a maven artifact obtainable from a
-/// maven repository.
+/// Represents an artifact created in a maven repository.
 ///
-public interface MvnRepoDependency extends MvnRepoResource {
+public interface MvnPublication extends MvnRepoResource {
 }

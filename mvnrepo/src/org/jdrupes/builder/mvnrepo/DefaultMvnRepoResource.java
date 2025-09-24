@@ -19,12 +19,13 @@
 package org.jdrupes.builder.mvnrepo;
 
 import java.util.Objects;
+import org.jdrupes.builder.api.ResourceType;
 import org.jdrupes.builder.core.ResourceObject;
 
-/// Represents a dependency on an artifact in a maven repository.
+/// Represents an artifact in a maven repository.
 ///
-public class DefaultMvnRepoDependency extends ResourceObject
-        implements MvnRepoDependency {
+public class DefaultMvnRepoResource extends ResourceObject
+        implements MvnRepoResource {
 
     private final String groupId;
     private final String artifactId;
@@ -32,10 +33,13 @@ public class DefaultMvnRepoDependency extends ResourceObject
 
     /// Instantiates a new default mvn repo dependency.
     ///
+    /// @param type the type
     /// @param coordinate the coordinate
     ///
     @SuppressWarnings("PMD.AvoidLiteralsInIfCondition")
-    public DefaultMvnRepoDependency(String coordinate) {
+    public DefaultMvnRepoResource(ResourceType<? extends MvnRepoResource> type,
+            String coordinate) {
+        super(type);
         var parts = coordinate.split(":");
         if (parts.length != 3) {
             throw new IllegalArgumentException(
@@ -93,7 +97,7 @@ public class DefaultMvnRepoDependency extends ResourceObject
         if (getClass() != obj.getClass()) {
             return false;
         }
-        DefaultMvnRepoDependency other = (DefaultMvnRepoDependency) obj;
+        DefaultMvnRepoResource other = (DefaultMvnRepoResource) obj;
         return Objects.equals(artifactId, other.artifactId)
             && Objects.equals(groupId, other.groupId)
             && Objects.equals(version, other.version)
