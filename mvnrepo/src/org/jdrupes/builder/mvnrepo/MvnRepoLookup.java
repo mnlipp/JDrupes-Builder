@@ -54,6 +54,7 @@ public class MvnRepoLookup implements ResourceProvider {
     private final Project project;
     private final List<String> coordinates = new ArrayList<>();
     private boolean downloadSources = true;
+    private boolean downloadJavadoc = true;
     private static Context rootContextInstance;
 
     /// Instantiates a new mvn repo lookup.
@@ -95,6 +96,16 @@ public class MvnRepoLookup implements ResourceProvider {
     ///
     public MvnRepoLookup downloadSources(boolean enable) {
         this.downloadSources = enable;
+        return this;
+    }
+
+    /// Whether to also download the javadoc. Defaults to `true`.
+    ///
+    /// @param enable the enable
+    /// @return the mvn repo lookup
+    ///
+    public MvnRepoLookup downloadJavadoc(boolean enable) {
+        this.downloadJavadoc = enable;
         return this;
     }
 
@@ -155,6 +166,9 @@ public class MvnRepoLookup implements ResourceProvider {
                     if (downloadSources) {
                         downloadSourceJar(repoSystem, repoSession, a);
                     }
+                    if (downloadJavadoc) {
+                        downloadJavadocJar(repoSystem, repoSession, a);
+                    }
                     return a;
                 }).map(a -> a.getFile().toPath())
                 .map(p -> ResourceFactory.create(JarFileType, p));
@@ -179,4 +193,17 @@ public class MvnRepoLookup implements ResourceProvider {
         }
     }
 
+    private void downloadJavadocJar(RepositorySystem repoSystem,
+            RepositorySystemSession repoSession, Artifact jarArtifact) {
+        Artifact javadocArtifact
+            = new SubArtifact(jarArtifact, "javadoc", "jar");
+        ArtifactRequest sourcesRequest = new ArtifactRequest();
+        sourcesRequest.setArtifact(javadocArtifact);
+        sourcesRequest.setRepositories(rootContext().remoteRepositories());
+        try {
+            repoSystem.resolveArtifact(repoSession, sourcesRequest);
+        } catch (ArtifactResolutionException e) { // NOPMD
+            // Ignore, javadoc is optional
+        }
+    }
 }
