@@ -25,12 +25,18 @@ import eu.maveniverse.maven.mima.context.Runtimes;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Stream;
+import org.eclipse.aether.RepositorySystem;
+import org.eclipse.aether.RepositorySystemSession;
+import org.eclipse.aether.artifact.Artifact;
 import org.eclipse.aether.artifact.DefaultArtifact;
 import org.eclipse.aether.collection.CollectRequest;
 import org.eclipse.aether.graph.Dependency;
 import org.eclipse.aether.graph.DependencyNode;
+import org.eclipse.aether.resolution.ArtifactRequest;
+import org.eclipse.aether.resolution.ArtifactResolutionException;
 import org.eclipse.aether.resolution.DependencyRequest;
 import org.eclipse.aether.resolution.DependencyResolutionException;
+import org.eclipse.aether.util.artifact.SubArtifact;
 import org.eclipse.aether.util.graph.visitor.PreorderNodeListGenerator;
 import org.jdrupes.builder.api.BuildException;
 import org.jdrupes.builder.api.Project;
@@ -47,6 +53,7 @@ public class MvnRepoLookup implements ResourceProvider {
 
     private final Project project;
     private final List<String> coordinates = new ArrayList<>();
+    private boolean downloadSources = true;
     private static Context rootContextInstance;
 
     /// Instantiates a new mvn repo lookup.
@@ -78,6 +85,16 @@ public class MvnRepoLookup implements ResourceProvider {
     ///
     public MvnRepoLookup artifact(String coordinate) {
         coordinates.add(coordinate);
+        return this;
+    }
+
+    /// Whether to also download the sources. Defaults to `true`.
+    ///
+    /// @param enable the enable
+    /// @return the mvn repo lookup
+    ///
+    public MvnRepoLookup downloadSources(boolean enable) {
+        this.downloadSources = enable;
         return this;
     }
 
@@ -119,10 +136,10 @@ public class MvnRepoLookup implements ResourceProvider {
             = new DependencyRequest(collectRequest, null);
         DependencyNode rootNode;
         try {
-            rootNode = rootContext().repositorySystem()
-                .resolveDependencies(rootContext().repositorySystemSession(),
-                    dependencyRequest)
-                .getRoot();
+            var repoSystem = rootContext().repositorySystem();
+            var repoSession = rootContext().repositorySystemSession();
+            rootNode = repoSystem.resolveDependencies(repoSession,
+                dependencyRequest).getRoot();
 // For maven 2.x libraries:
 //                List<DependencyNode> dependencyNodes = new ArrayList<>();
 //                rootNode.accept(new PreorderDependencyNodeConsumerVisitor(
@@ -133,12 +150,32 @@ public class MvnRepoLookup implements ResourceProvider {
             @SuppressWarnings("unchecked")
             var result = (Stream<T>) dependencyNodes.stream()
                 .filter(d -> d.getArtifact() != null)
-                .map(d -> d.getArtifact().getFile().toPath())
+                .map(DependencyNode::getArtifact)
+                .map(a -> {
+                    if (downloadSources) {
+                        downloadSourceJar(repoSystem, repoSession, a);
+                    }
+                    return a;
+                }).map(a -> a.getFile().toPath())
                 .map(p -> ResourceFactory.create(JarFileType, p));
             return result;
         } catch (DependencyResolutionException e) {
             throw new BuildException(
                 "Cannot resolve: " + e.getMessage(), e);
+        }
+    }
+
+    private void downloadSourceJar(RepositorySystem repoSystem,
+            RepositorySystemSession repoSession, Artifact jarArtifact) {
+        Artifact sourcesArtifact
+            = new SubArtifact(jarArtifact, "sources", "jar");
+        ArtifactRequest sourcesRequest = new ArtifactRequest();
+        sourcesRequest.setArtifact(sourcesArtifact);
+        sourcesRequest.setRepositories(rootContext().remoteRepositories());
+        try {
+            repoSystem.resolveArtifact(repoSession, sourcesRequest);
+        } catch (ArtifactResolutionException e) { // NOPMD
+            // Ignore, sources are optional
         }
     }
 
