@@ -47,6 +47,7 @@ public class MvnRepoLookup implements ResourceProvider {
 
     private final Project project;
     private final List<String> coordinates = new ArrayList<>();
+    private static Context rootContextInstance;
 
     /// Instantiates a new mvn repo lookup.
     ///
@@ -54,6 +55,20 @@ public class MvnRepoLookup implements ResourceProvider {
     ///
     public MvnRepoLookup(Project project) {
         this.project = project;
+    }
+
+    /// Lazily creates the root context.
+    /// @return the context
+    ///
+    /* default */ Context rootContext() {
+        if (rootContextInstance != null) {
+            return rootContextInstance;
+        }
+        ContextOverrides overrides = ContextOverrides.create()
+            .withUserSettings(true).build();
+        Runtime runtime = Runtimes.INSTANCE.getRuntime();
+        rootContextInstance = runtime.create(overrides);
+        return rootContextInstance;
     }
 
     /// Artifact.
@@ -91,44 +106,39 @@ public class MvnRepoLookup implements ResourceProvider {
     @SuppressWarnings("PMD.AvoidInstantiatingObjectsInLoops")
     private <T extends Resource> Stream<T>
             provideJars(ResourceRequest<T> requested) {
-        ContextOverrides overrides = ContextOverrides.create()
-            .withUserSettings(true).build();
-        Runtime runtime = Runtimes.INSTANCE.getRuntime();
-        try (Context context = runtime.create(overrides)) {
-            CollectRequest collectRequest = new CollectRequest()
-                .setRepositories(context.remoteRepositories());
-            for (var coord : coordinates) {
-                collectRequest.addDependency(
-                    new Dependency(new DefaultArtifact(coord),
-                        requested.wants(CompilationResourcesType) ? "compile"
-                            : "runtime"));
-            }
+        CollectRequest collectRequest = new CollectRequest()
+            .setRepositories(rootContext().remoteRepositories());
+        for (var coord : coordinates) {
+            collectRequest.addDependency(
+                new Dependency(new DefaultArtifact(coord),
+                    requested.wants(CompilationResourcesType) ? "compile"
+                        : "runtime"));
+        }
 
-            DependencyRequest dependencyRequest
-                = new DependencyRequest(collectRequest, null);
-            DependencyNode rootNode;
-            try {
-                rootNode = context.repositorySystem()
-                    .resolveDependencies(context.repositorySystemSession(),
-                        dependencyRequest)
-                    .getRoot();
+        DependencyRequest dependencyRequest
+            = new DependencyRequest(collectRequest, null);
+        DependencyNode rootNode;
+        try {
+            rootNode = rootContext().repositorySystem()
+                .resolveDependencies(rootContext().repositorySystemSession(),
+                    dependencyRequest)
+                .getRoot();
 // For maven 2.x libraries:
 //                List<DependencyNode> dependencyNodes = new ArrayList<>();
 //                rootNode.accept(new PreorderDependencyNodeConsumerVisitor(
 //                    dependencyNodes::add));
-                PreorderNodeListGenerator nlg = new PreorderNodeListGenerator();
-                rootNode.accept(nlg);
-                List<DependencyNode> dependencyNodes = nlg.getNodes();
-                @SuppressWarnings("unchecked")
-                var result = (Stream<T>) dependencyNodes.stream()
-                    .filter(d -> d.getArtifact() != null)
-                    .map(d -> d.getArtifact().getFile().toPath())
-                    .map(p -> ResourceFactory.create(JarFileType, p));
-                return result;
-            } catch (DependencyResolutionException e) {
-                throw new BuildException(
-                    "Cannot resolve: " + e.getMessage(), e);
-            }
+            PreorderNodeListGenerator nlg = new PreorderNodeListGenerator();
+            rootNode.accept(nlg);
+            List<DependencyNode> dependencyNodes = nlg.getNodes();
+            @SuppressWarnings("unchecked")
+            var result = (Stream<T>) dependencyNodes.stream()
+                .filter(d -> d.getArtifact() != null)
+                .map(d -> d.getArtifact().getFile().toPath())
+                .map(p -> ResourceFactory.create(JarFileType, p));
+            return result;
+        } catch (DependencyResolutionException e) {
+            throw new BuildException(
+                "Cannot resolve: " + e.getMessage(), e);
         }
     }
 
