@@ -18,6 +18,7 @@
 
 package org.jdrupes.builder.eclipse;
 
+import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.util.Properties;
@@ -252,7 +253,26 @@ public class EclipseConfigurator extends AbstractGenerator {
                 var entry = (Element) classpath
                     .appendChild(doc.createElement("classpathentry"));
                 entry.setAttribute("kind", "lib");
-                entry.setAttribute("path", jf.path().toString());
+                var jarPathName = jf.path().toString();
+                entry.setAttribute("path", jarPathName);
+
+                // Educated guesses
+                var sourcesJar = new File(
+                    jarPathName.replaceFirst("\\.jar$", "-sources.jar"));
+                if (sourcesJar.canRead()) {
+                    entry.setAttribute("sourcepath",
+                        sourcesJar.getAbsolutePath());
+                }
+                var javadocJar = new File(
+                    jarPathName.replaceFirst("\\.jar$", "-javadoc.jar"));
+                if (javadocJar.canRead()) {
+                    var attr = (Element) entry
+                        .appendChild(doc.createElement("attributes"))
+                        .appendChild(doc.createElement("attribute"));
+                    attr.setAttribute("name", "javadoc_location");
+                    attr.setAttribute("value",
+                        "jar:file:" + javadocJar.getAbsolutePath() + "!/");
+                }
             });
 
         // Allow derived class to override
