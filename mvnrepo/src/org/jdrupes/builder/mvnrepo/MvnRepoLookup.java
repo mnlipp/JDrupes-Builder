@@ -60,7 +60,7 @@ public class MvnRepoLookup implements ResourceProvider {
     /// Lazily creates the root context.
     /// @return the context
     ///
-    /* default */ Context rootContext() {
+    /* default */ static Context rootContext() {
         if (rootContextInstance != null) {
             return rootContextInstance;
         }
