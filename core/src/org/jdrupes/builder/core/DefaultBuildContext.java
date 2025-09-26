@@ -38,14 +38,12 @@ public class DefaultBuildContext implements BuildContext {
     private final FutureStreamCache cache;
     private ExecutorService executor
         = Executors.newVirtualThreadPerTaskExecutor();
-    private final CommandLine commandLine;
 
     /// Instantiates a new default build. By default, the build uses
     /// a virtual thread per task executor.
     ///
     /* default */ DefaultBuildContext() {
         cache = new FutureStreamCache();
-        commandLine = LauncherSupport.commandLine();
     }
 
     /// Returns the executor service used by this build to create futures.
@@ -80,7 +78,12 @@ public class DefaultBuildContext implements BuildContext {
 
     @Override
     public CommandLine commandLine() {
-        return commandLine;
+        return LauncherSupport.commandLine();
+    }
+
+    @Override
+    public String property(String name) {
+        return LauncherSupport.jdbldProperties().getProperty(name);
     }
 
 }

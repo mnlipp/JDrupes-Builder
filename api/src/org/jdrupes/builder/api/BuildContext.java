@@ -52,4 +52,16 @@ public interface BuildContext {
     ///
     <T extends Resource> Stream<T> get(ResourceProvider provider,
             ResourceRequest<T> request);
+
+    /// Return the value of the given property. Properties are defined by
+    /// (in order of precedence):
+    ///   1. command line options
+    ///   2. the file `.jdbld.properties` in the directory of the
+    ///      root project
+    ///   3. the file `.jdbld/jdbld.properties` in the user's home directory
+    ///
+    /// @param name the name
+    /// @return the string
+    ///
+    String property(String name);
 }
