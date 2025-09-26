@@ -1,5 +1,6 @@
 package jdbld;
 
+import java.net.URI;
 import java.nio.file.Path;
 import java.util.Map;
 import java.util.stream.Stream;
@@ -16,6 +17,8 @@ import org.jdrupes.builder.java.AppJarFile;
 import org.jdrupes.builder.java.ClasspathElement;
 import org.jdrupes.builder.java.UberJarGenerator;
 import org.jdrupes.builder.mvnrepo.MavenArtifactProject;
+import org.jdrupes.builder.mvnrepo.MvnPublication;
+import org.jdrupes.builder.mvnrepo.MvnPublicationGenerator;
 import org.jdrupes.builder.mvnrepo.MvnRepoLookup;
 import org.jdrupes.builder.mvnrepo.PomFile;
 import static org.jdrupes.builder.mvnrepo.MvnProperties.*;
@@ -59,6 +62,11 @@ public class Root extends AbstractProject
                         .resolve((String) get(GroupId)).resolve(name())
                         .resolve("pom.xml"), pomFile)))
             .destination(directory().resolve(Path.of("_jdbld", "app"))));
+        generator(MvnPublicationGenerator::new)
+            .snapshotRepository(URI.create(
+                "https://central.sonatype.com/repository/maven-snapshots/"))
+            .credentials(
+                context().property("cscuser"), context().property("cscpass"));
 
         // Build javadoc
         generator(Javadoc::new)
@@ -99,5 +107,7 @@ public class Root extends AbstractProject
             new ResourceRequest<EclipseConfiguration>(new ResourceType<>() {}));
         commandAlias("pomFile",
             new ResourceRequest<PomFile>(new ResourceType<>() {}));
+        commandAlias("mavenPublication",
+            new ResourceRequest<MvnPublication>(new ResourceType<>() {}));
     }
 }

@@ -68,7 +68,7 @@ public abstract class AbstractLauncher implements Launcher {
         Properties fallbacks = new Properties();
         fallbacks.putAll(Map.of(DefaultBuildContext.JDBLD_DIRECTORY, "_jdbld"));
         for (Path propsPath : List.of(
-            Path.of(System.getProperty("user.dir"))
+            Path.of(System.getProperty("user.home"))
                 .resolve(".jdbld").resolve("jdbld.properties"),
             Path.of("").toAbsolutePath().resolve(".jdbld.properties"))) {
             try {

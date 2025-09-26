@@ -18,17 +18,59 @@
 
 package org.jdrupes.builder.mvnrepo;
 
+import eu.maveniverse.maven.mima.context.Context;
+import eu.maveniverse.maven.mima.context.ContextOverrides;
+import eu.maveniverse.maven.mima.context.Runtime;
+import eu.maveniverse.maven.mima.context.Runtimes;
+
+import java.io.IOException;
+import java.io.InputStream;
+import java.net.URI;
 import java.util.stream.Stream;
+import org.apache.maven.model.building.DefaultModelBuilderFactory;
+import org.apache.maven.model.building.DefaultModelBuildingRequest;
+import org.apache.maven.model.building.ModelBuildingException;
+import org.eclipse.aether.artifact.DefaultArtifact;
+import org.eclipse.aether.deployment.DeployRequest;
+import org.eclipse.aether.deployment.DeploymentException;
+import org.eclipse.aether.repository.RemoteRepository;
+import org.eclipse.aether.util.repository.AuthenticationBuilder;
+import org.jdrupes.builder.api.BuildException;
+import static org.jdrupes.builder.api.Intend.*;
 import org.jdrupes.builder.api.Project;
 import org.jdrupes.builder.api.Resource;
 import org.jdrupes.builder.api.ResourceRequest;
+import org.jdrupes.builder.api.ResourceType;
 import org.jdrupes.builder.core.AbstractGenerator;
 import static org.jdrupes.builder.mvnrepo.MvnRepoTypes.*;
 
 public class MvnPublicationGenerator extends AbstractGenerator {
 
+    private URI repositoryUri;
+    private URI snapshotUri;
+    private String repoUser;
+    private String repoPass;
+
     public MvnPublicationGenerator(Project project) {
         super(project);
+        repositoryUri = URI.create(MvnRepoLookup.rootContext()
+            .remoteRepositories().get(0).getUrl());
+    }
+
+    public MvnPublicationGenerator repository(URI uri) {
+        this.repositoryUri = uri;
+        return this;
+    }
+
+    public MvnPublicationGenerator snapshotRepository(URI uri) {
+        this.snapshotUri = uri;
+        return this;
+    }
+
+    public MvnPublicationGenerator credentials(String user, String pass) {
+        this.repoUser = user;
+        this.repoPass = pass;
+        return this;
     }
 
     @Override
@@ -36,6 +78,44 @@ public class MvnPublicationGenerator extends AbstractGenerator {
             provide(ResourceRequest<T> requested) {
         if (!requested.includes(MvnPublicationType)) {
             return Stream.empty();
+        }
+        var pomResource = project().get(new ResourceRequest<PomFile>(
+            new ResourceType<>() {}).forwardTo(Supply)).findFirst();
+        if (pomResource.isEmpty()) {
+            log.warning("No POM file resource available.");
+            return Stream.empty();
+        }
+
+        // Get the model
+        try {
+            var pomFile = pomResource.get().path().toFile();
+            var req = new DefaultModelBuildingRequest().setPomFile(pomFile);
+            var model = new DefaultModelBuilderFactory().newInstance()
+                .build(req).getEffectiveModel();
+            var pomArtifact = new DefaultArtifact(model.getGroupId(),
+                model.getArtifactId(), "pom", model.getVersion())
+                    .setFile(pomFile);
+            var isSnapshot = pomArtifact.isSnapshot();
+            var repo = new RemoteRepository.Builder(
+                "mine", "default",
+                (isSnapshot ? snapshotUri : repositoryUri)
+                    .toString())
+                        .setAuthentication(new AuthenticationBuilder()
+                            .addUsername(repoUser).addPassword(repoPass)
+                            .build())
+                        .build();
+
+            var deployReq = new DeployRequest().setRepository(repo)
+                .addArtifact(pomArtifact);
+
+            var context = MvnRepoLookup.rootContext();
+            var result = context.repositorySystem().deploy(
+                context.repositorySystemSession(),
+                deployReq);
+            result = null;
+
+        } catch (ModelBuildingException | DeploymentException e) {
+            throw new BuildException(e);
         }
 
         return Stream.empty();
