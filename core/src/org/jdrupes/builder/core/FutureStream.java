@@ -18,6 +18,7 @@
 
 package org.jdrupes.builder.core;
 
+import java.util.Iterator;
 import java.util.List;
 import java.util.Spliterators;
 import java.util.concurrent.ExecutionException;
@@ -76,20 +77,33 @@ public class FutureStream<T extends Resource> {
         return StreamSupport
             .stream(new Spliterators.AbstractSpliterator<>(Long.MAX_VALUE, 0) {
 
+                private Iterator<T> theIterator;
+
+                private Iterator<T> iterator() {
+                    if (theIterator == null) {
+                        try {
+                            theIterator = source.get().iterator();
+                        } catch (InterruptedException | ExecutionException e) {
+                            throw new BuildException(e);
+                        }
+                    }
+                    return theIterator;
+                }
+
                 @Override
                 public void forEachRemaining(Consumer<? super T> action) {
-                    try {
-                        source.get().stream().forEach(action);
-                    } catch (InterruptedException | ExecutionException e) {
-                        throw new BuildException(e);
-                    }
+                    iterator().forEachRemaining(action);
                 }
 
                 @Override
                 public boolean tryAdvance(Consumer<? super T> action) {
-                    // Not needed when forEachRemaining is implemented.
-                    return false;
+                    if (!iterator().hasNext()) {
+                        return false;
+                    }
+                    action.accept(iterator().next());
+                    return true;
                 }
+
             }, false);
     }
 
