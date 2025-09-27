@@ -88,8 +88,8 @@ public class PomFileGenerator extends AbstractGenerator {
     }
 
     @Override
-    public <T extends Resource> Stream<T>
-            provide(ResourceRequest<T> requested) {
+    protected <T extends Resource> Stream<T>
+            doProvide(ResourceRequest<T> requested) {
         var pomPath = project().buildDirectory().resolve(destination)
             .resolve("pom.xml");
 

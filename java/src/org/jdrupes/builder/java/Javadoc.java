@@ -153,8 +153,8 @@ public class Javadoc extends JavaTool {
     @Override
     @SuppressWarnings({ "PMD.AvoidCatchingGenericException",
         "PMD.ExceptionAsFlowControl" })
-    public <T extends Resource> Stream<T>
-            provide(ResourceRequest<T> requested) {
+    protected <T extends Resource> Stream<T>
+            doProvide(ResourceRequest<T> requested) {
         if (!requested.includes(JavadocDirectoryType)
             && !requested.includes(Cleaniness)) {
             return Stream.empty();

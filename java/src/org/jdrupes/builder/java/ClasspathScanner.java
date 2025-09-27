@@ -55,8 +55,8 @@ public class ClasspathScanner extends AbstractGenerator {
     /// @return the stream
     ///
     @Override
-    public <T extends Resource> Stream<T>
-            provide(ResourceRequest<T> requested) {
+    protected <T extends Resource> Stream<T>
+            doProvide(ResourceRequest<T> requested) {
         // This supports requests for classpath elements only.
         if (!requested.includes(ClasspathElementType)) {
             return Stream.empty();

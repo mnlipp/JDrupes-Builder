@@ -80,7 +80,7 @@ public class BootstrapLauncher extends AbstractLauncher {
             ((Project) rootProject.project(BootstrapBuild.class))
                 .dependency(Expose, mvnLookup);
             @SuppressWarnings("PMD.UseDiamondOperator")
-            var cpUrls = rootProject.provide(
+            var cpUrls = rootProject.get(
                 new ResourceRequest<ClasspathElement>(
                     new ResourceType<CompilationResources>() {}))
                 .map(cpe -> {
@@ -105,7 +105,7 @@ public class BootstrapLauncher extends AbstractLauncher {
     public <T extends Resource> Stream<T> provide(ResourceRequest<T> request) {
         return unwrapBuildException(() -> {
             // Provide requested resource, handling all exceptions here
-            var result = rootProject.provide(request).toList();
+            var result = rootProject.get(request).toList();
             return result.stream();
         });
     }

@@ -74,8 +74,8 @@ public class MvnPublicationGenerator extends AbstractGenerator {
     }
 
     @Override
-    public <T extends Resource> Stream<T>
-            provide(ResourceRequest<T> requested) {
+    protected <T extends Resource> Stream<T>
+            doProvide(ResourceRequest<T> requested) {
         if (!requested.includes(MvnPublicationType)) {
             return Stream.empty();
         }

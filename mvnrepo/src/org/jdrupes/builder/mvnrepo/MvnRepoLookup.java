@@ -44,12 +44,14 @@ import org.jdrupes.builder.api.Resource;
 import org.jdrupes.builder.api.ResourceFactory;
 import org.jdrupes.builder.api.ResourceProvider;
 import org.jdrupes.builder.api.ResourceRequest;
+import org.jdrupes.builder.core.AbstractProvider;
 import static org.jdrupes.builder.java.JavaTypes.*;
 import static org.jdrupes.builder.mvnrepo.MvnRepoTypes.*;
 
 /// The Class MvnRepoLookup.
 ///
-public class MvnRepoLookup implements ResourceProvider {
+public class MvnRepoLookup extends AbstractProvider
+        implements ResourceProvider {
 
     private final Project project;
     private final List<String> coordinates = new ArrayList<>();
@@ -116,8 +118,8 @@ public class MvnRepoLookup implements ResourceProvider {
     /// @return the stream
     ///
     @Override
-    public <T extends Resource> Stream<T>
-            provide(ResourceRequest<T> requested) {
+    protected <T extends Resource> Stream<T>
+            doProvide(ResourceRequest<T> requested) {
         if (requested.wants(MvnRepoDependenciesType)) {
             @SuppressWarnings("unchecked")
             var result = (Stream<T>) coordinates.stream()

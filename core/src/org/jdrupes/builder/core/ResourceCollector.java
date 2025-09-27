@@ -49,7 +49,8 @@ public class ResourceCollector<T extends Resource> extends AbstractGenerator {
         super(project);
         this.type = type;
         resources
-            = project().newResource(new ResourceType<>(Resources.class, type) {});
+            = project()
+                .newResource(new ResourceType<>(Resources.class, type) {});
     }
 
     /// Adds the given file tree with resource directories.
@@ -82,8 +83,8 @@ public class ResourceCollector<T extends Resource> extends AbstractGenerator {
 
     @Override
     @SuppressWarnings("unchecked")
-    public <R extends Resource> Stream<R>
-            provide(ResourceRequest<R> requested) {
+    protected <R extends Resource> Stream<R>
+            doProvide(ResourceRequest<R> requested) {
         if (!requested.type().containedType().isAssignableFrom(type)) {
             return Stream.empty();
         }

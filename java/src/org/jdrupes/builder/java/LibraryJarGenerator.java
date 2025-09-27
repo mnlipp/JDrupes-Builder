@@ -143,8 +143,8 @@ public class LibraryJarGenerator extends JarGenerator {
 
     @Override
     @SuppressWarnings({ "PMD.CollapsibleIfStatements", "unchecked" })
-    public <T extends Resource> Stream<T>
-            provide(ResourceRequest<T> requested) {
+    protected <T extends Resource> Stream<T>
+            doProvide(ResourceRequest<T> requested) {
         if (!requested.includes(JarFileType)
             && !requested.includes(Cleaniness)) {
             return Stream.empty();

@@ -61,12 +61,15 @@ public class FutureStream<T extends Resource> {
         });
     }
 
-    /// Checks if is provider invocation is allowed.
+    /// Checks if is provider invocation is allowed. Clears the
+    /// allowed flag to also detect nested invocations.
     ///
     /// @return true, if is provider invocation allowed
     ///
     public static boolean isProviderInvocationAllowed() {
-        return providerInvocationAllowed.get();
+        var allowed = providerInvocationAllowed.get();
+        providerInvocationAllowed.set(false);
+        return allowed;
     }
 
     /// Returns the lazily evaluated stream of resources.

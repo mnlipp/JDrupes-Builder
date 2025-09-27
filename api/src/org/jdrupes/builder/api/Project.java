@@ -319,20 +319,6 @@ public interface Project extends ResourceProvider {
             providers(EnumSet.of(Consume, Expose)), requested);
     }
 
-    /// A project itself does not provide any resources. Rather, requests
-    /// for resources are forwarded to the project's providers. The types
-    /// of providers used is determined by the request.
-    ///
-    /// @param <R> the generic type
-    /// @param requested the requested
-    /// @return the provided resources
-    ///
-    @Override
-    default <R extends Resource> Stream<R>
-            provide(ResourceRequest<R> requested) {
-        return invokeProviders(providers(requested.forwardTo()), requested);
-    }
-
     /// Short for `directory().relativize(other)`.
     ///
     /// @param other the other path

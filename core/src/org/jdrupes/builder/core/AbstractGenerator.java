@@ -18,16 +18,13 @@
 
 package org.jdrupes.builder.core;
 
-import java.util.logging.Logger;
 import org.jdrupes.builder.api.Generator;
 import org.jdrupes.builder.api.Project;
 
 /// A base implementation of a [Generator].
 ///
-public abstract class AbstractGenerator implements Generator {
-
-    /// The log.
-    protected final Logger log = Logger.getLogger(getClass().getName());
+public abstract class AbstractGenerator extends AbstractProvider
+        implements Generator {
 
     private final Project project;
     private String name;
@@ -59,6 +56,12 @@ public abstract class AbstractGenerator implements Generator {
     @Override
     public Project project() {
         return project;
+    }
+
+    @Override
+    public String toString() {
+        return project().name() + "'s " + getClass().getSimpleName() + "("
+            + name + ")";
     }
 
 }

@@ -139,8 +139,8 @@ public class JavaCompiler extends JavaTool {
     }
 
     @Override
-    public <T extends Resource> Stream<T>
-            provide(ResourceRequest<T> requested) {
+    protected <T extends Resource> Stream<T>
+            doProvide(ResourceRequest<T> requested) {
         if (requested.includes(JavaSourceTreeType)) {
             @SuppressWarnings({ "unchecked" })
             var result = (Stream<T>) sources.stream();

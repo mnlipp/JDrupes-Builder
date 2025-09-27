@@ -91,8 +91,8 @@ public class EclipseConfigurator extends AbstractGenerator {
     /// @return the stream
     ///
     @Override
-    public <T extends Resource> Stream<T>
-            provide(ResourceRequest<T> requested) {
+    protected <T extends Resource> Stream<T>
+            doProvide(ResourceRequest<T> requested) {
         if (!requested.includes(new ResourceType<EclipseConfiguration>() {})) {
             return Stream.empty();
         }

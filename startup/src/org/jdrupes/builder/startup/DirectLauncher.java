@@ -84,7 +84,7 @@ public class DirectLauncher extends AbstractLauncher {
                     new BuildException("Unknown command: " + arg);
                 }
                 for (var req : reqs) {
-                    rootProject.provide(req)
+                    rootProject.get(req)
                         .forEach(r -> System.out.println(r.toString()));
                 }
             }
@@ -158,7 +158,7 @@ public class DirectLauncher extends AbstractLauncher {
     public <T extends Resource> Stream<T> provide(ResourceRequest<T> request) {
         return unwrapBuildException(() -> {
             // Provide requested resource, handling all exceptions here
-            var result = rootProject.provide(request).toList();
+            var result = rootProject.get(request).toList();
             return result.stream();
         });
     }

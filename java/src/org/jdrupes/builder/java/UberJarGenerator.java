@@ -156,8 +156,8 @@ public class UberJarGenerator extends LibraryJarGenerator {
 
     @Override
     @SuppressWarnings({ "PMD.CollapsibleIfStatements", "unchecked" })
-    public <T extends Resource> Stream<T>
-            provide(ResourceRequest<T> requested) {
+    protected <T extends Resource> Stream<T>
+            doProvide(ResourceRequest<T> requested) {
         for (var jarFile : openJars.values()) {
             try {
                 jarFile.close();

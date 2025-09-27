@@ -49,8 +49,10 @@ import org.jdrupes.builder.api.RootProject;
 
 /// A default implementation of a [Project].
 ///
-@SuppressWarnings({ "PMD.CouplingBetweenObjects", "PMD.GodClass" })
-public abstract class AbstractProject implements Project {
+@SuppressWarnings({ "PMD.CouplingBetweenObjects", "PMD.GodClass",
+    "PMD.TooManyMethods" })
+public abstract class AbstractProject extends AbstractProvider
+        implements Project {
 
     private Map<Class<? extends Project>, Future<Project>> projects;
     private static ThreadLocal<AbstractProject> fallbackParent
@@ -300,6 +302,20 @@ public abstract class AbstractProject implements Project {
         }
         properties.put(property, value);
         return this;
+    }
+
+    /// A project itself does not provide any resources. Rather, requests
+    /// for resources are forwarded to the project's providers. The types
+    /// of providers used is determined by the request.
+    ///
+    /// @param <R> the generic type
+    /// @param requested the requested
+    /// @return the provided resources
+    ///
+    @Override
+    protected <R extends Resource> Stream<R>
+            doProvide(ResourceRequest<R> requested) {
+        return invokeProviders(providers(requested.forwardTo()), requested);
     }
 
     /// Define command, see [RootProject#commandAlias].
