@@ -36,6 +36,9 @@ public abstract class AbstractGenerator extends AbstractProvider
     public AbstractGenerator(Project project) {
         this.project = project;
         name = getClass().getSimpleName();
+        if (name.isBlank()) {
+            name = "Adapted " + getClass().getSuperclass().getSimpleName();
+        }
     }
 
     /// Sets the name of the generator.
@@ -60,8 +63,7 @@ public abstract class AbstractGenerator extends AbstractProvider
 
     @Override
     public String toString() {
-        return project().name() + "'s " + getClass().getSimpleName() + "("
-            + name + ")";
+        return name + " in project " + project().name();
     }
 
 }
