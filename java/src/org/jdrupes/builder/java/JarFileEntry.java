@@ -86,4 +86,10 @@ public class JarFileEntry extends ResourceObject implements IOResource {
             && Objects.equals(jarFile.getName(), other.jarFile.getName());
     }
 
+    @Override
+    public String toString() {
+        return jarFile.getName() + "!" + entry.getName() + " ("
+            + asOfLocalized() + ")";
+    }
+
 }

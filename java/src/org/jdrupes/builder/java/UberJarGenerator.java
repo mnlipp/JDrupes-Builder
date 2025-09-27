@@ -23,9 +23,14 @@ import java.nio.file.Path;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Queue;
-import java.util.stream.Collectors;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentLinkedQueue;
+import java.util.function.Predicate;
+import java.util.jar.Attributes;
+import java.util.jar.JarEntry;
 import java.util.stream.Stream;
 import org.jdrupes.builder.api.BuildException;
+import org.jdrupes.builder.api.FileTree;
 import org.jdrupes.builder.api.Generator;
 import org.jdrupes.builder.api.IOResource;
 import org.jdrupes.builder.api.Project;
@@ -90,7 +95,9 @@ import static org.jdrupes.builder.java.JavaTypes.*;
 /// generating the uber jar in a project of its own. Often the root
 /// project can be used for this purpose.  
 ///
-public class UberJarGenerator extends AbstractJarGenerator {
+public class UberJarGenerator extends LibraryJarGenerator {
+
+    private Map<Path, java.util.jar.JarFile> openJars = Map.of();
 
     /// Instantiates a new uber jar generator.
     ///
@@ -101,9 +108,64 @@ public class UberJarGenerator extends AbstractJarGenerator {
     }
 
     @Override
+    @SuppressWarnings("PMD.UseDiamondOperator")
+    protected void collectFromProviders(Map<Path, Queue<IOResource>> contents) {
+        openJars = new ConcurrentHashMap<>();
+        project().invokeProviders(providers().stream(),
+            new ResourceRequest<ClasspathElement>(
+                new ResourceType<RuntimeResources>() {}))
+            .forEach(cpe -> {
+                if (cpe instanceof FileTree<?> fileTree) {
+                    addFileTree(contents, fileTree);
+                } else if (cpe instanceof JarFile jarFile) {
+                    addJarFile(contents, jarFile, openJars);
+                }
+
+            });
+    }
+
+    private void addJarFile(Map<Path, Queue<IOResource>> entries,
+            JarFile jarFile, Map<Path, java.util.jar.JarFile> openJars) {
+        @SuppressWarnings({ "PMD.PreserveStackTrace", "PMD.CloseResource" })
+        java.util.jar.JarFile jar
+            = openJars.computeIfAbsent(jarFile.path(), _ -> {
+                try {
+                    return new java.util.jar.JarFile(jarFile.path().toFile());
+                } catch (IOException e) {
+                    throw new BuildException("Cannot open resource " + jarFile
+                        + ": " + e.getMessage());
+                }
+
+            });
+        jar.stream().filter(Predicate.not(JarEntry::isDirectory))
+            .filter(e -> {
+                var segs = Path.of(e.getRealName()).iterator();
+                if (segs.next().equals(Path.of("META-INF"))) {
+                    segs.next();
+                    return segs.hasNext();
+                }
+                return true;
+            })
+            .forEach(e -> {
+                var relPath = Path.of(e.getRealName());
+                entries.computeIfAbsent(relPath,
+                    _ -> new ConcurrentLinkedQueue<IOResource>())
+                    .add(new JarFileEntry(jar, e));
+            });
+    }
+
+    @Override
     @SuppressWarnings({ "PMD.CollapsibleIfStatements", "unchecked" })
     public <T extends Resource> Stream<T>
             provide(ResourceRequest<T> requested) {
+        for (var jarFile : openJars.values()) {
+            try {
+                jarFile.close();
+            } catch (IOException e) { // NOPMD
+                // Ignore, just trying to be nice.
+            }
+        }
+
         if (!requested.includes(AppJarFileType)
             && !requested.includes(Cleaniness)) {
             return Stream.empty();
@@ -132,16 +194,12 @@ public class UberJarGenerator extends AbstractJarGenerator {
                 + name() + " in " + project());
         }
 
-        // Get all content.
-        log.fine(() -> "Getting uber jar content for " + jarName());
-        @SuppressWarnings("PMD.UseDiamondOperator")
-        var toBeIncluded = project().newResource(ClasspathType)
-            .addAll(project().invokeProviders(providers().stream(),
-                new ResourceRequest<ClasspathElement>(
-                    new ResourceType<RuntimeResources>() {})));
-        log.fine(() -> "Uber jar content: " + toBeIncluded.stream()
-            .map(e -> project().relativize(e.toPath()).toString())
-            .collect(Collectors.joining(":")));
+        // Add main class if defined
+        if (mainClass() != null) {
+            attributes(
+                Map.of(Attributes.Name.MAIN_CLASS, mainClass()).entrySet()
+                    .stream());
+        }
 
         // Narrow too general requests
         var requestedResource = requested.type().containedType();
@@ -149,14 +207,9 @@ public class UberJarGenerator extends AbstractJarGenerator {
             requestedResource = JarFileType;
         }
 
-        // Check if rebuild needed.
         var jarResource = (JarFile) project().newResource(requestedResource,
             destDir.resolve(jarName()));
-        if (jarResource.asOf().isAfter(toBeIncluded.asOf())) {
-            return Stream.of((T) jarResource);
-        }
-
-        buildJar(jarResource, toBeIncluded);
+        buildJar(jarResource);
         return Stream.of((T) jarResource);
     }
 

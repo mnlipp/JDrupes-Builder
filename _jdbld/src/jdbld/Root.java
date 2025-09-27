@@ -50,17 +50,18 @@ public class Root extends AbstractProject
 
         // Build app jar
         dependency(Forward, new UberJarGenerator(this)
-            .mainClass("org.jdrupes.builder.startup.BootstrapLauncher")
             .addAll(providers(Expose))
+            .mainClass("org.jdrupes.builder.startup.BootstrapLauncher")
             .add(new MvnRepoLookup(this).artifact(
                 "eu.maveniverse.maven.mima.runtime:standalone-static:2.4.29")
                 .artifact("org.slf4j:slf4j-api:2.0.17")
                 .artifact("org.slf4j:slf4j-jdk14:2.0.17"))
-            .add(get(new ResourceRequest<PomFile>(new ResourceType<>() {})
-                .forwardTo(Supply))
-                    .map(pomFile -> Map.entry(Path.of("META-INF/maven")
-                        .resolve((String) get(GroupId)).resolve(name())
-                        .resolve("pom.xml"), pomFile)))
+            .addEntries(
+                get(new ResourceRequest<PomFile>(new ResourceType<>() {})
+                    .forwardTo(Supply))
+                        .map(pomFile -> Map.entry(Path.of("META-INF/maven")
+                            .resolve((String) get(GroupId)).resolve(name())
+                            .resolve("pom.xml"), pomFile)))
             .destination(directory().resolve(Path.of("_jdbld", "app"))));
         generator(MvnPublicationGenerator::new)
             .snapshotRepository(URI.create(

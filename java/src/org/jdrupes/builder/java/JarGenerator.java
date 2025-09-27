@@ -18,33 +18,48 @@
 
 package org.jdrupes.builder.java;
 
-import java.util.Optional;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import static java.nio.file.StandardOpenOption.*;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
+import java.util.Queue;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentLinkedQueue;
+import java.util.function.Supplier;
+import java.util.jar.Attributes;
+import java.util.jar.Attributes.Name;
+import java.util.jar.JarEntry;
+import java.util.jar.JarOutputStream;
+import java.util.jar.Manifest;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+import java.util.stream.StreamSupport;
 import org.jdrupes.builder.api.BuildException;
-import org.jdrupes.builder.api.Generator;
+import org.jdrupes.builder.api.FileTree;
+import org.jdrupes.builder.api.IOResource;
 import org.jdrupes.builder.api.Project;
-import org.jdrupes.builder.api.Resource;
-import org.jdrupes.builder.api.ResourceRequest;
-import org.jdrupes.builder.api.ResourceType;
-import static org.jdrupes.builder.api.ResourceType.*;
-import static org.jdrupes.builder.java.JavaTypes.*;
+import static org.jdrupes.builder.api.Project.Properties.*;
+import org.jdrupes.builder.core.AbstractGenerator;
 
-/// A [Generator] for Java jar files.
+/// A general purpose generator for jars. This generator makes no
+/// assumptions about its content.
 ///
-/// The generator provides two types of resources.
-/// 
-/// 1. A [JarFile]. This type of resource is also returned if a more
-///    general [ResourceType] such as [ClasspathElement] is requested.
-///
-/// 2. The sources for the library.
-///
-/// The standard pattern for creating a library is simply:
-/// ```java
-/// generator(JarGenerator::new).addAll(providers(Supply));
-/// ```
-///
-public class JarGenerator extends AbstractJarGenerator {
+public abstract class JarGenerator extends AbstractGenerator {
+
+    private Path destination;
+    private Supplier<String> jarName
+        = () -> project().name() + "-" + project().get(Version) + ".jar";
+    private final List<Stream<Entry<Name, String>>> attributes
+        = new ArrayList<>();
+    private final List<Stream<
+            ? extends Map.Entry<Path, ? extends IOResource>>> entryStreams
+                = new ArrayList<>();
+    private final List<Stream<? extends FileTree<?>>> fileTrees
+        = new ArrayList<>();
 
     /// Instantiates a new library generator.
     ///
@@ -54,56 +69,212 @@ public class JarGenerator extends AbstractJarGenerator {
         super(project);
     }
 
-    @Override
-    @SuppressWarnings({ "PMD.CollapsibleIfStatements", "unchecked" })
-    public <T extends Resource> Stream<T>
-            provide(ResourceRequest<T> requested) {
-        if (!requested.includes(JarFileType)
-            && !requested.includes(Cleaniness)) {
-            return Stream.empty();
-        }
+    /// Returns the destination directory. Defaults to "`libs`".
+    ///
+    /// @return the destination
+    ///
+    public Path destination() {
+        return destination;
+    }
 
-        // Make sure mainClass is set for app jar
-        if (AppJarFileType.isAssignableFrom(requested.type().containedType())
-            && mainClass() == null) {
-            throw new BuildException("Main class must be set for "
-                + name() + " in " + project());
-        }
-        // Prepare jar file
-        var destDir = Optional.ofNullable(destination())
-            .orElseGet(() -> project().buildDirectory().resolve("libs"));
-        if (!destDir.toFile().exists()) {
-            if (!destDir.toFile().mkdirs()) {
-                throw new BuildException("Cannot create directory " + destDir);
+    /// Sets the destination directory. The [Path] is resolved against
+    /// the project's build directory (see [Project#buildDirectory]).
+    ///
+    /// @param destination the new destination
+    /// @return the java compiler
+    ///
+    public JarGenerator destination(Path destination) {
+        this.destination = destination;
+        return this;
+    }
+
+    /// Returns the name of the generated jar file. Defaults to
+    /// the project's name followed by its version and `.jar`.
+    ///
+    /// @return the string
+    ///
+    public String jarName() {
+        return jarName.get();
+    }
+
+    /// Sets the supplier for obtaining the name of the generated jar file
+    /// in [#provide].
+    ///
+    /// @param jarName the jar name
+    /// @return the jar generator
+    ///
+    public JarGenerator jarName(Supplier<String> jarName) {
+        this.jarName = jarName;
+        return this;
+    }
+
+    /// Sets the name of the generated jar file.
+    ///
+    /// @param jarName the jar name
+    /// @return the jar generator
+    ///
+    public JarGenerator jarName(String jarName) {
+        return jarName(() -> jarName);
+    }
+
+    /// Add the given attributes to the manifest.
+    ///
+    /// @param attributes the attributes
+    /// @return the library generator
+    ///
+    public JarGenerator
+            attributes(Stream<Map.Entry<Attributes.Name, String>> attributes) {
+        this.attributes.add(attributes);
+        return this;
+    }
+
+    /// Adds single resources to the jar. Each entry is added to the
+    /// jar as entry with the name passed in the key attribute of the
+    /// `Map.Entry` with the content from the [IOResource] in the
+    /// value attribute.
+    ///
+    /// @param entries the entries
+    /// @return the jar generator
+    ///
+    public JarGenerator addEntries(
+            Stream<? extends Map.Entry<Path, ? extends IOResource>> entries) {
+        entryStreams.add(entries);
+        return this;
+    }
+
+    /// Adds the given [FileTree]s. Each file in the tree will be added
+    /// as an entry using its relative path in the tree as name.  
+    ///
+    /// @param trees the trees
+    /// @return the jar generator
+    ///
+    public JarGenerator addTrees(Stream<? extends FileTree<?>> trees) {
+        fileTrees.add(trees);
+        return this;
+    }
+
+    /// Convenience method for adding a single entry, see [#addTrees(Stream)].
+    ///
+    /// @param tree the tree
+    /// @return the jar generator
+    ///
+    public JarGenerator add(FileTree<?> tree) {
+        addTrees(Stream.of(tree));
+        return this;
+    }
+
+    /// Convenience method for adding a single entry, see [#addEntries(Stream)].
+    ///
+    /// @param entry the entry
+    /// @return the jar generator
+    ///
+    public JarGenerator add(Map.Entry<Path, ? extends IOResource> entry) {
+        addEntries(Stream.of(entry));
+        return this;
+    }
+
+    /// Builds the jar.
+    ///
+    /// @param jarResource the jar resource
+    ///
+    protected void buildJar(JarFile jarResource) {
+        // Check if rebuild needed. TODO
+//        var jarResource = (JarFile) project().newResource(requestedResource,
+//            destDir.resolve(jarName()));
+//        if (jarResource.asOf().isAfter(toBeIncluded.asOf())) {
+//            return Stream.of((T) jarResource);
+//        }
+
+        log.info(() -> "Building jar in " + project().name());
+
+        // Collect entries for jar from all sources
+        var contents = new ConcurrentHashMap<Path, Queue<IOResource>>();
+        collectContents(contents);
+        resolveDuplicates(contents);
+
+        // Add content to jar file
+        Manifest manifest = new Manifest();
+        @SuppressWarnings("PMD.LooseCoupling")
+        Attributes attributes = manifest.getMainAttributes();
+        attributes.put(Attributes.Name.MANIFEST_VERSION, "1.0");
+        this.attributes.stream().flatMap(s -> s)
+            .forEach(e -> attributes.put(e.getKey(), e.getValue()));
+        try (JarOutputStream jos = new JarOutputStream(Files.newOutputStream(
+            jarResource.path(), CREATE, TRUNCATE_EXISTING), manifest)) {
+            for (var entry : contents.entrySet()) {
+                if (entry.getValue().isEmpty()) {
+                    continue;
+                }
+                var entryName
+                    = StreamSupport.stream(entry.getKey().spliterator(), false)
+                        .map(Path::toString).collect(Collectors.joining("/"));
+                @SuppressWarnings("PMD.AvoidInstantiatingObjectsInLoops")
+                JarEntry jarEntry = new JarEntry(entryName);
+                jarEntry.setTime(entry.getValue().peek().asOf().toEpochMilli());
+                jos.putNextEntry(jarEntry);
+                try (var input = entry.getValue().peek().inputStream()) {
+                    input.transferTo(jos);
+                }
             }
-        }
 
-        // Maybe only delete
-        if (requested.includes(Cleaniness)) {
-            project().newResource(JarFileType,
-                destDir.resolve(jarName())).delete();
-            return Stream.empty();
+        } catch (IOException e) {
+            throw new BuildException(e);
         }
+    }
 
-        // Get all content.
-        log.fine(() -> "Getting library jar content for " + jarName());
-        var toBeIncluded = project().newResource(ClasspathType)
-            .addAll(project().invokeProviders(providers().stream(),
-                new ResourceRequest<ClassTree>(new ResourceType<>() {})))
-            .addAll(project().invokeProviders(providers().stream(),
-                new ResourceRequest<JavaResourceTree>(
-                    new ResourceType<>() {})));
-        log.fine(() -> "Library jar content: " + toBeIncluded.stream()
-            .map(e -> project().relativize(e.toPath()).toString())
-            .collect(Collectors.joining(":")));
+    /// Add the contents from the added streams as preliminary jar
+    /// entries. Must be overridden by derived classes that define
+    /// additional ways to provide contents. The overriding method
+    /// must invoke `super.collectEntries(...)`.
+    ///
+    /// @param contents the preliminary contents
+    ///
+    protected void collectContents(Map<Path, Queue<IOResource>> contents) {
+        entryStreams.stream().flatMap(s -> s).forEach(entry -> {
+            contents.computeIfAbsent(entry.getKey(),
+                _ -> new ConcurrentLinkedQueue<IOResource>())
+                .add(entry.getValue());
+        });
+        fileTrees.stream().flatMap(s -> s)
+            .forEach(t -> addFileTree(contents, t));
+    }
 
-        // Check if rebuild needed.
-        var jarResource = project().newResource(JarFileType,
-            destDir.resolve(jarName()));
-        if (jarResource.asOf().isAfter(toBeIncluded.asOf())) {
-            return Stream.of((T) jarResource);
-        }
-        buildJar(jarResource, toBeIncluded);
-        return Stream.of((T) jarResource);
+    /// Adds the resources from the file tree. May be used by derived
+    /// classes to add file tree like contents that has not been added
+    /// using [#addFileTree].
+    ///
+    /// @param entries the entries
+    /// @param fileTree the file tree
+    ///
+    protected void addFileTree(Map<Path, Queue<IOResource>> entries,
+            FileTree<?> fileTree) {
+        var root = fileTree.root();
+        fileTree.stream().forEach(file -> {
+            var relPath = root.relativize(file.path());
+            entries.computeIfAbsent(relPath,
+                _ -> new ConcurrentLinkedQueue<IOResource>()).add(file);
+        });
+    }
+
+    /// Resolve duplicates. The default implementation outputs a warning
+    /// and skips the duplicate entry. 
+    ///
+    /// @param entries the entries
+    ///
+    @SuppressWarnings({ "PMD.AvoidLiteralsInIfCondition",
+        "PMD.UselessPureMethodCall" })
+    protected void resolveDuplicates(Map<Path, Queue<IOResource>> entries) {
+        entries.entrySet().parallelStream().forEach(item -> {
+            var queue = item.getValue();
+            if (queue.size() == 1) {
+                return;
+            }
+            var entryName = item.getKey();
+            queue.stream().reduce((a, b) -> {
+                log.warning(() -> "Entry " + entryName + " from " + a
+                    + " duplicates entry from " + b + " and is skipped.");
+                return a;
+            });
+        });
     }
 }

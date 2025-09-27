@@ -13,7 +13,7 @@ public class App extends AbstractProject implements JavaProject {
         dependency(Consume, project(Base1.class));
         dependency(Consume, project(Base2.class));
         dependency(Forward, new UberJarGenerator(this)
-            .destination(buildDirectory().resolve("app"))
-            .addAll(providers(EnumSet.of(Consume, Supply))));
+            .addAll(providers(EnumSet.of(Consume, Supply)))
+            .destination(buildDirectory().resolve("app")));
     }
 }
