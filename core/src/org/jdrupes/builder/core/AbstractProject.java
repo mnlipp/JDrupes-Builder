@@ -23,6 +23,7 @@ import java.lang.reflect.InvocationTargetException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Collections;
+import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -49,8 +50,7 @@ import org.jdrupes.builder.api.RootProject;
 
 /// A default implementation of a [Project].
 ///
-@SuppressWarnings({ "PMD.CouplingBetweenObjects", "PMD.GodClass",
-    "PMD.TooManyMethods" })
+@SuppressWarnings({ "PMD.CouplingBetweenObjects", "PMD.GodClass" })
 public abstract class AbstractProject extends AbstractProvider
         implements Project {
 
@@ -270,7 +270,7 @@ public abstract class AbstractProject extends AbstractProvider
     }
 
     @Override
-    public <T extends Resource> Stream<T> invokeProviders(
+    public <T extends Resource> Stream<T> getFrom(
             Stream<ResourceProvider> providers, ResourceRequest<T> request) {
         return providers.map(p -> context().<T> get(p, request))
             // Terminate stream to start all tasks for evaluating the futures
@@ -305,8 +305,8 @@ public abstract class AbstractProject extends AbstractProvider
     }
 
     /// A project itself does not provide any resources. Rather, requests
-    /// for resources are forwarded to the project's providers. The types
-    /// of providers used is determined by the request.
+    /// for resources are forwarded to the project's providers with intend
+    /// [Intend#Forward], [Intend#Expose] or [Intend#Supply].
     ///
     /// @param <R> the generic type
     /// @param requested the requested
@@ -315,7 +315,8 @@ public abstract class AbstractProject extends AbstractProvider
     @Override
     protected <R extends Resource> Stream<R>
             doProvide(ResourceRequest<R> requested) {
-        return invokeProviders(providers(requested.forwardTo()), requested);
+        return getFrom(providers(EnumSet.of(Forward, Expose, Supply)),
+            requested);
     }
 
     /// Define command, see [RootProject#commandAlias].

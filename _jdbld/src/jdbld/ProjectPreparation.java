@@ -27,10 +27,7 @@ import org.jdrupes.builder.eclipse.EclipseConfigurator;
 import org.jdrupes.builder.java.JavaCompiler;
 import org.jdrupes.builder.java.JavaProject;
 import org.jdrupes.builder.java.JavaResourceCollector;
-import org.jdrupes.builder.mvnrepo.MavenArtifactProject;
-import org.jdrupes.builder.mvnrepo.PomFileGenerator;
 import org.w3c.dom.Document;
-import org.w3c.dom.Element;
 import org.w3c.dom.Node;
 
 /// The Class ProjectPreparation.
@@ -44,49 +41,6 @@ public class ProjectPreparation {
                 .options("--release", "24");
             project.generator(JavaResourceCollector::new)
                 .add(Path.of("resources"), "**/*");
-        }
-        if (project instanceof MavenArtifactProject) {
-            project.generator(new PomFileGenerator(project) {
-
-                @Override
-                protected void adaptPom(Document doc, Element project) {
-                    project.appendChild(doc.createElement("description"))
-                        .setTextContent("See URL.");
-                    project.appendChild(doc.createElement("url"))
-                        .setTextContent(
-                            "https://builder.jdrupes.org/generator-index.html");
-                    var scm = project.appendChild(doc.createElement("scm"));
-                    scm.appendChild(doc.createElement("url"))
-                        .setTextContent(
-                            "https://github.com/jdrupes/jdrupes-builder");
-                    scm.appendChild(doc.createElement("connection"))
-                        .setTextContent(
-                            "scm:git://github.com/jdrupes/jdrupes-builder.git");
-                    scm.appendChild(doc.createElement("developerConnection"))
-                        .setTextContent(
-                            "scm:git://github.com/jdrupes/jdrupes-builder.git");
-                    var licenses
-                        = project.appendChild(doc.createElement("licenses"));
-                    var license
-                        = licenses.appendChild(doc.createElement("license"));
-                    license.appendChild(doc.createElement("name"))
-                        .setTextContent("AGPL 3.0");
-                    license.appendChild(doc.createElement("url"))
-                        .setTextContent(
-                            "https://www.gnu.org/licenses/agpl-3.0.en.html");
-                    license.appendChild(doc.createElement("distribution"))
-                        .setTextContent("repo");
-                    var developers
-                        = project.appendChild(doc.createElement("developers"));
-                    var developer = developers
-                        .appendChild(doc.createElement("developer"));
-                    developer.appendChild(doc.createElement("name"))
-                        .setTextContent("Michael N. Lipp");
-                    developer.appendChild(doc.createElement("id"))
-                        .setTextContent("mnlipp");
-                }
-
-            });
         }
     }
 

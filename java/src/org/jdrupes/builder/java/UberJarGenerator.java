@@ -111,7 +111,7 @@ public class UberJarGenerator extends LibraryJarGenerator {
     @SuppressWarnings("PMD.UseDiamondOperator")
     protected void collectFromProviders(Map<Path, Queue<IOResource>> contents) {
         openJars = new ConcurrentHashMap<>();
-        project().invokeProviders(providers().stream(),
+        project().getFrom(providers().stream(),
             new ResourceRequest<ClasspathElement>(
                 new ResourceType<RuntimeResources>() {}))
             .forEach(cpe -> {

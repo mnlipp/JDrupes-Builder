@@ -23,8 +23,7 @@ import java.util.EnumSet;
 import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Stream;
-import static org.jdrupes.builder.api.Intend.Consume;
-import static org.jdrupes.builder.api.Intend.Expose;
+import static org.jdrupes.builder.api.Intend.*;
 
 /// [Project]s are used to structure the build configuration. Every
 /// build configuration has a single root project and can have
@@ -303,7 +302,7 @@ public interface Project extends ResourceProvider {
     /// @param request the request
     /// @return the stream
     ///
-    <T extends Resource> Stream<T> invokeProviders(
+    <T extends Resource> Stream<T> getFrom(
             Stream<ResourceProvider> providers, ResourceRequest<T> request);
 
     /// Returns all resources that are provided for the given request
@@ -315,8 +314,19 @@ public interface Project extends ResourceProvider {
     ///
     default <T extends Resource> Stream<T>
             provided(ResourceRequest<T> requested) {
-        return invokeProviders(
-            providers(EnumSet.of(Consume, Expose)), requested);
+        return getFrom(providers(Consume, Expose), requested);
+    }
+
+    /// Returns all resources that are provided for the given request
+    /// by providers associated with [Intend#Supply].
+    ///
+    /// @param <T> the requested type
+    /// @param requested the requested
+    /// @return the provided resources
+    ///
+    default <T extends Resource> Stream<T>
+            supplied(ResourceRequest<T> requested) {
+        return getFrom(providers(Supply), requested);
     }
 
     /// Short for `directory().relativize(other)`.

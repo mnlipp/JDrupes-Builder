@@ -133,10 +133,10 @@ public class LibraryJarGenerator extends JarGenerator {
     /// @param contents the contents
     ///
     protected void collectFromProviders(Map<Path, Queue<IOResource>> contents) {
-        project().invokeProviders(providers().stream(),
+        project().getFrom(providers().stream(),
             new ResourceRequest<ClassTree>(new ResourceType<>() {}))
             .forEach(t -> addFileTree(contents, t));
-        project().invokeProviders(providers().stream(),
+        project().getFrom(providers().stream(),
             new ResourceRequest<JavaResourceTree>(new ResourceType<>() {}))
             .forEach(t -> addFileTree(contents, t));
     }

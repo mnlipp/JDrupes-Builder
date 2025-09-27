@@ -79,8 +79,8 @@ public class MvnPublicationGenerator extends AbstractGenerator {
         if (!requested.includes(MvnPublicationType)) {
             return Stream.empty();
         }
-        var pomResource = project().get(new ResourceRequest<PomFile>(
-            new ResourceType<>() {}).forwardTo(Supply)).findFirst();
+        var pomResource = project().supplied(new ResourceRequest<PomFile>(
+            new ResourceType<>() {})).findFirst();
         if (pomResource.isEmpty()) {
             log.warning("No POM file resource available.");
             return Stream.empty();

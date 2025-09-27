@@ -16,19 +16,21 @@ import org.jdrupes.builder.eclipse.EclipseConfiguration;
 import org.jdrupes.builder.java.AppJarFile;
 import org.jdrupes.builder.java.ClasspathElement;
 import org.jdrupes.builder.java.UberJarGenerator;
-import org.jdrupes.builder.mvnrepo.MavenArtifactProject;
 import org.jdrupes.builder.mvnrepo.MvnPublication;
 import org.jdrupes.builder.mvnrepo.MvnPublicationGenerator;
 import org.jdrupes.builder.mvnrepo.MvnRepoLookup;
 import org.jdrupes.builder.mvnrepo.PomFile;
+import org.jdrupes.builder.mvnrepo.PomFileGenerator;
+import org.w3c.dom.Document;
+import org.w3c.dom.Element;
+
 import static org.jdrupes.builder.mvnrepo.MvnProperties.*;
 import org.jdrupes.builder.java.Javadoc;
 import org.jdrupes.builder.java.JavadocDirectory;
 import org.jdrupes.builder.java.JavaSourceFile;
 import static org.jdrupes.builder.java.JavaTypes.*;
 
-public class Root extends AbstractProject
-        implements RootProject, MavenArtifactProject {
+public class Root extends AbstractProject implements RootProject {
 
     @Override
     public void prepareProject(Project project) {
@@ -57,12 +59,51 @@ public class Root extends AbstractProject
                 .artifact("org.slf4j:slf4j-api:2.0.17")
                 .artifact("org.slf4j:slf4j-jdk14:2.0.17"))
             .addEntries(
-                get(new ResourceRequest<PomFile>(new ResourceType<>() {})
-                    .forwardTo(Supply))
-                        .map(pomFile -> Map.entry(Path.of("META-INF/maven")
-                            .resolve((String) get(GroupId)).resolve(name())
-                            .resolve("pom.xml"), pomFile)))
+                supplied(new ResourceRequest<PomFile>(new ResourceType<>() {}))
+                    .map(pomFile -> Map.entry(Path.of("META-INF/maven")
+                        .resolve((String) get(GroupId)).resolve(name())
+                        .resolve("pom.xml"), pomFile)))
             .destination(directory().resolve(Path.of("_jdbld", "app"))));
+        generator(new PomFileGenerator(this) {
+
+            @Override
+            protected void adaptPom(Document doc, Element project) {
+                project.appendChild(doc.createElement("description"))
+                    .setTextContent("See URL.");
+                project.appendChild(doc.createElement("url"))
+                    .setTextContent(
+                        "https://builder.jdrupes.org/generator-index.html");
+                var scm = project.appendChild(doc.createElement("scm"));
+                scm.appendChild(doc.createElement("url"))
+                    .setTextContent(
+                        "https://github.com/jdrupes/jdrupes-builder");
+                scm.appendChild(doc.createElement("connection"))
+                    .setTextContent(
+                        "scm:git://github.com/jdrupes/jdrupes-builder.git");
+                scm.appendChild(doc.createElement("developerConnection"))
+                    .setTextContent(
+                        "scm:git://github.com/jdrupes/jdrupes-builder.git");
+                var licenses
+                    = project.appendChild(doc.createElement("licenses"));
+                var license
+                    = licenses.appendChild(doc.createElement("license"));
+                license.appendChild(doc.createElement("name"))
+                    .setTextContent("AGPL 3.0");
+                license.appendChild(doc.createElement("url"))
+                    .setTextContent(
+                        "https://www.gnu.org/licenses/agpl-3.0.en.html");
+                license.appendChild(doc.createElement("distribution"))
+                    .setTextContent("repo");
+                var developers
+                    = project.appendChild(doc.createElement("developers"));
+                var developer = developers
+                    .appendChild(doc.createElement("developer"));
+                developer.appendChild(doc.createElement("name"))
+                    .setTextContent("Michael N. Lipp");
+                developer.appendChild(doc.createElement("id"))
+                    .setTextContent("mnlipp");
+            }
+        });
         generator(MvnPublicationGenerator::new)
             .snapshotRepository(URI.create(
                 "https://central.sonatype.com/repository/maven-snapshots/"))
