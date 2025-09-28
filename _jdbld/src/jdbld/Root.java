@@ -53,12 +53,12 @@ public class Root extends AbstractProject implements RootProject {
 
         // Build app jar
         dependency(Forward, new UberJarGenerator(this)
-            .addAll(providers(Expose))
-            .mainClass("org.jdrupes.builder.startup.BootstrapLauncher")
-            .add(new MvnRepoLookup(this).artifact(
+            .from(providers(Expose))
+            .from(new MvnRepoLookup(this).artifact(
                 "eu.maveniverse.maven.mima.runtime:standalone-static:2.4.34")
                 .artifact("org.slf4j:slf4j-api:2.0.17")
                 .artifact("org.slf4j:slf4j-jdk14:2.0.17"))
+            .mainClass("org.jdrupes.builder.startup.BootstrapLauncher")
             .addEntries(
                 supplied(new ResourceRequest<PomFile>(new ResourceType<>() {}))
                     .map(pomFile -> Map.entry(Path.of("META-INF/maven")

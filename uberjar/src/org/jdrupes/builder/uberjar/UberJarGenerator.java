@@ -60,8 +60,8 @@ import static org.jdrupes.builder.mvnrepo.MvnRepoTypes.*;
 ///
 /// The generator takes a simple approach:
 /// 
-///   * Add the content of the [ClasspathElement]s added with [add][#add]
-///     or [addAll][#addAll] to the resulting uber jar.
+///   * Add the content of the [ClasspathElement]s added with `from` 
+///     to the resulting uber jar.
 ///   * Filter out any direct child files of `META-INF`. These files often
 ///     contain information related to the origin jar that is not applicable
 ///     to the uber jar.
@@ -88,7 +88,7 @@ import static org.jdrupes.builder.mvnrepo.MvnRepoTypes.*;
 /// ```
 /// This requests the same providers from the project as 
 /// [Project.provide][Project#provide] does, but allows the uber jar
-/// generator's [addAll][#addAll] method to filter out the uber jar
+/// generator's [from] method to filter out the uber jar
 /// generator itself from the providers. The given intends can
 /// vary depending on the requirements.
 ///
@@ -96,7 +96,7 @@ import static org.jdrupes.builder.mvnrepo.MvnRepoTypes.*;
 /// generators of your project, you can also add it to a project like this:
 /// ```java
 ///     dependency(new UberJarGenerator(this)
-///         .addAll(providers(EnumSet.of(Forward, Expose, Supply))), Intend.Forward)
+///         .from(providers(EnumSet.of(Forward, Expose, Supply))), Intend.Forward)
 /// ```
 ///
 /// Of course, the easiest thing to do is separate the generation of

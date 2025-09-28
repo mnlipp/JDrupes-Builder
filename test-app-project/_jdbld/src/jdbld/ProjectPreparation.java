@@ -44,7 +44,7 @@ public class ProjectPreparation {
             project.generator(JavaResourceCollector::new)
                 .add(Path.of("resources"), "**/*");
             project.generator(LibraryJarGenerator::new)
-                .addAll(project.providers(Supply));
+                .from(project.providers(Supply));
         }
     }
 

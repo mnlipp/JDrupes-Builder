@@ -48,14 +48,14 @@ import static org.jdrupes.builder.java.JavaTypes.*;
 /// 2. The sources for the library.
 ///
 /// As a convenience, adding resources to the library is simplified
-/// by methods [#add(ResourceProvider...)] and [#addAll(Stream)].
+/// by methods [from(ResourceProvider...)] and [from(Stream)].
 /// These methods allow the user to add providers that will be
 /// used to retrieve resources of type [ClassTree] and [JavaResourceTree]
 /// in addition to the explicitly added resources.
 ///
 /// The standard pattern for creating a library is simply:
 /// ```java
-/// generator(JarGenerator::new).addAll(providers(Supply));
+/// generator(JarGenerator::new).from(providers(Supply));
 /// ```
 ///
 public class LibraryJarGenerator extends JarGenerator {
@@ -90,25 +90,24 @@ public class LibraryJarGenerator extends JarGenerator {
         return this;
     }
 
-    /// Adds the given providers, see [addAll].
+    /// Additionally uses the given providers for obtaining contents for the
+    /// jar.
     ///
     /// @param providers the providers
     /// @return the jar generator
     ///
-    public LibraryJarGenerator add(ResourceProvider... providers) {
-        addAll(Stream.of(providers));
+    public LibraryJarGenerator from(ResourceProvider... providers) {
+        from(Stream.of(providers));
         return this;
     }
 
-    /// Adds the given providers. Each provider will be asked to provide
-    /// resources of type [ClassTree] and [JavaResourceTree] when
-    /// [#provide] is invoked. All file trees returned in response
-    /// are added to the library jar.
+    /// Additionally uses the given providers for obtaining contents for the
+    /// jar.
     ///
     /// @param providers the providers
-    /// @return the library generator
+    /// @return the jar generator
     ///
-    public LibraryJarGenerator addAll(Stream<ResourceProvider> providers) {
+    public LibraryJarGenerator from(Stream<ResourceProvider> providers) {
         this.providers.add(providers.filter(p -> !p.equals(this)));
         return this;
     }
