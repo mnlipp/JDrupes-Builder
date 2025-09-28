@@ -29,6 +29,7 @@ import java.util.Map.Entry;
 import java.util.Queue;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentLinkedQueue;
+import java.util.function.Predicate;
 import java.util.function.Supplier;
 import java.util.jar.Attributes;
 import java.util.jar.Attributes.Name;
@@ -178,21 +179,22 @@ public abstract class JarGenerator extends AbstractGenerator {
     /// @param jarResource the jar resource
     ///
     protected void buildJar(JarFile jarResource) {
-        // Check if rebuild needed. TODO
-//        var jarResource = (JarFile) project().newResource(requestedResource,
-//            destDir.resolve(jarName()));
-//        if (jarResource.asOf().isAfter(toBeIncluded.asOf())) {
-//            return Stream.of((T) jarResource);
-//        }
-
-        log.info(() -> "Building jar in " + project().name());
-
         // Collect entries for jar from all sources
         var contents = new ConcurrentHashMap<Path, Queue<IOResource>>();
         collectContents(contents);
         resolveDuplicates(contents);
 
-        // Add content to jar file
+        // Check if rebuild needed.
+        var newer = contents.values().stream()
+            .filter(Predicate.not(Queue::isEmpty))
+            .map(Queue::peek).filter(r -> r.asOf().isAfter(jarResource.asOf()))
+            .findAny();
+        if (newer.isEmpty()) {
+            return;
+        }
+
+        // Write jar file
+        log.info(() -> "Building jar in " + project().name());
         Manifest manifest = new Manifest();
         @SuppressWarnings("PMD.LooseCoupling")
         Attributes attributes = manifest.getMainAttributes();
