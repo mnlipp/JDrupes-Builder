@@ -148,7 +148,7 @@ public class JavaCompiler extends JavaTool {
         }
 
         if (!requested.includes(ClassTreeType)
-            && !requested.includes(Cleaniness)) {
+            && !requested.includes(CleanlinessType)) {
             return Stream.empty();
         }
 
@@ -163,7 +163,7 @@ public class JavaCompiler extends JavaTool {
         // or deleting.
         var destDir = project().buildDirectory().resolve(destination);
         final var classSet = project().newResource(ClassTreeType, destDir);
-        if (requested.includes(Cleaniness)) {
+        if (requested.includes(CleanlinessType)) {
             classSet.delete();
             return Stream.empty();
         }

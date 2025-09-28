@@ -34,7 +34,6 @@ import javax.xml.transform.dom.DOMSource;
 import javax.xml.transform.stream.StreamResult;
 import org.jdrupes.builder.api.BuildException;
 import org.jdrupes.builder.api.Generator;
-import static org.jdrupes.builder.api.Intend.Supply;
 import org.jdrupes.builder.api.Project;
 import static org.jdrupes.builder.api.Project.Properties.*;
 import org.jdrupes.builder.api.Resource;
@@ -51,7 +50,6 @@ import org.w3c.dom.Element;
 /// The generator provides a single type of resource.
 /// 
 ///
-@SuppressWarnings("PMD.TooManyStaticImports")
 public class PomFileGenerator extends AbstractGenerator {
 
     /// The Constant GENERATED_BY.
@@ -94,7 +92,7 @@ public class PomFileGenerator extends AbstractGenerator {
             .resolve("pom.xml");
 
         // Maybe only delete
-        if (requested.includes(Cleaniness)) {
+        if (requested.includes(CleanlinessType)) {
             if (pomPath.toFile().exists()) {
                 pomPath.toFile().delete();
             }

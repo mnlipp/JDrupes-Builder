@@ -147,7 +147,7 @@ public class LibraryJarGenerator extends JarGenerator {
     protected <T extends Resource> Stream<T>
             doProvide(ResourceRequest<T> requested) {
         if (!requested.includes(JarFileType)
-            && !requested.includes(Cleaniness)) {
+            && !requested.includes(CleanlinessType)) {
             return Stream.empty();
         }
 
@@ -175,7 +175,7 @@ public class LibraryJarGenerator extends JarGenerator {
         }
 
         // Maybe only delete
-        if (requested.includes(Cleaniness)) {
+        if (requested.includes(CleanlinessType)) {
             project().newResource(JarFileType,
                 destDir.resolve(jarName())).delete();
             return Stream.empty();

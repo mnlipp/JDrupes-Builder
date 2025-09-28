@@ -29,7 +29,6 @@ import org.jdrupes.builder.api.Resource;
 import org.jdrupes.builder.api.ResourceFactory;
 import org.jdrupes.builder.api.ResourceType;
 import org.jdrupes.builder.api.Resources;
-import static org.jdrupes.builder.core.CoreTypes.*;
 
 /// A factory for creating the Core resource objects.
 ///
@@ -64,7 +63,7 @@ public class CoreResourceFactory implements ResourceFactory {
     @SuppressWarnings({ "unchecked" })
     public <T extends Resource> Optional<T> newResource(ResourceType<T> type,
             Project project, Object... args) {
-        if (FileResourceType.isAssignableFrom(type)
+        if (ResourceType.FileResourceType.isAssignableFrom(type)
             && type.rawType().getSuperclass() == null
             && !addsMethod(FileResource.class,
                 (Class<? extends FileResource>) type.rawType())) {

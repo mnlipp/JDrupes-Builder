@@ -39,9 +39,20 @@ import java.util.stream.Stream;
 public class ResourceType<T extends Resource> {
 
     /// Used to request cleanup.
-    @SuppressWarnings("PMD.FieldNamingConventions")
+    @SuppressWarnings({ "PMD.FieldNamingConventions",
+        "PMD.AvoidDuplicateLiterals" })
     public static final ResourceType<
-            Cleanliness> Cleaniness = new ResourceType<>() {};
+            Cleanliness> CleanlinessType = new ResourceType<>() {};
+
+    /// The resource type for [ResourceFile].
+    @SuppressWarnings("PMD.FieldNamingConventions")
+    public static final ResourceType<ResourceFile> ResourceFileType
+        = new ResourceType<>() {};
+
+    /// The resource type for [FileResource].
+    @SuppressWarnings("PMD.FieldNamingConventions")
+    public static final ResourceType<FileResource> FileResourceType
+        = new ResourceType<>() {};
 
     @SuppressWarnings("PMD.FieldNamingConventions")
     public static final ResourceType<
@@ -59,6 +70,7 @@ public class ResourceType<T extends Resource> {
     /// @param type the type
     /// @param containedType the contained type
     ///
+    @SuppressWarnings({ "unchecked", "PMD.AvoidDuplicateLiterals" })
     public ResourceType(Class<? extends Resource> type,
             ResourceType<?> containedType) {
         this.type = (Class<T>) type;

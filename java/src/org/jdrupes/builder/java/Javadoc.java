@@ -156,14 +156,14 @@ public class Javadoc extends JavaTool {
     protected <T extends Resource> Stream<T>
             doProvide(ResourceRequest<T> requested) {
         if (!requested.includes(JavadocDirectoryType)
-            && !requested.includes(Cleaniness)) {
+            && !requested.includes(CleanlinessType)) {
             return Stream.empty();
         }
 
         // Get destination and check if we only have to cleanup.
         var destDir = project().buildDirectory().resolve(destination);
         var generated = project().newResource(ClassTreeType, destDir, "**/*");
-        if (requested.includes(Cleaniness)) {
+        if (requested.includes(CleanlinessType)) {
             generated.delete();
             destDir.toFile().delete();
             return Stream.empty();
