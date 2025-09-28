@@ -237,7 +237,7 @@ public abstract class JarGenerator extends AbstractGenerator {
                 _ -> project().newResource(IOResourcesType))
                 .add(entry.getValue());
         });
-        fileTrees.stream().flatMap(s -> s)
+        fileTrees.stream().parallel().flatMap(s -> s)
             .forEach(t -> addFileTree(contents, t));
     }
 

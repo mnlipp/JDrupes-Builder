@@ -124,7 +124,7 @@ public class UberJarGenerator extends LibraryJarGenerator {
         project().getFrom(providers().stream(),
             new ResourceRequest<ClasspathElement>(
                 new ResourceType<RuntimeResources>() {}))
-            .forEach(cpe -> {
+            .parallel().forEach(cpe -> {
                 if (cpe instanceof FileTree<?> fileTree) {
                     addFileTree(contents, fileTree);
                 } else if (cpe instanceof JarFile jarFile
@@ -138,7 +138,7 @@ public class UberJarGenerator extends LibraryJarGenerator {
             .forEach(d -> lookup.artifact(d.toString()));
         project().context().get(lookup, new ResourceRequest<ClasspathElement>(
             new ResourceType<RuntimeResources>() {}))
-            .forEach(cpe -> {
+            .parallel().forEach(cpe -> {
                 if (cpe instanceof MvnRepoJarFile jarFile) {
                     addJarFile(contents, jarFile, openJars);
                 }

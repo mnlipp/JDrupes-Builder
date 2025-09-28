@@ -136,10 +136,10 @@ public class LibraryJarGenerator extends JarGenerator {
             collectFromProviders(Map<Path, Resources<IOResource>> contents) {
         project().getFrom(providers().stream(),
             new ResourceRequest<ClassTree>(new ResourceType<>() {}))
-            .forEach(t -> addFileTree(contents, t));
+            .parallel().forEach(t -> addFileTree(contents, t));
         project().getFrom(providers().stream(),
             new ResourceRequest<JavaResourceTree>(new ResourceType<>() {}))
-            .forEach(t -> addFileTree(contents, t));
+            .parallel().forEach(t -> addFileTree(contents, t));
     }
 
     @Override
