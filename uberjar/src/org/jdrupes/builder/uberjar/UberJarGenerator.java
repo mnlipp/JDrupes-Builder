@@ -16,7 +16,7 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package org.jdrupes.builder.java;
+package org.jdrupes.builder.uberjar;
 
 import java.io.IOException;
 import java.nio.file.Path;
@@ -37,6 +37,14 @@ import org.jdrupes.builder.api.Project;
 import org.jdrupes.builder.api.Resource;
 import org.jdrupes.builder.api.ResourceRequest;
 import org.jdrupes.builder.api.ResourceType;
+import org.jdrupes.builder.java.AppJarFile;
+import org.jdrupes.builder.java.ClasspathElement;
+import org.jdrupes.builder.java.JarFile;
+import org.jdrupes.builder.java.JarFileEntry;
+import org.jdrupes.builder.java.LibraryJarGenerator;
+import org.jdrupes.builder.java.RuntimeResources;
+import org.jdrupes.builder.java.ServicesEntryResource;
+
 import static org.jdrupes.builder.api.ResourceType.*;
 import static org.jdrupes.builder.java.JavaTypes.*;
 

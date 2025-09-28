@@ -15,12 +15,12 @@ import org.jdrupes.builder.core.AbstractProject;
 import org.jdrupes.builder.eclipse.EclipseConfiguration;
 import org.jdrupes.builder.java.AppJarFile;
 import org.jdrupes.builder.java.ClasspathElement;
-import org.jdrupes.builder.java.UberJarGenerator;
 import org.jdrupes.builder.mvnrepo.MvnPublication;
 import org.jdrupes.builder.mvnrepo.MvnPublicationGenerator;
 import org.jdrupes.builder.mvnrepo.MvnRepoLookup;
 import org.jdrupes.builder.mvnrepo.PomFile;
 import org.jdrupes.builder.mvnrepo.PomFileGenerator;
+import org.jdrupes.builder.uberjar.UberJarGenerator;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 
@@ -47,6 +47,7 @@ public class Root extends AbstractProject implements RootProject {
         dependency(Expose, project(Core.class));
         dependency(Expose, project(Java.class));
         dependency(Expose, project(MvnRepo.class));
+        dependency(Expose, project(Uberjar.class));
         dependency(Expose, project(Startup.class));
         dependency(Expose, project(Eclipse.class));
 

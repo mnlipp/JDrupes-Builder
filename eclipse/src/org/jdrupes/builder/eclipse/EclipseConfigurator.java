@@ -97,6 +97,9 @@ public class EclipseConfigurator extends AbstractGenerator {
             return Stream.empty();
         }
 
+        // Make sure that the directories exist.
+        project().directory().resolve(".settings").toFile().mkdirs();
+
         // generate .project
         generateXmlFile(this::generateProjectConfiguration, ".project");
 
@@ -106,7 +109,6 @@ public class EclipseConfigurator extends AbstractGenerator {
         }
 
         // generate preferences
-        project().directory().toFile().mkdirs();
         generateResourcesPrefs();
         generateRuntimePrefs();
         if (project() instanceof JavaProject) {

@@ -4,7 +4,7 @@ import java.util.EnumSet;
 import static org.jdrupes.builder.api.Intend.*;
 import org.jdrupes.builder.core.AbstractProject;
 import org.jdrupes.builder.java.JavaProject;
-import org.jdrupes.builder.java.UberJarGenerator;
+import org.jdrupes.builder.uberjar.UberJarGenerator;
 
 public class App extends AbstractProject implements JavaProject {
 
