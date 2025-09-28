@@ -146,6 +146,9 @@ public class Root extends AbstractProject implements RootProject {
             new ResourceRequest<AppJarFile>(new ResourceType<>() {}),
             new ResourceRequest<JavadocDirectory>(
                 new ResourceType<>() {}));
+        commandAlias("javadoc",
+            new ResourceRequest<JavadocDirectory>(
+                new ResourceType<>() {}));
         commandAlias("eclipse",
             new ResourceRequest<EclipseConfiguration>(new ResourceType<>() {}));
         commandAlias("pomFile",
