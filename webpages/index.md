@@ -21,7 +21,7 @@ public class SimpleApp extends AbstractProject implements RootProject {
     public SimpleApp() {
         super(name("simple-app"));
         generator(JavaCompiler::new).addSources(Path.of("src"), "**/*.java");
-        generator(UberJarGenerator::new).addAll(providers(Supply))
+        generator(UberJarGenerator::new).from(providers(Supply))
             .mainClass("jdbld.demo.simpleapp.App");
 
         // Command arguments

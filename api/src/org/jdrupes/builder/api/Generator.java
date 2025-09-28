@@ -21,6 +21,23 @@ package org.jdrupes.builder.api;
 /// Models a [ResourceProvider] that generates new [Resource]s (artifacts)
 /// and makes them available to a [Project].
 ///
+/// In general, generators follow one of the following patterns:
+///
+///  1. They generate resources from arbitrary inputs. In this case,
+///     methods for adding inputs should be named as appropriate for
+///     the generator and the type of input.
+///
+///  2. They generate resources from explicitly specified resources.
+///     In this case, methods for adding inputs should be named
+///     `add(Type... values)` for enumerated values and
+///     `addXxx(Stream<Type> values)` for streams. (We cannot defines
+///     a generic `add(Stream<T>)` method due to type erasure.)
+///
+///  3. They generate resources from resources actively obtained from
+///     [ResourceProvider]s. In this case, methods for adding providers
+///     should be named `from(...)`. This can be enforced by implementing
+///     [ResourceRetriever].
+///
 /// All generators must handle requests for [Cleanliness].
 ///
 public interface Generator extends ResourceProvider {

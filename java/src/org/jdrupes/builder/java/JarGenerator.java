@@ -23,6 +23,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import static java.nio.file.StandardOpenOption.*;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -45,8 +46,8 @@ import static org.jdrupes.builder.api.ResourceType.*;
 import org.jdrupes.builder.api.Resources;
 import org.jdrupes.builder.core.AbstractGenerator;
 
-/// A general purpose generator for jars. This generator makes no
-/// assumptions about its content.
+/// A general purpose generator for jars. All contents must be added
+/// explicitly using [#add(Entry...)] or [#add(FileTree...)].
 ///
 public abstract class JarGenerator extends AbstractGenerator {
 
@@ -153,23 +154,24 @@ public abstract class JarGenerator extends AbstractGenerator {
         return this;
     }
 
-    /// Convenience method for adding a single entry, see [#addTrees(Stream)].
+    /// Convenience method for adding entries, see [#addTrees(Stream)].
     ///
-    /// @param tree the tree
+    /// @param trees the trees
     /// @return the jar generator
     ///
-    public JarGenerator add(FileTree<?> tree) {
-        addTrees(Stream.of(tree));
+    public JarGenerator add(FileTree<?>... trees) {
+        addTrees(Arrays.stream(trees));
         return this;
     }
 
     /// Convenience method for adding a single entry, see [#addEntries(Stream)].
     ///
-    /// @param entry the entry
+    /// @param entries the entry
     /// @return the jar generator
     ///
-    public JarGenerator add(Map.Entry<Path, ? extends IOResource> entry) {
-        addEntries(Stream.of(entry));
+    public JarGenerator add(@SuppressWarnings("unchecked") Map.Entry<Path,
+            ? extends IOResource>... entries) {
+        addEntries(Arrays.stream(entries));
         return this;
     }
 
@@ -238,22 +240,22 @@ public abstract class JarGenerator extends AbstractGenerator {
                 .add(entry.getValue());
         });
         fileTrees.stream().parallel().flatMap(s -> s)
-            .forEach(t -> addFileTree(contents, t));
+            .forEach(t -> collect(contents, t));
     }
 
-    /// Adds the resources from the file tree. May be used by derived
-    /// classes to add file tree like contents that has not been added
-    /// using [#addFileTree].
+    /// Adds the resources from the given file tree to the given contents.
+    /// May be used by derived classes while collecting contents for
+    /// the jar.
     ///
-    /// @param contents the entries
+    /// @param collected the preliminary contents
     /// @param fileTree the file tree
     ///
-    protected void addFileTree(Map<Path, Resources<IOResource>> contents,
+    protected void collect(Map<Path, Resources<IOResource>> collected,
             FileTree<?> fileTree) {
         var root = fileTree.root();
         fileTree.stream().forEach(file -> {
             var relPath = root.relativize(file.path());
-            contents.computeIfAbsent(relPath,
+            collected.computeIfAbsent(relPath,
                 _ -> project().newResource(IOResourcesType)).add(file);
         });
     }

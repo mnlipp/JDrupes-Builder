@@ -9,7 +9,8 @@ layout: jdbld
 
   * [ClasspathScanner](javadoc/org/jdrupes/builder/java/ClasspathScanner.html)
   * [EclipseConfigurator](javadoc/org/jdrupes/builder/eclipse/EclipseConfigurator.html)
+  * [JarGenerator](javadoc/org/jdrupes/builder/java/JarGenerator.html)
   * [JavaCompiler](javadoc/org/jdrupes/builder/java/JavaCompiler.html)
   * [Javadoc](javadoc/org/jdrupes/builder/java/Javadoc.html)
   * [LibraryGenerator](javadoc/org/jdrupes/builder/java/LibraryGenerator.html)
-  * [UberJarGenerator](javadoc/org/jdrupes/builder/java/UberJarGenerator.html)
+  * [UberJarGenerator](javadoc/org/jdrupes/builder/uberjar/UberJarGenerator.html)

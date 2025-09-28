@@ -42,11 +42,12 @@ import org.jdrupes.builder.java.ClasspathElement;
 import org.jdrupes.builder.java.JarFile;
 import org.jdrupes.builder.java.JarFileEntry;
 import static org.jdrupes.builder.java.JavaTypes.*;
-import org.jdrupes.builder.java.LibraryJarGenerator;
+import org.jdrupes.builder.java.LibraryGenerator;
 import org.jdrupes.builder.java.RuntimeResources;
 import org.jdrupes.builder.java.ServicesEntryResource;
 import org.jdrupes.builder.mvnrepo.MvnRepoJarFile;
 import org.jdrupes.builder.mvnrepo.MvnRepoLookup;
+import org.jdrupes.builder.mvnrepo.MvnRepoResource;
 import static org.jdrupes.builder.mvnrepo.MvnRepoTypes.*;
 
 /// A [Generator] for uber jars.
@@ -56,17 +57,23 @@ import static org.jdrupes.builder.mvnrepo.MvnRepoTypes.*;
 /// 1. A [JarFile]. This type of resource is also returned if a more
 ///    general [ResourceType] such as [ClasspathElement] is requested.
 ///
-/// 2. An [AppJarFile].
+/// 2. An [AppJarFile]. When requesting this special jar type, the
+///    generator checks if a main class is specified.
 ///
-/// The generator takes a simple approach:
+/// The generator takes the following approach:
 /// 
-///   * Add the content of the [ClasspathElement]s added with `from` 
-///     to the resulting uber jar.
-///   * Filter out any direct child files of `META-INF`. These files often
-///     contain information related to the origin jar that is not applicable
-///     to the uber jar.
-///   * Merge the files in `META-INF/services/` that have the same name by
-///     concatenating them.
+///   * Request all [ClasspathElement]s from the providers. Add the
+///     resource trees and the jar files to the sources to be processed.
+///     Ignore jar files from maven repositories (instances of
+///     [MvnRepoJarFile]).
+///   * Request all [MvnRepoResource]s from the providers and use them for
+///     a dependency resolution. Add the jar files from the dependency
+///     resolution to the resources to be processed.
+///   * Add resources from the sources to the uber jar. Merge the files in
+///     `META-INF/services/` that have the same name by concatenating them.
+///   * Filter out any other duplicate direct child files of `META-INF`.
+///     These files often contain information related to the origin jar
+///     that is not applicable to the uber jar.
 ///
 /// Note that the resource type of the uber jar generator's output is one
 /// of the resource types of its inputs, because uber jars can also be used
@@ -104,7 +111,7 @@ import static org.jdrupes.builder.mvnrepo.MvnRepoTypes.*;
 /// generating the uber jar in a project of its own. Often the root
 /// project can be used for this purpose.  
 ///
-public class UberJarGenerator extends LibraryJarGenerator {
+public class UberJarGenerator extends LibraryGenerator {
 
     private Map<Path, java.util.jar.JarFile> openJars = Map.of();
 
@@ -126,7 +133,7 @@ public class UberJarGenerator extends LibraryJarGenerator {
                 new ResourceType<RuntimeResources>() {}))
             .parallel().forEach(cpe -> {
                 if (cpe instanceof FileTree<?> fileTree) {
-                    addFileTree(contents, fileTree);
+                    collect(contents, fileTree);
                 } else if (cpe instanceof JarFile jarFile
                     && !(jarFile instanceof MvnRepoJarFile)) {
                     addJarFile(contents, jarFile, openJars);

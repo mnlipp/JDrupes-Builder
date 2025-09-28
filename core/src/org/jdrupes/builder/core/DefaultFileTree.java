@@ -30,6 +30,7 @@ import java.nio.file.SimpleFileVisitor;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.time.Instant;
 import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Objects;
 import java.util.Spliterators;
@@ -221,16 +222,28 @@ public class DefaultFileTree<T extends FileResource> extends DefaultResources<T>
         return StreamSupport
             .stream(new Spliterators.AbstractSpliterator<>(Long.MAX_VALUE, 0) {
 
+                private Iterator<T> theIterator;
+
+                private Iterator<T> iterator() {
+                    if (theIterator == null) {
+                        fill();
+                        theIterator = DefaultFileTree.super.stream().iterator();
+                    }
+                    return theIterator;
+                }
+
                 @Override
                 public void forEachRemaining(Consumer<? super T> action) {
-                    fill();
-                    DefaultFileTree.super.stream().forEach(action);
+                    iterator().forEachRemaining(action);
                 }
 
                 @Override
                 public boolean tryAdvance(Consumer<? super T> action) {
-                    // Not needed when forEachRemaining is implemented.
-                    return false;
+                    if (!iterator().hasNext()) {
+                        return false;
+                    }
+                    action.accept(iterator().next());
+                    return true;
                 }
             }, false);
     }
