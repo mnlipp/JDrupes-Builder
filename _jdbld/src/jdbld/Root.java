@@ -56,7 +56,7 @@ public class Root extends AbstractProject implements RootProject {
             .addAll(providers(Expose))
             .mainClass("org.jdrupes.builder.startup.BootstrapLauncher")
             .add(new MvnRepoLookup(this).artifact(
-                "eu.maveniverse.maven.mima.runtime:standalone-static:2.4.29")
+                "eu.maveniverse.maven.mima.runtime:standalone-static:2.4.34")
                 .artifact("org.slf4j:slf4j-api:2.0.17")
                 .artifact("org.slf4j:slf4j-jdk14:2.0.17"))
             .addEntries(
