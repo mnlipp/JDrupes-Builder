@@ -65,6 +65,12 @@ public interface Resources<T extends Resource> extends Resource {
                 next) -> next.isAfter(latest) ? next : latest);
     }
 
+    /// Checks if is empty.
+    ///
+    /// @return true, if is empty
+    ///
+    boolean isEmpty();
+
     /// Retrieves the resources as a stream.
     ///
     /// @return the stream

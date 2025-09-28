@@ -44,7 +44,7 @@ public class ResourceCollector<T extends Resource> extends AbstractGenerator {
     /// @param project the project
     /// @param type the type of resources to collect
     ///
-    @SuppressWarnings({ "PMD.ConstructorCallsOverridableMethod", "unchecked" })
+    @SuppressWarnings({ "PMD.ConstructorCallsOverridableMethod" })
     public ResourceCollector(Project project, ResourceType<T> type) {
         super(project);
         this.type = type;

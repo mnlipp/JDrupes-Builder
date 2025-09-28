@@ -21,7 +21,6 @@ package org.jdrupes.builder.java;
 import java.nio.file.Path;
 import java.util.Map;
 import java.util.Optional;
-import java.util.Queue;
 import java.util.jar.Attributes;
 import java.util.stream.Stream;
 import org.jdrupes.builder.api.BuildException;
@@ -33,6 +32,7 @@ import org.jdrupes.builder.api.ResourceProvider;
 import org.jdrupes.builder.api.ResourceRequest;
 import org.jdrupes.builder.api.ResourceType;
 import static org.jdrupes.builder.api.ResourceType.*;
+import org.jdrupes.builder.api.Resources;
 import org.jdrupes.builder.core.CachedStream;
 import static org.jdrupes.builder.java.JavaTypes.*;
 
@@ -122,7 +122,7 @@ public class LibraryJarGenerator extends JarGenerator {
     }
 
     @Override
-    protected void collectContents(Map<Path, Queue<IOResource>> contents) {
+    protected void collectContents(Map<Path, Resources<IOResource>> contents) {
         super.collectContents(contents);
         collectFromProviders(contents);
     }
@@ -132,7 +132,8 @@ public class LibraryJarGenerator extends JarGenerator {
     ///
     /// @param contents the contents
     ///
-    protected void collectFromProviders(Map<Path, Queue<IOResource>> contents) {
+    protected void
+            collectFromProviders(Map<Path, Resources<IOResource>> contents) {
         project().getFrom(providers().stream(),
             new ResourceRequest<ClassTree>(new ResourceType<>() {}))
             .forEach(t -> addFileTree(contents, t));

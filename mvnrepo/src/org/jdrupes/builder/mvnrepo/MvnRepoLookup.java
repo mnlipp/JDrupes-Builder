@@ -173,7 +173,7 @@ public class MvnRepoLookup extends AbstractProvider
                     }
                     return a;
                 }).map(a -> a.getFile().toPath())
-                .map(p -> ResourceFactory.create(JarFileType, p));
+                .map(p -> ResourceFactory.create(MvnRepoJarFileType, p));
             return result;
         } catch (DependencyResolutionException e) {
             throw new BuildException(

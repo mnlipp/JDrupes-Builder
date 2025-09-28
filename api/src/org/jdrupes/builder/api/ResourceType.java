@@ -43,6 +43,14 @@ public class ResourceType<T extends Resource> {
     public static final ResourceType<
             Cleanliness> Cleaniness = new ResourceType<>() {};
 
+    @SuppressWarnings("PMD.FieldNamingConventions")
+    public static final ResourceType<
+            IOResource> IOResourceType = new ResourceType<>() {};
+
+    @SuppressWarnings({ "PMD.FieldNamingConventions" })
+    public static final ResourceType<Resources<IOResource>> IOResourcesType
+        = new ResourceType<>(Resources.class, IOResourceType) {};
+
     private final Class<T> type;
     private final ResourceType<?> containedType;
 
@@ -51,8 +59,9 @@ public class ResourceType<T extends Resource> {
     /// @param type the type
     /// @param containedType the contained type
     ///
-    public ResourceType(Class<T> type, ResourceType<?> containedType) {
-        this.type = type;
+    public ResourceType(Class<? extends Resource> type,
+            ResourceType<?> containedType) {
+        this.type = (Class<T>) type;
         this.containedType = containedType;
     }
 
@@ -188,7 +197,7 @@ public class ResourceType<T extends Resource> {
                 + " type " + this.type + " with non-container type " + type);
         }
         @SuppressWarnings("unchecked")
-        var result = new ResourceType<>((Class<R>) type, containedType);
+        var result = new ResourceType<R>((Class<R>) type, containedType);
         return result;
     }
 

@@ -66,6 +66,11 @@ public class DefaultResources<T extends Resource> extends ResourceObject
     }
 
     @Override
+    public boolean isEmpty() {
+        return content.isEmpty();
+    }
+
+    @Override
     public Stream<T> stream() {
         return content.stream();
     }

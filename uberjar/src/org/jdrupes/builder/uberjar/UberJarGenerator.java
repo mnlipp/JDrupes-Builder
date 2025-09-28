@@ -22,9 +22,7 @@ import java.io.IOException;
 import java.nio.file.Path;
 import java.util.Map;
 import java.util.Optional;
-import java.util.Queue;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.function.Predicate;
 import java.util.jar.Attributes;
 import java.util.jar.JarEntry;
@@ -37,16 +35,19 @@ import org.jdrupes.builder.api.Project;
 import org.jdrupes.builder.api.Resource;
 import org.jdrupes.builder.api.ResourceRequest;
 import org.jdrupes.builder.api.ResourceType;
+import static org.jdrupes.builder.api.ResourceType.*;
+import org.jdrupes.builder.api.Resources;
 import org.jdrupes.builder.java.AppJarFile;
 import org.jdrupes.builder.java.ClasspathElement;
 import org.jdrupes.builder.java.JarFile;
 import org.jdrupes.builder.java.JarFileEntry;
+import static org.jdrupes.builder.java.JavaTypes.*;
 import org.jdrupes.builder.java.LibraryJarGenerator;
 import org.jdrupes.builder.java.RuntimeResources;
 import org.jdrupes.builder.java.ServicesEntryResource;
-
-import static org.jdrupes.builder.api.ResourceType.*;
-import static org.jdrupes.builder.java.JavaTypes.*;
+import org.jdrupes.builder.mvnrepo.MvnRepoJarFile;
+import org.jdrupes.builder.mvnrepo.MvnRepoLookup;
+import static org.jdrupes.builder.mvnrepo.MvnRepoTypes.*;
 
 /// A [Generator] for uber jars.
 ///
@@ -117,7 +118,8 @@ public class UberJarGenerator extends LibraryJarGenerator {
 
     @Override
     @SuppressWarnings("PMD.UseDiamondOperator")
-    protected void collectFromProviders(Map<Path, Queue<IOResource>> contents) {
+    protected void
+            collectFromProviders(Map<Path, Resources<IOResource>> contents) {
         openJars = new ConcurrentHashMap<>();
         project().getFrom(providers().stream(),
             new ResourceRequest<ClasspathElement>(
@@ -125,14 +127,25 @@ public class UberJarGenerator extends LibraryJarGenerator {
             .forEach(cpe -> {
                 if (cpe instanceof FileTree<?> fileTree) {
                     addFileTree(contents, fileTree);
-                } else if (cpe instanceof JarFile jarFile) {
+                } else if (cpe instanceof JarFile jarFile
+                    && !(jarFile instanceof MvnRepoJarFile)) {
                     addJarFile(contents, jarFile, openJars);
                 }
-
+            });
+        var lookup = new MvnRepoLookup(project());
+        project().getFrom(providers().stream(),
+            new ResourceRequest<>(MvnRepoDependenciesType))
+            .forEach(d -> lookup.artifact(d.toString()));
+        project().context().get(lookup, new ResourceRequest<ClasspathElement>(
+            new ResourceType<RuntimeResources>() {}))
+            .forEach(cpe -> {
+                if (cpe instanceof MvnRepoJarFile jarFile) {
+                    addJarFile(contents, jarFile, openJars);
+                }
             });
     }
 
-    private void addJarFile(Map<Path, Queue<IOResource>> entries,
+    private void addJarFile(Map<Path, Resources<IOResource>> entries,
             JarFile jarFile, Map<Path, java.util.jar.JarFile> openJars) {
         @SuppressWarnings({ "PMD.PreserveStackTrace", "PMD.CloseResource" })
         java.util.jar.JarFile jar
@@ -143,7 +156,6 @@ public class UberJarGenerator extends LibraryJarGenerator {
                     throw new BuildException("Cannot open resource " + jarFile
                         + ": " + e.getMessage());
                 }
-
             });
         jar.stream().filter(Predicate.not(JarEntry::isDirectory))
             .filter(e -> {
@@ -157,23 +169,16 @@ public class UberJarGenerator extends LibraryJarGenerator {
             .forEach(e -> {
                 var relPath = Path.of(e.getRealName());
                 entries.computeIfAbsent(relPath,
-                    _ -> new ConcurrentLinkedQueue<IOResource>())
+                    _ -> project().newResource(IOResourcesType))
                     .add(new JarFileEntry(jar, e));
             });
     }
 
     @Override
-    @SuppressWarnings({ "PMD.CollapsibleIfStatements", "unchecked" })
+    @SuppressWarnings({ "PMD.CollapsibleIfStatements", "unchecked",
+        "PMD.CloseResource", "PMD.UseTryWithResources" })
     protected <T extends Resource> Stream<T>
             doProvide(ResourceRequest<T> requested) {
-        for (var jarFile : openJars.values()) {
-            try {
-                jarFile.close();
-            } catch (IOException e) { // NOPMD
-                // Ignore, just trying to be nice.
-            }
-        }
-
         if (!requested.includes(AppJarFileType)
             && !requested.includes(Cleaniness)) {
             return Stream.empty();
@@ -217,37 +222,50 @@ public class UberJarGenerator extends LibraryJarGenerator {
 
         var jarResource = (JarFile) project().newResource(requestedResource,
             destDir.resolve(jarName()));
-        buildJar(jarResource);
+        try {
+            buildJar(jarResource);
+        } finally {
+            // buidJar indirectly calls collectFromProviders which opens
+            // resources that are used in builJar. Close them now.
+            for (var jarFile : openJars.values()) {
+                try {
+                    jarFile.close();
+                } catch (IOException e) { // NOPMD
+                    // Ignore, just trying to be nice.
+                }
+            }
+
+        }
         return Stream.of((T) jarResource);
     }
 
     @SuppressWarnings({ "PMD.AvoidLiteralsInIfCondition",
         "PMD.PreserveStackTrace", "PMD.UselessPureMethodCall" })
     @Override
-    protected void resolveDuplicates(Map<Path, Queue<IOResource>> entries) {
+    protected void resolveDuplicates(Map<Path, Resources<IOResource>> entries) {
         entries.entrySet().parallelStream().forEach(item -> {
-            var queue = item.getValue();
-            if (queue.size() == 1) {
+            var candidates = item.getValue();
+            if (candidates.stream().count() == 1) {
                 return;
             }
             var entryName = item.getKey();
             if (entryName.startsWith("META-INF/services")) {
                 var combined = new ServicesEntryResource();
-                for (var resource : queue) {
+                candidates.stream().forEach(service -> {
                     try {
-                        combined.add(resource);
+                        combined.add(service);
                     } catch (IOException e) {
-                        throw new BuildException("Cannot read " + resource);
+                        throw new BuildException("Cannot read " + service);
                     }
-                }
-                queue.clear();
-                queue.add(combined);
+                });
+                candidates.clear();
+                candidates.add(combined);
                 return;
             }
             if (entryName.startsWith("META-INF")) {
-                queue.clear();
+                candidates.clear();
             }
-            queue.stream().reduce((a, b) -> {
+            candidates.stream().reduce((a, b) -> {
                 log.warning(() -> "Entry " + entryName + " from " + a
                     + " duplicates entry from " + b + " and is skipped.");
                 return a;

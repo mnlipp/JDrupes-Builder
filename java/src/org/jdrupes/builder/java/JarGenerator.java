@@ -26,10 +26,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
-import java.util.Queue;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ConcurrentLinkedQueue;
-import java.util.function.Predicate;
 import java.util.function.Supplier;
 import java.util.jar.Attributes;
 import java.util.jar.Attributes.Name;
@@ -44,6 +41,8 @@ import org.jdrupes.builder.api.FileTree;
 import org.jdrupes.builder.api.IOResource;
 import org.jdrupes.builder.api.Project;
 import static org.jdrupes.builder.api.Project.Properties.*;
+import static org.jdrupes.builder.api.ResourceType.*;
+import org.jdrupes.builder.api.Resources;
 import org.jdrupes.builder.core.AbstractGenerator;
 
 /// A general purpose generator for jars. This generator makes no
@@ -180,15 +179,14 @@ public abstract class JarGenerator extends AbstractGenerator {
     ///
     protected void buildJar(JarFile jarResource) {
         // Collect entries for jar from all sources
-        var contents = new ConcurrentHashMap<Path, Queue<IOResource>>();
+        var contents = new ConcurrentHashMap<Path, Resources<IOResource>>();
         collectContents(contents);
         resolveDuplicates(contents);
 
         // Check if rebuild needed.
         var newer = contents.values().stream()
-            .filter(Predicate.not(Queue::isEmpty))
-            .map(Queue::peek).filter(r -> r.asOf().isAfter(jarResource.asOf()))
-            .findAny();
+            .map(r -> r.stream().findFirst().stream()).flatMap(s -> s)
+            .filter(r -> r.asOf().isAfter(jarResource.asOf())).findAny();
         if (newer.isEmpty()) {
             return;
         }
@@ -212,9 +210,11 @@ public abstract class JarGenerator extends AbstractGenerator {
                         .map(Path::toString).collect(Collectors.joining("/"));
                 @SuppressWarnings("PMD.AvoidInstantiatingObjectsInLoops")
                 JarEntry jarEntry = new JarEntry(entryName);
-                jarEntry.setTime(entry.getValue().peek().asOf().toEpochMilli());
+                jarEntry.setTime(entry.getValue().stream().findFirst().get()
+                    .asOf().toEpochMilli());
                 jos.putNextEntry(jarEntry);
-                try (var input = entry.getValue().peek().inputStream()) {
+                try (var input = entry.getValue().stream().findFirst().get()
+                    .inputStream()) {
                     input.transferTo(jos);
                 }
             }
@@ -231,10 +231,10 @@ public abstract class JarGenerator extends AbstractGenerator {
     ///
     /// @param contents the preliminary contents
     ///
-    protected void collectContents(Map<Path, Queue<IOResource>> contents) {
+    protected void collectContents(Map<Path, Resources<IOResource>> contents) {
         entryStreams.stream().flatMap(s -> s).forEach(entry -> {
             contents.computeIfAbsent(entry.getKey(),
-                _ -> new ConcurrentLinkedQueue<IOResource>())
+                _ -> project().newResource(IOResourcesType))
                 .add(entry.getValue());
         });
         fileTrees.stream().flatMap(s -> s)
@@ -245,16 +245,16 @@ public abstract class JarGenerator extends AbstractGenerator {
     /// classes to add file tree like contents that has not been added
     /// using [#addFileTree].
     ///
-    /// @param entries the entries
+    /// @param contents the entries
     /// @param fileTree the file tree
     ///
-    protected void addFileTree(Map<Path, Queue<IOResource>> entries,
+    protected void addFileTree(Map<Path, Resources<IOResource>> contents,
             FileTree<?> fileTree) {
         var root = fileTree.root();
         fileTree.stream().forEach(file -> {
             var relPath = root.relativize(file.path());
-            entries.computeIfAbsent(relPath,
-                _ -> new ConcurrentLinkedQueue<IOResource>()).add(file);
+            contents.computeIfAbsent(relPath,
+                _ -> project().newResource(IOResourcesType)).add(file);
         });
     }
 
@@ -265,14 +265,15 @@ public abstract class JarGenerator extends AbstractGenerator {
     ///
     @SuppressWarnings({ "PMD.AvoidLiteralsInIfCondition",
         "PMD.UselessPureMethodCall" })
-    protected void resolveDuplicates(Map<Path, Queue<IOResource>> entries) {
+    protected void resolveDuplicates(
+            Map<Path, Resources<IOResource>> entries) {
         entries.entrySet().parallelStream().forEach(item -> {
-            var queue = item.getValue();
-            if (queue.size() == 1) {
+            var resources = item.getValue();
+            if (resources.stream().count() == 1) {
                 return;
             }
             var entryName = item.getKey();
-            queue.stream().reduce((a, b) -> {
+            resources.stream().reduce((a, b) -> {
                 log.warning(() -> "Entry " + entryName + " from " + a
                     + " duplicates entry from " + b + " and is skipped.");
                 return a;
