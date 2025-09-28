@@ -54,10 +54,12 @@ public class ResourceType<T extends Resource> {
     public static final ResourceType<FileResource> FileResourceType
         = new ResourceType<>() {};
 
+    /// The resource type for [IOResource].
     @SuppressWarnings("PMD.FieldNamingConventions")
     public static final ResourceType<
             IOResource> IOResourceType = new ResourceType<>() {};
 
+    /// The resource type for `Resources[IOResource]`.
     @SuppressWarnings({ "PMD.FieldNamingConventions" })
     public static final ResourceType<Resources<IOResource>> IOResourcesType
         = new ResourceType<>(Resources.class, IOResourceType) {};
