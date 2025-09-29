@@ -41,6 +41,8 @@ import org.jdrupes.builder.api.Resource;
 import org.jdrupes.builder.api.ResourceRequest;
 import org.jdrupes.builder.api.ResourceType;
 import org.jdrupes.builder.core.AbstractGenerator;
+import org.jdrupes.builder.java.LibraryJarFile;
+
 import static org.jdrupes.builder.mvnrepo.MvnRepoTypes.*;
 
 public class MvnPublicationGenerator extends AbstractGenerator {
@@ -84,8 +86,17 @@ public class MvnPublicationGenerator extends AbstractGenerator {
             log.warning("No POM file resource available.");
             return Stream.empty();
         }
+        var jarResource = project().getFrom(project()
+            .providers(Expose, Forward),
+            new ResourceRequest<LibraryJarFile>(
+                new ResourceType<>() {}))
+            .findFirst();
+        if (jarResource.isEmpty()) {
+            log.warning("No jar file resource available.");
+            return Stream.empty();
+        }
 
-        // Get the model
+        // Get the coordinates from the model
         try {
             var pomFile = pomResource.get().path().toFile();
             var req = new DefaultModelBuildingRequest().setPomFile(pomFile);
@@ -103,9 +114,11 @@ public class MvnPublicationGenerator extends AbstractGenerator {
                             .addUsername(repoUser).addPassword(repoPass)
                             .build())
                         .build();
-
             var deployReq = new DeployRequest().setRepository(repo)
-                .addArtifact(pomArtifact);
+                .addArtifact(pomArtifact).addArtifact(new DefaultArtifact(
+                    model.getGroupId(), model.getArtifactId(), "jar",
+                    model.getVersion())
+                        .setFile(jarResource.get().path().toFile()));
 
             var context = MvnRepoLookup.rootContext();
             var result = context.repositorySystem().deploy(
