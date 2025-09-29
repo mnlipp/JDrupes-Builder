@@ -110,8 +110,8 @@ public class DefaultFileResource extends ResourceObject
         if (!super.equals(obj)) {
             return false;
         }
-        return (obj instanceof DefaultFileResource other)
-            && Objects.equals(path, other.path);
+        return (obj instanceof FileResource other)
+            && Objects.equals(path, other.path());
     }
 
     @Override
