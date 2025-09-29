@@ -41,4 +41,8 @@ if [ ! -r "$builderJar" ]; then
   exit 1
 fi
 
+# Only for self build
+cp "$builderJar" "$jdbldDirectory/app/jdrupes-builder-current.jar"
+builderJar="$jdbldDirectory/app/jdrupes-builder-current.jar"
+
 $javaCmd -Duser.language=en_US -jar "$builderJar" "$@"
