@@ -22,6 +22,8 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
+
+import org.jdrupes.builder.api.BuildException;
 import org.jdrupes.builder.api.Project;
 import org.jdrupes.builder.eclipse.EclipseConfigurator;
 import org.jdrupes.builder.java.JavaCompiler;
@@ -45,12 +47,10 @@ public class ProjectPreparation {
     }
 
     public static void setupEclipseConfigurator(Project project) {
-        project.generator(new EclipseConfigurator(project) {
-
-            @Override
-            protected void adaptProjectConfiguration(Document doc,
-                    Node buildSpec, Node natures) {
-                if (project() instanceof JavaProject) {
+        project.generator(new EclipseConfigurator(project)
+            .adaptProjectConfiguration((Document doc,
+                    Node buildSpec, Node natures) -> {
+                if (project instanceof JavaProject) {
                     var cmd = buildSpec
                         .appendChild(doc.createElement("buildCommand"));
                     cmd.appendChild(doc.createElement("name"))
@@ -70,27 +70,26 @@ public class ProjectPreparation {
                         .appendChild(doc.createTextNode(
                             "ch.acanda.eclipse.pmd.builder.PMDNature"));
                 }
-            }
-
-            @Override
-            protected void adaptConfiguration() throws IOException {
-                if (!(project() instanceof JavaProject)) {
+            }).adaptConfiguration(() -> {
+                if (!(project instanceof JavaProject)) {
                     return;
                 }
-                Files.copy(
-                    Root.class.getResourceAsStream("net.sf.jautodoc.prefs"),
-                    project.directory()
-                        .resolve(".settings/net.sf.jautodoc.prefs"),
-                    StandardCopyOption.REPLACE_EXISTING);
-                Files.copy(Root.class.getResourceAsStream("checkstyle"),
-                    project.directory().resolve(".checkstyle"),
-                    StandardCopyOption.REPLACE_EXISTING);
-                Files.copy(Root.class.getResourceAsStream("eclipse-pmd"),
-                    project.directory().resolve(".eclipse-pmd"),
-                    StandardCopyOption.REPLACE_EXISTING);
-            }
-        });
-
+                try {
+                    Files.copy(
+                        Root.class.getResourceAsStream("net.sf.jautodoc.prefs"),
+                        project.directory()
+                            .resolve(".settings/net.sf.jautodoc.prefs"),
+                        StandardCopyOption.REPLACE_EXISTING);
+                    Files.copy(Root.class.getResourceAsStream("checkstyle"),
+                        project.directory().resolve(".checkstyle"),
+                        StandardCopyOption.REPLACE_EXISTING);
+                    Files.copy(Root.class.getResourceAsStream("eclipse-pmd"),
+                        project.directory().resolve(".eclipse-pmd"),
+                        StandardCopyOption.REPLACE_EXISTING);
+                } catch (IOException e) {
+                    throw new BuildException(e);
+                }
+            }));
     }
 
 }
