@@ -98,7 +98,7 @@ public class DefaultFileResource extends ResourceObject
     public int hashCode() {
         final int prime = 31;
         int result = super.hashCode();
-        result = prime * result + Objects.hash(path, type());
+        result = prime * result + Objects.hash(path);
         return result;
     }
 
@@ -110,12 +110,8 @@ public class DefaultFileResource extends ResourceObject
         if (!super.equals(obj)) {
             return false;
         }
-        if (getClass() != obj.getClass()) {
-            return false;
-        }
-        DefaultFileResource other = (DefaultFileResource) obj;
-        return Objects.equals(path, other.path)
-            && Objects.equals(type(), other.type());
+        return (obj instanceof DefaultFileResource other)
+            && Objects.equals(path, other.path);
     }
 
     @Override

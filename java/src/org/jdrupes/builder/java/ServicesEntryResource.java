@@ -29,7 +29,9 @@ import org.jdrupes.builder.api.IOResource;
 import org.jdrupes.builder.core.ResourceObject;
 
 /// A temporary resource that is used to store the combined
-/// `META-INF/services/` entries for a given service.
+/// `META-INF/services/` entries for a given service. The class can be
+/// used for this purpose only. In particular, it does not support
+/// `hashCode` or `equals`.
 ///
 public class ServicesEntryResource extends ResourceObject
         implements IOResource {

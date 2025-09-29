@@ -48,7 +48,7 @@ public abstract class ResourceObject implements Resource, Proxyable {
     static <T extends Resource> T createResource(ResourceType<T> type) {
         return (T) Proxy.newProxyInstance(type.rawType().getClassLoader(),
             new Class<?>[] { type.rawType(), Proxyable.class },
-            new ForwardingHandler(new DefaultResources<>(type)));
+            new ForwardingHandler(new ResourceObject(type) {}));
     }
 
     @Override
@@ -69,11 +69,8 @@ public abstract class ResourceObject implements Resource, Proxyable {
         if (obj == null) {
             return false;
         }
-        if (getClass() != obj.getClass()) {
-            return false;
-        }
-        ResourceObject other = (ResourceObject) obj;
-        return Objects.equals(type(), other.type());
+        return (obj instanceof ResourceObject other)
+            && Objects.equals(type(), other.type());
     }
 
     @Override

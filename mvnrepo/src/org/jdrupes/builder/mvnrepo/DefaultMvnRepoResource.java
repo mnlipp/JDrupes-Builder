@@ -82,7 +82,7 @@ public class DefaultMvnRepoResource extends ResourceObject
         final int prime = 31;
         int result = super.hashCode();
         result = prime * result
-            + Objects.hash(artifactId, groupId, version, type());
+            + Objects.hash(artifactId, groupId, version);
         return result;
     }
 
@@ -94,14 +94,10 @@ public class DefaultMvnRepoResource extends ResourceObject
         if (!super.equals(obj)) {
             return false;
         }
-        if (getClass() != obj.getClass()) {
-            return false;
-        }
-        DefaultMvnRepoResource other = (DefaultMvnRepoResource) obj;
-        return Objects.equals(artifactId, other.artifactId)
+        return (obj instanceof DefaultMvnRepoResource other)
+            && Objects.equals(artifactId, other.artifactId)
             && Objects.equals(groupId, other.groupId)
-            && Objects.equals(version, other.version)
-            && Objects.equals(type(), other.type());
+            && Objects.equals(version, other.version);
     }
 
     /// To string.

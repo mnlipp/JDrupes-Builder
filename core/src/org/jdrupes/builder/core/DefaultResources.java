@@ -97,11 +97,8 @@ public class DefaultResources<T extends Resource> extends ResourceObject
         if (!super.equals(obj)) {
             return false;
         }
-        if (getClass() != obj.getClass()) {
-            return false;
-        }
-        DefaultResources<?> other = (DefaultResources<?>) obj;
-        return Objects.equals(content, other.content);
+        return (obj instanceof DefaultResources<?> other)
+            && Objects.equals(content, other.content);
     }
 
     @Override

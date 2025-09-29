@@ -78,11 +78,8 @@ public class JarFileEntry extends ResourceObject implements IOResource {
         if (!super.equals(obj)) {
             return false;
         }
-        if (getClass() != obj.getClass()) {
-            return false;
-        }
-        JarFileEntry other = (JarFileEntry) obj;
-        return Objects.equals(entry.getName(), other.entry.getName())
+        return (obj instanceof JarFileEntry other)
+            && Objects.equals(entry.getName(), other.entry.getName())
             && Objects.equals(jarFile.getName(), other.jarFile.getName());
     }
 
