@@ -120,17 +120,18 @@ public class MvnPublicationGenerator extends AbstractGenerator {
                     model.getVersion())
                         .setFile(jarResource.get().path().toFile()));
 
+            @SuppressWarnings("PMD.CloseResource")
             var context = MvnRepoLookup.rootContext();
             var result = context.repositorySystem().deploy(
-                context.repositorySystemSession(),
-                deployReq);
-            result = null;
-
+                context.repositorySystemSession(), deployReq);
+            return (Stream<T>) Stream
+                .of(project().newResource(MvnPublicationType,
+                    model.getGroupId() + ":" + model.getArtifactId() + ":"
+                        + model.getVersion()));
         } catch (ModelBuildingException | DeploymentException e) {
             throw new BuildException(e);
         }
 
-        return Stream.empty();
     }
 
 }

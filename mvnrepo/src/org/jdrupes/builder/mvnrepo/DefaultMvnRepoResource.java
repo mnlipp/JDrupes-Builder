@@ -106,6 +106,6 @@ public class DefaultMvnRepoResource extends ResourceObject
     ///
     @Override
     public String toString() {
-        return groupId + ":" + artifactId + ":" + version;
+        return type().toString() + " " + coordinates();
     }
 }

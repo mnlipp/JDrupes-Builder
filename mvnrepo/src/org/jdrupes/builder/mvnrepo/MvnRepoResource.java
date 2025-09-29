@@ -43,4 +43,12 @@ public interface MvnRepoResource extends Resource {
     ///
     String version();
 
+    /// Return the maven coordinates as "groudId:artifactId:version".
+    ///
+    /// @return the string
+    ///
+    default String coordinates() {
+        return groupId() + ":" + artifactId() + ":" + version();
+
+    }
 }
