@@ -5,10 +5,8 @@ import java.nio.file.Path;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Stream;
-
 import org.apache.maven.model.Developer;
 import org.apache.maven.model.License;
-import org.apache.maven.model.Model;
 import org.apache.maven.model.Scm;
 import org.jdrupes.builder.api.FileTree;
 import static org.jdrupes.builder.api.Intend.*;
@@ -57,29 +55,25 @@ public class Root extends AbstractProject implements RootProject {
         dependency(Expose, project(Eclipse.class));
 
         // Generate POM
-        generator(new PomFileGenerator(this) {
-
-            @Override
-            protected void adaptPom(Model model) {
-                model.setDescription("See URL.");
-                model.setUrl("https://builder.jdrupes.org/");
-                var scm = new Scm();
-                scm.setUrl("https://github.com/jdrupes/jdrupes-builder");
-                scm.setConnection(
-                    "scm:git://github.com/jdrupes/jdrupes-builder.git");
-                scm.setDeveloperConnection(
-                    "scm:git://github.com/jdrupes/jdrupes-builder.git");
-                model.setScm(scm);
-                var license = new License();
-                license.setName("AGPL 3.0");
-                license.setUrl("https://www.gnu.org/licenses/agpl-3.0.en.html");
-                license.setDistribution("repo");
-                model.setLicenses(List.of(license));
-                var developer = new Developer();
-                developer.setId("mnlipp");
-                developer.setName("Michael N. Lipp");
-                model.setDevelopers(List.of(developer));
-            }
+        generator(PomFileGenerator::new).adaptPom(model -> {
+            model.setDescription("See URL.");
+            model.setUrl("https://builder.jdrupes.org/");
+            var scm = new Scm();
+            scm.setUrl("https://github.com/jdrupes/jdrupes-builder");
+            scm.setConnection(
+                "scm:git://github.com/jdrupes/jdrupes-builder.git");
+            scm.setDeveloperConnection(
+                "scm:git://github.com/jdrupes/jdrupes-builder.git");
+            model.setScm(scm);
+            var license = new License();
+            license.setName("AGPL 3.0");
+            license.setUrl("https://www.gnu.org/licenses/agpl-3.0.en.html");
+            license.setDistribution("repo");
+            model.setLicenses(List.of(license));
+            var developer = new Developer();
+            developer.setId("mnlipp");
+            developer.setName("Michael N. Lipp");
+            model.setDevelopers(List.of(developer));
         });
 
         // Build app jar
