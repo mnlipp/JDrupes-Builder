@@ -13,4 +13,5 @@ layout: jdbld
   * [JavaCompiler](javadoc/org/jdrupes/builder/java/JavaCompiler.html)
   * [Javadoc](javadoc/org/jdrupes/builder/java/Javadoc.html)
   * [LibraryGenerator](javadoc/org/jdrupes/builder/java/LibraryGenerator.html)
+  * [PomFileGenerator](javadoc/org/jdrupes/builder/mvnrepo/PomFileGenerator.html)
   * [UberJarGenerator](javadoc/org/jdrupes/builder/uberjar/UberJarGenerator.html)

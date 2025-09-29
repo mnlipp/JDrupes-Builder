@@ -2,8 +2,14 @@ package jdbld;
 
 import java.net.URI;
 import java.nio.file.Path;
+import java.util.List;
 import java.util.Map;
 import java.util.stream.Stream;
+
+import org.apache.maven.model.Developer;
+import org.apache.maven.model.License;
+import org.apache.maven.model.Model;
+import org.apache.maven.model.Scm;
 import org.jdrupes.builder.api.FileTree;
 import static org.jdrupes.builder.api.Intend.*;
 import org.jdrupes.builder.api.Project;
@@ -23,8 +29,6 @@ import org.jdrupes.builder.mvnrepo.MvnRepoLookup;
 import org.jdrupes.builder.mvnrepo.PomFile;
 import org.jdrupes.builder.mvnrepo.PomFileGenerator;
 import org.jdrupes.builder.uberjar.UberJarGenerator;
-import org.w3c.dom.Document;
-import org.w3c.dom.Element;
 import static org.jdrupes.builder.mvnrepo.MvnProperties.*;
 import org.jdrupes.builder.java.Javadoc;
 import org.jdrupes.builder.java.JavadocDirectory;
@@ -56,41 +60,25 @@ public class Root extends AbstractProject implements RootProject {
         generator(new PomFileGenerator(this) {
 
             @Override
-            protected void adaptPom(Document doc, Element project) {
-                project.appendChild(doc.createElement("description"))
-                    .setTextContent("See URL.");
-                project.appendChild(doc.createElement("url"))
-                    .setTextContent(
-                        "https://builder.jdrupes.org/generator-index.html");
-                var scm = project.appendChild(doc.createElement("scm"));
-                scm.appendChild(doc.createElement("url"))
-                    .setTextContent(
-                        "https://github.com/jdrupes/jdrupes-builder");
-                scm.appendChild(doc.createElement("connection"))
-                    .setTextContent(
-                        "scm:git://github.com/jdrupes/jdrupes-builder.git");
-                scm.appendChild(doc.createElement("developerConnection"))
-                    .setTextContent(
-                        "scm:git://github.com/jdrupes/jdrupes-builder.git");
-                var licenses
-                    = project.appendChild(doc.createElement("licenses"));
-                var license
-                    = licenses.appendChild(doc.createElement("license"));
-                license.appendChild(doc.createElement("name"))
-                    .setTextContent("AGPL 3.0");
-                license.appendChild(doc.createElement("url"))
-                    .setTextContent(
-                        "https://www.gnu.org/licenses/agpl-3.0.en.html");
-                license.appendChild(doc.createElement("distribution"))
-                    .setTextContent("repo");
-                var developers
-                    = project.appendChild(doc.createElement("developers"));
-                var developer = developers
-                    .appendChild(doc.createElement("developer"));
-                developer.appendChild(doc.createElement("name"))
-                    .setTextContent("Michael N. Lipp");
-                developer.appendChild(doc.createElement("id"))
-                    .setTextContent("mnlipp");
+            protected void adaptPom(Model model) {
+                model.setDescription("See URL.");
+                model.setUrl("https://builder.jdrupes.org/");
+                var scm = new Scm();
+                scm.setUrl("https://github.com/jdrupes/jdrupes-builder");
+                scm.setConnection(
+                    "scm:git://github.com/jdrupes/jdrupes-builder.git");
+                scm.setDeveloperConnection(
+                    "scm:git://github.com/jdrupes/jdrupes-builder.git");
+                model.setScm(scm);
+                var license = new License();
+                license.setName("AGPL 3.0");
+                license.setUrl("https://www.gnu.org/licenses/agpl-3.0.en.html");
+                license.setDistribution("repo");
+                model.setLicenses(List.of(license));
+                var developer = new Developer();
+                developer.setId("mnlipp");
+                developer.setName("Michael N. Lipp");
+                model.setDevelopers(List.of(developer));
             }
         });
 
@@ -143,7 +131,9 @@ public class Root extends AbstractProject implements RootProject {
             .options("--allow-script-in-comments")
             .options("-linksource")
             .options("-link",
-                "https://docs.oracle.com/en/java/javase/23/docs/api/")
+                "https://docs.oracle.com/en/java/javase/25/docs/api/")
+            .options("-link",
+                "https://maven.apache.org/ref/3-LATEST/apidocs/")
             .options("-quiet");
 
         // Publish (deploy)
@@ -156,9 +146,10 @@ public class Root extends AbstractProject implements RootProject {
         // Commands
         commandAlias("build",
             new ResourceRequest<AppJarFile>(new ResourceType<>() {}),
-            new ResourceRequest<SourcesJarFile>(new ResourceType<>() {}),
             new ResourceRequest<JavadocDirectory>(
                 new ResourceType<>() {}));
+        commandAlias("sources",
+            new ResourceRequest<SourcesJarFile>(new ResourceType<>() {}));
         commandAlias("javadoc",
             new ResourceRequest<JavadocDirectory>(
                 new ResourceType<>() {}));
