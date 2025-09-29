@@ -169,7 +169,6 @@ public class JavaCompiler extends JavaTool {
         }
 
         // Get classpath for compilation.
-        log.fine(() -> "Getting classpath for " + project());
         @SuppressWarnings("PMD.UseDiamondOperator")
         var cpResources = project().newResource(ClasspathType).addAll(
             project().provided(new ResourceRequest<ClasspathElement>(
@@ -190,6 +189,8 @@ public class JavaCompiler extends JavaTool {
                 .count()) {
             classSet.delete();
             compile(cpResources, destDir);
+        } else {
+            log.fine(() -> "Classes in " + project() + " are up to date.");
         }
         classSet.clear();
         @SuppressWarnings("unchecked")

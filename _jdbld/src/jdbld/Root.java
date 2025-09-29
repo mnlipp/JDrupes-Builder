@@ -15,6 +15,8 @@ import org.jdrupes.builder.core.AbstractProject;
 import org.jdrupes.builder.eclipse.EclipseConfiguration;
 import org.jdrupes.builder.java.AppJarFile;
 import org.jdrupes.builder.java.ClasspathElement;
+import org.jdrupes.builder.java.JarGenerator;
+import static org.jdrupes.builder.java.JavaTypes.*;
 import org.jdrupes.builder.mvnrepo.MvnPublication;
 import org.jdrupes.builder.mvnrepo.MvnPublicationGenerator;
 import org.jdrupes.builder.mvnrepo.MvnRepoLookup;
@@ -23,12 +25,11 @@ import org.jdrupes.builder.mvnrepo.PomFileGenerator;
 import org.jdrupes.builder.uberjar.UberJarGenerator;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
-
 import static org.jdrupes.builder.mvnrepo.MvnProperties.*;
 import org.jdrupes.builder.java.Javadoc;
 import org.jdrupes.builder.java.JavadocDirectory;
+import org.jdrupes.builder.java.SourcesJarFile;
 import org.jdrupes.builder.java.JavaSourceFile;
-import static org.jdrupes.builder.java.JavaTypes.*;
 
 public class Root extends AbstractProject implements RootProject {
 
@@ -51,20 +52,7 @@ public class Root extends AbstractProject implements RootProject {
         dependency(Expose, project(Startup.class));
         dependency(Expose, project(Eclipse.class));
 
-        // Build app jar
-        dependency(Forward, new UberJarGenerator(this)
-            .from(providers(Expose))
-            .from(new MvnRepoLookup(this).artifact(
-                "eu.maveniverse.maven.mima.runtime:standalone-static:2.4.34")
-                .artifact("org.slf4j:slf4j-api:2.0.17")
-                .artifact("org.slf4j:slf4j-jdk14:2.0.17"))
-            .mainClass("org.jdrupes.builder.startup.BootstrapLauncher")
-            .addEntries(
-                supplied(new ResourceRequest<PomFile>(new ResourceType<>() {}))
-                    .map(pomFile -> Map.entry(Path.of("META-INF/maven")
-                        .resolve((String) get(GroupId)).resolve(name())
-                        .resolve("pom.xml"), pomFile)))
-            .destination(directory().resolve(Path.of("_jdbld", "app"))));
+        // Generate POM
         generator(new PomFileGenerator(this) {
 
             @Override
@@ -105,11 +93,28 @@ public class Root extends AbstractProject implements RootProject {
                     .setTextContent("mnlipp");
             }
         });
-        generator(MvnPublicationGenerator::new)
-            .snapshotRepository(URI.create(
-                "https://central.sonatype.com/repository/maven-snapshots/"))
-            .credentials(
-                context().property("cscuser"), context().property("cscpass"));
+
+        // Build app jar
+        dependency(Forward, new UberJarGenerator(this)
+            .from(providers(Expose))
+            .from(new MvnRepoLookup(this).artifact(
+                "eu.maveniverse.maven.mima.runtime:standalone-static:2.4.34")
+                .artifact("org.slf4j:slf4j-api:2.0.17")
+                .artifact("org.slf4j:slf4j-jdk14:2.0.17"))
+            .mainClass("org.jdrupes.builder.startup.BootstrapLauncher")
+            .addEntries(
+                supplied(new ResourceRequest<PomFile>(new ResourceType<>() {}))
+                    .map(pomFile -> Map.entry(Path.of("META-INF/maven")
+                        .resolve((String) get(GroupId)).resolve(name())
+                        .resolve("pom.xml"), pomFile)))
+            .destination(directory().resolve(Path.of("_jdbld", "app"))));
+
+        // Build sources jar
+        generator(new JarGenerator(this, SourcesJarFileType)
+            .addTrees(get(new ResourceRequest<FileTree<JavaSourceFile>>(
+                new ResourceType<>() {})))
+            .jarName(name() + "-" + get(Version) + "-sources.jar")
+            .destination(directory().resolve(Path.of("_jdbld", "app"))));
 
         // Build javadoc
         generator(Javadoc::new)
@@ -141,9 +146,17 @@ public class Root extends AbstractProject implements RootProject {
                 "https://docs.oracle.com/en/java/javase/23/docs/api/")
             .options("-quiet");
 
+        // Publish (deploy)
+        generator(MvnPublicationGenerator::new)
+            .snapshotRepository(URI.create(
+                "https://central.sonatype.com/repository/maven-snapshots/"))
+            .credentials(
+                context().property("cscuser"), context().property("cscpass"));
+
         // Commands
         commandAlias("build",
             new ResourceRequest<AppJarFile>(new ResourceType<>() {}),
+            new ResourceRequest<SourcesJarFile>(new ResourceType<>() {}),
             new ResourceRequest<JavadocDirectory>(
                 new ResourceType<>() {}));
         commandAlias("javadoc",

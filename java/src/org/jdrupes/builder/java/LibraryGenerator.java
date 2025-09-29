@@ -49,8 +49,6 @@ import static org.jdrupes.builder.java.JavaTypes.*;
 /// 2. An [AppJarFile]. When requesting this special jar type, the
 ///    generator checks if a main class is specified.
 ///
-/// 3. The sources for the library.
-///
 /// Instead of explicitly adding resources, this generator also supports
 /// resource retrieval from added providers. The providers will be used
 /// to retrieve resources of type [ClassTree] and [JavaResourceTree] in
@@ -73,7 +71,7 @@ public class LibraryGenerator extends JarGenerator
     /// @param project the project
     ///
     public LibraryGenerator(Project project) {
-        super(project);
+        super(project, LibraryJarFileType);
     }
 
     /// Returns the main class.
@@ -129,6 +127,10 @@ public class LibraryGenerator extends JarGenerator
     @Override
     protected void collectContents(Map<Path, Resources<IOResource>> contents) {
         super.collectContents(contents);
+        // Add main class if defined
+        if (mainClass() != null) {
+            attributes(Map.entry(Attributes.Name.MAIN_CLASS, mainClass()));
+        }
         collectFromProviders(contents);
     }
 
@@ -151,23 +153,16 @@ public class LibraryGenerator extends JarGenerator
     @SuppressWarnings({ "PMD.CollapsibleIfStatements", "unchecked" })
     protected <T extends Resource> Stream<T>
             doProvide(ResourceRequest<T> requested) {
-        if (!requested.includes(JarFileType)
+        if (!requested.includes(LibraryJarFileType)
             && !requested.includes(CleanlinessType)) {
             return Stream.empty();
         }
 
         // Make sure mainClass is set for app jar
         if (AppJarFileType.isAssignableFrom(requested.type().containedType())
-            && mainClass == null) {
+            && mainClass() == null) {
             throw new BuildException("Main class must be set for "
                 + name() + " in " + project());
-        }
-
-        // Add main class if defined
-        if (mainClass != null) {
-            attributes(
-                Map.of(Attributes.Name.MAIN_CLASS, mainClass()).entrySet()
-                    .stream());
         }
 
         // Prepare jar file
@@ -178,16 +173,19 @@ public class LibraryGenerator extends JarGenerator
                 throw new BuildException("Cannot create directory " + destDir);
             }
         }
+        var jarResource
+            = AppJarFileType.isAssignableFrom(requested.type().containedType())
+                ? project().newResource(AppJarFileType,
+                    destDir.resolve(jarName()))
+                : project().newResource(LibraryJarFileType,
+                    destDir.resolve(jarName()));
 
         // Maybe only delete
         if (requested.includes(CleanlinessType)) {
-            project().newResource(JarFileType,
-                destDir.resolve(jarName())).delete();
+            jarResource.delete();
             return Stream.empty();
         }
 
-        var jarResource = project().newResource(JarFileType,
-            destDir.resolve(jarName()));
         buildJar(jarResource);
         return Stream.of((T) jarResource);
     }

@@ -24,7 +24,6 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Predicate;
-import java.util.jar.Attributes;
 import java.util.jar.JarEntry;
 import java.util.stream.Stream;
 import org.jdrupes.builder.api.BuildException;
@@ -181,71 +180,6 @@ public class UberJarGenerator extends LibraryGenerator {
             });
     }
 
-    @Override
-    @SuppressWarnings({ "PMD.CollapsibleIfStatements", "unchecked",
-        "PMD.CloseResource", "PMD.UseTryWithResources" })
-    protected <T extends Resource> Stream<T>
-            doProvide(ResourceRequest<T> requested) {
-        if (!requested.includes(AppJarFileType)
-            && !requested.includes(CleanlinessType)) {
-            return Stream.empty();
-        }
-
-        // Prepare jar file
-        var destDir = Optional.ofNullable(destination())
-            .orElseGet(() -> project().buildDirectory().resolve("libs"));
-        if (!destDir.toFile().exists()) {
-            if (!destDir.toFile().mkdirs()) {
-                throw new BuildException("Cannot create directory " + destDir);
-            }
-        }
-
-        // Maybe only delete
-        if (requested.includes(CleanlinessType)) {
-            project().newResource(JarFileType,
-                destDir.resolve(jarName())).delete();
-            return Stream.empty();
-        }
-
-        // Make sure mainClass is set for app jar
-        if (AppJarFileType.isAssignableFrom(requested.type().containedType())
-            && mainClass() == null) {
-            throw new BuildException("Main class must be set for "
-                + name() + " in " + project());
-        }
-
-        // Add main class if defined
-        if (mainClass() != null) {
-            attributes(
-                Map.of(Attributes.Name.MAIN_CLASS, mainClass()).entrySet()
-                    .stream());
-        }
-
-        // Narrow too general requests
-        var requestedResource = requested.type().containedType();
-        if (!JarFile.class.isAssignableFrom(requestedResource.getClass())) {
-            requestedResource = JarFileType;
-        }
-
-        var jarResource = (JarFile) project().newResource(requestedResource,
-            destDir.resolve(jarName()));
-        try {
-            buildJar(jarResource);
-        } finally {
-            // buidJar indirectly calls collectFromProviders which opens
-            // resources that are used in builJar. Close them now.
-            for (var jarFile : openJars.values()) {
-                try {
-                    jarFile.close();
-                } catch (IOException e) { // NOPMD
-                    // Ignore, just trying to be nice.
-                }
-            }
-
-        }
-        return Stream.of((T) jarResource);
-    }
-
     @SuppressWarnings({ "PMD.AvoidLiteralsInIfCondition",
         "PMD.PreserveStackTrace", "PMD.UselessPureMethodCall" })
     @Override
@@ -278,5 +212,60 @@ public class UberJarGenerator extends LibraryGenerator {
                 return a;
             });
         });
+    }
+
+    @Override
+    @SuppressWarnings({ "PMD.CollapsibleIfStatements", "unchecked",
+        "PMD.CloseResource", "PMD.UseTryWithResources" })
+    protected <T extends Resource> Stream<T>
+            doProvide(ResourceRequest<T> requested) {
+        if (!requested.includes(AppJarFileType)
+            && !requested.includes(CleanlinessType)) {
+            return Stream.empty();
+        }
+
+        // Make sure mainClass is set for app jar
+        if (AppJarFileType.isAssignableFrom(requested.type().containedType())
+            && mainClass() == null) {
+            throw new BuildException("Main class must be set for "
+                + name() + " in " + project());
+        }
+
+        // Prepare jar file
+        var destDir = Optional.ofNullable(destination())
+            .orElseGet(() -> project().buildDirectory().resolve("libs"));
+        if (!destDir.toFile().exists()) {
+            if (!destDir.toFile().mkdirs()) {
+                throw new BuildException("Cannot create directory " + destDir);
+            }
+        }
+        var jarResource
+            = AppJarFileType.isAssignableFrom(requested.type().containedType())
+                ? project().newResource(AppJarFileType,
+                    destDir.resolve(jarName()))
+                : project().newResource(LibraryJarFileType,
+                    destDir.resolve(jarName()));
+
+        // Maybe only delete
+        if (requested.includes(CleanlinessType)) {
+            jarResource.delete();
+            return Stream.empty();
+        }
+
+        try {
+            buildJar(jarResource);
+        } finally {
+            // buidJar indirectly calls collectFromProviders which opens
+            // resources that are used in buildJar. Close them now.
+            for (var jarFile : openJars.values()) {
+                try {
+                    jarFile.close();
+                } catch (IOException e) { // NOPMD
+                    // Ignore, just trying to be nice.
+                }
+            }
+
+        }
+        return Stream.of((T) jarResource);
     }
 }

@@ -18,9 +18,8 @@
 
 package org.jdrupes.builder.java;
 
-import org.jdrupes.builder.api.FileResource;
-
-/// A [FileResource] that represents an application jar.
+/// Defines a library jar file.
 ///
-public interface AppJarFile extends LibraryJarFile {
+public interface LibraryJarFile extends JarFile {
+
 }
