@@ -21,6 +21,7 @@ package org.jdrupes.builder.java;
 import java.io.File;
 import java.nio.file.Path;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 import java.util.function.Function;
@@ -38,6 +39,7 @@ import org.jdrupes.builder.api.ResourceRequest;
 import org.jdrupes.builder.api.ResourceType;
 import static org.jdrupes.builder.api.ResourceType.*;
 import org.jdrupes.builder.api.Resources;
+import org.jdrupes.builder.core.CachedStream;
 import static org.jdrupes.builder.java.JavaTypes.*;
 
 /// The [Javadoc] generator provides the resource [JavadocDirectory],
@@ -51,8 +53,8 @@ import static org.jdrupes.builder.java.JavaTypes.*;
 ///
 public class Javadoc extends JavaTool {
 
-    private final Resources<FileTree<JavaSourceFile>> sources
-        = project().newResource(new ResourceType<>() {});
+    private final CachedStream<FileTree<JavaSourceFile>> sources
+        = new CachedStream<>();
     private Path destination = Path.of("doc");
     private final Resources<ClasspathElement> tagletpath;
     private final List<String> taglets = new ArrayList<>();
@@ -91,8 +93,9 @@ public class Javadoc extends JavaTool {
     /// @param sources the sources
     /// @return the java compiler
     ///
-    public final Javadoc addSources(FileTree<JavaSourceFile> sources) {
-        this.sources.add(sources);
+    @SafeVarargs
+    public final Javadoc addSources(FileTree<JavaSourceFile>... sources) {
+        this.sources.add(Arrays.stream(sources));
         return this;
     }
 
@@ -103,7 +106,7 @@ public class Javadoc extends JavaTool {
     /// @param directory the directory
     /// @param pattern the pattern
     /// @return the resources collector
-    ///
+    /// 
     public final Javadoc addSources(Path directory, String pattern) {
         addSources(
             project().newResource(JavaSourceTreeType, directory, pattern));
@@ -116,7 +119,7 @@ public class Javadoc extends JavaTool {
     /// @return the java compiler
     ///
     public final Javadoc addSources(Stream<FileTree<JavaSourceFile>> sources) {
-        this.sources.addAll(sources);
+        this.sources.add(sources);
         return this;
     }
 
