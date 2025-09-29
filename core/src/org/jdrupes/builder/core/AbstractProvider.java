@@ -31,7 +31,13 @@ import org.jdrupes.builder.api.ResourceRequest;
 public abstract class AbstractProvider implements ResourceProvider {
 
     /// The log.
-    protected final Logger log = Logger.getLogger(getClass().getName());
+    @SuppressWarnings("PMD.LambdaCanBeMethodReference")
+    // Use first non-anomymous class for logger.
+    protected final Logger log = Logger.getLogger(
+        Stream.iterate((Class<?>) getClass(),
+            c -> c != null, (Class<?> c) -> c.getSuperclass())
+            .filter(c -> !c.isAnonymousClass())
+            .findFirst().get().getName());
 
     /// Checks if the the current thread executes a provider invocation
     /// from [BuildContext#get]. Generates a warning if the invocation
