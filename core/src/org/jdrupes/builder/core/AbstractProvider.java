@@ -39,6 +39,12 @@ public abstract class AbstractProvider implements ResourceProvider {
             .filter(c -> !c.isAnonymousClass())
             .findFirst().get().getName());
 
+    /// Initializes a new abstract provider.
+    ///
+    public AbstractProvider() {
+        // Make javadoc happy.
+    }
+
     /// Checks if the the current thread executes a provider invocation
     /// from [BuildContext#get]. Generates a warning if the invocation
     /// is not allowed. Then invokes [#doProvide].

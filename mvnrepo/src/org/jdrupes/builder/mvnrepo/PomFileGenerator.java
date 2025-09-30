@@ -161,6 +161,7 @@ public class PomFileGenerator extends AbstractGenerator {
     /// Allow derived classes to post process the generated POM.
     ///
     /// @param adaptor the adaptor
+    /// @return the pom file generator
     ///
     public PomFileGenerator adaptPom(Consumer<Model> adaptor) {
         this.pomAdapter = adaptor;

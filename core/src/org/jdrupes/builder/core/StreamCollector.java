@@ -43,6 +43,8 @@ public class StreamCollector<T> {
 
     /// Instantiates a new collector.
     ///
+    /// @param cached determines if contents is cached
+    ///
     public StreamCollector(boolean cached) {
         this.cached = cached;
     }
@@ -50,6 +52,7 @@ public class StreamCollector<T> {
     /// Use all given streams as sources.
     ///
     /// @param sources the sources
+    /// @return the stream collector
     ///
     @SuppressWarnings("unchecked")
     @SafeVarargs
@@ -102,7 +105,6 @@ public class StreamCollector<T> {
     /// Create a cached collector.
     ///
     /// @param <T> the generic type
-    /// @param source the source
     /// @return the cached stream
     ///
     public static <T> StreamCollector<T> cached() {
@@ -124,7 +126,6 @@ public class StreamCollector<T> {
     /// Create an un-cached collector.
     ///
     /// @param <T> the generic type
-    /// @param source the source
     /// @return the cached stream
     ///
     public static <T> StreamCollector<T> uncached() {
