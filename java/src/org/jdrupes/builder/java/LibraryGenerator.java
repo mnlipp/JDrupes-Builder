@@ -34,7 +34,7 @@ import org.jdrupes.builder.api.ResourceRetriever;
 import org.jdrupes.builder.api.ResourceType;
 import static org.jdrupes.builder.api.ResourceType.*;
 import org.jdrupes.builder.api.Resources;
-import org.jdrupes.builder.core.CachedStream;
+import org.jdrupes.builder.core.StreamCollector;
 import static org.jdrupes.builder.java.JavaTypes.*;
 
 /// A [Generator] for Java libraries packaged as jars. A library jar
@@ -62,8 +62,8 @@ import static org.jdrupes.builder.java.JavaTypes.*;
 public class LibraryGenerator extends JarGenerator
         implements ResourceRetriever {
 
-    private final CachedStream<ResourceProvider> providers
-        = new CachedStream<>();
+    private final StreamCollector<ResourceProvider> providers
+        = StreamCollector.cached();
     private String mainClass;
 
     /// Instantiates a new library generator.
@@ -120,7 +120,7 @@ public class LibraryGenerator extends JarGenerator
     ///
     /// @return the cached stream
     ///
-    protected CachedStream<ResourceProvider> providers() {
+    protected StreamCollector<ResourceProvider> providers() {
         return providers;
     }
 

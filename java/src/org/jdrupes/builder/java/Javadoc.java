@@ -39,7 +39,7 @@ import org.jdrupes.builder.api.ResourceRequest;
 import org.jdrupes.builder.api.ResourceType;
 import static org.jdrupes.builder.api.ResourceType.*;
 import org.jdrupes.builder.api.Resources;
-import org.jdrupes.builder.core.CachedStream;
+import org.jdrupes.builder.core.StreamCollector;
 import static org.jdrupes.builder.java.JavaTypes.*;
 
 /// The [Javadoc] generator provides the resource [JavadocDirectory],
@@ -53,8 +53,8 @@ import static org.jdrupes.builder.java.JavaTypes.*;
 ///
 public class Javadoc extends JavaTool {
 
-    private final CachedStream<FileTree<JavaSourceFile>> sources
-        = new CachedStream<>();
+    private final StreamCollector<FileTree<JavaSourceFile>> sources
+        = StreamCollector.cached();
     private Path destination = Path.of("doc");
     private final Resources<ClasspathElement> tagletpath;
     private final List<String> taglets = new ArrayList<>();
