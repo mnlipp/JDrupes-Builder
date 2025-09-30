@@ -23,6 +23,7 @@ import eu.maveniverse.maven.mima.context.ContextOverrides;
 import eu.maveniverse.maven.mima.context.Runtime;
 import eu.maveniverse.maven.mima.context.Runtimes;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Stream;
 import org.eclipse.aether.RepositorySystem;
@@ -39,7 +40,6 @@ import org.eclipse.aether.resolution.DependencyResolutionException;
 import org.eclipse.aether.util.artifact.SubArtifact;
 import org.eclipse.aether.util.graph.visitor.PreorderNodeListGenerator;
 import org.jdrupes.builder.api.BuildException;
-import org.jdrupes.builder.api.Project;
 import org.jdrupes.builder.api.Resource;
 import org.jdrupes.builder.api.ResourceFactory;
 import org.jdrupes.builder.api.ResourceProvider;
@@ -48,12 +48,17 @@ import org.jdrupes.builder.core.AbstractProvider;
 import static org.jdrupes.builder.java.JavaTypes.*;
 import static org.jdrupes.builder.mvnrepo.MvnRepoTypes.*;
 
-/// The Class MvnRepoLookup.
+/// Depending on the request, this provider provides two types of resources.
+/// 
+///  1. The artifacts to be resolved as [MvnRepoDependencies]. The artifacts
+///     to be resolved are those added with [resolve].
+///
+///  2. The [CompilationResources] or [RuntimeResources] (depending on the
+///     request) that result from resolving the artifacts to be resolved.
 ///
 public class MvnRepoLookup extends AbstractProvider
         implements ResourceProvider {
 
-    private final Project project;
     private final List<String> coordinates = new ArrayList<>();
     private boolean downloadSources = true;
     private boolean downloadJavadoc = true;
@@ -61,10 +66,9 @@ public class MvnRepoLookup extends AbstractProvider
 
     /// Instantiates a new mvn repo lookup.
     ///
-    /// @param project the project
-    ///
-    public MvnRepoLookup(Project project) {
-        this.project = project;
+    @SuppressWarnings("PMD.UnnecessaryConstructor")
+    public MvnRepoLookup() {
+        // Make javadoc happy.
     }
 
     /// Lazily creates the root context.
@@ -81,13 +85,14 @@ public class MvnRepoLookup extends AbstractProvider
         return rootContextInstance;
     }
 
-    /// Add the coordinates of a wanted artifact.
+    /// Add artifacts, specified by their coordinates
+    /// (`groupId:artifactId:version`).
     ///
     /// @param coordinates the coordinates
     /// @return the mvn repo lookup
     ///
-    public MvnRepoLookup wanted(String coordinates) {
-        this.coordinates.add(coordinates);
+    public MvnRepoLookup resolve(String... coordinates) {
+        this.coordinates.addAll(Arrays.asList(coordinates));
         return this;
     }
 
@@ -123,7 +128,8 @@ public class MvnRepoLookup extends AbstractProvider
         if (requested.wants(MvnRepoDependenciesType)) {
             @SuppressWarnings("unchecked")
             var result = (Stream<T>) coordinates.stream()
-                .map(c -> project.newResource(MvnRepoDependencyType, c));
+                .map(c -> ResourceFactory.create(MvnRepoDependencyType, null,
+                    c));
             return result;
         }
         if (requested.wants(CompilationResourcesType)
