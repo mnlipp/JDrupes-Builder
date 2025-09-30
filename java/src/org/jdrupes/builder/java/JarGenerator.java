@@ -22,9 +22,7 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import static java.nio.file.StandardOpenOption.*;
-import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Optional;
@@ -49,6 +47,7 @@ import org.jdrupes.builder.api.ResourceType;
 import static org.jdrupes.builder.api.ResourceType.*;
 import org.jdrupes.builder.api.Resources;
 import org.jdrupes.builder.core.AbstractGenerator;
+import org.jdrupes.builder.core.StreamCollector;
 
 /// A general purpose generator for jars. All contents must be added
 /// explicitly using [#add(Entry...)] or [#add(FileTree...)].
@@ -60,13 +59,13 @@ public class JarGenerator extends AbstractGenerator {
     private Path destination;
     private Supplier<String> jarName
         = () -> project().name() + "-" + project().get(Version) + ".jar";
-    private final List<Stream<Entry<Name, String>>> attributes
-        = new ArrayList<>();
-    private final List<Stream<
-            ? extends Map.Entry<Path, ? extends IOResource>>> entryStreams
-                = new ArrayList<>();
-    private final List<Stream<? extends FileTree<?>>> fileTrees
-        = new ArrayList<>();
+    private final StreamCollector<Entry<Name, String>> attributes
+        = StreamCollector.cached();
+    private final StreamCollector<
+            ? extends Map.Entry<Path, ? extends IOResource>> entryStreams
+                = StreamCollector.cached();
+    private final StreamCollector<? extends FileTree<?>> fileTrees
+        = StreamCollector.cached();
 
     /// Instantiates a new library generator.
     ///
@@ -223,7 +222,7 @@ public class JarGenerator extends AbstractGenerator {
         @SuppressWarnings("PMD.LooseCoupling")
         Attributes attributes = manifest.getMainAttributes();
         attributes.put(Attributes.Name.MANIFEST_VERSION, "1.0");
-        this.attributes.stream().flatMap(s -> s)
+        this.attributes.stream()
             .forEach(e -> attributes.put(e.getKey(), e.getValue()));
         try (JarOutputStream jos = new JarOutputStream(Files.newOutputStream(
             jarResource.path(), CREATE, TRUNCATE_EXISTING), manifest)) {
@@ -258,12 +257,12 @@ public class JarGenerator extends AbstractGenerator {
     /// @param contents the preliminary contents
     ///
     protected void collectContents(Map<Path, Resources<IOResource>> contents) {
-        entryStreams.stream().flatMap(s -> s).forEach(entry -> {
+        entryStreams.stream().forEach(entry -> {
             contents.computeIfAbsent(entry.getKey(),
                 _ -> project().newResource(IOResourcesType))
                 .add(entry.getValue());
         });
-        fileTrees.stream().parallel().flatMap(s -> s)
+        fileTrees.stream().parallel()
             .forEach(t -> collect(contents, t));
     }
 
