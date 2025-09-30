@@ -62,9 +62,9 @@ public class JarGenerator extends AbstractGenerator {
     private final StreamCollector<Entry<Name, String>> attributes
         = StreamCollector.cached();
     private final StreamCollector<
-            ? extends Map.Entry<Path, ? extends IOResource>> entryStreams
+            Map.Entry<Path, ? extends IOResource>> entryStreams
                 = StreamCollector.cached();
-    private final StreamCollector<? extends FileTree<?>> fileTrees
+    private final StreamCollector<FileTree<?>> fileTrees
         = StreamCollector.cached();
 
     /// Instantiates a new library generator.
