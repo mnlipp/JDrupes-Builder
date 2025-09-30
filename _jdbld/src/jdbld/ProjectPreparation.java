@@ -40,7 +40,7 @@ public class ProjectPreparation {
         if (project instanceof JavaProject) {
             project.generator(JavaCompiler::new)
                 .addSources(Path.of("src"), "**/*.java")
-                .options("--release", "24");
+                .options("--release", "25");
             project.generator(JavaResourceCollector::new)
                 .add(Path.of("resources"), "**/*");
         }
