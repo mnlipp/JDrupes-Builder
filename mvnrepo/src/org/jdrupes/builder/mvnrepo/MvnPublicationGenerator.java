@@ -18,12 +18,6 @@
 
 package org.jdrupes.builder.mvnrepo;
 
-import eu.maveniverse.maven.mima.context.Context;
-import eu.maveniverse.maven.mima.context.ContextOverrides;
-import eu.maveniverse.maven.mima.context.Runtime;
-import eu.maveniverse.maven.mima.context.Runtimes;
-import java.io.IOException;
-import java.io.InputStream;
 import java.net.URI;
 import java.util.stream.Stream;
 import org.apache.maven.model.building.DefaultModelBuilderFactory;
@@ -42,7 +36,7 @@ import org.jdrupes.builder.api.ResourceRequest;
 import org.jdrupes.builder.api.ResourceType;
 import org.jdrupes.builder.core.AbstractGenerator;
 import org.jdrupes.builder.java.LibraryJarFile;
-
+import org.jdrupes.builder.java.SourcesJarFile;
 import static org.jdrupes.builder.mvnrepo.MvnRepoTypes.*;
 
 public class MvnPublicationGenerator extends AbstractGenerator {
@@ -74,64 +68,93 @@ public class MvnPublicationGenerator extends AbstractGenerator {
         return this;
     }
 
+    private <T extends Resource> T resourceCheck(Stream<T> resources,
+            String name) {
+        var iter = resources.iterator();
+        if (!iter.hasNext()) {
+            log.severe(() -> "No " + name + " resource available.");
+            return null;
+        }
+        var result = iter.next();
+        if (iter.hasNext()) {
+            log.severe(() -> "More than one " + name + " resource found.");
+            return null;
+        }
+        return result;
+    }
+
     @Override
     protected <T extends Resource> Stream<T>
             doProvide(ResourceRequest<T> requested) {
         if (!requested.includes(MvnPublicationType)) {
             return Stream.empty();
         }
-        var pomResource = project().supplied(new ResourceRequest<PomFile>(
-            new ResourceType<>() {})).findFirst();
-        if (pomResource.isEmpty()) {
-            log.warning("No POM file resource available.");
+        PomFile pomResource = resourceCheck(project().supplied(
+            new ResourceRequest<PomFile>(new ResourceType<>() {})), "POM file");
+        if (pomResource == null) {
             return Stream.empty();
         }
-        var jarResource = project().getFrom(project()
+        var jarResource = resourceCheck(project().getFrom(project()
             .providers(Expose, Forward),
-            new ResourceRequest<LibraryJarFile>(
-                new ResourceType<>() {}))
-            .findFirst();
-        if (jarResource.isEmpty()) {
-            log.warning("No jar file resource available.");
+            new ResourceRequest<LibraryJarFile>(new ResourceType<>() {})),
+            "jar file");
+        if (jarResource == null) {
             return Stream.empty();
+        }
+        var srcsIter = project().supplied(
+            new ResourceRequest<SourcesJarFile>(new ResourceType<>() {}))
+            .iterator();
+        SourcesJarFile srcsFile = null;
+        if (srcsIter.hasNext()) {
+            srcsFile = srcsIter.next();
+            if (srcsIter.hasNext()) {
+                log.severe(() -> "More than one sources jar resources found.");
+                return Stream.empty();
+            }
         }
 
         // Get the coordinates from the model
         try {
-            var pomFile = pomResource.get().path().toFile();
-            var req = new DefaultModelBuildingRequest().setPomFile(pomFile);
-            var model = new DefaultModelBuilderFactory().newInstance()
-                .build(req).getEffectiveModel();
-            var pomArtifact = new DefaultArtifact(model.getGroupId(),
-                model.getArtifactId(), "pom", model.getVersion())
-                    .setFile(pomFile);
-            var isSnapshot = pomArtifact.isSnapshot();
-            var repo = new RemoteRepository.Builder(
-                "mine", "default",
-                (isSnapshot ? snapshotUri : repositoryUri)
-                    .toString())
-                        .setAuthentication(new AuthenticationBuilder()
-                            .addUsername(repoUser).addPassword(repoPass)
-                            .build())
-                        .build();
-            var deployReq = new DeployRequest().setRepository(repo)
-                .addArtifact(pomArtifact).addArtifact(new DefaultArtifact(
-                    model.getGroupId(), model.getArtifactId(), "jar",
-                    model.getVersion())
-                        .setFile(jarResource.get().path().toFile()));
-
-            @SuppressWarnings("PMD.CloseResource")
-            var context = MvnRepoLookup.rootContext();
-            var result = context.repositorySystem().deploy(
-                context.repositorySystemSession(), deployReq);
-            return (Stream<T>) Stream
-                .of(project().newResource(MvnPublicationType,
-                    model.getGroupId() + ":" + model.getArtifactId() + ":"
-                        + model.getVersion()));
+            return (Stream<T>) deploy(pomResource, jarResource, srcsFile);
         } catch (ModelBuildingException | DeploymentException e) {
             throw new BuildException(e);
         }
+    }
 
+    private Stream<?> deploy(PomFile pomResource, LibraryJarFile jarResource,
+            SourcesJarFile srcsFile)
+            throws ModelBuildingException, DeploymentException {
+        var pomFile = pomResource.path().toFile();
+        var req = new DefaultModelBuildingRequest().setPomFile(pomFile);
+        var model = new DefaultModelBuilderFactory().newInstance()
+            .build(req).getEffectiveModel();
+        var pomArtifact = new DefaultArtifact(model.getGroupId(),
+            model.getArtifactId(), "pom", model.getVersion()).setFile(pomFile);
+        var isSnapshot = pomArtifact.isSnapshot();
+        var repo = new RemoteRepository.Builder(
+            "mine", "default",
+            (isSnapshot ? snapshotUri : repositoryUri)
+                .toString()).setAuthentication(new AuthenticationBuilder()
+                    .addUsername(repoUser).addPassword(repoPass)
+                    .build()).build();
+        var deployReq = new DeployRequest().setRepository(repo)
+            .addArtifact(pomArtifact).addArtifact(new DefaultArtifact(
+                model.getGroupId(), model.getArtifactId(), "jar",
+                model.getVersion()).setFile(jarResource.path().toFile()));
+        if (srcsFile != null) {
+            deployReq.addArtifact(new DefaultArtifact(model.getGroupId(),
+                model.getArtifactId(), "sources", "jar", model.getVersion())
+                    .setFile(pomFile));
+        }
+
+        @SuppressWarnings("PMD.CloseResource")
+        var context = MvnRepoLookup.rootContext();
+        var result = context.repositorySystem().deploy(
+            context.repositorySystemSession(), deployReq);
+        return Stream
+            .of(project().newResource(MvnPublicationType,
+                model.getGroupId() + ":" + model.getArtifactId() + ":"
+                    + model.getVersion()));
     }
 
 }
