@@ -41,6 +41,7 @@ public abstract class AbstractProvider implements ResourceProvider {
 
     /// Initializes a new abstract provider.
     ///
+    @SuppressWarnings("PMD.UnnecessaryConstructor")
     public AbstractProvider() {
         // Make javadoc happy.
     }
