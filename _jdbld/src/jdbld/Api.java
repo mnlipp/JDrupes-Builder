@@ -11,7 +11,7 @@ public class Api extends AbstractProject implements JavaProject {
     public Api() {
         super(name("api"));
         dependency(Expose, MvnRepoLookup::new)
-            .artifact("commons-cli:commons-cli:1.10.0");
+            .wanted("commons-cli:commons-cli:1.10.0");
     }
 
 }

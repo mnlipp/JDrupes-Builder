@@ -79,10 +79,10 @@ public class Root extends AbstractProject implements RootProject {
         // Build app jar
         dependency(Forward, new UberJarGenerator(this)
             .from(providers(Expose))
-            .from(new MvnRepoLookup(this).artifact(
+            .from(new MvnRepoLookup(this).wanted(
                 "eu.maveniverse.maven.mima.runtime:standalone-static:2.4.34")
-                .artifact("org.slf4j:slf4j-api:2.0.17")
-                .artifact("org.slf4j:slf4j-jdk14:2.0.17"))
+                .wanted("org.slf4j:slf4j-api:2.0.17")
+                .wanted("org.slf4j:slf4j-jdk14:2.0.17"))
             .mainClass("org.jdrupes.builder.startup.BootstrapLauncher")
             .addEntries(
                 supplied(new ResourceRequest<PomFile>(new ResourceType<>() {}))
@@ -102,8 +102,8 @@ public class Root extends AbstractProject implements RootProject {
         generator(Javadoc::new)
             .destination(rootProject().directory().resolve("webpages/javadoc"))
             .tagletpath(from(new MvnRepoLookup(this)
-                .artifact("org.jdrupes.taglets:plantuml-taglet:3.1.0")
-                .artifact("net.sourceforge.plantuml:plantuml:1.2023.11"))
+                .wanted("org.jdrupes.taglets:plantuml-taglet:3.1.0")
+                .wanted("net.sourceforge.plantuml:plantuml:1.2023.11"))
                     .get(new ResourceRequest<ClasspathElement>(
                         RuntimeResourcesType)))
             .taglets(Stream.of("org.jdrupes.taglets.plantUml.PlantUml",

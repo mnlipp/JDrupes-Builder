@@ -76,7 +76,7 @@ public class BootstrapLauncher extends AbstractLauncher {
             Arrays.asList(jdbldProps
                 .getProperty(BootstrapBuild.BUILD_EXTENSIONS, "").split(","))
                 .stream().map(String::trim).filter(c -> !c.isBlank())
-                .forEach(mvnLookup::artifact);
+                .forEach(mvnLookup::wanted);
             ((Project) rootProject.project(BootstrapBuild.class))
                 .dependency(Expose, mvnLookup);
             @SuppressWarnings("PMD.UseDiamondOperator")

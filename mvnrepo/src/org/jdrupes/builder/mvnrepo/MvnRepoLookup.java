@@ -81,13 +81,13 @@ public class MvnRepoLookup extends AbstractProvider
         return rootContextInstance;
     }
 
-    /// Artifact.
+    /// Add the coordinates of a wanted artifact.
     ///
-    /// @param coordinate the coordinate
+    /// @param coordinates the coordinates
     /// @return the mvn repo lookup
     ///
-    public MvnRepoLookup artifact(String coordinate) {
-        coordinates.add(coordinate);
+    public MvnRepoLookup wanted(String coordinates) {
+        this.coordinates.add(coordinates);
         return this;
     }
 

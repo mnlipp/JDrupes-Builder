@@ -141,7 +141,7 @@ public class UberJarGenerator extends LibraryGenerator {
         var lookup = new MvnRepoLookup(project());
         project().getFrom(providers().stream(),
             new ResourceRequest<>(MvnRepoDependenciesType))
-            .forEach(d -> lookup.artifact(d.coordinates()));
+            .forEach(d -> lookup.wanted(d.coordinates()));
         project().context().get(lookup, new ResourceRequest<ClasspathElement>(
             new ResourceType<RuntimeResources>() {}))
             .parallel().forEach(cpe -> {
