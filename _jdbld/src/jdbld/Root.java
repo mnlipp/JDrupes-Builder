@@ -31,7 +31,6 @@ import org.jdrupes.builder.uberjar.UberJarGenerator;
 import static org.jdrupes.builder.mvnrepo.MvnProperties.*;
 import org.jdrupes.builder.java.Javadoc;
 import org.jdrupes.builder.java.JavadocDirectory;
-import org.jdrupes.builder.java.SourcesJarFile;
 import org.jdrupes.builder.java.JavaSourceFile;
 
 public class Root extends AbstractProject implements RootProject {
@@ -139,21 +138,11 @@ public class Root extends AbstractProject implements RootProject {
                 context().property("cscuser"), context().property("cscpass"));
 
         // Commands
-        commandAlias("build",
-            new ResourceRequest<AppJarFile>(new ResourceType<>() {}),
-            new ResourceRequest<JavadocDirectory>(
-                new ResourceType<>() {}));
-        commandAlias("sources",
-            new ResourceRequest<SourcesJarFile>(new ResourceType<>() {}));
-//        commandAlias("javadoc",
-//            new ResourceRequest<JavadocDirectory>(
-//                new ResourceType<>() {}));
+        commandAlias("build", requestFor(AppJarFile.class),
+            requestFor(JavadocDirectory.class));
         commandAlias("javadoc", requestFor(JavadocDirectory.class));
-        commandAlias("eclipse",
-            new ResourceRequest<EclipseConfiguration>(new ResourceType<>() {}));
-        commandAlias("pomFile",
-            new ResourceRequest<PomFile>(new ResourceType<>() {}));
-        commandAlias("mavenPublication",
-            new ResourceRequest<MvnPublication>(new ResourceType<>() {}));
+        commandAlias("eclipse", requestFor(EclipseConfiguration.class));
+        commandAlias("pomFile", requestFor(PomFile.class));
+        commandAlias("mavenPublication", requestFor(MvnPublication.class));
     }
 }
