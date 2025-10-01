@@ -58,8 +58,7 @@ import static org.jdrupes.builder.java.JavaTypes.*;
 /// generator(LibraryGenerator::new).from(providers(Supply));
 /// ```
 ///
-public class LibraryGenerator extends JarGenerator
-        implements ResourceRetriever {
+public class LibraryGenerator extends JarGenerator implements ResourceRetriever {
 
     private final StreamCollector<ResourceProvider> providers
         = StreamCollector.cached();

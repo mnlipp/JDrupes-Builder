@@ -27,14 +27,17 @@ import org.eclipse.aether.artifact.DefaultArtifact;
 import org.eclipse.aether.deployment.DeployRequest;
 import org.eclipse.aether.deployment.DeploymentException;
 import org.eclipse.aether.repository.RemoteRepository;
+import org.eclipse.aether.util.artifact.SubArtifact;
 import org.eclipse.aether.util.repository.AuthenticationBuilder;
 import org.jdrupes.builder.api.BuildException;
 import static org.jdrupes.builder.api.Intend.*;
 import org.jdrupes.builder.api.Project;
 import org.jdrupes.builder.api.Resource;
 import org.jdrupes.builder.api.ResourceRequest;
+import static org.jdrupes.builder.api.ResourceRequest.requestFor;
 import org.jdrupes.builder.api.ResourceType;
 import org.jdrupes.builder.core.AbstractGenerator;
+import org.jdrupes.builder.java.JavadocJarFile;
 import org.jdrupes.builder.java.LibraryJarFile;
 import org.jdrupes.builder.java.SourcesJarFile;
 import static org.jdrupes.builder.mvnrepo.MvnRepoTypes.*;
@@ -90,19 +93,17 @@ public class MvnPublicationGenerator extends AbstractGenerator {
             return Stream.empty();
         }
         PomFile pomResource = resourceCheck(project().supplied(
-            new ResourceRequest<PomFile>(new ResourceType<>() {})), "POM file");
+            requestFor(PomFile.class)), "POM file");
         if (pomResource == null) {
             return Stream.empty();
         }
         var jarResource = resourceCheck(project().getFrom(project()
-            .providers(Expose, Forward),
-            new ResourceRequest<LibraryJarFile>(new ResourceType<>() {})),
+            .providers(Expose, Forward), requestFor(LibraryJarFile.class)),
             "jar file");
         if (jarResource == null) {
             return Stream.empty();
         }
-        var srcsIter = project().supplied(
-            new ResourceRequest<SourcesJarFile>(new ResourceType<>() {}))
+        var srcsIter = project().supplied(requestFor(SourcesJarFile.class))
             .iterator();
         SourcesJarFile srcsFile = null;
         if (srcsIter.hasNext()) {
@@ -112,25 +113,36 @@ public class MvnPublicationGenerator extends AbstractGenerator {
                 return Stream.empty();
             }
         }
+        var jdIter = project().supplied(requestFor(JavadocJarFile.class))
+            .iterator();
+        JavadocJarFile jdFile = null;
+        if (jdIter.hasNext()) {
+            jdFile = jdIter.next();
+            if (jdIter.hasNext()) {
+                log.severe(() -> "More than one javadoc jar resources found.");
+                return Stream.empty();
+            }
+        }
 
         // Get the coordinates from the model
         try {
-            return (Stream<T>) deploy(pomResource, jarResource, srcsFile);
+            return (Stream<T>) deploy(pomResource, jarResource, srcsFile,
+                jdFile);
         } catch (ModelBuildingException | DeploymentException e) {
             throw new BuildException(e);
         }
     }
 
     private Stream<?> deploy(PomFile pomResource, LibraryJarFile jarResource,
-            SourcesJarFile srcsFile)
+            SourcesJarFile srcsFile, JavadocJarFile jdFile)
             throws ModelBuildingException, DeploymentException {
         var pomFile = pomResource.path().toFile();
         var req = new DefaultModelBuildingRequest().setPomFile(pomFile);
         var model = new DefaultModelBuilderFactory().newInstance()
             .build(req).getEffectiveModel();
-        var pomArtifact = new DefaultArtifact(model.getGroupId(),
-            model.getArtifactId(), "pom", model.getVersion()).setFile(pomFile);
-        var isSnapshot = pomArtifact.isSnapshot();
+        var mainArtifact = new DefaultArtifact(model.getGroupId(),
+            model.getArtifactId(), "", model.getVersion());
+        var isSnapshot = mainArtifact.isSnapshot();
         var repo = new RemoteRepository.Builder(
             "mine", "default",
             (isSnapshot ? snapshotUri : repositoryUri)
@@ -138,13 +150,17 @@ public class MvnPublicationGenerator extends AbstractGenerator {
                     .addUsername(repoUser).addPassword(repoPass)
                     .build()).build();
         var deployReq = new DeployRequest().setRepository(repo)
-            .addArtifact(pomArtifact).addArtifact(new DefaultArtifact(
-                model.getGroupId(), model.getArtifactId(), "jar",
-                model.getVersion()).setFile(jarResource.path().toFile()));
+            .addArtifact(new SubArtifact(mainArtifact, "", "pom")
+                .setFile(pomFile))
+            .addArtifact(new SubArtifact(mainArtifact, "", "jar")
+                .setFile(jarResource.path().toFile()));
         if (srcsFile != null) {
-            deployReq.addArtifact(new DefaultArtifact(model.getGroupId(),
-                model.getArtifactId(), "sources", "jar", model.getVersion())
-                    .setFile(pomFile));
+            deployReq.addArtifact(new SubArtifact(mainArtifact,
+                "sources", "jar").setFile(srcsFile.path().toFile()));
+        }
+        if (jdFile != null) {
+            deployReq.addArtifact(new SubArtifact(mainArtifact,
+                "javadoc", "jar").setFile(jdFile.path().toFile()));
         }
 
         @SuppressWarnings("PMD.CloseResource")
@@ -157,4 +173,40 @@ public class MvnPublicationGenerator extends AbstractGenerator {
                     + model.getVersion()));
     }
 
+    /*
+     * import org.bouncycastle.openpgp.*;
+     * import org.bouncycastle.openpgp.operator.jcajce.JcaPGPContentSignerBuilder;
+     * import
+     * org.bouncycastle.openpgp.operator.jcajce.JcaPBESecretKeyDecryptorBuilder;
+     * import org.bouncycastle.bcpg.ArmoredOutputStream;
+     * 
+     * import java.io.*;
+     * import java.security.Security;
+     * 
+     * public static void signFile(File inputFile, File outputAsc, PGPSecretKey
+     * secretKey, char[] passphrase) throws Exception {
+     * Security.addProvider(new
+     * org.bouncycastle.jce.provider.BouncyCastleProvider());
+     * 
+     * PGPPrivateKey privateKey = secretKey.extractPrivateKey(
+     * new JcaPBESecretKeyDecryptorBuilder().setProvider("BC").build(passphrase));
+     * 
+     * PGPSignatureGenerator signatureGenerator = new PGPSignatureGenerator(
+     * new JcaPGPContentSignerBuilder(secretKey.getPublicKey().getAlgorithm(),
+     * PGPUtil.SHA256).setProvider("BC"));
+     * signatureGenerator.init(PGPSignature.BINARY_DOCUMENT, privateKey);
+     * 
+     * try (InputStream fileIn = new BufferedInputStream(new
+     * FileInputStream(inputFile));
+     * OutputStream out = new ArmoredOutputStream(new FileOutputStream(outputAsc)))
+     * {
+     * int ch;
+     * while ((ch = fileIn.read()) != -1) {
+     * signatureGenerator.update((byte) ch);
+     * }
+     * PGPSignature signature = signatureGenerator.generate();
+     * signature.encode(out);
+     * }
+     * }
+     */
 }
