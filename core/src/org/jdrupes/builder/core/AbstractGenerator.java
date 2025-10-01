@@ -57,7 +57,7 @@ public abstract class AbstractGenerator extends AbstractProvider
     }
 
     @Override
-    public Project project() {
+    public final Project project() {
         return project;
     }
 

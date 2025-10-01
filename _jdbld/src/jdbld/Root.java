@@ -20,17 +20,21 @@ import org.jdrupes.builder.core.AbstractProject;
 import org.jdrupes.builder.eclipse.EclipseConfiguration;
 import org.jdrupes.builder.java.AppJarFile;
 import org.jdrupes.builder.java.ClasspathElement;
-import org.jdrupes.builder.java.JarGenerator;
 import static org.jdrupes.builder.java.JavaTypes.*;
+
+import org.jdrupes.builder.mvnrepo.JavadocJarGenerator;
 import org.jdrupes.builder.mvnrepo.MvnPublication;
 import org.jdrupes.builder.mvnrepo.MvnPublicationGenerator;
 import org.jdrupes.builder.mvnrepo.MvnRepoLookup;
 import org.jdrupes.builder.mvnrepo.PomFile;
 import org.jdrupes.builder.mvnrepo.PomFileGenerator;
+import org.jdrupes.builder.mvnrepo.SourcesJarGenerator;
 import org.jdrupes.builder.uberjar.UberJarGenerator;
 import static org.jdrupes.builder.mvnrepo.MvnProperties.*;
 import org.jdrupes.builder.java.Javadoc;
 import org.jdrupes.builder.java.JavadocDirectory;
+import org.jdrupes.builder.java.JavadocJarFile;
+import org.jdrupes.builder.java.SourcesJarFile;
 import org.jdrupes.builder.java.JavaSourceFile;
 
 public class Root extends AbstractProject implements RootProject {
@@ -54,7 +58,7 @@ public class Root extends AbstractProject implements RootProject {
         dependency(Expose, project(Startup.class));
         dependency(Expose, project(Eclipse.class));
 
-        // Generate POM
+        // Supply POM
         generator(PomFileGenerator::new).adaptPom(model -> {
             model.setDescription("See URL.");
             model.setUrl("https://builder.jdrupes.org/");
@@ -76,7 +80,7 @@ public class Root extends AbstractProject implements RootProject {
             model.setDevelopers(List.of(developer));
         });
 
-        // Build app jar
+        // Provide app jar
         dependency(Forward, new UberJarGenerator(this)
             .from(providers(Expose))
             .from(new MvnRepoLookup().resolve(
@@ -91,14 +95,7 @@ public class Root extends AbstractProject implements RootProject {
                         .resolve("pom.xml"), pomFile)))
             .destination(directory().resolve(Path.of("_jdbld", "app"))));
 
-        // Build sources jar
-        generator(new JarGenerator(this, SourcesJarFileType)
-            .addTrees(get(new ResourceRequest<FileTree<JavaSourceFile>>(
-                new ResourceType<>() {})))
-            .jarName(name() + "-" + get(Version) + "-sources.jar")
-            .destination(directory().resolve(Path.of("_jdbld", "app"))));
-
-        // Build javadoc
+        // Supply javadoc
         generator(Javadoc::new)
             .destination(rootProject().directory().resolve("webpages/javadoc"))
             .tagletpath(from(new MvnRepoLookup()
@@ -130,6 +127,16 @@ public class Root extends AbstractProject implements RootProject {
                 "https://maven.apache.org/ref/3-LATEST/apidocs/")
             .options("-quiet");
 
+        // Supply sources jar
+        generator(SourcesJarGenerator::new)
+            .addTrees(get(new ResourceRequest<FileTree<JavaSourceFile>>(
+                new ResourceType<>() {})))
+            .destination(directory().resolve(Path.of("_jdbld", "app")));
+
+        // Supply javadoc jar
+        generator(JavadocJarGenerator::new)
+            .destination(directory().resolve(Path.of("_jdbld", "app")));
+
         // Publish (deploy)
         generator(MvnPublicationGenerator::new)
             .snapshotRepository(URI.create(
@@ -140,7 +147,9 @@ public class Root extends AbstractProject implements RootProject {
         // Commands
         commandAlias("build", requestFor(AppJarFile.class),
             requestFor(JavadocDirectory.class));
+        commandAlias("sourcesJar", requestFor(SourcesJarFile.class));
         commandAlias("javadoc", requestFor(JavadocDirectory.class));
+        commandAlias("javadocJar", requestFor(JavadocJarFile.class));
         commandAlias("eclipse", requestFor(EclipseConfiguration.class));
         commandAlias("pomFile", requestFor(PomFile.class));
         commandAlias("mavenPublication", requestFor(MvnPublication.class));

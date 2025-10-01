@@ -88,4 +88,8 @@ public final class JavaTypes {
     /// The Java application jar file.
     public static final ResourceType<SourcesJarFile> SourcesJarFileType
         = new ResourceType<>() {};
+
+    /// The javadoc jar file.
+    public static final ResourceType<JavadocJarFile> JavadocJarFileType
+        = new ResourceType<>() {};
 }

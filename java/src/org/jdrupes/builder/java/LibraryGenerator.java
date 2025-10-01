@@ -20,7 +20,6 @@ package org.jdrupes.builder.java;
 
 import java.nio.file.Path;
 import java.util.Map;
-import java.util.Optional;
 import java.util.jar.Attributes;
 import java.util.stream.Stream;
 import org.jdrupes.builder.api.BuildException;
@@ -166,8 +165,7 @@ public class LibraryGenerator extends JarGenerator
         }
 
         // Prepare jar file
-        var destDir = Optional.ofNullable(destination())
-            .orElseGet(() -> project().buildDirectory().resolve("libs"));
+        var destDir = destination();
         if (!destDir.toFile().exists()) {
             if (!destDir.toFile().mkdirs()) {
                 throw new BuildException("Cannot create directory " + destDir);

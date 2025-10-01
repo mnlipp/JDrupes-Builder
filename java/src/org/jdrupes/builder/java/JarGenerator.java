@@ -25,7 +25,6 @@ import static java.nio.file.StandardOpenOption.*;
 import java.util.Arrays;
 import java.util.Map;
 import java.util.Map.Entry;
-import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Supplier;
 import java.util.jar.Attributes;
@@ -56,7 +55,8 @@ import org.jdrupes.builder.core.StreamCollector;
 public class JarGenerator extends AbstractGenerator {
 
     private final ResourceType<? extends JarFile> jarType;
-    private Path destination;
+    private Supplier<Path> destination
+        = () -> project().buildDirectory().resolve("libs");
     private Supplier<String> jarName
         = () -> project().name() + "-" + project().get(Version) + ".jar";
     private final StreamCollector<Entry<Name, String>> attributes
@@ -78,21 +78,34 @@ public class JarGenerator extends AbstractGenerator {
         this.jarType = jarType;
     }
 
-    /// Returns the destination directory. Defaults to "`libs`".
+    /// Returns the destination directory. Defaults to sub directory
+    /// `libs` in the project's build directory
+    /// (see [Project#buildDirectory]).
     ///
     /// @return the destination
     ///
     public Path destination() {
-        return destination;
+        return destination.get();
     }
 
     /// Sets the destination directory. The [Path] is resolved against
     /// the project's build directory (see [Project#buildDirectory]).
     ///
     /// @param destination the new destination
-    /// @return the java compiler
+    /// @return the jar generator
     ///
     public JarGenerator destination(Path destination) {
+        this.destination
+            = () -> project().buildDirectory().resolve(destination);
+        return this;
+    }
+
+    /// Sets the destination directory.
+    ///
+    /// @param destination the new destination
+    /// @return the jar generator
+    ///
+    public JarGenerator destination(Supplier<Path> destination) {
         this.destination = destination;
         return this;
     }
@@ -316,8 +329,7 @@ public class JarGenerator extends AbstractGenerator {
         }
 
         // Prepare jar file
-        var destDir = Optional.ofNullable(destination())
-            .orElseGet(() -> project().buildDirectory().resolve("libs"));
+        var destDir = destination();
         if (!destDir.toFile().exists()) {
             if (!destDir.toFile().mkdirs()) {
                 throw new BuildException("Cannot create directory " + destDir);
