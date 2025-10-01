@@ -18,7 +18,14 @@
 
 package org.jdrupes.builder.mvnrepo;
 
+import java.io.BufferedInputStream;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.net.URI;
+import java.security.Security;
 import java.util.stream.Stream;
 import org.apache.maven.model.building.DefaultModelBuilderFactory;
 import org.apache.maven.model.building.DefaultModelBuildingRequest;
@@ -41,6 +48,10 @@ import org.jdrupes.builder.java.JavadocJarFile;
 import org.jdrupes.builder.java.LibraryJarFile;
 import org.jdrupes.builder.java.SourcesJarFile;
 import static org.jdrupes.builder.mvnrepo.MvnRepoTypes.*;
+import org.bouncycastle.openpgp.*;
+import org.bouncycastle.openpgp.operator.jcajce.JcaPGPContentSignerBuilder;
+import org.bouncycastle.openpgp.operator.jcajce.JcePBESecretKeyDecryptorBuilder;
+import org.bouncycastle.bcpg.ArmoredOutputStream;
 
 public class MvnPublicationGenerator extends AbstractGenerator {
 
@@ -173,40 +184,32 @@ public class MvnPublicationGenerator extends AbstractGenerator {
                     + model.getVersion()));
     }
 
-    /*
-     * import org.bouncycastle.openpgp.*;
-     * import org.bouncycastle.openpgp.operator.jcajce.JcaPGPContentSignerBuilder;
-     * import
-     * org.bouncycastle.openpgp.operator.jcajce.JcaPBESecretKeyDecryptorBuilder;
-     * import org.bouncycastle.bcpg.ArmoredOutputStream;
-     * 
-     * import java.io.*;
-     * import java.security.Security;
-     * 
-     * public static void signFile(File inputFile, File outputAsc, PGPSecretKey
-     * secretKey, char[] passphrase) throws Exception {
-     * Security.addProvider(new
-     * org.bouncycastle.jce.provider.BouncyCastleProvider());
-     * 
-     * PGPPrivateKey privateKey = secretKey.extractPrivateKey(
-     * new JcaPBESecretKeyDecryptorBuilder().setProvider("BC").build(passphrase));
-     * 
-     * PGPSignatureGenerator signatureGenerator = new PGPSignatureGenerator(
-     * new JcaPGPContentSignerBuilder(secretKey.getPublicKey().getAlgorithm(),
-     * PGPUtil.SHA256).setProvider("BC"));
-     * signatureGenerator.init(PGPSignature.BINARY_DOCUMENT, privateKey);
-     * 
-     * try (InputStream fileIn = new BufferedInputStream(new
-     * FileInputStream(inputFile));
-     * OutputStream out = new ArmoredOutputStream(new FileOutputStream(outputAsc)))
-     * {
-     * int ch;
-     * while ((ch = fileIn.read()) != -1) {
-     * signatureGenerator.update((byte) ch);
-     * }
-     * PGPSignature signature = signatureGenerator.generate();
-     * signature.encode(out);
-     * }
-     * }
-     */
+    public static void createDetachedSignature(
+            File inputFile, File signatureFile,
+            PGPSecretKey secretKey, char[] passphrase) throws Exception {
+        Security.addProvider(
+            new org.bouncycastle.jce.provider.BouncyCastleProvider());
+        PGPPrivateKey privateKey = secretKey.extractPrivateKey(
+            new JcePBESecretKeyDecryptorBuilder().setProvider("BC")
+                .build(passphrase));
+        JcaPGPContentSignerBuilder signerBuilder
+            = new JcaPGPContentSignerBuilder(
+                secretKey.getPublicKey().getAlgorithm(), PGPUtil.SHA256)
+                    .setProvider("BC");
+        PGPSignatureGenerator signatureGenerator = new PGPSignatureGenerator(
+            signerBuilder, secretKey.getPublicKey());
+        signatureGenerator.init(PGPSignature.BINARY_DOCUMENT, privateKey);
+
+        try (InputStream fileInput
+            = new BufferedInputStream(new FileInputStream(inputFile));
+                OutputStream sigOut = new ArmoredOutputStream(
+                    new FileOutputStream(signatureFile))) {
+            int ch;
+            while ((ch = fileInput.read()) >= 0) {
+                signatureGenerator.update((byte) ch);
+            }
+            PGPSignature signature = signatureGenerator.generate();
+            signature.encode(sigOut);
+        }
+    }
 }

@@ -13,7 +13,7 @@ public class MvnRepo extends AbstractProject implements JavaProject {
         dependency(Consume, project(Java.class));
         dependency(Expose, new MvnRepoLookup().resolve(
             "eu.maveniverse.maven.mima:context:2.4.34",
-            "org.apache.maven:maven-model-builder:3.9.11"));
+            "org.apache.maven:maven-model-builder:3.9.11",
+            "org.bouncycastle:bcpg-jdk18on:1.82"));
     }
-
 }
