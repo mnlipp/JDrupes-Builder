@@ -34,6 +34,10 @@ import java.util.stream.Stream;
 /// Beware of automatic inference of type arguments. The inferred
 /// type arguments will usually be super classes of what you expect.
 ///
+/// An alternative to using an anonymous class to create a type token
+/// is to statically import the `resourceType` methods. Using these
+/// typically also results in clear code that is sometimes easier to read.   
+///
 /// @param <T> the resource type
 ///
 public class ResourceType<T extends Resource> {
@@ -67,7 +71,7 @@ public class ResourceType<T extends Resource> {
     private final Class<T> type;
     private final ResourceType<?> containedType;
 
-    /// Instantiates a new resource type.
+    /// Initializes a new resource type.
     ///
     /// @param type the type
     /// @param containedType the contained type
@@ -77,6 +81,34 @@ public class ResourceType<T extends Resource> {
             ResourceType<?> containedType) {
         this.type = (Class<T>) type;
         this.containedType = containedType;
+    }
+
+    /// Creates a new resource type from the given container type
+    /// and contained type. The common usage pattern is to import
+    /// this method statically.
+    ///
+    /// @param <C> the generic type
+    /// @param <T> the generic type
+    /// @param type the type
+    /// @param containedType the contained type
+    /// @return the resource type
+    ///
+    public static <C extends Resources<T>, T extends Resource>
+            ResourceType<C>
+            resourceType(Class<C> type, Class<T> containedType) {
+        return new ResourceType<>(type, resourceType(containedType));
+    }
+
+    /// Creates a new resource type from the given type. The common
+    /// usage pattern is to import this method statically.
+    ///
+    /// @param <T> the generic type
+    /// @param type the type
+    /// @return the resource type
+    ///
+    public static <T extends Resource> ResourceType<T>
+            resourceType(Class<T> type) {
+        return new ResourceType<>(type, null);
     }
 
     @SuppressWarnings("unchecked")

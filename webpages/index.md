@@ -25,8 +25,7 @@ public class SimpleApp extends AbstractProject implements RootProject {
             .mainClass("jdbld.demo.simpleapp.App");
 
         // Command arguments
-        commandAlias("build",
-            new ResourceRequest<AppJarFile>(new ResourceType<>() {}));
+        commandAlias("build", requestFor(AppJarFile.class));
     }
 }
 ```

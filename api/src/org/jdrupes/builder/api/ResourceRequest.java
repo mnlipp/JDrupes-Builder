@@ -54,6 +54,37 @@ public class ResourceRequest<T extends Resource> {
         this.type = type;
     }
 
+    /// Creates a request for a resource of the given type, in the
+    /// given container type. The recommended usage pattern is
+    /// to import this method statically.
+    ///
+    /// @param <C> the generic type
+    /// @param <T> the generic type
+    /// @param container the container
+    /// @param requested the requested
+    /// @return the resource request
+    ///
+    public static <C extends Resources<T>, T extends Resource>
+            ResourceRequest<T>
+            requestFor(Class<C> container, Class<T> requested) {
+        return new ResourceRequest<>(new ResourceType<>(container,
+            new ResourceType<>(requested, null)));
+    }
+
+    /// Creates a request for a resource of the given type in a
+    /// container of type [Resources]. The recommended usage pattern
+    /// is to import this method statically.
+    ///
+    /// @param <T> the generic type
+    /// @param requested the requested
+    /// @return the resource request
+    ///
+    public static <T extends Resource>
+            ResourceRequest<T> requestFor(Class<T> requested) {
+        return new ResourceRequest<>(new ResourceType<>(Resources.class,
+            new ResourceType<>(requested, null)));
+    }
+
     /// Create a widened resource request by replacing the requested
     /// top-level type with the given super type, thus widening the
     /// request.

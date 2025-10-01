@@ -13,6 +13,7 @@ import static org.jdrupes.builder.api.Intend.*;
 import org.jdrupes.builder.api.Project;
 import static org.jdrupes.builder.api.Project.Properties.*;
 import org.jdrupes.builder.api.ResourceRequest;
+import static org.jdrupes.builder.api.ResourceRequest.requestFor;
 import org.jdrupes.builder.api.ResourceType;
 import org.jdrupes.builder.api.RootProject;
 import org.jdrupes.builder.core.AbstractProject;
@@ -144,9 +145,10 @@ public class Root extends AbstractProject implements RootProject {
                 new ResourceType<>() {}));
         commandAlias("sources",
             new ResourceRequest<SourcesJarFile>(new ResourceType<>() {}));
-        commandAlias("javadoc",
-            new ResourceRequest<JavadocDirectory>(
-                new ResourceType<>() {}));
+//        commandAlias("javadoc",
+//            new ResourceRequest<JavadocDirectory>(
+//                new ResourceType<>() {}));
+        commandAlias("javadoc", requestFor(JavadocDirectory.class));
         commandAlias("eclipse",
             new ResourceRequest<EclipseConfiguration>(new ResourceType<>() {}));
         commandAlias("pomFile",

@@ -111,8 +111,7 @@ when invoking the builder. This is shown in the sample project:
 
 ```java
         // Command arguments
-        commandAlias("build",
-            new ResourceRequest<AppJarFile>(new ResourceType<>() {}));
+        commandAlias("build", requestFor(AppJarFile.class));
 ```
  
 Note that the command argument "`clean`" is predefined and can always
