@@ -462,7 +462,7 @@ public class EclipseConfigurator extends AbstractGenerator {
         return this;
     }
 
-    /// Allow derived classes to add additional resources.
+    /// Allow the user to add additional resources.
     ///
     /// @param adaptor the adaptor
     /// @return the eclipse configurator
