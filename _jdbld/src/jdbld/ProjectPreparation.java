@@ -22,6 +22,8 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
+import java.util.List;
+import java.util.Map;
 
 import org.jdrupes.builder.api.BuildException;
 import org.jdrupes.builder.api.Project;
@@ -29,6 +31,7 @@ import org.jdrupes.builder.eclipse.EclipseConfigurator;
 import org.jdrupes.builder.java.JavaCompiler;
 import org.jdrupes.builder.java.JavaProject;
 import org.jdrupes.builder.java.JavaResourceCollector;
+import org.jdrupes.builder.vscode.VscodeConfigurator;
 import org.w3c.dom.Document;
 import org.w3c.dom.Node;
 
@@ -90,6 +93,53 @@ public class ProjectPreparation {
                     throw new BuildException(e);
                 }
             }));
+    }
+
+    @SuppressWarnings("unchecked")
+    public static void setupVscodeConfiguration(Project project) {
+        project.generator(VscodeConfigurator::new)
+            .jdk("25", Path.of("/usr/lib/jvm/java-25-openjdk/"))
+            .adaptLaunch(c -> {
+                if (!(project instanceof Root)) {
+                    return;
+                }
+                ((List<Map<String, Object>>) c.get("configurations"))
+                    .addAll(List.of(
+                        Map.of("type", "java",
+                            "name", "Current File",
+                            "request", "launch",
+                            "mainClass", "${file}",
+                            "vmArgs", "-Duser.language=en_US",
+                            "args", "build"),
+                        Map.of("type", "java",
+                            "name", "BootstrapLauncher",
+                            "request", "launch",
+                            "classPaths", List.of("$Auto",
+                                "${workspaceFolder}/_jdbld/build/classes",
+                                "${workspaceFolder}/eclipse/build/classes",
+                                "${workspaceFolder}/uberjar/build/classes",
+                                "${workspaceFolder}/vscode/build/classes",
+                                "${workspaceFolder}/_jdbld/app/jdrupes-builder-0.0.3-SNAPSHOT.jar"),
+                            "mainClass",
+                            "org.jdrupes.builder.startup.BootstrapLauncher",
+                            "projectName", "startup",
+                            "vmArgs", "-Duser.language=en_US",
+                            "args", "build"),
+                        Map.of("type", "java",
+                            "name", "DirectLauncher",
+                            "request", "launch",
+                            "classPaths", List.of("$Auto",
+                                "${workspaceFolder}/_jdbld/build/classes",
+                                "${workspaceFolder}/eclipse/build/classes",
+                                "${workspaceFolder}/uberjar/build/classes",
+                                "${workspaceFolder}/vscode/build/classes",
+                                "${workspaceFolder}/_jdbld/app/jdrupes-builder-0.0.3-SNAPSHOT.jar"),
+                            "mainClass",
+                            "org.jdrupes.builder.startup.DirectLauncher",
+                            "projectName", "startup",
+                            "vmArgs", "-Duser.language=en_US",
+                            "args", "build")));
+            });
     }
 
 }

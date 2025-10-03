@@ -30,6 +30,7 @@ import org.jdrupes.builder.mvnrepo.PomFile;
 import org.jdrupes.builder.mvnrepo.PomFileGenerator;
 import org.jdrupes.builder.mvnrepo.SourcesJarGenerator;
 import org.jdrupes.builder.uberjar.UberJarGenerator;
+import org.jdrupes.builder.vscode.VscodeConfiguration;
 import static org.jdrupes.builder.mvnrepo.MvnProperties.*;
 import org.jdrupes.builder.java.Javadoc;
 import org.jdrupes.builder.java.JavadocDirectory;
@@ -43,6 +44,7 @@ public class Root extends AbstractProject implements RootProject {
     public void prepareProject(Project project) {
         ProjectPreparation.setupCommonGenerators(project);
         ProjectPreparation.setupEclipseConfigurator(project);
+        ProjectPreparation.setupVscodeConfiguration(project);
     }
 
     public Root() {
@@ -57,6 +59,7 @@ public class Root extends AbstractProject implements RootProject {
         dependency(Expose, project(Uberjar.class));
         dependency(Expose, project(Startup.class));
         dependency(Expose, project(Eclipse.class));
+        dependency(Expose, project(Vscode.class));
 
         // Supply POM
         generator(PomFileGenerator::new).adaptPom(model -> {
@@ -151,6 +154,7 @@ public class Root extends AbstractProject implements RootProject {
         commandAlias("javadoc", requestFor(JavadocDirectory.class));
         commandAlias("javadocJar", requestFor(JavadocJarFile.class));
         commandAlias("eclipse", requestFor(EclipseConfiguration.class));
+        commandAlias("vscode", requestFor(VscodeConfiguration.class));
         commandAlias("pomFile", requestFor(PomFile.class));
         commandAlias("mavenPublication", requestFor(MvnPublication.class));
     }

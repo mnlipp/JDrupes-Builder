@@ -341,7 +341,7 @@ public class EclipseConfigurator extends AbstractGenerator {
         attribute.setAttribute("value", "true");
     }
 
-    /// Allow derived classes to post process the classpath configuration.
+    /// Allow the user to post process the classpath configuration.
     /// The node passed to the consumer is the `classpath` element.
     ///
     /// @param adaptor the adaptor
@@ -373,7 +373,7 @@ public class EclipseConfigurator extends AbstractGenerator {
         }
     }
 
-    /// Allow derived classes to adapt the properties for the
+    /// Allow the user to adapt the properties for the
     /// `.settings/org.eclipse.core.resources.prefs` file.
     ///
     /// @param adaptor the adaptor
@@ -405,7 +405,7 @@ public class EclipseConfigurator extends AbstractGenerator {
         }
     }
 
-    /// Allow derived classes to adapt the properties for the
+    /// Allow the user to adapt the properties for the
     /// `.settings/org.eclipse.core.runtime.prefs` file.
     ///
     /// @param adaptor the adaptor
@@ -451,7 +451,7 @@ public class EclipseConfigurator extends AbstractGenerator {
         }
     }
 
-    /// Allow derived classes to adapt the properties for the
+    /// Allow the user to adapt the properties for the
     /// `.settings/org.eclipse.jdt.core.prefs` file.
     ///
     /// @param adaptor the adaptor
