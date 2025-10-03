@@ -33,7 +33,7 @@ import static org.jdrupes.builder.api.Intend.*;
 import org.jdrupes.builder.api.Project;
 import org.jdrupes.builder.api.Resource;
 import org.jdrupes.builder.api.ResourceRequest;
-import org.jdrupes.builder.api.ResourceType;
+import static org.jdrupes.builder.api.ResourceType.resourceType;
 import org.jdrupes.builder.core.AbstractGenerator;
 import org.jdrupes.builder.java.JarFile;
 import org.jdrupes.builder.java.JavaCompiler;
@@ -57,6 +57,8 @@ public class VscodeConfigurator extends AbstractGenerator {
     private Consumer<Map<String, Object>> launchAdaptor = _ -> {
     };
     private Consumer<Map<String, Object>> tasksAdaptor = _ -> {
+    };
+    private Runnable configurationAdaptor = () -> {
     };
 
     /// Initializes a new vscode configurator.
@@ -94,7 +96,7 @@ public class VscodeConfigurator extends AbstractGenerator {
     @Override
     protected <T extends Resource> Stream<T>
             doProvide(ResourceRequest<T> requested) {
-        if (!requested.includes(new ResourceType<VscodeConfiguration>() {})) {
+        if (!requested.includes(resourceType(VscodeConfiguration.class))) {
             return Stream.empty();
         }
         Path vscodeDir = project().directory().resolve(".vscode");
@@ -106,10 +108,14 @@ public class VscodeConfigurator extends AbstractGenerator {
         } catch (IOException e) {
             throw new BuildException(e);
         }
-        @SuppressWarnings({ "unchecked", "PMD.UseDiamondOperator" })
+
+        // General overrides
+        configurationAdaptor.run();
+
+        // Return a result
+        @SuppressWarnings({ "unchecked" })
         var result = (Stream<T>) Stream.of(project().newResource(
-            new ResourceType<VscodeConfiguration>() {},
-            project().directory()));
+            resourceType(VscodeConfiguration.class), project().directory()));
         return result;
     }
 
@@ -215,6 +221,16 @@ public class VscodeConfigurator extends AbstractGenerator {
     public VscodeConfigurator
             adaptTasks(Consumer<Map<String, Object>> adaptor) {
         tasksAdaptor = adaptor;
+        return this;
+    }
+
+    /// Allow the user to add additional resources.
+    ///
+    /// @param adaptor the adaptor
+    /// @return the eclipse configurator
+    ///
+    public VscodeConfigurator adaptConfiguration(Runnable adaptor) {
+        configurationAdaptor = adaptor;
         return this;
     }
 }

@@ -21,3 +21,4 @@ Generators are marked with a "(G)".
   * [PomFileGenerator](javadoc/org/jdrupes/builder/mvnrepo/PomFileGenerator.html) (G)
   * [SourcesJarGenerator](javadoc/org/jdrupes/builder/mvnrepo/SourcesJarGenerator.html) (G)
   * [UberJarGenerator](javadoc/org/jdrupes/builder/uberjar/UberJarGenerator.html) (G)
+  * [VscodeConfigurator](javadoc/org/jdrupes/builder/vscode/VscodeConfigurator.html) (G)
