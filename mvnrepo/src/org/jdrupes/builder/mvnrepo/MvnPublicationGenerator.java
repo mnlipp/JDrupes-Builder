@@ -19,23 +19,31 @@
 package org.jdrupes.builder.mvnrepo;
 
 import java.io.BufferedInputStream;
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
+import java.io.FileNotFoundException;
+import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.URI;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 import java.security.Security;
+import java.util.function.Supplier;
 import java.util.stream.Stream;
 import org.apache.maven.model.building.DefaultModelBuilderFactory;
 import org.apache.maven.model.building.DefaultModelBuildingRequest;
 import org.apache.maven.model.building.ModelBuildingException;
 import org.bouncycastle.bcpg.ArmoredOutputStream;
+import org.bouncycastle.jce.provider.BouncyCastleProvider;
+import org.bouncycastle.openpgp.PGPException;
 import org.bouncycastle.openpgp.PGPPrivateKey;
-import org.bouncycastle.openpgp.PGPSecretKey;
+import org.bouncycastle.openpgp.PGPPublicKey;
+import org.bouncycastle.openpgp.PGPSecretKeyRingCollection;
 import org.bouncycastle.openpgp.PGPSignature;
 import org.bouncycastle.openpgp.PGPSignatureGenerator;
 import org.bouncycastle.openpgp.PGPUtil;
+import org.bouncycastle.openpgp.operator.jcajce.JcaKeyFingerprintCalculator;
 import org.bouncycastle.openpgp.operator.jcajce.JcaPGPContentSignerBuilder;
 import org.bouncycastle.openpgp.operator.jcajce.JcePBESecretKeyDecryptorBuilder;
 import org.eclipse.aether.artifact.Artifact;
@@ -53,6 +61,7 @@ import org.jdrupes.builder.api.Resource;
 import org.jdrupes.builder.api.ResourceRequest;
 import static org.jdrupes.builder.api.ResourceRequest.requestFor;
 import org.jdrupes.builder.core.AbstractGenerator;
+import org.jdrupes.builder.java.JarGenerator;
 import org.jdrupes.builder.java.JavadocJarFile;
 import org.jdrupes.builder.java.LibraryJarFile;
 import org.jdrupes.builder.java.SourcesJarFile;
@@ -65,6 +74,11 @@ public class MvnPublicationGenerator extends AbstractGenerator {
     private URI snapshotUri;
     private String repoUser;
     private String repoPass;
+    private JcaPGPContentSignerBuilder signerBuilder;
+    private PGPPrivateKey privateKey;
+    private PGPPublicKey publicKey;
+    private Supplier<Path> artifactDirectory
+        = () -> project().buildDirectory().resolve("publications/maven");
 
     public MvnPublicationGenerator(Project project) {
         super(project);
@@ -85,6 +99,46 @@ public class MvnPublicationGenerator extends AbstractGenerator {
     public MvnPublicationGenerator credentials(String user, String pass) {
         this.repoUser = user;
         this.repoPass = pass;
+        return this;
+    }
+
+    /// Returns the directory where additional artifacts are created.
+    /// Defaults to sub directory `publications/maven` in the project's
+    /// build directory (see [Project#buildDirectory]).
+    ///
+    /// @return the directory
+    ///
+    public Path artifactDirectory() {
+        return artifactDirectory.get();
+    }
+
+    /// Sets the directory where additional artifacts are created.
+    /// The [Path] is resolved against the project's build directory
+    /// (see [Project#buildDirectory]). If `destination` is `null`,
+    /// the additional artifacts are created in the directory where
+    /// the base artifact is found.
+    ///
+    /// @param directory the new directory
+    /// @return the maven publication generator
+    ///
+    public MvnPublicationGenerator artifactDirectory(Path directory) {
+        if (directory == null) {
+            this.artifactDirectory = () -> null;
+        }
+        this.artifactDirectory
+            = () -> project().buildDirectory().resolve(directory);
+        return this;
+    }
+
+    /// Sets the directory where additional artifacts are created.
+    /// If the [Supplier] returns `null`, the additional artifacts
+    /// are created in the directory where the base artifact is found.
+    ///
+    /// @param directory the new directory
+    /// @return the maven publication generator
+    ///
+    public MvnPublicationGenerator artifactDirectory(Supplier<Path> directory) {
+        this.artifactDirectory = directory;
         return this;
     }
 
@@ -165,6 +219,9 @@ public class MvnPublicationGenerator extends AbstractGenerator {
                     .addUsername(repoUser).addPassword(repoPass)
                     .build()).build();
         var deployReq = new DeployRequest().setRepository(repo);
+        if (artifactDirectory() != null) {
+            artifactDirectory().toFile().mkdirs();
+        }
         addArtifact(deployReq, new SubArtifact(mainArtifact, "", "pom"),
             pomResource);
         addArtifact(deployReq, new SubArtifact(mainArtifact, "", "jar"),
@@ -181,16 +238,12 @@ public class MvnPublicationGenerator extends AbstractGenerator {
         // Now deploy everything
         @SuppressWarnings("PMD.CloseResource")
         var context = MvnRepoLookup.rootContext();
+        // TODO disable temporarily
         var result = context.repositorySystem().deploy(
             context.repositorySystemSession(), deployReq);
         return Stream.of(project().newResource(MvnPublicationType,
             mainArtifact.getGroupId() + ":" + mainArtifact.getArtifactId()
                 + ":" + mainArtifact.getVersion()));
-    }
-
-    private void addArtifact(DeployRequest deployReq, Artifact artifact,
-            FileResource resource) {
-        deployReq.addArtifact(artifact.setFile(resource.path().toFile()));
     }
 
     private Artifact mainArtifact(PomFile pomResource)
@@ -203,32 +256,123 @@ public class MvnPublicationGenerator extends AbstractGenerator {
             "jar", model.getVersion());
     }
 
-    public static void createDetachedSignature(
-            File inputFile, File signatureFile,
-            PGPSecretKey secretKey, char[] passphrase) throws Exception {
-        Security.addProvider(
-            new org.bouncycastle.jce.provider.BouncyCastleProvider());
-        PGPPrivateKey privateKey = secretKey.extractPrivateKey(
+    private void addArtifact(DeployRequest deployReq, Artifact artifact,
+            FileResource resource) {
+        deployReq.addArtifact(artifact.setFile(resource.path().toFile()));
+
+        // Generate .md5 and .sha1 checksum files
+        try {
+            MessageDigest md5 = MessageDigest.getInstance("MD5");
+            MessageDigest sha1 = MessageDigest.getInstance("SHA-1");
+            try (var fis = Files.newInputStream(resource.path())) {
+                byte[] buffer = new byte[8192];
+                while (true) {
+                    int read = fis.read(buffer);
+                    if (read < 0) {
+                        break;
+                    }
+                    md5.update(buffer, 0, read);
+                    sha1.update(buffer, 0, read);
+                }
+            }
+            var fileName = resource.path().getFileName().toString();
+
+            // Handle generated md5
+            var md5Hex = toHex(md5.digest()) + "  " + fileName + "\n";
+            var md5Path = destinationPath(resource, fileName + ".md5");
+            Files.writeString(md5Path, md5Hex);
+            deployReq.addArtifact(new SubArtifact(artifact, "*", "*.md5")
+                .setFile(md5Path.toFile()));
+
+            // Handle generated sha1
+            String sha1Hex = toHex(sha1.digest()) + "  " + fileName + "\n";
+            var sha1Path = destinationPath(resource, fileName + ".sha1");
+            Files.writeString(sha1Path, sha1Hex);
+            deployReq.addArtifact(new SubArtifact(artifact, "*", "*.sha1")
+                .setFile(sha1Path.toFile()));
+
+            // Add signature as yet another artifact
+            var sigPath = signResource(resource);
+            deployReq.addArtifact(new SubArtifact(artifact, "*", "*.asc")
+                .setFile(sigPath.toFile()));
+        } catch (NoSuchAlgorithmException | IOException | PGPException e) {
+            throw new BuildException(e);
+        }
+    }
+
+    private Path destinationPath(FileResource base, String fileName) {
+        var dir = artifactDirectory();
+        if (dir == null) {
+            base.path().resolveSibling(fileName);
+        }
+        return dir.resolve(fileName);
+    }
+
+    public static String toHex(byte[] bytes) {
+        char[] hexDigits = "0123456789abcdef".toCharArray();
+        char[] result = new char[bytes.length * 2];
+
+        for (int i = 0; i < bytes.length; i++) {
+            int unsigned = bytes[i] & 0xFF;
+            result[i * 2] = hexDigits[unsigned >>> 4];
+            result[i * 2 + 1] = hexDigits[unsigned & 0x0F];
+        }
+        return new String(result);
+    }
+
+    private void initSigning()
+            throws FileNotFoundException, IOException, PGPException {
+        if (signerBuilder != null) {
+            return;
+        }
+        var keyRingFileName
+            = project().context().property("signing.secretKeyRingFile");
+        var keyId = project().context().property("signing.keyId");
+        var passphrase
+            = project().context().property("signing.password").toCharArray();
+        if (keyRingFileName == null || keyId == null || passphrase == null) {
+            log.warning(() -> "Cannot sign artifacts: properties not set.");
+            return;
+        }
+        Security.addProvider(new BouncyCastleProvider());
+        var secretKeyRingCollection = new PGPSecretKeyRingCollection(
+            PGPUtil.getDecoderStream(
+                Files.newInputStream(Path.of(keyRingFileName))),
+            new JcaKeyFingerprintCalculator());
+        var secretKey = secretKeyRingCollection
+            .getSecretKey(Long.parseUnsignedLong(keyId, 16));
+        publicKey = secretKey.getPublicKey();
+        privateKey = secretKey.extractPrivateKey(
             new JcePBESecretKeyDecryptorBuilder().setProvider("BC")
                 .build(passphrase));
-        JcaPGPContentSignerBuilder signerBuilder
-            = new JcaPGPContentSignerBuilder(
-                secretKey.getPublicKey().getAlgorithm(), PGPUtil.SHA256)
-                    .setProvider("BC");
-        PGPSignatureGenerator signatureGenerator = new PGPSignatureGenerator(
-            signerBuilder, secretKey.getPublicKey());
-        signatureGenerator.init(PGPSignature.BINARY_DOCUMENT, privateKey);
+        signerBuilder = new JcaPGPContentSignerBuilder(
+            publicKey.getAlgorithm(), PGPUtil.SHA256).setProvider("BC");
 
-        try (InputStream fileInput
-            = new BufferedInputStream(new FileInputStream(inputFile));
-                OutputStream sigOut = new ArmoredOutputStream(
-                    new FileOutputStream(signatureFile))) {
-            int ch;
-            while ((ch = fileInput.read()) >= 0) {
-                signatureGenerator.update((byte) ch);
+    }
+
+    private Path signResource(FileResource resource)
+            throws PGPException, IOException {
+        initSigning();
+        PGPSignatureGenerator signatureGenerator = new PGPSignatureGenerator(
+            signerBuilder, publicKey);
+        signatureGenerator.init(PGPSignature.BINARY_DOCUMENT, privateKey);
+        var sigPath = destinationPath(resource,
+            resource.path().getFileName() + ".asc");
+        try (InputStream fileInput = new BufferedInputStream(
+            Files.newInputStream(resource.path()));
+                OutputStream sigOut
+                    = new ArmoredOutputStream(Files.newOutputStream(sigPath))) {
+            byte[] buffer = new byte[8192];
+            while (true) {
+                int read = fileInput.read(buffer);
+                if (read < 0) {
+                    break;
+                }
+                signatureGenerator.update(buffer, 0, read);
             }
             PGPSignature signature = signatureGenerator.generate();
             signature.encode(sigOut);
         }
+        return sigPath;
     }
 }
