@@ -19,6 +19,7 @@
 package org.jdrupes.builder.core;
 
 import java.lang.reflect.Proxy;
+import java.util.Collections;
 import java.util.LinkedHashSet;
 import java.util.Objects;
 import java.util.Set;
@@ -49,7 +50,7 @@ public class DefaultResources<T extends Resource> extends ResourceObject
     ///
     protected DefaultResources(ResourceType<?> type) {
         super(type);
-        content = new LinkedHashSet<>();
+        content = Collections.synchronizedSet(new LinkedHashSet<>());
     }
 
     /* default */ @SuppressWarnings("unchecked")
