@@ -30,6 +30,15 @@ import java.util.stream.Stream;
 import org.apache.maven.model.building.DefaultModelBuilderFactory;
 import org.apache.maven.model.building.DefaultModelBuildingRequest;
 import org.apache.maven.model.building.ModelBuildingException;
+import org.bouncycastle.bcpg.ArmoredOutputStream;
+import org.bouncycastle.openpgp.PGPPrivateKey;
+import org.bouncycastle.openpgp.PGPSecretKey;
+import org.bouncycastle.openpgp.PGPSignature;
+import org.bouncycastle.openpgp.PGPSignatureGenerator;
+import org.bouncycastle.openpgp.PGPUtil;
+import org.bouncycastle.openpgp.operator.jcajce.JcaPGPContentSignerBuilder;
+import org.bouncycastle.openpgp.operator.jcajce.JcePBESecretKeyDecryptorBuilder;
+import org.eclipse.aether.artifact.Artifact;
 import org.eclipse.aether.artifact.DefaultArtifact;
 import org.eclipse.aether.deployment.DeployRequest;
 import org.eclipse.aether.deployment.DeploymentException;
@@ -37,22 +46,19 @@ import org.eclipse.aether.repository.RemoteRepository;
 import org.eclipse.aether.util.artifact.SubArtifact;
 import org.eclipse.aether.util.repository.AuthenticationBuilder;
 import org.jdrupes.builder.api.BuildException;
+import org.jdrupes.builder.api.FileResource;
 import static org.jdrupes.builder.api.Intend.*;
 import org.jdrupes.builder.api.Project;
 import org.jdrupes.builder.api.Resource;
 import org.jdrupes.builder.api.ResourceRequest;
 import static org.jdrupes.builder.api.ResourceRequest.requestFor;
-import org.jdrupes.builder.api.ResourceType;
 import org.jdrupes.builder.core.AbstractGenerator;
 import org.jdrupes.builder.java.JavadocJarFile;
 import org.jdrupes.builder.java.LibraryJarFile;
 import org.jdrupes.builder.java.SourcesJarFile;
 import static org.jdrupes.builder.mvnrepo.MvnRepoTypes.*;
-import org.bouncycastle.openpgp.*;
-import org.bouncycastle.openpgp.operator.jcajce.JcaPGPContentSignerBuilder;
-import org.bouncycastle.openpgp.operator.jcajce.JcePBESecretKeyDecryptorBuilder;
-import org.bouncycastle.bcpg.ArmoredOutputStream;
 
+@SuppressWarnings("PMD.CouplingBetweenObjects")
 public class MvnPublicationGenerator extends AbstractGenerator {
 
     private URI repositoryUri;
@@ -135,24 +141,22 @@ public class MvnPublicationGenerator extends AbstractGenerator {
             }
         }
 
-        // Get the coordinates from the model
+        // Deploy what we've found
         try {
-            return (Stream<T>) deploy(pomResource, jarResource, srcsFile,
+            @SuppressWarnings("unchecked")
+            var result = (Stream<T>) deploy(pomResource, jarResource, srcsFile,
                 jdFile);
+            return result;
         } catch (ModelBuildingException | DeploymentException e) {
             throw new BuildException(e);
         }
     }
 
+    @SuppressWarnings("PMD.AvoidDuplicateLiterals")
     private Stream<?> deploy(PomFile pomResource, LibraryJarFile jarResource,
             SourcesJarFile srcsFile, JavadocJarFile jdFile)
             throws ModelBuildingException, DeploymentException {
-        var pomFile = pomResource.path().toFile();
-        var req = new DefaultModelBuildingRequest().setPomFile(pomFile);
-        var model = new DefaultModelBuilderFactory().newInstance()
-            .build(req).getEffectiveModel();
-        var mainArtifact = new DefaultArtifact(model.getGroupId(),
-            model.getArtifactId(), "", model.getVersion());
+        var mainArtifact = mainArtifact(pomResource);
         var isSnapshot = mainArtifact.isSnapshot();
         var repo = new RemoteRepository.Builder(
             "mine", "default",
@@ -160,28 +164,43 @@ public class MvnPublicationGenerator extends AbstractGenerator {
                 .toString()).setAuthentication(new AuthenticationBuilder()
                     .addUsername(repoUser).addPassword(repoPass)
                     .build()).build();
-        var deployReq = new DeployRequest().setRepository(repo)
-            .addArtifact(new SubArtifact(mainArtifact, "", "pom")
-                .setFile(pomFile))
-            .addArtifact(new SubArtifact(mainArtifact, "", "jar")
-                .setFile(jarResource.path().toFile()));
+        var deployReq = new DeployRequest().setRepository(repo);
+        addArtifact(deployReq, new SubArtifact(mainArtifact, "", "pom"),
+            pomResource);
+        addArtifact(deployReq, new SubArtifact(mainArtifact, "", "jar"),
+            jarResource);
         if (srcsFile != null) {
-            deployReq.addArtifact(new SubArtifact(mainArtifact,
-                "sources", "jar").setFile(srcsFile.path().toFile()));
+            addArtifact(deployReq,
+                new SubArtifact(mainArtifact, "sources", "jar"), srcsFile);
         }
         if (jdFile != null) {
-            deployReq.addArtifact(new SubArtifact(mainArtifact,
-                "javadoc", "jar").setFile(jdFile.path().toFile()));
+            addArtifact(deployReq,
+                new SubArtifact(mainArtifact, "javadoc", "jar"), jdFile);
         }
 
+        // Now deploy everything
         @SuppressWarnings("PMD.CloseResource")
         var context = MvnRepoLookup.rootContext();
         var result = context.repositorySystem().deploy(
             context.repositorySystemSession(), deployReq);
-        return Stream
-            .of(project().newResource(MvnPublicationType,
-                model.getGroupId() + ":" + model.getArtifactId() + ":"
-                    + model.getVersion()));
+        return Stream.of(project().newResource(MvnPublicationType,
+            mainArtifact.getGroupId() + ":" + mainArtifact.getArtifactId()
+                + ":" + mainArtifact.getVersion()));
+    }
+
+    private void addArtifact(DeployRequest deployReq, Artifact artifact,
+            FileResource resource) {
+        deployReq.addArtifact(artifact.setFile(resource.path().toFile()));
+    }
+
+    private Artifact mainArtifact(PomFile pomResource)
+            throws ModelBuildingException {
+        var pomFile = pomResource.path().toFile();
+        var req = new DefaultModelBuildingRequest().setPomFile(pomFile);
+        var model = new DefaultModelBuilderFactory().newInstance()
+            .build(req).getEffectiveModel();
+        return new DefaultArtifact(model.getGroupId(), model.getArtifactId(),
+            "jar", model.getVersion());
     }
 
     public static void createDetachedSignature(
