@@ -72,6 +72,7 @@ import static org.jdrupes.builder.mvnrepo.MvnRepoTypes.*;
 ///   * Filter out any other duplicate direct child files of `META-INF`.
 ///     These files often contain information related to the origin jar
 ///     that is not applicable to the uber jar.
+///   * Filter out any module-info.class entries.
 ///
 /// Note that the resource type of the uber jar generator's output is one
 /// of the resource types of its inputs, because uber jars can also be used
@@ -163,15 +164,17 @@ public class UberJarGenerator extends LibraryGenerator {
                 }
             });
         jar.stream().filter(Predicate.not(JarEntry::isDirectory))
+            .filter(e -> !Path.of(e.getName())
+                .endsWith(Path.of("module-info.class")))
             .filter(e -> {
+                // Filter top-level entries in META-INF/
                 var segs = Path.of(e.getRealName()).iterator();
                 if (segs.next().equals(Path.of("META-INF"))) {
                     segs.next();
                     return segs.hasNext();
                 }
                 return true;
-            })
-            .forEach(e -> {
+            }).forEach(e -> {
                 var relPath = Path.of(e.getRealName());
                 entries.computeIfAbsent(relPath,
                     _ -> project().newResource(IOResourcesType))
