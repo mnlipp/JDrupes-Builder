@@ -18,9 +18,16 @@
 
 package org.jdrupes.builder.core;
 
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import org.jdrupes.builder.api.Cleanliness;
 import org.jdrupes.builder.api.Generator;
 import org.jdrupes.builder.api.Project;
+import org.jdrupes.builder.api.ResourceRequest;
+import static org.jdrupes.builder.api.ResourceType.CleanlinessType;
 
+// TODO: Auto-generated Javadoc
 /// A base implementation of a [Generator].
 ///
 public abstract class AbstractGenerator extends AbstractProvider
@@ -51,16 +58,49 @@ public abstract class AbstractGenerator extends AbstractProvider
         return this;
     }
 
+    /// Name.
+    ///
+    /// @return the string
+    ///
     @Override
     public String name() {
         return name;
     }
 
+    /// Project.
+    ///
+    /// @return the project
+    ///
     @Override
     public final Project project() {
         return project;
     }
 
+    /// If the request includes [Cleanliness] deletes the given files 
+    /// and returns `true`.
+    ///
+    /// @param requested the requested resource
+    /// @param files the files
+    /// @return true, if successful
+    ///
+    protected boolean cleanup(ResourceRequest<?> requested, Path... files) {
+        if (!requested.includes(CleanlinessType)) {
+            return false;
+        }
+        for (Path file : files) {
+            try {
+                Files.deleteIfExists(file);
+            } catch (IOException e) {
+                log.warning(() -> file + " cannot be deleted.");
+            }
+        }
+        return true;
+    }
+
+    /// To string.
+    ///
+    /// @return the string
+    ///
     @Override
     public String toString() {
         return name + " in project " + project().name();

@@ -35,7 +35,6 @@ import org.jdrupes.builder.api.Project;
 import static org.jdrupes.builder.api.Project.Properties.*;
 import org.jdrupes.builder.api.Resource;
 import org.jdrupes.builder.api.ResourceRequest;
-import static org.jdrupes.builder.api.ResourceType.*;
 import org.jdrupes.builder.core.AbstractGenerator;
 import static org.jdrupes.builder.mvnrepo.MvnProperties.*;
 import static org.jdrupes.builder.mvnrepo.MvnRepoTypes.*;
@@ -104,15 +103,9 @@ public class PomFileGenerator extends AbstractGenerator {
     @Override
     protected <T extends Resource> Stream<T>
             doProvide(ResourceRequest<T> requested) {
-        destination().toFile().mkdirs();
         var pomPath = destination().resolve(Optional.ofNullable(
             project().get(ArtifactId)).orElse(project().name()) + "-pom.xml");
-
-        // Maybe only delete
-        if (requested.includes(CleanlinessType)) {
-            if (pomPath.toFile().exists()) {
-                pomPath.toFile().delete();
-            }
+        if (cleanup(requested, pomPath)) {
             return Stream.empty();
         }
 
@@ -120,6 +113,7 @@ public class PomFileGenerator extends AbstractGenerator {
             return Stream.empty();
         }
 
+        pomPath.getParent().toFile().mkdirs();
         var deps = project().newResource(MvnRepoDependenciesType).addAll(
             project().supplied(new ResourceRequest<>(
                 MvnRepoDependenciesType)));
