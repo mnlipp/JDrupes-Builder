@@ -24,7 +24,39 @@ getProperty() {
   fi
 }
 
-jdbldDirectory=$(getProperty "jdbldDirectory" "_jdbld")
+# Get the executable jar
+
+jdbldVersion=$(getProperty "jdbldVersion" "0.0.3-SNAPSHOT")
+
+if expr >/dev/null "$jdbldVersion" : '.*-SNAPSHOT$'; then
+  # Snaphost are more difficult becaus ethey have no "guessable" file name.
+  xmlstarlet=$(command -v "xmlstarlet")
+  if [ $? -ne 0 ]; then
+    echo >&2 "Need xmlstarlet to download a snapshot version"
+    exit 1
+  fi
+  snapshotBaseUrl="https://central.sonatype.com/repository/maven-snapshots/org/jdrupes/jdrupes-builder"
+  snapshotVersion=$(curl -s $snapshotBaseUrl/$jdbldVersion/maven-metadata.xml \
+    | xmlstarlet sel -t -v "/metadata/versioning/snapshotVersions/snapshotVersion[extension='jar' and not(classifier)]/value")
+  builderJar="$HOME/.jdbld/versions/jdrupes-builder-$snapshotVersion.jar"
+  # Get if not already there
+  if [ ! -r "$builderJar" ]; then
+    mkdir -p $HOME/.jdbld/versions
+    # Cleanup old snapshots
+    snapBase=$(echo -n "$jdbldVersion" | sed 's/-SNAPSHOT$//')
+    rm -f $HOME/.jdbld/versions/jdrupes-builder-$snapBase-*.jar
+    # Get latest
+    curl "$snapshotBaseUrl/$jdbldVersion/jdrupes-builder-$snapshotVersion.jar" \
+      -o "$builderJar"
+  fi
+fi
+
+if [ ! -r "$builderJar" ]; then
+  echo >&2 "JDrupes Builder's executable jar not found."
+  exit 1
+fi
+
+# Handle java related options
 
 javaCmd=java
 if [ -z "$JAVA_HOME" ]; then
@@ -33,16 +65,5 @@ fi
 if [ ! -z "$JAVA_HOME" ]; then
   javaCmd="$JAVA_HOME/bin/java"
 fi
-
-builderJar="$jdbldDirectory/app/jdrupes-builder-0.0.3-SNAPSHOT.jar"
-
-if [ ! -r "$builderJar" ]; then
-  echo >&2 "JDrupes Builder's executable jar not found."
-  exit 1
-fi
-
-# Only for self build
-cp "$builderJar" "$jdbldDirectory/app/jdrupes-builder-current.jar"
-builderJar="$jdbldDirectory/app/jdrupes-builder-current.jar"
 
 $javaCmd -Duser.language=en_US -jar "$builderJar" "$@"
