@@ -63,7 +63,6 @@ public class Javadoc extends JavaTool {
     ///
     /// @param project the project
     ///
-    @SuppressWarnings("PMD.ConstructorCallsOverridableMethod")
     public Javadoc(Project project) {
         super(project);
         tagletpath = project().newResource(new ResourceType<>() {});
