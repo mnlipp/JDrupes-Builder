@@ -31,6 +31,7 @@ import java.security.NoSuchAlgorithmException;
 import java.security.Security;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Supplier;
 import java.util.stream.Stream;
 import org.apache.maven.model.building.DefaultModelBuilderFactory;
@@ -270,7 +271,15 @@ public class MvnPublicationGenerator extends AbstractGenerator {
         var context = MvnRepoLookup.rootContext();
         var session = new DefaultRepositorySystemSession(
             context.repositorySystemSession());
+        var startMsgLogged = new AtomicBoolean(false);
         session.setRepositoryListener(new AbstractRepositoryListener() {
+            @Override
+            public void artifactDeploying(RepositoryEvent event) {
+                if (!startMsgLogged.getAndSet(true)) {
+                    log.info(() -> "Start deploying artifacts...");
+                }
+            }
+
             @Override
             public void artifactDeployed(RepositoryEvent event) {
                 if (!"jar".equals(event.getArtifact().getExtension())) {
