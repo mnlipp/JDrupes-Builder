@@ -237,6 +237,11 @@ public class JarGenerator extends AbstractGenerator {
         attributes.put(Attributes.Name.MANIFEST_VERSION, "1.0");
         this.attributes.stream()
             .forEach(e -> attributes.put(e.getKey(), e.getValue()));
+        try {
+            // Allow continued use of existing jar if open (POSIX only)
+            Files.deleteIfExists(jarResource.path());
+        } catch (IOException e) { // NOPMD
+        }
         try (JarOutputStream jos = new JarOutputStream(Files.newOutputStream(
             jarResource.path(), CREATE, TRUNCATE_EXISTING), manifest)) {
             for (var entry : contents.entrySet()) {
