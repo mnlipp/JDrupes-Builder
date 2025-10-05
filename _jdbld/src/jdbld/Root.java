@@ -96,7 +96,7 @@ public class Root extends AbstractProject implements RootProject {
                     .map(pomFile -> Map.entry(Path.of("META-INF/maven")
                         .resolve((String) get(GroupId)).resolve(name())
                         .resolve("pom.xml"), pomFile)))
-            .destination(directory().resolve(Path.of("_jdbld", "app"))));
+            .destination(buildDirectory().resolve(Path.of("app"))));
 
         // Supply javadoc
         generator(Javadoc::new)
@@ -133,12 +133,10 @@ public class Root extends AbstractProject implements RootProject {
         // Supply sources jar
         generator(SourcesJarGenerator::new)
             .addTrees(get(new ResourceRequest<FileTree<JavaSourceFile>>(
-                new ResourceType<>() {})))
-            .destination(directory().resolve(Path.of("_jdbld", "app")));
+                new ResourceType<>() {})));
 
         // Supply javadoc jar
-        generator(JavadocJarGenerator::new)
-            .destination(directory().resolve(Path.of("_jdbld", "app")));
+        generator(JavadocJarGenerator::new);
 
         // Publish (deploy)
         generator(MvnPublicationGenerator::new)
