@@ -46,8 +46,8 @@ import org.jdrupes.builder.api.ResourceProvider;
 import org.jdrupes.builder.api.ResourceRequest;
 import org.jdrupes.builder.core.AbstractProvider;
 import org.jdrupes.builder.java.CompilationResources;
-import org.jdrupes.builder.java.RuntimeResources;
 import static org.jdrupes.builder.java.JavaTypes.*;
+import org.jdrupes.builder.java.RuntimeResources;
 import static org.jdrupes.builder.mvnrepo.MvnRepoTypes.*;
 
 /// Depending on the request, this provider provides two types of resources.

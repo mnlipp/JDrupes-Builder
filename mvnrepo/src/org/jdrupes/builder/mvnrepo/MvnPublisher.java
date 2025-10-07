@@ -19,11 +19,22 @@
 package org.jdrupes.builder.mvnrepo;
 
 import java.io.BufferedInputStream;
+import java.io.BufferedOutputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.io.PipedInputStream;
+import java.io.PipedOutputStream;
+import java.io.UncheckedIOException;
+import java.io.UnsupportedEncodingException;
 import java.net.URI;
+import java.net.URISyntaxException;
+import java.net.URLEncoder;
+import java.net.http.HttpClient;
+import java.net.http.HttpRequest;
+import java.net.http.HttpResponse;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.security.MessageDigest;
@@ -31,9 +42,14 @@ import java.security.NoSuchAlgorithmException;
 import java.security.Security;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Supplier;
 import java.util.stream.Stream;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipOutputStream;
 import org.apache.maven.model.building.DefaultModelBuilderFactory;
 import org.apache.maven.model.building.DefaultModelBuildingRequest;
 import org.apache.maven.model.building.ModelBuildingException;
@@ -49,6 +65,7 @@ import org.bouncycastle.openpgp.PGPUtil;
 import org.bouncycastle.openpgp.operator.jcajce.JcaKeyFingerprintCalculator;
 import org.bouncycastle.openpgp.operator.jcajce.JcaPGPContentSignerBuilder;
 import org.bouncycastle.openpgp.operator.jcajce.JcePBESecretKeyDecryptorBuilder;
+import org.bouncycastle.util.encoders.Base64;
 import org.eclipse.aether.AbstractRepositoryListener;
 import org.eclipse.aether.DefaultRepositorySystemSession;
 import org.eclipse.aether.RepositoryEvent;
@@ -60,6 +77,7 @@ import org.eclipse.aether.repository.RemoteRepository;
 import org.eclipse.aether.util.artifact.SubArtifact;
 import org.eclipse.aether.util.repository.AuthenticationBuilder;
 import org.jdrupes.builder.api.BuildException;
+import org.jdrupes.builder.api.Generator;
 import static org.jdrupes.builder.api.Intend.*;
 import org.jdrupes.builder.api.Project;
 import org.jdrupes.builder.api.Resource;
@@ -69,12 +87,27 @@ import org.jdrupes.builder.core.AbstractGenerator;
 import org.jdrupes.builder.java.JavadocJarFile;
 import org.jdrupes.builder.java.LibraryJarFile;
 import org.jdrupes.builder.java.SourcesJarFile;
+import static org.jdrupes.builder.mvnrepo.MvnProperties.ArtifactId;
 import static org.jdrupes.builder.mvnrepo.MvnRepoTypes.*;
 
-@SuppressWarnings({ "PMD.CouplingBetweenObjects", "PMD.ExcessiveImports" })
-public class MvnPublicationGenerator extends AbstractGenerator {
+/// A [Generator] for maven deployments in response to requests for
+/// [MvnPublication] It supports publishing releases using the
+/// [Publish Portal API](https://central.sonatype.org/publish/publish-portal-api/)
+/// and publishing snapshots using the "traditional" maven approach
+/// (uploading the files, including the appropriate `maven-metadata.xml`
+/// files).
+///
+/// The publisher requests the [PomFile] from the project and uses
+/// the groupId, artfactId and version as specified in this file.
+/// It also requests the [LibraryJarFile], the [SourcesJarFile] and
+/// the [JavadocJarFile]. The latter two are optional for snapshot
+/// releases.
+///
+@SuppressWarnings({ "PMD.CouplingBetweenObjects", "PMD.ExcessiveImports",
+    "PMD.GodClass", "PMD.TooManyMethods" })
+public class MvnPublisher extends AbstractGenerator {
 
-    private URI repositoryUri;
+    private URI uploadUri;
     private URI snapshotUri;
     private String repoUser;
     private String repoPass;
@@ -84,25 +117,35 @@ public class MvnPublicationGenerator extends AbstractGenerator {
     private Supplier<Path> artifactDirectory
         = () -> project().buildDirectory().resolve("publications/maven");
     private boolean keepSubArtifacts;
+    private boolean publishAutomatically;
 
     /// Creates a new Maven publication generator.
     ///
     /// @param project the project
     ///
-    public MvnPublicationGenerator(Project project) {
+    public MvnPublisher(Project project) {
         super(project);
-        repositoryUri = URI.create(MvnRepoLookup.rootContext()
-            .remoteRepositories().get(0).getUrl());
+        uploadUri = URI
+            .create("https://central.sonatype.com/api/v1/publisher/upload");
     }
 
-    /// Sets the Maven repository URI.
+    /// Sets the upload URI.
     ///
     /// @param uri the repository URI
     /// @return the maven publication generator
     ///
-    public MvnPublicationGenerator repository(URI uri) {
-        this.repositoryUri = uri;
+    public MvnPublisher uploadUri(URI uri) {
+        this.uploadUri = uri;
         return this;
+    }
+
+    /// Returns the upload URI. Defaults to 
+    /// `https://central.sonatype.com/api/v1/publisher/upload`.
+    ///
+    /// @return the uri
+    ///
+    public URI uploadUri() {
+        return uploadUri;
     }
 
     /// Sets the Maven snapshot repository URI.
@@ -110,9 +153,18 @@ public class MvnPublicationGenerator extends AbstractGenerator {
     /// @param uri the snapshot repository URI
     /// @return the maven publication generator
     ///
-    public MvnPublicationGenerator snapshotRepository(URI uri) {
+    public MvnPublisher snapshotRepository(URI uri) {
         this.snapshotUri = uri;
         return this;
+    }
+
+    /// Returns the snapshot repository. Defaults to
+    /// `https://central.sonatype.com/repository/maven-snapshots/`.
+    ///
+    /// @return the uri
+    ///
+    public URI snapshotRepository() {
+        return snapshotUri;
     }
 
     /// Sets the Maven repository credentials.
@@ -121,18 +173,27 @@ public class MvnPublicationGenerator extends AbstractGenerator {
     /// @param pass the password
     /// @return the maven publication generator
     ///
-    public MvnPublicationGenerator credentials(String user, String pass) {
+    public MvnPublisher credentials(String user, String pass) {
         this.repoUser = user;
         this.repoPass = pass;
         return this;
     }
 
-    /// Keep generated sub artifacts.
+    /// Keep generated sub artifacts (checksums, signatures)
     ///
     /// @return the mvn publication generator
     ///
-    public MvnPublicationGenerator keepSubArtifacts() {
+    public MvnPublisher keepSubArtifacts() {
         keepSubArtifacts = true;
+        return this;
+    }
+
+    /// Publish the release automatically.
+    ///
+    /// @return the mvn publisher
+    ///
+    public MvnPublisher publishAutomatically() {
+        publishAutomatically = true;
         return this;
     }
 
@@ -155,7 +216,7 @@ public class MvnPublicationGenerator extends AbstractGenerator {
     /// @param directory the new directory
     /// @return the maven publication generator
     ///
-    public MvnPublicationGenerator artifactDirectory(Path directory) {
+    public MvnPublisher artifactDirectory(Path directory) {
         if (directory == null) {
             this.artifactDirectory = () -> null;
             return this;
@@ -172,24 +233,9 @@ public class MvnPublicationGenerator extends AbstractGenerator {
     /// @param directory the new directory
     /// @return the maven publication generator
     ///
-    public MvnPublicationGenerator artifactDirectory(Supplier<Path> directory) {
+    public MvnPublisher artifactDirectory(Supplier<Path> directory) {
         this.artifactDirectory = directory;
         return this;
-    }
-
-    private <T extends Resource> T resourceCheck(Stream<T> resources,
-            String name) {
-        var iter = resources.iterator();
-        if (!iter.hasNext()) {
-            log.severe(() -> "No " + name + " resource available.");
-            return null;
-        }
-        var result = iter.next();
-        if (iter.hasNext()) {
-            log.severe(() -> "More than one " + name + " resource found.");
-            return null;
-        }
-        return result;
     }
 
     @Override
@@ -231,14 +277,25 @@ public class MvnPublicationGenerator extends AbstractGenerator {
         }
 
         // Deploy what we've found
-        try {
-            @SuppressWarnings("unchecked")
-            var result = (Stream<T>) deploy(pomResource, jarResource, srcsFile,
-                jdFile);
-            return result;
-        } catch (ModelBuildingException | DeploymentException e) {
-            throw new BuildException(e);
+        @SuppressWarnings("unchecked")
+        var result = (Stream<T>) deploy(pomResource, jarResource, srcsFile,
+            jdFile);
+        return result;
+    }
+
+    private <T extends Resource> T resourceCheck(Stream<T> resources,
+            String name) {
+        var iter = resources.iterator();
+        if (!iter.hasNext()) {
+            log.severe(() -> "No " + name + " resource available.");
+            return null;
         }
+        var result = iter.next();
+        if (iter.hasNext()) {
+            log.severe(() -> "More than one " + name + " resource found.");
+            return null;
+        }
+        return result;
     }
 
     private record Deployable(Artifact artifact, boolean temporary) {
@@ -246,9 +303,14 @@ public class MvnPublicationGenerator extends AbstractGenerator {
 
     @SuppressWarnings("PMD.AvoidDuplicateLiterals")
     private Stream<?> deploy(PomFile pomResource, LibraryJarFile jarResource,
-            SourcesJarFile srcsJar, JavadocJarFile javadocJar)
-            throws ModelBuildingException, DeploymentException {
-        var mainArtifact = mainArtifact(pomResource);
+            SourcesJarFile srcsJar, JavadocJarFile javadocJar) {
+        Artifact mainArtifact;
+        try {
+            mainArtifact = mainArtifact(pomResource);
+        } catch (ModelBuildingException e) {
+            throw new BuildException(
+                "Cannot build model from POM: " + e.getMessage(), e);
+        }
         if (artifactDirectory() != null) {
             artifactDirectory().toFile().mkdirs();
         }
@@ -266,49 +328,21 @@ public class MvnPublicationGenerator extends AbstractGenerator {
                 "jar", javadocJar.path().toFile()));
         }
 
-        // Now deploy everything
-        @SuppressWarnings("PMD.CloseResource")
-        var context = MvnRepoLookup.rootContext();
-        var session = new DefaultRepositorySystemSession(
-            context.repositorySystemSession());
-        var startMsgLogged = new AtomicBoolean(false);
-        session.setRepositoryListener(new AbstractRepositoryListener() {
-            @Override
-            public void artifactDeploying(RepositoryEvent event) {
-                if (!startMsgLogged.getAndSet(true)) {
-                    log.info(() -> "Start deploying artifacts...");
-                }
+        try {
+            if (mainArtifact.isSnapshot()) {
+                deploySnapshot(toDeploy);
+            } else {
+                deployRelease(mainArtifact, toDeploy);
             }
-
-            @Override
-            public void artifactDeployed(RepositoryEvent event) {
-                if (!"jar".equals(event.getArtifact().getExtension())) {
-                    return;
-                }
-                log.info(() -> "Deployed: " + event.getArtifact());
+        } catch (DeploymentException e) {
+            throw new BuildException(
+                "Deployment failed for " + mainArtifact, e);
+        } finally {
+            if (!keepSubArtifacts) {
+                toDeploy.stream().filter(Deployable::temporary).forEach(d -> {
+                    d.artifact().getFile().delete();
+                });
             }
-
-            @Override
-            public void metadataDeployed(RepositoryEvent event) {
-                log.info(() -> "Deployed: " + event.getMetadata());
-            }
-
-        });
-        var isSnapshot = mainArtifact.isSnapshot();
-        var repo = new RemoteRepository.Builder(
-            "mine", "default",
-            (isSnapshot ? snapshotUri : repositoryUri)
-                .toString()).setAuthentication(new AuthenticationBuilder()
-                    .addUsername(repoUser).addPassword(repoPass).build())
-                    .build();
-        var deployReq = new DeployRequest().setRepository(repo);
-        toDeploy.stream().map(d -> d.artifact).forEach(deployReq::addArtifact);
-        var result = context.repositorySystem().deploy(session, deployReq);
-        if (!keepSubArtifacts) {
-            toDeploy.stream().filter(Deployable::temporary).forEach(d -> {
-                d.artifact().getFile().delete();
-            });
-
         }
         return Stream.of(project().newResource(MvnPublicationType,
             mainArtifact.getGroupId() + ":" + mainArtifact.getArtifactId()
@@ -349,16 +383,14 @@ public class MvnPublicationGenerator extends AbstractGenerator {
             var fileName = artifactFile.getFileName().toString();
 
             // Handle generated md5
-            var md5Hex = toHex(md5.digest()) + "  " + fileName + "\n";
             var md5Path = destinationPath(artifactFile, fileName + ".md5");
-            Files.writeString(md5Path, md5Hex);
+            Files.writeString(md5Path, toHex(md5.digest()));
             toDeploy.add(new Deployable(new SubArtifact(artifact, "*", "*.md5",
                 md5Path.toFile()), true));
 
             // Handle generated sha1
-            String sha1Hex = toHex(sha1.digest()) + "  " + fileName + "\n";
             var sha1Path = destinationPath(artifactFile, fileName + ".sha1");
-            Files.writeString(sha1Path, sha1Hex);
+            Files.writeString(sha1Path, toHex(sha1.digest()));
             toDeploy.add(new Deployable(new SubArtifact(artifact, "*", "*.sha1",
                 sha1Path.toFile()), true));
 
@@ -418,7 +450,6 @@ public class MvnPublicationGenerator extends AbstractGenerator {
                 .build(passphrase));
         signerBuilder = new JcaPGPContentSignerBuilder(
             publicKey.getAlgorithm(), PGPUtil.SHA256).setProvider("BC");
-
     }
 
     private Path signResource(Path resource)
@@ -445,5 +476,167 @@ public class MvnPublicationGenerator extends AbstractGenerator {
             signature.encode(sigOut);
         }
         return sigPath;
+    }
+
+    private void deploySnapshot(List<Deployable> toDeploy)
+            throws DeploymentException {
+        // Now deploy everything
+        @SuppressWarnings("PMD.CloseResource")
+        var context = MvnRepoLookup.rootContext();
+        var session = new DefaultRepositorySystemSession(
+            context.repositorySystemSession());
+        var startMsgLogged = new AtomicBoolean(false);
+        session.setRepositoryListener(new AbstractRepositoryListener() {
+            @Override
+            public void artifactDeploying(RepositoryEvent event) {
+                if (!startMsgLogged.getAndSet(true)) {
+                    log.info(() -> "Start deploying artifacts...");
+                }
+            }
+
+            @Override
+            public void artifactDeployed(RepositoryEvent event) {
+                if (!"jar".equals(event.getArtifact().getExtension())) {
+                    return;
+                }
+                log.info(() -> "Deployed: " + event.getArtifact());
+            }
+
+            @Override
+            public void metadataDeployed(RepositoryEvent event) {
+                log.info(() -> "Deployed: " + event.getMetadata());
+            }
+
+        });
+        var repo = new RemoteRepository.Builder("mine", "default",
+            snapshotUri.toString())
+                .setAuthentication(new AuthenticationBuilder()
+                    .addUsername(repoUser).addPassword(repoPass).build())
+                .build();
+        var deployReq = new DeployRequest().setRepository(repo);
+        toDeploy.stream().map(d -> d.artifact).forEach(deployReq::addArtifact);
+        context.repositorySystem().deploy(session, deployReq);
+    }
+
+    @SuppressWarnings("PMD.AvoidLiteralsInIfCondition")
+    private void deployRelease(Artifact mainArtifact,
+            List<Deployable> toDeploy) {
+        // Create zip file with all artifacts for release, see
+        // https://central.sonatype.org/publish/publish-portal-upload/
+        var zipName = Optional.ofNullable(project().get(ArtifactId))
+            .orElse(project().name()) + "-" + mainArtifact.getVersion()
+            + "-release.zip";
+        var zipPath = artifactDirectory().resolve(zipName);
+        try {
+            Path praefix = Path.of(mainArtifact.getGroupId().replace('.', '/'))
+                .resolve(mainArtifact.getArtifactId())
+                .resolve(mainArtifact.getVersion());
+            try (ZipOutputStream zos
+                = new ZipOutputStream(Files.newOutputStream(zipPath))) {
+                for (Deployable d : toDeploy) {
+                    var artifact = d.artifact();
+                    @SuppressWarnings("PMD.AvoidInstantiatingObjectsInLoops")
+                    var entry = new ZipEntry(praefix.resolve(
+                        artifact.getArtifactId() + "-" + artifact.getVersion()
+                            + (artifact.getClassifier().isEmpty()
+                                ? ""
+                                : "-" + artifact.getClassifier())
+                            + "." + artifact.getExtension())
+                        .toString());
+                    zos.putNextEntry(entry);
+                    try (var fis = Files.newInputStream(
+                        artifact.getFile().toPath())) {
+                        fis.transferTo(zos);
+                    }
+                    zos.closeEntry();
+                }
+            }
+        } catch (IOException e) {
+            throw new BuildException(
+                "Failed to create release zip: " + e.getMessage(), e);
+        }
+
+        try (var client = HttpClient.newHttpClient()) {
+            var boundary = "===" + System.currentTimeMillis() + "===";
+            var token = new String(Base64.encode((repoUser + ":" + repoPass)
+                .getBytes(StandardCharsets.UTF_8)), StandardCharsets.UTF_8);
+            var effectiveUri = uploadUri;
+            if (publishAutomatically) {
+                effectiveUri = addQueryParameter(
+                    uploadUri, "publishingType", "AUTOMATIC");
+            }
+            HttpRequest request = HttpRequest.newBuilder().uri(effectiveUri)
+                .header("Authorization", "Bearer " + token)
+                .header("Content-Type",
+                    "multipart/form-data; boundary=" + boundary)
+                .POST(HttpRequest.BodyPublishers
+                    .ofInputStream(() -> getAsMultipart(zipPath, boundary)))
+                .build();
+            log.info(() -> "Uploading release bundle...");
+            HttpResponse<String> response = client.send(request,
+                HttpResponse.BodyHandlers.ofString());
+            if (response.statusCode() / 100 != 2) {
+                throw new BuildException(
+                    "Failed to upload release bundle: " + response.body());
+            }
+        } catch (IOException | InterruptedException e) {
+            throw new BuildException(
+                "Failed to upload release bundle: " + e.getMessage(), e);
+        } finally {
+            if (!keepSubArtifacts) {
+                zipPath.toFile().delete();
+            }
+        }
+    }
+
+    @SuppressWarnings("PMD.UseTryWithResources")
+    private InputStream getAsMultipart(Path zipPath, String boundary) {
+        // Use Piped streams for streaming multipart content
+        var fromPipe = new PipedInputStream();
+        final String lineFeed = "\r\n";
+
+        // Write multipart content to pipe
+        ExecutorService executor = Executors.newVirtualThreadPerTaskExecutor();
+        executor.submit(() -> {
+            try (var mpOut = new BufferedOutputStream(
+                new PipedOutputStream(fromPipe))) {
+                @SuppressWarnings("PMD.InefficientStringBuffering")
+                StringBuilder intro = new StringBuilder(100)
+                    .append("--").append(boundary).append(lineFeed)
+                    .append("Content-Disposition: form-data; name=\"bundle\";"
+                        + " filename=\"%s\"".formatted(zipPath.getFileName()))
+                    .append(lineFeed)
+                    .append("Content-Type: application/octet-stream")
+                    .append(lineFeed).append(lineFeed);
+                mpOut.write(
+                    intro.toString().getBytes(StandardCharsets.US_ASCII));
+                Files.newInputStream(zipPath).transferTo(mpOut);
+                mpOut.write((lineFeed + "--" + boundary + "--")
+                    .getBytes(StandardCharsets.US_ASCII));
+            } catch (IOException e) {
+                throw new UncheckedIOException(e);
+            } finally {
+                executor.close();
+            }
+        });
+        return fromPipe;
+    }
+
+    private static URI addQueryParameter(URI uri, String key, String value) {
+        String query = uri.getQuery();
+        try {
+            String newQueryParam
+                = key + "=" + URLEncoder.encode(value, "UTF-8");
+            String newQuery = (query == null || query.isEmpty()) ? newQueryParam
+                : query + "&" + newQueryParam;
+
+            // Build a new URI with the new query string
+            return new URI(uri.getScheme(), uri.getAuthority(), uri.getPath(),
+                newQuery, uri.getFragment());
+        } catch (UnsupportedEncodingException | URISyntaxException e) {
+            // UnsupportedEncodingException cannot happen, UTF-8 is standard.
+            // URISyntaxException cannot happen when starting with a valid URI
+            throw new IllegalArgumentException(e);
+        }
     }
 }

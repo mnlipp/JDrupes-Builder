@@ -1,6 +1,5 @@
 package jdbld;
 
-import java.net.URI;
 import java.nio.file.Path;
 import java.util.List;
 import java.util.Map;
@@ -21,10 +20,9 @@ import org.jdrupes.builder.eclipse.EclipseConfiguration;
 import org.jdrupes.builder.java.AppJarFile;
 import org.jdrupes.builder.java.ClasspathElement;
 import static org.jdrupes.builder.java.JavaTypes.*;
-
 import org.jdrupes.builder.mvnrepo.JavadocJarGenerator;
 import org.jdrupes.builder.mvnrepo.MvnPublication;
-import org.jdrupes.builder.mvnrepo.MvnPublicationGenerator;
+import org.jdrupes.builder.mvnrepo.MvnPublisher;
 import org.jdrupes.builder.mvnrepo.MvnRepoLookup;
 import org.jdrupes.builder.mvnrepo.PomFile;
 import org.jdrupes.builder.mvnrepo.PomFileGenerator;
@@ -50,7 +48,7 @@ public class Root extends AbstractProject implements RootProject {
     public Root() {
         super(name("jdrupes-builder"));
         set(GroupId, "org.jdrupes");
-        set(Version, "0.0.3-SNAPSHOT");
+        set(Version, "0.0.3");
 
         dependency(Expose, project(Api.class));
         dependency(Expose, project(Core.class));
@@ -139,9 +137,8 @@ public class Root extends AbstractProject implements RootProject {
         generator(JavadocJarGenerator::new);
 
         // Publish (deploy)
-        generator(MvnPublicationGenerator::new)
-            .snapshotRepository(URI.create(
-                "https://central.sonatype.com/repository/maven-snapshots/"))
+        generator(MvnPublisher::new)
+            .publishAutomatically()
             .credentials(
                 context().property("cscuser"), context().property("cscpass"));
 
