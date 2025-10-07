@@ -127,6 +127,8 @@ public class MvnPublisher extends AbstractGenerator {
         super(project);
         uploadUri = URI
             .create("https://central.sonatype.com/api/v1/publisher/upload");
+        snapshotUri = URI
+            .create("https://central.sonatype.com/repository/maven-snapshots/");
     }
 
     /// Sets the upload URI.
