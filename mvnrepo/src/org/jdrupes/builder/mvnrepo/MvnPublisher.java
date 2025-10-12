@@ -76,6 +76,7 @@ import org.eclipse.aether.deployment.DeploymentException;
 import org.eclipse.aether.repository.RemoteRepository;
 import org.eclipse.aether.util.artifact.SubArtifact;
 import org.eclipse.aether.util.repository.AuthenticationBuilder;
+import org.jdrupes.builder.api.BuildContext;
 import org.jdrupes.builder.api.BuildException;
 import org.jdrupes.builder.api.Generator;
 import static org.jdrupes.builder.api.Intend.*;
@@ -103,6 +104,11 @@ import static org.jdrupes.builder.mvnrepo.MvnRepoTypes.*;
 /// the [JavadocJarFile]. The latter two are optional for snapshot
 /// releases.
 ///
+/// Publishing requires credentials for the maven repository and a
+/// PGP/GPG secret key for signing the artifacts. They can be set by
+/// the respective methods. However, it is assumed that the credentials
+/// are usually made available as properties in the build context.
+///
 @SuppressWarnings({ "PMD.CouplingBetweenObjects", "PMD.ExcessiveImports",
     "PMD.GodClass", "PMD.TooManyMethods" })
 public class MvnPublisher extends AbstractGenerator {
@@ -111,6 +117,9 @@ public class MvnPublisher extends AbstractGenerator {
     private URI snapshotUri;
     private String repoUser;
     private String repoPass;
+    private String signingKeyRing;
+    private String signingKeyId;
+    private String signingPassword;
     private JcaPGPContentSignerBuilder signerBuilder;
     private PGPPrivateKey privateKey;
     private PGPPublicKey publicKey;
@@ -169,7 +178,9 @@ public class MvnPublisher extends AbstractGenerator {
         return snapshotUri;
     }
 
-    /// Sets the Maven repository credentials.
+    /// Sets the Maven repository credentials. If not specified, the
+    /// publisher looks for properties `mvnrepo.user` and
+    /// `mvnrepo.password` in the properties provided by the [BuildContext].
     ///
     /// @param user the username
     /// @param pass the password
@@ -181,7 +192,29 @@ public class MvnPublisher extends AbstractGenerator {
         return this;
     }
 
-    /// Keep generated sub artifacts (checksums, signatures)
+    /// Use the provided information to sign the artifacts. If no
+    /// information is specified, the publisher will use the [BuildContext]
+    /// to look up the properties `signing.secretKeyRingFile`,
+    /// `signing.secretKey` and `signing.password`.
+    ///
+    /// The publisher retrieves the secret key from the key ring using the
+    /// key ID. While this method makes signing in CI/CD pipelines
+    /// more complex, it is considered best practice. 
+    ///
+    /// @param secretKeyRing the secret key ring
+    /// @param keyId the key id
+    /// @param password the password
+    /// @return the mvn publisher
+    ///
+    public MvnPublisher signWith(String secretKeyRing, String keyId,
+            String password) {
+        this.signingKeyRing = secretKeyRing;
+        this.signingKeyId = keyId;
+        this.signingPassword = password;
+        return this;
+    }
+
+    /// Keep generated sub artifacts (checksums, signatures).
     ///
     /// @return the mvn publication generator
     ///
@@ -430,11 +463,13 @@ public class MvnPublisher extends AbstractGenerator {
         if (signerBuilder != null) {
             return;
         }
-        var keyRingFileName
-            = project().context().property("signing.secretKeyRingFile");
-        var keyId = project().context().property("signing.keyId");
-        var passphrase
-            = project().context().property("signing.password").toCharArray();
+        var keyRingFileName = Optional.ofNullable(signingKeyRing)
+            .orElse(project().context().property("signing.secretKeyRingFile"));
+        var keyId = Optional.ofNullable(signingKeyId)
+            .orElse(project().context().property("signing.keyId"));
+        var passphrase = Optional.ofNullable(signingPassword)
+            .orElse(project().context().property("signing.password"))
+            .toCharArray();
         if (keyRingFileName == null || keyId == null || passphrase == null) {
             log.warning(() -> "Cannot sign artifacts: properties not set.");
             return;
@@ -510,10 +545,14 @@ public class MvnPublisher extends AbstractGenerator {
             }
 
         });
+        var user = Optional.ofNullable(repoUser)
+            .orElse(project().context().property("mvnrepo.user"));
+        var password = Optional.ofNullable(repoPass)
+            .orElse(project().context().property("mvnrepo.password"));
         var repo = new RemoteRepository.Builder("mine", "default",
             snapshotUri.toString())
                 .setAuthentication(new AuthenticationBuilder()
-                    .addUsername(repoUser).addPassword(repoPass).build())
+                    .addUsername(user).addPassword(password).build())
                 .build();
         var deployReq = new DeployRequest().setRepository(repo);
         toDeploy.stream().map(d -> d.artifact).forEach(deployReq::addArtifact);
@@ -560,7 +599,11 @@ public class MvnPublisher extends AbstractGenerator {
 
         try (var client = HttpClient.newHttpClient()) {
             var boundary = "===" + System.currentTimeMillis() + "===";
-            var token = new String(Base64.encode((repoUser + ":" + repoPass)
+            var user = Optional.ofNullable(repoUser)
+                .orElse(project().context().property("mvnrepo.user"));
+            var password = Optional.ofNullable(repoPass)
+                .orElse(project().context().property("mvnrepo.password"));
+            var token = new String(Base64.encode((user + ":" + password)
                 .getBytes(StandardCharsets.UTF_8)), StandardCharsets.UTF_8);
             var effectiveUri = uploadUri;
             if (publishAutomatically) {

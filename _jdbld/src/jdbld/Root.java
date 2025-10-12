@@ -48,7 +48,7 @@ public class Root extends AbstractProject implements RootProject {
     public Root() {
         super(name("jdrupes-builder"));
         set(GroupId, "org.jdrupes");
-        set(Version, "0.0.4-SNAPSHOT");
+        set(Version, "0.0.4");
 
         dependency(Expose, project(Api.class));
         dependency(Expose, project(Core.class));
@@ -136,11 +136,9 @@ public class Root extends AbstractProject implements RootProject {
         // Supply javadoc jar
         generator(JavadocJarGenerator::new);
 
-        // Publish (deploy)
-        generator(MvnPublisher::new)
-            .publishAutomatically()
-            .credentials(
-                context().property("cscuser"), context().property("cscpass"));
+        // Publish (deploy). Credentials and signing information is
+        // obtained through properties.
+        generator(MvnPublisher::new);
 
         // Commands
         commandAlias("build", requestFor(AppJarFile.class),
