@@ -18,6 +18,8 @@
 
 package jdbld;
 
+import static org.jdrupes.builder.mvnrepo.MvnProperties.GroupId;
+
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -27,6 +29,7 @@ import java.util.Map;
 
 import org.jdrupes.builder.api.BuildException;
 import org.jdrupes.builder.api.Project;
+import org.jdrupes.builder.api.RootProject;
 import org.jdrupes.builder.eclipse.EclipseConfigurator;
 import org.jdrupes.builder.java.JavaCompiler;
 import org.jdrupes.builder.java.JavaProject;
@@ -51,6 +54,8 @@ public class ProjectPreparation {
 
     public static void setupEclipseConfigurator(Project project) {
         project.generator(new EclipseConfigurator(project)
+            .eclipseAlias(project instanceof RootProject ? project.name()
+                : project.get(GroupId) + ".builder." + project.name())
             .adaptProjectConfiguration((Document doc,
                     Node buildSpec, Node natures) -> {
                 if (project instanceof JavaProject) {
