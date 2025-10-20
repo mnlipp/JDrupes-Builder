@@ -36,6 +36,7 @@ import org.jdrupes.builder.api.FileTree;
 import org.jdrupes.builder.api.Project;
 import org.jdrupes.builder.api.Resource;
 import org.jdrupes.builder.api.ResourceRequest;
+import static org.jdrupes.builder.api.ResourceRequest.*;
 import org.jdrupes.builder.api.ResourceType;
 import static org.jdrupes.builder.api.ResourceType.*;
 import org.jdrupes.builder.api.Resources;
@@ -176,29 +177,19 @@ public class Javadoc extends JavaTool {
         var diagnostics = new DiagnosticCollector<JavaFileObject>();
         try (var fileManager
             = javadoc.getStandardFileManager(diagnostics, null, null)) {
-            if (options().contains("-d")) {
-                new BuildException(project()
-                    + ": Specifying the destination directory with "
-                    + "options() is not allowed.");
-            }
-            List<String> allOptions = new ArrayList<>(options());
-            allOptions.addAll(List.of("-d", destDir.toString()));
-            var tagletPath = tagletPath();
-            if (!tagletPath.isEmpty()) {
-                allOptions.addAll(List.of("-tagletpath", tagletPath));
-            }
-            for (var taglet : taglets) {
-                allOptions.addAll(List.of("-taglet", taglet));
-            }
+            List<String> allOptions = evaluateOptions(destDir);
+            log.finest(() -> "Javadoc options: " + allOptions);
+            var sources = sourcePaths();
+            log.finest(() -> "Javadoc sources: " + sources);
             var sourceFiles
-                = fileManager.getJavaFileObjectsFromPaths(sourcePaths());
+                = fileManager.getJavaFileObjectsFromPaths(sources);
             if (!javadoc.getTask(null, fileManager, diagnostics, null,
                 allOptions, sourceFiles).call()) {
                 throw new BuildException("Documentation generation failed");
             }
         } catch (Exception e) {
             log.log(java.util.logging.Level.SEVERE, () -> "Project "
-                + project().name() + ": " + "Problem compiling Java: "
+                + project().name() + ": " + "Problem generating Javadoc: "
                 + e.getMessage());
             throw new BuildException(e);
         } finally {
@@ -208,6 +199,37 @@ public class Javadoc extends JavaTool {
         var result = (Stream<T>) Stream
             .of(project().newResource(JavadocDirectoryType, destDir));
         return result;
+    }
+
+    private List<String> evaluateOptions(Path destDir) {
+        if (options().contains("-d")) {
+            new BuildException(project()
+                + ": Specifying the destination directory with "
+                + "options() is not allowed.");
+        }
+        List<String> allOptions = new ArrayList<>(options());
+        allOptions.addAll(List.of("-d", destDir.toString()));
+
+        // Handle classpath
+        var cpResources = project().newResource(ClasspathType).addAll(
+            project().provided(requestFor(ClasspathElement.class)));
+        log.finest(() -> "Generating in " + project() + " with classpath "
+            + cpResources.stream().map(Resource::toString).toList());
+        if (!cpResources.isEmpty()) {
+            var classpath = cpResources.stream().map(e -> e.toPath().toString())
+                .collect(Collectors.joining(File.pathSeparator));
+            allOptions.addAll(List.of("-cp", classpath));
+        }
+
+        // Handle taglets
+        var tagletPath = tagletPath();
+        if (!tagletPath.isEmpty()) {
+            allOptions.addAll(List.of("-tagletpath", tagletPath));
+        }
+        for (var taglet : taglets) {
+            allOptions.addAll(List.of("-taglet", taglet));
+        }
+        return allOptions;
     }
 
     private String tagletPath() {
