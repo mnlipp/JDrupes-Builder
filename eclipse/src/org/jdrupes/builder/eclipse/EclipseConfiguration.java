@@ -18,11 +18,23 @@
 
 package org.jdrupes.builder.eclipse;
 
-import org.jdrupes.builder.api.FileResource;
+import org.jdrupes.builder.api.Resource;
 
 /// A resource request for the Eclipse configuration files. The request
-/// results in the configured project's directory.
+/// results in information about the Eclipse configuration.
 ///
-public interface EclipseConfiguration extends FileResource {
+public interface EclipseConfiguration extends Resource {
+
+    /// The jdbld project name.
+    ///
+    /// @return the string
+    ///
+    String projectName();
+
+    /// The project name used in the Eclipse configuration.
+    ///
+    /// @return the string
+    ///
+    String eclipseAlias();
 
 }
