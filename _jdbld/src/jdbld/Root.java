@@ -82,7 +82,7 @@ public class Root extends AbstractProject implements RootProject {
         });
 
         // Provide app jar
-        dependency(Forward, new UberJarGenerator(this)
+        dependency(Supply, new UberJarGenerator(this)
             .from(providers(Expose))
             .from(new MvnRepoLookup().resolve(
                 "eu.maveniverse.maven.mima.runtime:standalone-static:2.4.34",

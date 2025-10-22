@@ -79,7 +79,6 @@ import org.eclipse.aether.util.repository.AuthenticationBuilder;
 import org.jdrupes.builder.api.BuildContext;
 import org.jdrupes.builder.api.BuildException;
 import org.jdrupes.builder.api.Generator;
-import static org.jdrupes.builder.api.Intend.*;
 import org.jdrupes.builder.api.Project;
 import org.jdrupes.builder.api.Resource;
 import org.jdrupes.builder.api.ResourceRequest;
@@ -279,14 +278,13 @@ public class MvnPublisher extends AbstractGenerator {
         if (!requested.includes(MvnPublicationType)) {
             return Stream.empty();
         }
-        PomFile pomResource = resourceCheck(project().supplied(
-            requestFor(PomFile.class)), "POM file");
+        PomFile pomResource = resourceCheck(
+            project().supplied(requestFor(PomFile.class)), "POM file");
         if (pomResource == null) {
             return Stream.empty();
         }
-        var jarResource = resourceCheck(project().getFrom(project()
-            .providers(Expose, Forward), requestFor(LibraryJarFile.class)),
-            "jar file");
+        var jarResource = resourceCheck(
+            project().supplied(requestFor(LibraryJarFile.class)), "jar file");
         if (jarResource == null) {
             return Stream.empty();
         }
