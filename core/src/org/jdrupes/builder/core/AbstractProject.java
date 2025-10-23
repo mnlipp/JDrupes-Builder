@@ -270,14 +270,6 @@ public abstract class AbstractProject extends AbstractProvider
     }
 
     @Override
-    public <T extends Resource> Stream<T> getFrom(
-            Stream<ResourceProvider> providers, ResourceRequest<T> request) {
-        return providers.map(p -> context().<T> get(p, request))
-            // Terminate stream to start all tasks for evaluating the futures
-            .toList().stream().flatMap(s -> s);
-    }
-
-    @Override
     public DefaultBuildContext context() {
         return ((AbstractProject) rootProject()).context;
     }

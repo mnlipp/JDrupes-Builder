@@ -294,16 +294,21 @@ public interface Project extends ResourceProvider {
         return providers(EnumSet.of(intend, intends));
     }
 
-    /// Invoke the given providers for the given request and return the
-    /// resulting stream. This method terminates the stream of providers.
+    /// Invoke the given providers for the given request (via [Context#get])
+    /// and return the resulting stream. This method terminates the stream
+    /// of providers.
     ///
     /// @param <T> the generic type
     /// @param providers the providers
     /// @param request the request
     /// @return the stream
     ///
-    <T extends Resource> Stream<T> getFrom(
-            Stream<ResourceProvider> providers, ResourceRequest<T> request);
+    default <T extends Resource> Stream<T> getFrom(
+            Stream<ResourceProvider> providers, ResourceRequest<T> request) {
+        return providers.map(p -> context().<T> get(p, request))
+            // Terminate stream to start all tasks for evaluating the futures
+            .toList().stream().flatMap(s -> s);
+    }
 
     /// Returns all resources that are provided for the given request
     /// by providers associated with [Intend#Consume] or [Intend#Expose].
