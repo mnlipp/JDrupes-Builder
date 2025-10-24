@@ -22,6 +22,7 @@ import eu.maveniverse.maven.mima.context.Context;
 import eu.maveniverse.maven.mima.context.ContextOverrides;
 import eu.maveniverse.maven.mima.context.Runtime;
 import eu.maveniverse.maven.mima.context.Runtimes;
+import java.net.URI;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -33,6 +34,8 @@ import org.eclipse.aether.artifact.DefaultArtifact;
 import org.eclipse.aether.collection.CollectRequest;
 import org.eclipse.aether.graph.Dependency;
 import org.eclipse.aether.graph.DependencyNode;
+import org.eclipse.aether.repository.RemoteRepository;
+import org.eclipse.aether.repository.RepositoryPolicy;
 import org.eclipse.aether.resolution.ArtifactRequest;
 import org.eclipse.aether.resolution.ArtifactResolutionException;
 import org.eclipse.aether.resolution.DependencyRequest;
@@ -64,6 +67,7 @@ public class MvnRepoLookup extends AbstractProvider
     private final List<String> coordinates = new ArrayList<>();
     private boolean downloadSources = true;
     private boolean downloadJavadoc = true;
+    private URI snapshotUri;
     private static Context rootContextInstance;
 
     /// Instantiates a new mvn repo lookup.
@@ -85,6 +89,25 @@ public class MvnRepoLookup extends AbstractProvider
         Runtime runtime = Runtimes.INSTANCE.getRuntime();
         rootContextInstance = runtime.create(overrides);
         return rootContextInstance;
+    }
+
+    /// Sets the Maven snapshot repository URI.
+    ///
+    /// @param uri the snapshot repository URI
+    /// @return the mvn repo lookup
+    ///
+    public MvnRepoLookup snapshotRepository(URI uri) {
+        this.snapshotUri = uri;
+        return this;
+    }
+
+    /// Returns the snapshot repository. Defaults to
+    /// `https://central.sonatype.com/repository/maven-snapshots/`.
+    ///
+    /// @return the uri
+    ///
+    public URI snapshotRepository() {
+        return snapshotUri;
     }
 
     /// Add artifacts, specified by their coordinates
@@ -144,8 +167,11 @@ public class MvnRepoLookup extends AbstractProvider
     @SuppressWarnings("PMD.AvoidInstantiatingObjectsInLoops")
     private <T extends Resource> Stream<T>
             provideJars(ResourceRequest<T> requested) {
-        CollectRequest collectRequest = new CollectRequest()
-            .setRepositories(rootContext().remoteRepositories());
+        CollectRequest collectRequest = new CollectRequest().setRepositories(
+            new ArrayList<>(rootContext().remoteRepositories()));
+        if (snapshotUri != null) {
+            addSnapshotRepository(collectRequest);
+        }
         for (var coord : coordinates) {
             collectRequest.addDependency(
                 new Dependency(new DefaultArtifact(coord),
@@ -187,6 +213,21 @@ public class MvnRepoLookup extends AbstractProvider
             throw new BuildException(
                 "Cannot resolve: " + e.getMessage(), e);
         }
+    }
+
+    private void addSnapshotRepository(CollectRequest collectRequest) {
+        RemoteRepository snapshotsRepo = new RemoteRepository.Builder(
+            "snapshots", "default", snapshotUri.toString())
+                .setSnapshotPolicy(new RepositoryPolicy(
+                    true,  // enable snapshots
+                    RepositoryPolicy.UPDATE_POLICY_ALWAYS,
+                    RepositoryPolicy.CHECKSUM_POLICY_WARN))
+                .setReleasePolicy(new RepositoryPolicy(
+                    false,
+                    RepositoryPolicy.UPDATE_POLICY_NEVER,
+                    RepositoryPolicy.CHECKSUM_POLICY_IGNORE))
+                .build();
+        collectRequest.addRepository(snapshotsRepo);
     }
 
     private void downloadSourceJar(RepositorySystem repoSystem,
