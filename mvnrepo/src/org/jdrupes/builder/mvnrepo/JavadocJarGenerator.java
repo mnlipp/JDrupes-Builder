@@ -21,6 +21,7 @@ package org.jdrupes.builder.mvnrepo;
 import java.util.Optional;
 import org.jdrupes.builder.api.FileResource;
 import org.jdrupes.builder.api.FileTree;
+import static org.jdrupes.builder.api.Intend.Supply;
 import org.jdrupes.builder.api.Project;
 import static org.jdrupes.builder.api.Project.Properties.Version;
 import org.jdrupes.builder.api.ResourceRequest;
@@ -51,8 +52,8 @@ public class JavadocJarGenerator extends JarGenerator {
     @SuppressWarnings({ "PMD.ConstructorCallsOverridableMethod" })
     public JavadocJarGenerator(Project project) {
         super(project, JavadocJarFileType);
-        var trees = project().supplied(new ResourceRequest<JavadocDirectory>(
-            new ResourceType<>() {})).map(
+        var trees = project().from(Supply).get(
+            new ResourceRequest<JavadocDirectory>(new ResourceType<>() {})).map(
                 d -> project().newResource(
                     new ResourceType<FileTree<FileResource>>() {},
                     d.path(), "**/*"));

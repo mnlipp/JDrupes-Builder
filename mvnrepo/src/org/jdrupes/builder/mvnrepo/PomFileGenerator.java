@@ -32,6 +32,8 @@ import org.apache.maven.model.io.DefaultModelWriter;
 import org.jdrupes.builder.api.BuildException;
 import org.jdrupes.builder.api.Generator;
 import org.jdrupes.builder.api.Project;
+
+import static org.jdrupes.builder.api.Intend.Supply;
 import static org.jdrupes.builder.api.Project.Properties.*;
 import org.jdrupes.builder.api.Resource;
 import org.jdrupes.builder.api.ResourceRequest;
@@ -115,7 +117,7 @@ public class PomFileGenerator extends AbstractGenerator {
 
         pomPath.getParent().toFile().mkdirs();
         var deps = project().newResource(MvnRepoDependenciesType).addAll(
-            project().supplied(new ResourceRequest<>(
+            project().from(Supply).get(new ResourceRequest<>(
                 MvnRepoDependenciesType)));
         Model model = generatePom();
 

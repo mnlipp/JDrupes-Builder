@@ -79,6 +79,7 @@ import org.eclipse.aether.util.repository.AuthenticationBuilder;
 import org.jdrupes.builder.api.BuildContext;
 import org.jdrupes.builder.api.BuildException;
 import org.jdrupes.builder.api.Generator;
+import static org.jdrupes.builder.api.Intend.*;
 import org.jdrupes.builder.api.Project;
 import org.jdrupes.builder.api.Resource;
 import org.jdrupes.builder.api.ResourceRequest;
@@ -279,17 +280,17 @@ public class MvnPublisher extends AbstractGenerator {
             return Stream.empty();
         }
         PomFile pomResource = resourceCheck(
-            project().supplied(requestFor(PomFile.class)), "POM file");
+            project().from(Consume).get(requestFor(PomFile.class)), "POM file");
         if (pomResource == null) {
             return Stream.empty();
         }
-        var jarResource = resourceCheck(
-            project().supplied(requestFor(LibraryJarFile.class)), "jar file");
+        var jarResource = resourceCheck(project().from(Supply)
+            .get(requestFor(LibraryJarFile.class)), "jar file");
         if (jarResource == null) {
             return Stream.empty();
         }
-        var srcsIter = project().supplied(requestFor(SourcesJarFile.class))
-            .iterator();
+        var srcsIter = project().from(Supply)
+            .get(requestFor(SourcesJarFile.class)).iterator();
         SourcesJarFile srcsFile = null;
         if (srcsIter.hasNext()) {
             srcsFile = srcsIter.next();
@@ -298,8 +299,8 @@ public class MvnPublisher extends AbstractGenerator {
                 return Stream.empty();
             }
         }
-        var jdIter = project().supplied(requestFor(JavadocJarFile.class))
-            .iterator();
+        var jdIter = project().from(Supply)
+            .get(requestFor(JavadocJarFile.class)).iterator();
         JavadocJarFile jdFile = null;
         if (jdIter.hasNext()) {
             jdFile = jdIter.next();

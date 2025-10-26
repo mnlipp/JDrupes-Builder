@@ -294,22 +294,6 @@ public interface Project extends ResourceProvider {
         return providers(EnumSet.of(intend, intends));
     }
 
-    /// Invoke the given providers for the given request (via [Context#get])
-    /// and return the resulting stream. This method terminates the stream
-    /// of providers.
-    ///
-    /// @param <T> the generic type
-    /// @param providers the providers
-    /// @param request the request
-    /// @return the stream
-    ///
-    default <T extends Resource> Stream<T> getFrom(
-            Stream<ResourceProvider> providers, ResourceRequest<T> request) {
-        return providers.map(p -> context().<T> get(p, request))
-            // Terminate stream to start all tasks for evaluating the futures
-            .toList().stream().flatMap(s -> s);
-    }
-
     /// Returns all resources that are provided for the given request
     /// by providers associated with [Intend#Consume] or [Intend#Expose].
     ///
@@ -319,19 +303,7 @@ public interface Project extends ResourceProvider {
     ///
     default <T extends Resource> Stream<T>
             provided(ResourceRequest<T> requested) {
-        return getFrom(providers(Consume, Expose), requested);
-    }
-
-    /// Returns all resources that are provided for the given request
-    /// by providers associated with [Intend#Supply].
-    ///
-    /// @param <T> the requested type
-    /// @param requested the requested
-    /// @return the provided resources
-    ///
-    default <T extends Resource> Stream<T>
-            supplied(ResourceRequest<T> requested) {
-        return getFrom(providers(Supply), requested);
+        return from(Consume, Expose).get(requested);
     }
 
     /// Short for `directory().relativize(other)`.
@@ -385,9 +357,31 @@ public interface Project extends ResourceProvider {
     /// @return the stream of resources
     ///
     default FromHelper from(ResourceProvider provider) {
-        return new FromHelper(context(), provider);
+        return new FromHelper(context(), Stream.of(provider));
     }
 
+    /// Returns a new [FromHelper] instance for a subsequent call to
+    /// [FromHelper#get].
+    ///
+    /// @param providers the providers
+    /// @return the stream of resources
+    ///
+    default FromHelper from(Stream<ResourceProvider> providers) {
+        return new FromHelper(context(), providers);
+    }
+
+    /// Retrieves the providers with the specified intend(s)
+    /// (see [#providers]) and returns a new [FromHelper] instance
+    /// for a subsequent call to [FromHelper#get].
+    ///
+    /// @param intend the intend
+    /// @param intends the intends
+    /// @return the from helper
+    ///
+    default FromHelper from(Intend intend, Intend... intends) {
+        return new FromHelper(context(), providers(intend, intends));
+    }
+    
     /// Returns a new resource with the given type. Short for invoking
     /// [ResourceFactory#create] with the current project as first argument
     /// and the given arguments appended.

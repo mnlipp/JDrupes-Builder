@@ -59,8 +59,8 @@ public class Root extends AbstractProject implements RootProject {
         dependency(Expose, project(Eclipse.class));
         dependency(Expose, project(Vscode.class));
 
-        // Supply POM
-        generator(PomFileGenerator::new).adaptPom(model -> {
+        // Generate POM
+        dependency(Consume, PomFileGenerator::new).adaptPom(model -> {
             model.setDescription("See URL.");
             model.setUrl("https://builder.jdrupes.org/");
             var scm = new Scm();
@@ -89,11 +89,11 @@ public class Root extends AbstractProject implements RootProject {
                 "org.slf4j:slf4j-api:2.0.17",
                 "org.slf4j:slf4j-jdk14:2.0.17"))
             .mainClass("org.jdrupes.builder.startup.BootstrapLauncher")
-            .addEntries(
-                supplied(new ResourceRequest<PomFile>(new ResourceType<>() {}))
-                    .map(pomFile -> Map.entry(Path.of("META-INF/maven")
-                        .resolve((String) get(GroupId)).resolve(name())
-                        .resolve("pom.xml"), pomFile)))
+            .addEntries(from(Consume)
+                .get(new ResourceRequest<PomFile>(new ResourceType<>() {}))
+                .map(pomFile -> Map.entry(Path.of("META-INF/maven")
+                    .resolve((String) get(GroupId)).resolve(name())
+                    .resolve("pom.xml"), pomFile)))
             .destination(buildDirectory().resolve(Path.of("app"))));
 
         // Supply javadoc

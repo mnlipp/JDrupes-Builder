@@ -20,6 +20,7 @@ package org.jdrupes.builder.mvnrepo;
 
 import java.util.Optional;
 import org.jdrupes.builder.api.FileTree;
+import static org.jdrupes.builder.api.Intend.Supply;
 import org.jdrupes.builder.api.Project;
 import static org.jdrupes.builder.api.Project.Properties.Version;
 import org.jdrupes.builder.api.ResourceRequest;
@@ -50,7 +51,7 @@ public class SourcesJarGenerator extends JarGenerator {
     @SuppressWarnings("PMD.ConstructorCallsOverridableMethod")
     public SourcesJarGenerator(Project project) {
         super(project, SourcesJarFileType);
-        addTrees(project().supplied(
+        addTrees(project().from(Supply).get(
             new ResourceRequest<FileTree<JavaSourceFile>>(
                 new ResourceType<>() {})));
         jarName(Optional.ofNullable(project().get(ArtifactId))

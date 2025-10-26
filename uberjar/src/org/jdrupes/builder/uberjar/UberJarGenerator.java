@@ -127,8 +127,8 @@ public class UberJarGenerator extends LibraryGenerator {
     protected void
             collectFromProviders(Map<Path, Resources<IOResource>> contents) {
         openJars = new ConcurrentHashMap<>();
-        project().getFrom(providers().stream(),
-            new ResourceRequest<ClasspathElement>(
+        project().from(providers().stream())
+            .get(new ResourceRequest<ClasspathElement>(
                 new ResourceType<RuntimeResources>() {}))
             .parallel().forEach(cpe -> {
                 if (cpe instanceof FileTree<?> fileTree) {
@@ -139,8 +139,8 @@ public class UberJarGenerator extends LibraryGenerator {
                 }
             });
         var lookup = new MvnRepoLookup();
-        project().getFrom(providers().stream(),
-            new ResourceRequest<>(MvnRepoDependenciesType))
+        project().from(providers().stream())
+            .get(new ResourceRequest<>(MvnRepoDependenciesType))
             .forEach(d -> lookup.resolve(d.coordinates()));
         project().context().get(lookup, new ResourceRequest<ClasspathElement>(
             new ResourceType<RuntimeResources>() {}))

@@ -23,7 +23,6 @@ import java.lang.reflect.InvocationTargetException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Collections;
-import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -307,8 +306,7 @@ public abstract class AbstractProject extends AbstractProvider
     @Override
     protected <R extends Resource> Stream<R>
             doProvide(ResourceRequest<R> requested) {
-        return getFrom(providers(EnumSet.of(Forward, Expose, Supply)),
-            requested);
+        return from(Forward, Expose, Supply).get(requested);
     }
 
     /// Define command, see [RootProject#commandAlias].

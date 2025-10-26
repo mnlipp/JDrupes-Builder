@@ -58,7 +58,8 @@ import static org.jdrupes.builder.java.JavaTypes.*;
 /// generator(LibraryGenerator::new).from(providers(Supply));
 /// ```
 ///
-public class LibraryGenerator extends JarGenerator implements ResourceRetriever {
+public class LibraryGenerator extends JarGenerator
+        implements ResourceRetriever {
 
     private final StreamCollector<ResourceProvider> providers
         = StreamCollector.cached();
@@ -139,11 +140,11 @@ public class LibraryGenerator extends JarGenerator implements ResourceRetriever 
     ///
     protected void
             collectFromProviders(Map<Path, Resources<IOResource>> contents) {
-        project().getFrom(providers().stream(),
-            new ResourceRequest<ClassTree>(new ResourceType<>() {}))
+        project().from(providers().stream())
+            .get(new ResourceRequest<ClassTree>(new ResourceType<>() {}))
             .parallel().forEach(t -> collect(contents, t));
-        project().getFrom(providers().stream(),
-            new ResourceRequest<JavaResourceTree>(new ResourceType<>() {}))
+        project().from(providers().stream())
+            .get(new ResourceRequest<JavaResourceTree>(new ResourceType<>() {}))
             .parallel().forEach(t -> collect(contents, t));
     }
 

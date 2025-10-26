@@ -23,11 +23,12 @@ import java.util.stream.Stream;
 /// Helper class for implementing [Project#from].
 ///
 /// @param context the context
-/// @param provider the provider
+/// @param providers the providers
 ///
-public record FromHelper(BuildContext context, ResourceProvider provider) {
+public record FromHelper(BuildContext context,
+        Stream<ResourceProvider> providers) {
 
-    /// Returns the requested resources using the context and provider 
+    /// Returns the requested resources using the context and providers 
     /// passed to the record's constructor.
     ///
     /// @param <T> the generic type
@@ -35,7 +36,7 @@ public record FromHelper(BuildContext context, ResourceProvider provider) {
     /// @return the stream
     ///
     public <T extends Resource> Stream<T> get(ResourceRequest<T> request) {
-        return context.get(provider, request);
+        return providers.flatMap(provider -> context.get(provider, request));
     }
 
 }
