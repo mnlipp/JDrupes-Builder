@@ -168,7 +168,7 @@ public interface Project extends ResourceProvider {
     /// @param project the requested project's type
     /// @return the project
     ///
-    ResourceProvider project(Class<? extends Project> project);
+    Project project(Class<? extends Project> project);
 
     /// Returns the project's name. 
     ///

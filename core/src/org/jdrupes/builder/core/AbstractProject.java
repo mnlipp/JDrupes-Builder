@@ -203,7 +203,7 @@ public abstract class AbstractProject extends AbstractProvider
     }
 
     @Override
-    public ResourceProvider project(Class<? extends Project> prjCls) {
+    public Project project(Class<? extends Project> prjCls) {
         if (this.getClass().equals(prjCls)) {
             return this;
         }
