@@ -19,10 +19,12 @@
 package org.jdrupes.builder.startup;
 
 import java.net.MalformedURLException;
+import java.net.URI;
 import java.net.URL;
 import java.net.URLClassLoader;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.Optional;
 import java.util.logging.Logger;
 import java.util.stream.Stream;
 import org.jdrupes.builder.api.BuildException;
@@ -30,7 +32,6 @@ import org.jdrupes.builder.api.FileResource;
 import org.jdrupes.builder.api.FileTree;
 import static org.jdrupes.builder.api.Intend.*;
 import org.jdrupes.builder.api.Launcher;
-import org.jdrupes.builder.api.Project;
 import org.jdrupes.builder.api.Resource;
 import org.jdrupes.builder.api.ResourceRequest;
 import org.jdrupes.builder.api.ResourceType;
@@ -73,12 +74,15 @@ public class BootstrapLauncher extends AbstractLauncher {
 
             // Add build extensions to the build project.
             var mvnLookup = new MvnRepoLookup();
+            Optional.ofNullable(jdbldProps
+                .getProperty(BootstrapBuild.EXTENSIONS_SNAPSHOT_REPO, null))
+                .map(URI::create).ifPresent(mvnLookup::snapshotRepository);
             Arrays.asList(jdbldProps
                 .getProperty(BootstrapBuild.BUILD_EXTENSIONS, "").split(","))
                 .stream().map(String::trim).filter(c -> !c.isBlank())
                 .forEach(mvnLookup::resolve);
-            ((Project) rootProject.project(BootstrapBuild.class))
-                .dependency(Expose, mvnLookup);
+            rootProject.project(BootstrapBuild.class).dependency(Expose,
+                mvnLookup);
             @SuppressWarnings("PMD.UseDiamondOperator")
             var cpUrls = rootProject.get(
                 new ResourceRequest<ClasspathElement>(
