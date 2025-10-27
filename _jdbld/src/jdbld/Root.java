@@ -107,8 +107,6 @@ public class Root extends AbstractProject implements RootProject {
             .taglets(Stream.of("org.jdrupes.taglets.plantUml.PlantUml",
                 "org.jdrupes.taglets.plantUml.StartUml",
                 "org.jdrupes.taglets.plantUml.EndUml"))
-            .addSources(get(new ResourceRequest<FileTree<JavaSourceFile>>(
-                new ResourceType<>() {})))
             .options("-overview", directory().resolve("overview.md").toString())
             .options("--add-stylesheet",
                 directory().resolve("misc/javadoc-overwrites.css").toString())

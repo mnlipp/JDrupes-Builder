@@ -44,7 +44,7 @@ import org.jdrupes.builder.core.StreamCollector;
 import static org.jdrupes.builder.java.JavaTypes.*;
 
 /// The [Javadoc] generator provides the resource [JavadocDirectory],
-/// a directory that contains the generated javadoc files.
+/// a directory that contains generated javadoc files.
 ///
 /// No attempt has been made to define types for the options of
 /// the javadoc tool. Rather, the options are passed as strings
@@ -52,10 +52,22 @@ import static org.jdrupes.builder.java.JavaTypes.*;
 /// exceptions for options that are directly related to resource
 /// types (files, directory trees, paths) from the builder context.
 ///
+/// By default, the generator builds the javadoc for the project passed
+/// to the constructor. In some cases, e.g. when building a common javadoc
+/// for multiple projects, this is not the desired behavior. In this case,
+/// the project(s) to generate javadoc can be set with [#projects].
+///
+/// The sources processed default to the project's [JavaSourceFile]s, i.e.
+/// the resources obtained by invoking
+/// `get(new ResourceRequest<FileTree<JavaSourceFile>>(new ResourceType<>() {}))`
+/// on the project(s). This can be overridden by setting the sources with
+/// one or several invocations of the `addSources`-methods.
+///
 public class Javadoc extends JavaTool {
 
     private final StreamCollector<FileTree<JavaSourceFile>> sources
         = StreamCollector.cached();
+    private StreamCollector<Project> projects = StreamCollector.cached();
     private Path destination = Path.of("doc");
     private final Resources<ClasspathElement> tagletpath;
     private final List<String> taglets = new ArrayList<>();
@@ -66,7 +78,19 @@ public class Javadoc extends JavaTool {
     ///
     public Javadoc(Project project) {
         super(project);
+        projects.add(project);
         tagletpath = project().newResource(new ResourceType<>() {});
+    }
+
+    /// Sets the projects to generate javadoc for.
+    ///
+    /// @param projects the projects
+    /// @return the javadoc
+    ///
+    public Javadoc projects(Stream<Project> projects) {
+        this.projects = StreamCollector.cached();
+        this.projects.add(projects);
+        return this;
     }
 
     /// Returns the destination directory. Defaults to "`doc`".
@@ -127,8 +151,9 @@ public class Javadoc extends JavaTool {
     ///
     /// @return the collection
     ///
-    private Collection<Path> sourcePaths() {
-        return sources.stream().map(Resources::stream)
+    private Collection<Path> sourcePaths(
+            Stream<FileTree<JavaSourceFile>> sources) {
+        return sources.map(Resources::stream)
             .flatMap(Function.identity()).map(FileResource::path)
             .collect(Collectors.toSet());
     }
@@ -179,10 +204,16 @@ public class Javadoc extends JavaTool {
             = javadoc.getStandardFileManager(diagnostics, null, null)) {
             List<String> allOptions = evaluateOptions(destDir);
             log.finest(() -> "Javadoc options: " + allOptions);
-            var sources = sourcePaths();
-            log.finest(() -> "Javadoc sources: " + sources);
+            var sourcePaths = sourcePaths(sources.stream());
+            if (sourcePaths.isEmpty()) {
+                sourcePaths = sourcePaths(projects.stream().flatMap(p -> p
+                    .get(new ResourceRequest<FileTree<JavaSourceFile>>(
+                        new ResourceType<>() {}))));
+            }
+            var finalSourcePaths = sourcePaths;
+            log.finest(() -> "Javadoc sources: " + finalSourcePaths);
             var sourceFiles
-                = fileManager.getJavaFileObjectsFromPaths(sources);
+                = fileManager.getJavaFileObjectsFromPaths(sourcePaths);
             if (!javadoc.getTask(null, fileManager, diagnostics, null,
                 allOptions, sourceFiles).call()) {
                 throw new BuildException("Documentation generation failed");
@@ -211,8 +242,8 @@ public class Javadoc extends JavaTool {
         allOptions.addAll(List.of("-d", destDir.toString()));
 
         // Handle classpath
-        var cpResources = project().newResource(ClasspathType).addAll(
-            project().provided(requestFor(ClasspathElement.class)));
+        var cpResources = newResource(ClasspathType).addAll(projects.stream()
+            .flatMap(p -> p.provided(requestFor(ClasspathElement.class))));
         log.finest(() -> "Generating in " + project() + " with classpath "
             + cpResources.stream().map(Resource::toString).toList());
         if (!cpResources.isEmpty()) {

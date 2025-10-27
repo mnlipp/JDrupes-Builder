@@ -24,7 +24,9 @@ import java.nio.file.Path;
 import org.jdrupes.builder.api.Cleanliness;
 import org.jdrupes.builder.api.Generator;
 import org.jdrupes.builder.api.Project;
+import org.jdrupes.builder.api.Resource;
 import org.jdrupes.builder.api.ResourceRequest;
+import org.jdrupes.builder.api.ResourceType;
 import static org.jdrupes.builder.api.ResourceType.CleanlinessType;
 
 // TODO: Auto-generated Javadoc
@@ -74,6 +76,18 @@ public abstract class AbstractGenerator extends AbstractProvider
     @Override
     public final Project project() {
         return project;
+    }
+
+    /// Short for `project().newResource(type, args)`.
+    ///
+    /// @param <T> the generic type
+    /// @param type the type
+    /// @param args the args
+    /// @return the t
+    ///
+    protected <T extends Resource> T newResource(ResourceType<T> type,
+            Object... args) {
+        return project.newResource(type, args);
     }
 
     /// If the request includes [Cleanliness] deletes the given files 
