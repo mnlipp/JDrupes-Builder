@@ -77,10 +77,12 @@ public class BootstrapLauncher extends AbstractLauncher {
             Optional.ofNullable(jdbldProps
                 .getProperty(BootstrapBuild.EXTENSIONS_SNAPSHOT_REPO, null))
                 .map(URI::create).ifPresent(mvnLookup::snapshotRepository);
-            Arrays.asList(jdbldProps
+            var buildCoords = Arrays.asList(jdbldProps
                 .getProperty(BootstrapBuild.BUILD_EXTENSIONS, "").split(","))
-                .stream().map(String::trim).filter(c -> !c.isBlank())
-                .forEach(mvnLookup::resolve);
+                .stream().map(String::trim).filter(c -> !c.isBlank()).toList();
+            log.fine(() -> "Adding libraries from " + buildCoords
+                + " to classpath for builder project compilation");
+            buildCoords.forEach(mvnLookup::resolve);
             rootProject.project(BootstrapBuild.class).dependency(Expose,
                 mvnLookup);
             @SuppressWarnings("PMD.UseDiamondOperator")
@@ -99,6 +101,8 @@ public class BootstrapLauncher extends AbstractLauncher {
                         throw new BuildException(e);
                     }
                 }).toArray(URL[]::new);
+            log.fine(() -> "Launching build project with classpath: "
+                + Arrays.toString(cpUrls));
             new DirectLauncher(new URLClassLoader(cpUrls,
                 Thread.currentThread().getContextClassLoader()), args);
             return null;

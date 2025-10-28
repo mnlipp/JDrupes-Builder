@@ -56,7 +56,7 @@ public class BootstrapBuild extends AbstractProject implements Masked {
         var jcp = Path.of(System.getProperty("java.class.path"))
             .toAbsolutePath().toString();
         log.fine(() -> "Using java.class.path " + jcp
-            + " for builder project compilation");
+            + " as base for builder project compilation");
         dependency(Consume, new ClasspathScanner(this, jcp));
 
         // Collect directories with "build configuration", derive source
