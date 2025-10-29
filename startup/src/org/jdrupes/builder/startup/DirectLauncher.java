@@ -72,7 +72,7 @@ public class DirectLauncher extends AbstractLauncher {
     public DirectLauncher(ClassLoader classloader, String[] args) {
         super(args);
         unwrapBuildException(() -> {
-            final var extClsLdr = addExtensions(classloader);
+            final var extClsLdr = addRuntimeExts(classloader);
             var rootProjects = new ArrayList<Class<? extends RootProject>>();
             var subprojects = new ArrayList<Class<? extends Project>>();
             findProjects(extClsLdr, rootProjects, subprojects);
@@ -92,12 +92,10 @@ public class DirectLauncher extends AbstractLauncher {
         });
     }
 
-    private ClassLoader addExtensions(ClassLoader classloader) {
-        String[] coordinates = Stream.concat(Arrays.asList(jdbldProps
-            .getProperty(BootstrapBuild.BUILD_EXTENSIONS, "").split(","))
-            .stream(),
-            Arrays.asList(jdbldProps.getProperty(RUNTIME_EXTENSIONS, "")
-                .split(",")).stream())
+    private ClassLoader addRuntimeExts(ClassLoader classloader) {
+        String[] coordinates = Arrays
+            .asList(jdbldProps.getProperty(RUNTIME_EXTENSIONS, "").split(","))
+            .stream()
             .map(String::trim).filter(c -> !c.isBlank()).toArray(String[]::new);
         if (coordinates.length == 0) {
             return classloader;
