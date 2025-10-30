@@ -18,9 +18,10 @@
 
 package org.jdrupes.builder.mvnrepo;
 
-import org.jdrupes.builder.api.Resources;
+import org.jdrupes.builder.java.CompilationResources;
 
 /// A set of maven repository dependencies.
 ///
-public interface MvnRepoDependencies extends Resources<MvnRepoDependency> {
+public interface MvnRepoCompilationDeps extends MvnRepoRuntimeDeps,
+        CompilationResources {
 }

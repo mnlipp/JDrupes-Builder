@@ -18,7 +18,9 @@
 
 package org.jdrupes.builder.java;
 
-/// The Interface RuntimeResources.
+/// The Interface CompilationClasspathElements.
 ///
-public interface RuntimeResources {
+public interface CompilationClasspathElements extends RuntimeClasspathElements,
+        CompilationResources {
+
 }

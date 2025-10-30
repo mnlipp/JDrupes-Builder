@@ -18,7 +18,10 @@
 
 package org.jdrupes.builder.java;
 
-/// The Interface RuntimeResources.
+import org.jdrupes.builder.api.Resources;
+
+/// The Interface RuntimeClasspathElements.
 ///
-public interface RuntimeResources {
+public interface RuntimeClasspathElements extends Resources<ClasspathElement>,
+        RuntimeResources {
 }

@@ -27,16 +27,17 @@ import java.util.Optional;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
 import java.util.stream.Stream;
+import org.apache.maven.model.Dependency;
 import org.apache.maven.model.Model;
 import org.apache.maven.model.io.DefaultModelWriter;
 import org.jdrupes.builder.api.BuildException;
 import org.jdrupes.builder.api.Generator;
+import static org.jdrupes.builder.api.Intend.*;
 import org.jdrupes.builder.api.Project;
-
-import static org.jdrupes.builder.api.Intend.Supply;
 import static org.jdrupes.builder.api.Project.Properties.*;
 import org.jdrupes.builder.api.Resource;
 import org.jdrupes.builder.api.ResourceRequest;
+import org.jdrupes.builder.api.Resources;
 import org.jdrupes.builder.core.AbstractGenerator;
 import static org.jdrupes.builder.mvnrepo.MvnProperties.*;
 import static org.jdrupes.builder.mvnrepo.MvnRepoTypes.*;
@@ -116,10 +117,10 @@ public class PomFileGenerator extends AbstractGenerator {
         }
 
         pomPath.getParent().toFile().mkdirs();
-        var deps = project().newResource(MvnRepoDependenciesType).addAll(
-            project().from(Supply).get(new ResourceRequest<>(
-                MvnRepoDependenciesType)));
-        Model model = generatePom();
+        var deps = project().newResource(MvnRepoCompilationDepsType).addAll(
+            project().from(Supply, Expose, Consume).get(new ResourceRequest<>(
+                MvnRepoCompilationDepsType)));
+        Model model = generatePom(deps);
 
         // create, compare and maybe write model
         pomPath.getParent().toFile().mkdirs();
@@ -153,7 +154,7 @@ public class PomFileGenerator extends AbstractGenerator {
         return result;
     }
 
-    private Model generatePom() {
+    private Model generatePom(Resources<MvnRepoDependency> deps) {
         Model model = new Model();
         model.setModelVersion("4.0.0");
         var groupId = project().<String> get(GroupId);
@@ -164,6 +165,14 @@ public class PomFileGenerator extends AbstractGenerator {
             .<String> get(ArtifactId)).orElse(project().name()));
         model.setVersion(project().get(Version));
         model.setName(project().name());
+        deps.stream().forEach(d -> {
+            var dep = new Dependency();
+            dep.setGroupId(d.groupId());
+            dep.setArtifactId(d.artifactId());
+            dep.setVersion(d.version());
+            dep.setScope("compile");
+            model.addDependency(dep);
+        });
 
         // Adapt
         pomAdapter.accept(model);

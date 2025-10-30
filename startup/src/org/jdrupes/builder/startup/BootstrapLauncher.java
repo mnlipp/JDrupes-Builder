@@ -38,7 +38,7 @@ import org.jdrupes.builder.api.ResourceType;
 import org.jdrupes.builder.api.RootProject;
 import org.jdrupes.builder.core.LauncherSupport;
 import org.jdrupes.builder.java.ClasspathElement;
-import org.jdrupes.builder.java.CompilationResources;
+import org.jdrupes.builder.java.CompilationClasspathElements;
 import org.jdrupes.builder.mvnrepo.MvnRepoLookup;
 
 /// A default implementation of a [Launcher]. The launcher first builds
@@ -88,7 +88,7 @@ public class BootstrapLauncher extends AbstractLauncher {
             @SuppressWarnings("PMD.UseDiamondOperator")
             var cpUrls = rootProject.get(
                 new ResourceRequest<ClasspathElement>(
-                    new ResourceType<CompilationResources>() {}))
+                    new ResourceType<CompilationClasspathElements>() {}))
                 .map(cpe -> {
                     try {
                         if (cpe instanceof FileTree tree) {

@@ -41,7 +41,7 @@ import org.jdrupes.builder.java.JarFile;
 import org.jdrupes.builder.java.JarFileEntry;
 import static org.jdrupes.builder.java.JavaTypes.*;
 import org.jdrupes.builder.java.LibraryGenerator;
-import org.jdrupes.builder.java.RuntimeResources;
+import org.jdrupes.builder.java.RuntimeClasspathElements;
 import org.jdrupes.builder.java.ServicesEntryResource;
 import org.jdrupes.builder.mvnrepo.MvnRepoJarFile;
 import org.jdrupes.builder.mvnrepo.MvnRepoLookup;
@@ -129,7 +129,7 @@ public class UberJarGenerator extends LibraryGenerator {
         openJars = new ConcurrentHashMap<>();
         project().from(providers().stream())
             .get(new ResourceRequest<ClasspathElement>(
-                new ResourceType<RuntimeResources>() {}))
+                new ResourceType<RuntimeClasspathElements>() {}))
             .parallel().forEach(cpe -> {
                 if (cpe instanceof FileTree<?> fileTree) {
                     collect(contents, fileTree);
@@ -140,10 +140,10 @@ public class UberJarGenerator extends LibraryGenerator {
             });
         var lookup = new MvnRepoLookup();
         project().from(providers().stream())
-            .get(new ResourceRequest<>(MvnRepoDependenciesType))
+            .get(new ResourceRequest<>(MvnRepoCompilationDepsType))
             .forEach(d -> lookup.resolve(d.coordinates()));
         project().context().get(lookup, new ResourceRequest<ClasspathElement>(
-            new ResourceType<RuntimeResources>() {}))
+            new ResourceType<RuntimeClasspathElements>() {}))
             .parallel().forEach(cpe -> {
                 if (cpe instanceof MvnRepoJarFile jarFile) {
                     addJarFile(contents, jarFile, openJars);

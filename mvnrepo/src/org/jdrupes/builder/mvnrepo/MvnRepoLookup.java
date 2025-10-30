@@ -48,17 +48,17 @@ import org.jdrupes.builder.api.ResourceFactory;
 import org.jdrupes.builder.api.ResourceProvider;
 import org.jdrupes.builder.api.ResourceRequest;
 import org.jdrupes.builder.core.AbstractProvider;
-import org.jdrupes.builder.java.CompilationResources;
+import org.jdrupes.builder.java.CompilationClasspathElements;
 import static org.jdrupes.builder.java.JavaTypes.*;
-import org.jdrupes.builder.java.RuntimeResources;
+import org.jdrupes.builder.java.RuntimeClasspathElements;
 import static org.jdrupes.builder.mvnrepo.MvnRepoTypes.*;
 
 /// Depending on the request, this provider provides two types of resources.
 /// 
-///  1. The artifacts to be resolved as [MvnRepoDependencies]. The artifacts
+///  1. The artifacts to be resolved as [MvnRepoCompilationDeps]. The artifacts
 ///     to be resolved are those added with [resolve].
 ///
-///  2. The [CompilationResources] or [RuntimeResources] (depending on the
+///  2. The [CompilationClasspathElements] or [RuntimeClasspathElements] (depending on the
 ///     request) that result from resolving the artifacts to be resolved.
 ///
 public class MvnRepoLookup extends AbstractProvider
@@ -150,11 +150,10 @@ public class MvnRepoLookup extends AbstractProvider
     @Override
     protected <T extends Resource> Stream<T>
             doProvide(ResourceRequest<T> requested) {
-        if (requested.wants(MvnRepoDependenciesType)) {
+        if (requested.wants(MvnRepoCompilationDepsType)) {
             @SuppressWarnings("unchecked")
-            var result = (Stream<T>) coordinates.stream()
-                .map(c -> ResourceFactory.create(MvnRepoDependencyType, null,
-                    c));
+            var result = (Stream<T>) coordinates.stream().map(
+                c -> ResourceFactory.create(MvnRepoDependencyType, null, c));
             return result;
         }
         if (requested.wants(CompilationResourcesType)

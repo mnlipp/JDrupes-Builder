@@ -16,9 +16,13 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package org.jdrupes.builder.java;
+package org.jdrupes.builder.mvnrepo;
 
-/// The Interface RuntimeResources.
+import org.jdrupes.builder.api.Resources;
+import org.jdrupes.builder.java.RuntimeResources;
+
+/// A set of maven repository dependencies.
 ///
-public interface RuntimeResources {
+public interface MvnRepoRuntimeDeps extends Resources<MvnRepoDependency>,
+        RuntimeResources {
 }
