@@ -52,6 +52,17 @@ import static org.jdrupes.builder.java.JavaTypes.*;
 ///    [JavaTypes#ClassTreeType] (or a more general type such as
 ///    [JavaTypes#ClasspathElementType]).
 ///
+/// No attempt has been made to define types for the options of
+/// the java compiler. Rather, the options are passed as strings
+/// as the [ToolProvider] API suggests. There are some noteworthy
+/// exceptions for options that are directly related to resource
+/// types (files, directory trees, paths) from the builder context.
+///
+/// If no "-g..." option is specified, the generator adds "-g" and
+/// thus generates full debug information. If you want to restore the
+/// default behavior of the java compiler, you have to specify
+/// `-g:[lines, source]` explicitly.
+///
 public class JavaCompiler extends JavaTool {
 
     private final Resources<FileTree<JavaSourceFile>> sources
@@ -212,6 +223,14 @@ public class JavaCompiler extends JavaTool {
             var compilationUnits
                 = fileManager.getJavaFileObjectsFromPaths(sourcePaths());
             List<String> allOptions = new ArrayList<>(options());
+
+            // If no -g... option is given, add -g (full debug info)
+            if (allOptions.stream()
+                .filter(o -> !o.startsWith("-g")).findAny().isEmpty()) {
+                allOptions.add("-g");
+            }
+
+            // Add options from specific properties
             allOptions.addAll(List.of(
                 "-d", destDir.toString(),
                 "-cp", classpath,
