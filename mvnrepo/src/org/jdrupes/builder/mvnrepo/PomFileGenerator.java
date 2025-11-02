@@ -38,10 +38,8 @@ import static org.jdrupes.builder.api.Project.Properties.*;
 import org.jdrupes.builder.api.Resource;
 import org.jdrupes.builder.api.ResourceRequest;
 import static org.jdrupes.builder.api.ResourceRequest.*;
-import org.jdrupes.builder.api.ResourceType;
 import org.jdrupes.builder.api.Resources;
 import org.jdrupes.builder.core.AbstractGenerator;
-import org.jdrupes.builder.java.CompilationResources;
 import static org.jdrupes.builder.mvnrepo.MvnProperties.*;
 import static org.jdrupes.builder.mvnrepo.MvnRepoTypes.*;
 
@@ -122,8 +120,8 @@ public class PomFileGenerator extends AbstractGenerator {
 
         pomPath.getParent().toFile().mkdirs();
         var deps = newResource(MvnRepoCompilationDepsType)
-                .addAll(project().from(Supply, Expose, Consume).get(requestFor(
-                    MvnRepoCompilationDepsType)));
+            .addAll(project().from(Supply, Expose, Consume).get(requestFor(
+                MvnRepoCompilationDepsType)));
         Model model = generatePom(deps);
 
         // create, compare and maybe write model

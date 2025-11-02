@@ -47,10 +47,7 @@ import org.jdrupes.builder.api.Resource;
 import org.jdrupes.builder.api.ResourceFactory;
 import org.jdrupes.builder.api.ResourceProvider;
 import org.jdrupes.builder.api.ResourceRequest;
-import org.jdrupes.builder.api.ResourceType;
 import org.jdrupes.builder.core.AbstractProvider;
-import org.jdrupes.builder.java.ClasspathElement;
-import org.jdrupes.builder.java.CompilationResources;
 import static org.jdrupes.builder.java.JavaTypes.*;
 import static org.jdrupes.builder.mvnrepo.MvnRepoTypes.*;
 
