@@ -34,11 +34,10 @@ import static org.jdrupes.builder.api.Intend.*;
 import org.jdrupes.builder.api.Launcher;
 import org.jdrupes.builder.api.Resource;
 import org.jdrupes.builder.api.ResourceRequest;
-import org.jdrupes.builder.api.ResourceType;
+import static org.jdrupes.builder.api.ResourceRequest.*;
 import org.jdrupes.builder.api.RootProject;
 import org.jdrupes.builder.core.LauncherSupport;
-import org.jdrupes.builder.java.ClasspathElement;
-import org.jdrupes.builder.java.CompilationClasspathElements;
+import static org.jdrupes.builder.java.JavaTypes.*;
 import org.jdrupes.builder.mvnrepo.MvnRepoLookup;
 
 /// A default implementation of a [Launcher]. The launcher first builds
@@ -85,10 +84,7 @@ public class BootstrapLauncher extends AbstractLauncher {
             buildCoords.forEach(mvnLookup::resolve);
             rootProject.project(BootstrapBuild.class).dependency(Expose,
                 mvnLookup);
-            @SuppressWarnings("PMD.UseDiamondOperator")
-            var cpUrls = rootProject.get(
-                new ResourceRequest<ClasspathElement>(
-                    new ResourceType<CompilationClasspathElements>() {}))
+            var cpUrls = rootProject.get(requestFor(CompilationClasspathType))
                 .map(cpe -> {
                     try {
                         if (cpe instanceof FileTree tree) {

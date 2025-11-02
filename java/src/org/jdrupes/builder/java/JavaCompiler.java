@@ -36,6 +36,7 @@ import org.jdrupes.builder.api.Project;
 import static org.jdrupes.builder.api.Project.Properties.*;
 import org.jdrupes.builder.api.Resource;
 import org.jdrupes.builder.api.ResourceRequest;
+import static org.jdrupes.builder.api.ResourceRequest.*;
 import org.jdrupes.builder.api.ResourceType;
 import static org.jdrupes.builder.api.ResourceType.*;
 import org.jdrupes.builder.api.Resources;
@@ -180,10 +181,8 @@ public class JavaCompiler extends JavaTool {
         }
 
         // Get classpath for compilation.
-        @SuppressWarnings("PMD.UseDiamondOperator")
-        var cpResources = project().newResource(ClasspathType).addAll(
-            project().provided(new ResourceRequest<ClasspathElement>(
-                CompilationResourcesType)));
+        var cpResources = newResource(ClasspathType).addAll(
+            project().provided(requestFor(CompilationClasspathType)));
         log.finest(() -> "Compiling in " + project() + " with classpath "
             + cpResources.stream().map(e -> e.toPath().toString())
                 .collect(Collectors.joining(File.pathSeparator)));

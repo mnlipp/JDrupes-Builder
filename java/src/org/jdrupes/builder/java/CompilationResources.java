@@ -18,7 +18,12 @@
 
 package org.jdrupes.builder.java;
 
-/// The Interface RuntimeResources.
+import org.jdrupes.builder.api.Resource;
+
+/// A container for [Resource]s needed at compilation time.
 ///
-public interface CompilationResources extends RuntimeResources {
+/// @param <T> the contained type
+///
+public interface CompilationResources<T extends Resource>
+        extends RuntimeResources<T> {
 }

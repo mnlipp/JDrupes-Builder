@@ -37,8 +37,11 @@ import org.jdrupes.builder.api.Project;
 import static org.jdrupes.builder.api.Project.Properties.*;
 import org.jdrupes.builder.api.Resource;
 import org.jdrupes.builder.api.ResourceRequest;
+import static org.jdrupes.builder.api.ResourceRequest.*;
+import org.jdrupes.builder.api.ResourceType;
 import org.jdrupes.builder.api.Resources;
 import org.jdrupes.builder.core.AbstractGenerator;
+import org.jdrupes.builder.java.CompilationResources;
 import static org.jdrupes.builder.mvnrepo.MvnProperties.*;
 import static org.jdrupes.builder.mvnrepo.MvnRepoTypes.*;
 
@@ -54,6 +57,7 @@ import static org.jdrupes.builder.mvnrepo.MvnRepoTypes.*;
 /// as the project requires. Finally, the model is written to the
 /// POM file
 ///
+@SuppressWarnings("PMD.TooManyStaticImports")
 public class PomFileGenerator extends AbstractGenerator {
 
     /// The Constant GENERATED_BY.
@@ -117,9 +121,9 @@ public class PomFileGenerator extends AbstractGenerator {
         }
 
         pomPath.getParent().toFile().mkdirs();
-        var deps = project().newResource(MvnRepoCompilationDepsType).addAll(
-            project().from(Supply, Expose, Consume).get(new ResourceRequest<>(
-                MvnRepoCompilationDepsType)));
+        var deps = newResource(MvnRepoCompilationDepsType)
+                .addAll(project().from(Supply, Expose, Consume).get(requestFor(
+                    MvnRepoCompilationDepsType)));
         Model model = generatePom(deps);
 
         // create, compare and maybe write model

@@ -19,6 +19,7 @@
 package org.jdrupes.builder.mvnrepo;
 
 import org.jdrupes.builder.api.ResourceType;
+import org.jdrupes.builder.java.CompilationResources;
 
 /// A collection of Maven specific [ResourceType]s.
 ///
@@ -39,19 +40,19 @@ public final class MvnRepoTypes {
     /// The maven repository dependencies type.
     @SuppressWarnings("PMD.LongVariable")
     public static final ResourceType<
-            MvnRepoCompilationDeps> MvnRepoCompilationDepsType
+            CompilationResources<MvnRepoDependency>> MvnRepoCompilationDepsType
                 = new ResourceType<>() {};
 
     /// The maven publication type.
-    public static final ResourceType<MvnPublication> MvnPublicationType
-        = new ResourceType<>() {};
+    public static final ResourceType<
+            MvnPublication> MvnPublicationType = new ResourceType<>() {};
 
     /// A jar file from the maven repository.
-    public static final ResourceType<MvnRepoJarFile> MvnRepoJarFileType
-        = new ResourceType<>() {};
+    public static final ResourceType<
+            MvnRepoJarFile> MvnRepoJarFileType = new ResourceType<>() {};
 
     /// The POM file type.
-    public static final ResourceType<PomFile> PomFileType
-        = new ResourceType<>() {};
+    public static final ResourceType<
+            PomFile> PomFileType = new ResourceType<>() {};
 
 }

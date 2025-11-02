@@ -32,17 +32,20 @@ import org.jdrupes.builder.api.IOResource;
 import org.jdrupes.builder.api.Project;
 import org.jdrupes.builder.api.Resource;
 import org.jdrupes.builder.api.ResourceRequest;
+import static org.jdrupes.builder.api.ResourceRequest.*;
 import org.jdrupes.builder.api.ResourceType;
 import static org.jdrupes.builder.api.ResourceType.*;
 import org.jdrupes.builder.api.Resources;
 import org.jdrupes.builder.java.AppJarFile;
 import org.jdrupes.builder.java.ClasspathElement;
+import org.jdrupes.builder.java.CompilationResources;
 import org.jdrupes.builder.java.JarFile;
 import org.jdrupes.builder.java.JarFileEntry;
 import static org.jdrupes.builder.java.JavaTypes.*;
 import org.jdrupes.builder.java.LibraryGenerator;
-import org.jdrupes.builder.java.RuntimeClasspathElements;
+import org.jdrupes.builder.java.RuntimeResources;
 import org.jdrupes.builder.java.ServicesEntryResource;
+import org.jdrupes.builder.mvnrepo.MvnRepoDependency;
 import org.jdrupes.builder.mvnrepo.MvnRepoJarFile;
 import org.jdrupes.builder.mvnrepo.MvnRepoLookup;
 import org.jdrupes.builder.mvnrepo.MvnRepoResource;
@@ -123,13 +126,11 @@ public class UberJarGenerator extends LibraryGenerator {
     }
 
     @Override
-    @SuppressWarnings("PMD.UseDiamondOperator")
     protected void
             collectFromProviders(Map<Path, Resources<IOResource>> contents) {
         openJars = new ConcurrentHashMap<>();
         project().from(providers().stream())
-            .get(new ResourceRequest<ClasspathElement>(
-                new ResourceType<RuntimeClasspathElements>() {}))
+            .get(requestFor(RuntimeClasspathType))
             .parallel().forEach(cpe -> {
                 if (cpe instanceof FileTree<?> fileTree) {
                     collect(contents, fileTree);
@@ -139,11 +140,11 @@ public class UberJarGenerator extends LibraryGenerator {
                 }
             });
         var lookup = new MvnRepoLookup();
-        project().from(providers().stream())
-            .get(new ResourceRequest<>(MvnRepoCompilationDepsType))
+        project().from(providers().stream()).get(
+            requestFor(MvnRepoCompilationDepsType))
             .forEach(d -> lookup.resolve(d.coordinates()));
-        project().context().get(lookup, new ResourceRequest<ClasspathElement>(
-            new ResourceType<RuntimeClasspathElements>() {}))
+        project().context().get(lookup,
+            new ResourceRequest<>(RuntimeClasspathType))
             .parallel().forEach(cpe -> {
                 if (cpe instanceof MvnRepoJarFile jarFile) {
                     addJarFile(contents, jarFile, openJars);

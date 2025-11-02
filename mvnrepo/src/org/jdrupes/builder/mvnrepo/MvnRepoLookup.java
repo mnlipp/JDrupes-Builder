@@ -47,18 +47,21 @@ import org.jdrupes.builder.api.Resource;
 import org.jdrupes.builder.api.ResourceFactory;
 import org.jdrupes.builder.api.ResourceProvider;
 import org.jdrupes.builder.api.ResourceRequest;
+import org.jdrupes.builder.api.ResourceType;
 import org.jdrupes.builder.core.AbstractProvider;
-import org.jdrupes.builder.java.CompilationClasspathElements;
+import org.jdrupes.builder.java.ClasspathElement;
+import org.jdrupes.builder.java.CompilationResources;
 import static org.jdrupes.builder.java.JavaTypes.*;
-import org.jdrupes.builder.java.RuntimeClasspathElements;
 import static org.jdrupes.builder.mvnrepo.MvnRepoTypes.*;
 
 /// Depending on the request, this provider provides two types of resources.
 /// 
-///  1. The artifacts to be resolved as [MvnRepoCompilationDeps]. The artifacts
+///  1. The artifacts to be resolved as
+///     `CompilationResources<MavenRepoDependencies>`. The artifacts
 ///     to be resolved are those added with [resolve].
 ///
-///  2. The [CompilationClasspathElements] or [RuntimeClasspathElements] (depending on the
+///  2. The `CompilationResources<ClasspathElement>` 
+///     or `RuntimeResources<ClasspathElement>` (depending on the
 ///     request) that result from resolving the artifacts to be resolved.
 ///
 public class MvnRepoLookup extends AbstractProvider
@@ -156,7 +159,7 @@ public class MvnRepoLookup extends AbstractProvider
                 c -> ResourceFactory.create(MvnRepoDependencyType, null, c));
             return result;
         }
-        if (requested.wants(CompilationResourcesType)
+        if (requested.wants(CompilationClasspathType)
             && requested.includes(JarFileType)) {
             return provideJars(requested);
         }
@@ -172,9 +175,10 @@ public class MvnRepoLookup extends AbstractProvider
             addSnapshotRepository(collectRequest);
         }
         for (var coord : coordinates) {
-            collectRequest.addDependency(
-                new Dependency(new DefaultArtifact(coord),
-                    requested.wants(CompilationResourcesType) ? "compile"
+            collectRequest
+                .addDependency(new Dependency(new DefaultArtifact(coord),
+                    requested.wants(CompilationClasspathType)
+                        ? "compile"
                         : "runtime"));
         }
 

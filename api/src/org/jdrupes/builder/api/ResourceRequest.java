@@ -85,6 +85,17 @@ public class ResourceRequest<T extends Resource> {
             new ResourceType<>(requested, null)));
     }
 
+    /// Slightly briefer alternative to invoking the constructor.
+    ///
+    /// @param <T> the generic type
+    /// @param type the type
+    /// @return the resource request
+    ///
+    public static <T extends Resource> ResourceRequest<T>
+            requestFor(ResourceType<? extends Resources<T>> type) {
+        return new ResourceRequest<>(type);
+    }
+
     /// Create a widened resource request by replacing the requested
     /// top-level type with the given super type, thus widening the
     /// request.

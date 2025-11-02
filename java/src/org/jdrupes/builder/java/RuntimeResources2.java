@@ -16,12 +16,14 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package org.jdrupes.builder.mvnrepo;
+package org.jdrupes.builder.java;
 
-import org.jdrupes.builder.java.CompilationResources;
+import org.jdrupes.builder.api.Resource;
+import org.jdrupes.builder.api.Resources;
 
-/// A set of maven repository dependencies.
+/// A container for [Resource]s needed at runtime.
 ///
-public interface MvnRepoCompilationDeps extends MvnRepoRuntimeDeps,
-        CompilationResources {
+/// @param <T> the contained type
+///
+public interface RuntimeResources2<T extends Resource> extends Resources<T> {
 }

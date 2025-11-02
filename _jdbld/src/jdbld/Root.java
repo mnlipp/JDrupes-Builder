@@ -18,8 +18,6 @@ import org.jdrupes.builder.api.RootProject;
 import org.jdrupes.builder.core.AbstractProject;
 import org.jdrupes.builder.eclipse.EclipseConfiguration;
 import org.jdrupes.builder.java.AppJarFile;
-import org.jdrupes.builder.java.ClasspathElement;
-import static org.jdrupes.builder.java.JavaTypes.*;
 import org.jdrupes.builder.mvnrepo.JavadocJarGenerator;
 import org.jdrupes.builder.mvnrepo.MvnPublication;
 import org.jdrupes.builder.mvnrepo.MvnPublisher;
@@ -33,6 +31,7 @@ import static org.jdrupes.builder.mvnrepo.MvnProperties.*;
 import org.jdrupes.builder.java.Javadoc;
 import org.jdrupes.builder.java.JavadocDirectory;
 import org.jdrupes.builder.java.JavadocJarFile;
+import static org.jdrupes.builder.java.JavaTypes.*;
 import org.jdrupes.builder.java.SourcesJarFile;
 import org.jdrupes.builder.java.JavaSourceFile;
 
@@ -102,8 +101,7 @@ public class Root extends AbstractProject implements RootProject {
             .tagletpath(from(new MvnRepoLookup()
                 .resolve("org.jdrupes.taglets:plantuml-taglet:3.1.0",
                     "net.sourceforge.plantuml:plantuml:1.2023.11"))
-                        .get(new ResourceRequest<ClasspathElement>(
-                            RuntimeResourcesType)))
+                        .get(requestFor(RuntimeClasspathType)))
             .taglets(Stream.of("org.jdrupes.taglets.plantUml.PlantUml",
                 "org.jdrupes.taglets.plantUml.StartUml",
                 "org.jdrupes.taglets.plantUml.EndUml"))

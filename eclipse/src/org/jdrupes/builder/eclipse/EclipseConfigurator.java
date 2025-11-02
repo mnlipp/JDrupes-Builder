@@ -41,14 +41,15 @@ import org.jdrupes.builder.api.Intend;
 import org.jdrupes.builder.api.Project;
 import org.jdrupes.builder.api.Resource;
 import org.jdrupes.builder.api.ResourceRequest;
+import static org.jdrupes.builder.api.ResourceRequest.*;
 import org.jdrupes.builder.api.ResourceType;
 import org.jdrupes.builder.core.AbstractGenerator;
 import org.jdrupes.builder.java.ClasspathElement;
+import org.jdrupes.builder.java.CompilationResources;
 import org.jdrupes.builder.java.JarFile;
 import org.jdrupes.builder.java.JavaCompiler;
 import org.jdrupes.builder.java.JavaProject;
 import org.jdrupes.builder.java.JavaResourceCollector;
-import static org.jdrupes.builder.java.JavaTypes.CompilationResourcesType;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.Node;
@@ -250,8 +251,7 @@ public class EclipseConfigurator extends AbstractGenerator {
     ///
     /// @param doc the doc
     ///
-    @SuppressWarnings({ "PMD.AvoidDuplicateLiterals",
-        "PMD.UseDiamondOperator" })
+    @SuppressWarnings({ "PMD.AvoidDuplicateLiterals" })
     protected void generateClasspathConfiguration(Document doc) {
         var classpath = doc.appendChild(doc.createElement("classpath"));
         project().providers(Intend.Supply)
@@ -295,8 +295,7 @@ public class EclipseConfigurator extends AbstractGenerator {
                 var entry = (Element) classpath
                     .appendChild(doc.createElement("classpathentry"));
                 entry.setAttribute("kind", "src");
-                var referenced = p
-                    .get(ResourceRequest.requestFor(EclipseConfiguration.class))
+                var referenced = p.get(requestFor(EclipseConfiguration.class))
                     .filter(c -> c.projectName().equals(p.name())).findFirst()
                     .map(EclipseConfiguration::eclipseAlias).orElse(p.name());
                 entry.setAttribute("path", "/" + referenced);
@@ -308,8 +307,9 @@ public class EclipseConfigurator extends AbstractGenerator {
             });
 
         // Add jars
-        project().provided(new ResourceRequest<ClasspathElement>(
-            CompilationResourcesType)).filter(p -> p instanceof JarFile)
+        project().provided(requestFor(
+            new ResourceType<CompilationResources<ClasspathElement>>() {}))
+            .filter(p -> p instanceof JarFile)
             .map(jf -> (JarFile) jf).forEach(jf -> {
                 var entry = (Element) classpath
                     .appendChild(doc.createElement("classpathentry"));
