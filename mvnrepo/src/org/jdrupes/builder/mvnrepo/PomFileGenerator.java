@@ -41,6 +41,7 @@ import static org.jdrupes.builder.api.ResourceRequest.*;
 import org.jdrupes.builder.api.Resources;
 import org.jdrupes.builder.core.AbstractGenerator;
 import static org.jdrupes.builder.mvnrepo.MvnProperties.*;
+import org.jdrupes.builder.mvnrepo.MvnRepoDependency.Scope;
 import static org.jdrupes.builder.mvnrepo.MvnRepoTypes.*;
 
 /// A [Generator] for POM files. The generator generates a maven
@@ -172,7 +173,7 @@ public class PomFileGenerator extends AbstractGenerator {
             dep.setGroupId(d.groupId());
             dep.setArtifactId(d.artifactId());
             dep.setVersion(d.version());
-            dep.setScope("compile");
+            dep.setScope(d.scope() == Scope.Compile ? "compile" : "runtime");
             model.addDependency(dep);
         });
 

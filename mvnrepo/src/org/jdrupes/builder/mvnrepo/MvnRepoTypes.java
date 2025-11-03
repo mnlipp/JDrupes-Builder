@@ -37,10 +37,15 @@ public final class MvnRepoTypes {
     public static final ResourceType<
             MvnRepoDependency> MvnRepoDependencyType = new ResourceType<>() {};
 
-    /// The maven repository dependencies type.
+    /// The maven repository compilation dependencies type.
     @SuppressWarnings("PMD.LongVariable")
     public static final ResourceType<
             CompilationResources<MvnRepoDependency>> MvnRepoCompilationDepsType
+                = new ResourceType<>() {};
+
+    /// The maven repository runtime dependencies type.
+    public static final ResourceType<
+            CompilationResources<MvnRepoDependency>> MvnRepoRuntimeDepsType
                 = new ResourceType<>() {};
 
     /// The maven publication type.

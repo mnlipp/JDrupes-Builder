@@ -56,6 +56,7 @@ import org.jdrupes.builder.core.AbstractProvider;
 import org.jdrupes.builder.java.CompilationResources;
 import org.jdrupes.builder.java.JarFile;
 import static org.jdrupes.builder.java.JavaTypes.*;
+import org.jdrupes.builder.mvnrepo.MvnRepoDependency.Scope;
 import static org.jdrupes.builder.mvnrepo.MvnRepoTypes.*;
 
 /// Depending on the request, this provider provides two types of resources.
@@ -125,10 +126,10 @@ public class MvnRepoLookup extends AbstractProvider
     /// @param coordinates the coordinates
     /// @return the mvn repo lookup
     ///
-    public MvnRepoLookup resolve(
-            ResourceType<? extends Resources<MvnRepoDependency>> scope,
-            String... coordinates) {
-        this.coordinates.computeIfAbsent(scope, _ -> new ArrayList<>())
+    public MvnRepoLookup resolve(Scope scope, String... coordinates) {
+        this.coordinates
+            .computeIfAbsent(scope == Scope.Compile ? MvnRepoCompilationDepsType
+                : MvnRepoRuntimeDepsType, _ -> new ArrayList<>())
             .addAll(Arrays.asList(coordinates));
         return this;
     }
@@ -140,7 +141,7 @@ public class MvnRepoLookup extends AbstractProvider
     /// @return the mvn repo lookup
     ///
     public MvnRepoLookup resolve(String... coordinates) {
-        return resolve(MvnRepoCompilationDepsType, coordinates);
+        return resolve(Scope.Compile, coordinates);
     }
 
     /// Whether to also download the sources. Defaults to `true`.
@@ -176,9 +177,12 @@ public class MvnRepoLookup extends AbstractProvider
             @SuppressWarnings("unchecked")
             var result = (Stream<T>) coordinates.entrySet().stream()
                 .filter(e -> requested.wants(e.getKey()))
-                .map(e -> e.getValue().stream()).flatMap(c -> c)
-                .map(c -> ResourceFactory.create(MvnRepoDependencyType, null,
-                    c));
+                .map(e -> e.getValue().stream().map(c -> ResourceFactory
+                    .create(MvnRepoDependencyType, null, c,
+                        e.getKey().equals(MvnRepoCompilationDepsType)
+                            ? Scope.Compile
+                            : Scope.Runtime)))
+                .flatMap(d -> d);
             return result;
         }
         if (requested

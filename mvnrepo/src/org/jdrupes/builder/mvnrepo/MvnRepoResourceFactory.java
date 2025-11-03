@@ -26,6 +26,7 @@ import org.jdrupes.builder.api.Resource;
 import org.jdrupes.builder.api.ResourceFactory;
 import org.jdrupes.builder.api.ResourceType;
 import org.jdrupes.builder.core.ForwardingHandler;
+import org.jdrupes.builder.mvnrepo.MvnRepoDependency.Scope;
 import static org.jdrupes.builder.mvnrepo.MvnRepoTypes.*;
 
 /// A factory for creating Java related resource objects.
@@ -43,6 +44,15 @@ public class MvnRepoResourceFactory implements ResourceFactory {
     @Override
     public <T extends Resource> Optional<T> newResource(ResourceType<T> type,
             Project project, Object... args) {
+        if (MvnRepoDependencyType.isAssignableFrom(type)) {
+            return Optional
+                .of((T) Proxy.newProxyInstance(type.rawType().getClassLoader(),
+                    new Class<?>[] { type.rawType(), Proxyable.class },
+                    new ForwardingHandler(
+                        new DefaultMvnRepoDependency(
+                            (ResourceType<? extends MvnRepoDependency>) type,
+                            (String) args[0], (Scope) args[1]))));
+        }
         if (MvnRepoResourceType.isAssignableFrom(type)) {
             return Optional
                 .of((T) Proxy.newProxyInstance(type.rawType().getClassLoader(),

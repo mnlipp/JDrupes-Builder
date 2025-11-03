@@ -41,7 +41,7 @@ public abstract class ResourceObject implements Resource, Proxyable {
     /// @param type the type
     ///
     protected ResourceObject(ResourceType<?> type) {
-        this.type = type;
+        this.type = Objects.requireNonNull(type);
     }
 
     /* default */ @SuppressWarnings("unchecked")

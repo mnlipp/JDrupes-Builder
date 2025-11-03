@@ -40,7 +40,7 @@ public class DefaultMvnRepoResource extends ResourceObject
     public DefaultMvnRepoResource(ResourceType<? extends MvnRepoResource> type,
             String coordinate) {
         super(type);
-        var parts = coordinate.split(":");
+        var parts = Objects.requireNonNull(coordinate).split(":");
         if (parts.length != 3) {
             throw new IllegalArgumentException(
                 "Invalid maven coordinate: " + coordinate);

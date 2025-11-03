@@ -21,6 +21,7 @@ import org.jdrupes.builder.java.AppJarFile;
 import org.jdrupes.builder.mvnrepo.JavadocJarGenerator;
 import org.jdrupes.builder.mvnrepo.MvnPublication;
 import org.jdrupes.builder.mvnrepo.MvnPublisher;
+import org.jdrupes.builder.mvnrepo.MvnRepoDependency.Scope;
 import org.jdrupes.builder.mvnrepo.MvnRepoLookup;
 import org.jdrupes.builder.mvnrepo.PomFile;
 import org.jdrupes.builder.mvnrepo.PomFileGenerator;
@@ -83,7 +84,7 @@ public class Root extends AbstractProject implements RootProject {
         // Provide app jar
         dependency(Supply, new UberJarGenerator(this)
             .from(providers(Expose))
-            .from(new MvnRepoLookup().resolve(
+            .from(new MvnRepoLookup().resolve(Scope.Runtime,
                 "eu.maveniverse.maven.mima.runtime:standalone-static:2.4.34",
                 "org.slf4j:slf4j-api:2.0.17",
                 "org.slf4j:slf4j-jdk14:2.0.17"))
