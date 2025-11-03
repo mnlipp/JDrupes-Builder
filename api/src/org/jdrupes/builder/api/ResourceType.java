@@ -93,7 +93,7 @@ public class ResourceType<T extends Resource> {
     /// @param containedType the contained type
     /// @return the resource type
     ///
-    public static <C extends Resources<T>, T extends Resource> ResourceType<C>
+    public static <C extends Resources<?>, T extends Resource> ResourceType<C>
             resourceType(Class<C> type, Class<T> containedType) {
         return new ResourceType<>(type, resourceType(containedType));
     }

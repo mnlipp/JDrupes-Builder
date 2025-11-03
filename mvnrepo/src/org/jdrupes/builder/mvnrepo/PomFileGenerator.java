@@ -114,7 +114,7 @@ public class PomFileGenerator extends AbstractGenerator {
             return Stream.empty();
         }
 
-        if (!requested.includes(PomFileType)) {
+        if (!requested.collects(PomFileType)) {
             return Stream.empty();
         }
 

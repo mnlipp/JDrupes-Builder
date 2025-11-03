@@ -153,14 +153,14 @@ public class JavaCompiler extends JavaTool {
     @Override
     protected <T extends Resource> Stream<T>
             doProvide(ResourceRequest<T> requested) {
-        if (requested.includes(JavaSourceTreeType)) {
+        if (requested.collects(JavaSourceTreeType)) {
             @SuppressWarnings({ "unchecked" })
             var result = (Stream<T>) sources.stream();
             return result;
         }
 
-        if (!requested.includes(ClassTreeType)
-            && !requested.includes(CleanlinessType)) {
+        if (!requested.collects(ClassTreeType)
+            && !requested.collects(CleanlinessType)) {
             return Stream.empty();
         }
 
@@ -175,7 +175,7 @@ public class JavaCompiler extends JavaTool {
         // or deleting.
         var destDir = project().buildDirectory().resolve(destination);
         final var classSet = project().newResource(ClassTreeType, destDir);
-        if (requested.includes(CleanlinessType)) {
+        if (requested.collects(CleanlinessType)) {
             classSet.delete();
             return Stream.empty();
         }

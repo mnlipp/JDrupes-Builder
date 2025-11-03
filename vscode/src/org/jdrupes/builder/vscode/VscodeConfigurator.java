@@ -97,7 +97,7 @@ public class VscodeConfigurator extends AbstractGenerator {
     @Override
     protected <T extends Resource> Stream<T>
             doProvide(ResourceRequest<T> requested) {
-        if (!requested.includes(resourceType(VscodeConfiguration.class))) {
+        if (!requested.collects(resourceType(VscodeConfiguration.class))) {
             return Stream.empty();
         }
         Path vscodeDir = project().directory().resolve(".vscode");

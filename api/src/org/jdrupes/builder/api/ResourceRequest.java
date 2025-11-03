@@ -129,12 +129,14 @@ public class ResourceRequest<T extends Resource> {
         return type().isAssignableFrom(other);
     }
 
-    /// Checks if the requested resource type includes the given type.
+    /// Checks if the requested type is a container type and if the
+    /// contained type of the container type is assignable from the
+    /// given type. 
     ///
     /// @param type the type to check
     /// @return true, if successful
     ///
-    public boolean includes(ResourceType<?> type) {
+    public boolean collects(ResourceType<?> type) {
         return Optional.ofNullable(type().containedType())
             .map(ct -> ct.isAssignableFrom(type)).orElse(false);
     }

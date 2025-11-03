@@ -183,15 +183,15 @@ public class Javadoc extends JavaTool {
         "PMD.ExceptionAsFlowControl" })
     protected <T extends Resource> Stream<T>
             doProvide(ResourceRequest<T> requested) {
-        if (!requested.includes(JavadocDirectoryType)
-            && !requested.includes(CleanlinessType)) {
+        if (!requested.collects(JavadocDirectoryType)
+            && !requested.collects(CleanlinessType)) {
             return Stream.empty();
         }
 
         // Get destination and check if we only have to cleanup.
         var destDir = project().buildDirectory().resolve(destination);
         var generated = project().newResource(ClassTreeType, destDir, "**/*");
-        if (requested.includes(CleanlinessType)) {
+        if (requested.collects(CleanlinessType)) {
             generated.delete();
             destDir.toFile().delete();
             return Stream.empty();

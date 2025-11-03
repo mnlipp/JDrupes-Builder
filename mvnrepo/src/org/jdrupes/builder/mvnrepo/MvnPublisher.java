@@ -276,7 +276,7 @@ public class MvnPublisher extends AbstractGenerator {
     @Override
     protected <T extends Resource> Stream<T>
             doProvide(ResourceRequest<T> requested) {
-        if (!requested.includes(MvnPublicationType)) {
+        if (!requested.collects(MvnPublicationType)) {
             return Stream.empty();
         }
         PomFile pomResource = resourceCheck(

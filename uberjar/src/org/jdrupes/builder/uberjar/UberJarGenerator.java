@@ -219,8 +219,8 @@ public class UberJarGenerator extends LibraryGenerator {
         "PMD.CloseResource", "PMD.UseTryWithResources" })
     protected <T extends Resource> Stream<T>
             doProvide(ResourceRequest<T> requested) {
-        if (!requested.includes(AppJarFileType)
-            && !requested.includes(CleanlinessType)) {
+        if (!requested.collects(AppJarFileType)
+            && !requested.collects(CleanlinessType)) {
             return Stream.empty();
         }
 
@@ -246,7 +246,7 @@ public class UberJarGenerator extends LibraryGenerator {
                     destDir.resolve(jarName()));
 
         // Maybe only delete
-        if (requested.includes(CleanlinessType)) {
+        if (requested.collects(CleanlinessType)) {
             jarResource.delete();
             return Stream.empty();
         }

@@ -328,8 +328,8 @@ public class JarGenerator extends AbstractGenerator {
     @SuppressWarnings({ "PMD.CollapsibleIfStatements", "unchecked" })
     protected <T extends Resource> Stream<T>
             doProvide(ResourceRequest<T> requested) {
-        if (!requested.includes(jarType)
-            && !requested.includes(CleanlinessType)) {
+        if (!requested.collects(jarType)
+            && !requested.collects(CleanlinessType)) {
             return Stream.empty();
         }
 
@@ -344,7 +344,7 @@ public class JarGenerator extends AbstractGenerator {
             destDir.resolve(jarName()));
 
         // Maybe only delete
-        if (requested.includes(CleanlinessType)) {
+        if (requested.collects(CleanlinessType)) {
             jarResource.delete();
             return Stream.empty();
         }

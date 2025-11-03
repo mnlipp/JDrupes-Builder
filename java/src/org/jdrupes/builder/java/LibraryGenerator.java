@@ -152,8 +152,8 @@ public class LibraryGenerator extends JarGenerator
     @SuppressWarnings({ "PMD.CollapsibleIfStatements", "unchecked" })
     protected <T extends Resource> Stream<T>
             doProvide(ResourceRequest<T> requested) {
-        if (!requested.includes(LibraryJarFileType)
-            && !requested.includes(CleanlinessType)) {
+        if (!requested.collects(LibraryJarFileType)
+            && !requested.collects(CleanlinessType)) {
             return Stream.empty();
         }
 
@@ -179,7 +179,7 @@ public class LibraryGenerator extends JarGenerator
                     destDir.resolve(jarName()));
 
         // Maybe only delete
-        if (requested.includes(CleanlinessType)) {
+        if (requested.collects(CleanlinessType)) {
             jarResource.delete();
             return Stream.empty();
         }
