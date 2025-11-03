@@ -125,7 +125,7 @@ public class ResourceRequest<T extends Resource> {
     /// @param other the other
     /// @return true, if successful
     ///
-    public boolean wants(ResourceType<?> other) {
+    public boolean accepts(ResourceType<?> other) {
         return type().isAssignableFrom(other);
     }
 

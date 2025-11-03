@@ -173,10 +173,10 @@ public class MvnRepoLookup extends AbstractProvider
     @Override
     protected <T extends Resource> Stream<T>
             doProvide(ResourceRequest<T> requested) {
-        if (requested.wants(MvnRepoCompilationDepsType)) {
+        if (requested.accepts(MvnRepoCompilationDepsType)) {
             @SuppressWarnings("unchecked")
             var result = (Stream<T>) coordinates.entrySet().stream()
-                .filter(e -> requested.wants(e.getKey()))
+                .filter(e -> requested.accepts(e.getKey()))
                 .map(e -> e.getValue().stream().map(c -> ResourceFactory
                     .create(MvnRepoDependencyType, null, c,
                         e.getKey().equals(MvnRepoCompilationDepsType)
@@ -186,7 +186,7 @@ public class MvnRepoLookup extends AbstractProvider
             return result;
         }
         if (requested
-            .wants(new ResourceType<CompilationResources<JarFile>>() {})) {
+            .accepts(new ResourceType<CompilationResources<JarFile>>() {})) {
             return provideJars(requested);
         }
         return Stream.empty();
@@ -210,7 +210,7 @@ public class MvnRepoLookup extends AbstractProvider
             .flatMap(c -> c).forEach(c -> {
                 collectRequest
                     .addDependency(new Dependency(new DefaultArtifact(c),
-                        requested.wants(RuntimeClasspathType)
+                        requested.accepts(RuntimeClasspathType)
                             ? "runtime"
                             : "compile"));
             });
