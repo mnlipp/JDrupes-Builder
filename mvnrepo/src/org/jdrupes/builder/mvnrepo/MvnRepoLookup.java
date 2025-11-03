@@ -26,6 +26,8 @@ import java.net.URI;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Stream;
 import org.eclipse.aether.RepositorySystem;
 import org.eclipse.aether.RepositorySystemSession;
@@ -47,8 +49,14 @@ import org.jdrupes.builder.api.Resource;
 import org.jdrupes.builder.api.ResourceFactory;
 import org.jdrupes.builder.api.ResourceProvider;
 import org.jdrupes.builder.api.ResourceRequest;
+import org.jdrupes.builder.api.ResourceType;
+import static org.jdrupes.builder.api.ResourceType.*;
+import org.jdrupes.builder.api.Resources;
 import org.jdrupes.builder.core.AbstractProvider;
+import org.jdrupes.builder.java.CompilationResources;
+import org.jdrupes.builder.java.JarFile;
 import static org.jdrupes.builder.java.JavaTypes.*;
+import org.jdrupes.builder.java.RuntimeResources;
 import static org.jdrupes.builder.mvnrepo.MvnRepoTypes.*;
 
 /// Depending on the request, this provider provides two types of resources.
@@ -64,7 +72,8 @@ import static org.jdrupes.builder.mvnrepo.MvnRepoTypes.*;
 public class MvnRepoLookup extends AbstractProvider
         implements ResourceProvider {
 
-    private final List<String> coordinates = new ArrayList<>();
+    private final Map<ResourceType<? extends Resources<?>>,
+            List<String>> coordinates = new ConcurrentHashMap<>();
     private boolean downloadSources = true;
     private boolean downloadJavadoc = true;
     private URI snapshotUri;
@@ -111,14 +120,28 @@ public class MvnRepoLookup extends AbstractProvider
     }
 
     /// Add artifacts, specified by their coordinates
-    /// (`groupId:artifactId:version`).
+    /// (`groupId:artifactId:version`) with the given scope.
+    ///
+    /// @param scope the scope
+    /// @param coordinates the coordinates
+    /// @return the mvn repo lookup
+    ///
+    public MvnRepoLookup resolve(
+            ResourceType<? extends Resources<MvnRepoDependency>> scope,
+            String... coordinates) {
+        this.coordinates.computeIfAbsent(scope, _ -> new ArrayList<>())
+            .addAll(Arrays.asList(coordinates));
+        return this;
+    }
+
+    /// Add artifacts, specified by their coordinates
+    /// (`groupId:artifactId:version`) as compilation resources.
     ///
     /// @param coordinates the coordinates
     /// @return the mvn repo lookup
     ///
     public MvnRepoLookup resolve(String... coordinates) {
-        this.coordinates.addAll(Arrays.asList(coordinates));
-        return this;
+        return resolve(MvnRepoCompilationDepsType, coordinates);
     }
 
     /// Whether to also download the sources. Defaults to `true`.
@@ -152,32 +175,42 @@ public class MvnRepoLookup extends AbstractProvider
             doProvide(ResourceRequest<T> requested) {
         if (requested.wants(MvnRepoCompilationDepsType)) {
             @SuppressWarnings("unchecked")
-            var result = (Stream<T>) coordinates.stream().map(
-                c -> ResourceFactory.create(MvnRepoDependencyType, null, c));
+            var result = (Stream<T>) coordinates.entrySet().stream()
+                .filter(e -> requested.wants(e.getKey()))
+                .map(e -> e.getValue().stream()).flatMap(c -> c)
+                .map(c -> ResourceFactory.create(MvnRepoDependencyType, null,
+                    c));
             return result;
         }
-        if (requested.wants(CompilationClasspathType)
-            && requested.includes(JarFileType)) {
+        if (requested
+            .wants(new ResourceType<CompilationResources<JarFile>>() {})) {
             return provideJars(requested);
         }
         return Stream.empty();
     }
 
-    @SuppressWarnings("PMD.AvoidInstantiatingObjectsInLoops")
     private <T extends Resource> Stream<T>
             provideJars(ResourceRequest<T> requested) {
+        // Base collect request, optionally with snapshots
         CollectRequest collectRequest = new CollectRequest().setRepositories(
             new ArrayList<>(rootContext().remoteRepositories()));
         if (snapshotUri != null) {
             addSnapshotRepository(collectRequest);
         }
-        for (var coord : coordinates) {
-            collectRequest
-                .addDependency(new Dependency(new DefaultArtifact(coord),
-                    requested.wants(CompilationClasspathType)
-                        ? "compile"
-                        : "runtime"));
-        }
+
+        // Retrieve coordinates and add to collect request
+        var asDepsType = resourceType(
+            requested.type().rawType(), MvnRepoDependency.class);
+        coordinates.entrySet().stream()
+            .filter(e -> asDepsType.isAssignableFrom(e.getKey()))
+            .map(e -> e.getValue().stream())
+            .flatMap(c -> c).forEach(c -> {
+                collectRequest
+                    .addDependency(new Dependency(new DefaultArtifact(c),
+                        requested.wants(RuntimeClasspathType)
+                            ? "runtime"
+                            : "compile"));
+            });
 
         DependencyRequest dependencyRequest
             = new DependencyRequest(collectRequest, null);
