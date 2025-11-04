@@ -20,6 +20,7 @@ package org.jdrupes.builder.mvnrepo;
 
 import org.jdrupes.builder.api.ResourceType;
 import org.jdrupes.builder.java.CompilationResources;
+import org.jdrupes.builder.java.RuntimeResources;
 
 /// A collection of Maven specific [ResourceType]s.
 ///
@@ -45,7 +46,7 @@ public final class MvnRepoTypes {
 
     /// The maven repository runtime dependencies type.
     public static final ResourceType<
-            CompilationResources<MvnRepoDependency>> MvnRepoRuntimeDepsType
+            RuntimeResources<MvnRepoDependency>> MvnRepoRuntimeDepsType
                 = new ResourceType<>() {};
 
     /// The maven publication type.
