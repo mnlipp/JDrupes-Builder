@@ -44,17 +44,23 @@ import static org.jdrupes.builder.mvnrepo.MvnProperties.*;
 import org.jdrupes.builder.mvnrepo.MvnRepoDependency.Scope;
 import static org.jdrupes.builder.mvnrepo.MvnRepoTypes.*;
 
-/// A [Generator] for POM files. The generator generates a maven
-/// [Model] with basic information. The group is set to the value
-/// of the property [MvnProperties#GroupId] if it is defined. The
-/// artifact id is set to the property [MvnProperties#ArtifactId]
-/// or the name of the project, if [MvnProperties#ArtifactId] is not
-/// defined. The version is set to the value of the property
-/// [Project.Properties#Version].
+/// A [Generator] (mainly) for POM files. In response to requests for
+/// [PomFile] it generates a maven [Model] with basic information.
+/// The group is set to the value of the property [MvnProperties#GroupId]
+/// if it is defined. The artifact id is set to the property
+/// [MvnProperties#ArtifactId] or the name of the project, if
+/// [MvnProperties#ArtifactId] is not defined. The version is set to
+/// the value of the property [Project.Properties#Version].
 ///
 /// This basic model is passed to [#adaptPom] where it can be adapted.
 /// as the project requires. Finally, the model is written to the
-/// POM file
+/// POM file.
+///
+/// In addition to the [PomFile] requests, this generator also handles
+/// requests for [MvnRepoDependency]. This reflects that a project that
+/// has a POM file is obviously intended to be released as a maven
+/// artifact. Other projects in a multi-project build will therefore
+/// eventually depend on the maven artifact "to be released".
 ///
 @SuppressWarnings("PMD.TooManyStaticImports")
 public class PomFileGenerator extends AbstractGenerator {
@@ -65,6 +71,7 @@ public class PomFileGenerator extends AbstractGenerator {
         = () -> project().buildDirectory().resolve("publications/maven");
     private Consumer<Model> pomAdapter = _ -> {
     }; // Do nothing>
+    private boolean runtimeLibrary;
 
     /// Instantiates a new library generator.
     ///
@@ -106,6 +113,18 @@ public class PomFileGenerator extends AbstractGenerator {
         return this;
     }
 
+    /// POMs do not contain any information whether the library is
+    /// intended to be used at runtime or at compile time. This information
+    /// is only needed when this generator responds to requests for
+    /// [MvnRepoDependency].
+    ///
+    /// @return the pom file generator
+    ///
+    public PomFileGenerator runtimeLibrary() {
+        runtimeLibrary = true;
+        return this;
+    }
+
     @Override
     protected <T extends Resource> Stream<T>
             doProvide(ResourceRequest<T> requested) {
@@ -115,14 +134,21 @@ public class PomFileGenerator extends AbstractGenerator {
             return Stream.empty();
         }
 
+        if (requested.accepts(MvnRepoCompilationDepsType)) {
+            return generateRepoDependency(requested);
+        }
+
         if (!requested.collects(PomFileType)) {
             return Stream.empty();
         }
 
         pomPath.getParent().toFile().mkdirs();
         var deps = newResource(MvnRepoCompilationDepsType)
-            .addAll(project().from(Supply, Expose, Consume).get(requestFor(
-                MvnRepoCompilationDepsType)));
+            .addAll(project().providers(Supply, Expose, Consume)
+                // Don't add dependency on self
+                .filter(p -> !p.equals(this)).flatMap(
+                    p -> project().context().get(p, requestFor(
+                        MvnRepoCompilationDepsType))));
         Model model = generatePom(deps);
 
         // create, compare and maybe write model
@@ -190,6 +216,20 @@ public class PomFileGenerator extends AbstractGenerator {
     public PomFileGenerator adaptPom(Consumer<Model> adaptor) {
         this.pomAdapter = adaptor;
         return this;
+    }
+
+    @SuppressWarnings("unchecked")
+    private <T extends Resource> Stream<T>
+            generateRepoDependency(ResourceRequest<T> requested) {
+        if (requested.accepts(MvnRepoRuntimeDepsType) && !runtimeLibrary) {
+            return Stream.empty();
+        }
+        return Stream.of((T) newResource(MvnRepoDependencyType,
+            project().<String> get(GroupId)
+                + ":" + Optional.ofNullable(project()
+                    .<String> get(ArtifactId)).orElse(project().name())
+                + ":" + project().get(Version),
+            runtimeLibrary ? Scope.Runtime : Scope.Compile));
     }
 
 }
