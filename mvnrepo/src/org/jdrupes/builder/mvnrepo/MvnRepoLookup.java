@@ -55,7 +55,6 @@ import org.jdrupes.builder.api.Resources;
 import org.jdrupes.builder.core.AbstractProvider;
 import org.jdrupes.builder.java.CompilationResources;
 import org.jdrupes.builder.java.JarFile;
-import static org.jdrupes.builder.java.JavaTypes.*;
 import org.jdrupes.builder.mvnrepo.MvnRepoDependency.Scope;
 import static org.jdrupes.builder.mvnrepo.MvnRepoTypes.*;
 
@@ -206,14 +205,10 @@ public class MvnRepoLookup extends AbstractProvider
             requested.type().rawType(), MvnRepoDependency.class);
         coordinates.entrySet().stream()
             .filter(e -> asDepsType.isAssignableFrom(e.getKey()))
-            .map(e -> e.getValue().stream())
-            .flatMap(c -> c).forEach(c -> {
-                collectRequest
-                    .addDependency(new Dependency(new DefaultArtifact(c),
-                        requested.accepts(RuntimeClasspathType)
-                            ? "runtime"
-                            : "compile"));
-            });
+            .forEach(e -> e.getValue().stream().forEach(c -> collectRequest
+                .addDependency(new Dependency(new DefaultArtifact(c),
+                    e.getKey().equals(MvnRepoCompilationDepsType) ? "compile"
+                        : "runtime"))));
 
         DependencyRequest dependencyRequest
             = new DependencyRequest(collectRequest, null);

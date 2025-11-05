@@ -132,13 +132,18 @@ public class UberJarGenerator extends LibraryGenerator {
                 if (cpe instanceof FileTree<?> fileTree) {
                     collect(contents, fileTree);
                 } else if (cpe instanceof JarFile jarFile
+                    // Ignore jar files from maven repositories, see below
                     && !(jarFile instanceof MvnRepoJarFile)) {
                     addJarFile(contents, jarFile, openJars);
                 }
             });
+
+        // Jar files from maven repositories must be resolved before
+        // they can be added to the uber jar, i.e. they must be added
+        // with their transitive dependencies.
         var lookup = new MvnRepoLookup();
         project().from(providers().stream()).get(
-            requestFor(MvnRepoCompilationDepsType))
+            requestFor(MvnRepoRuntimeDepsType))
             .forEach(d -> lookup.resolve(d.coordinates()));
         project().context().get(lookup,
             new ResourceRequest<>(RuntimeClasspathType))
