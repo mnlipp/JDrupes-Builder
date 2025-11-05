@@ -107,18 +107,26 @@ public abstract class AbstractLauncher implements Launcher {
     ///
     @SuppressWarnings("PMD.UseVarargs")
     public AbstractLauncher(String[] args) {
-        Options options = new Options();
-        options.addOption("B-x", true, "Exclude from project scan");
-        options.addOption(Option.builder("P").hasArgs().valueSeparator('=')
-            .desc("Property in form key=value").get());
         try {
-            commandLine = new DefaultParser().parse(options, args);
+            commandLine = new DefaultParser().parse(baseOptions(), args);
         } catch (ParseException e) {
             throw new BuildException(e);
         }
 
         // Set properties from command line
         jdbldProps.putAll(commandLine.getOptionProperties("P"));
+    }
+
+    /// Return the handled options.
+    ///
+    /// @return the options
+    ///
+    protected final Options baseOptions() {
+        Options options = new Options();
+        options.addOption("B-x", true, "Exclude from project scan");
+        options.addOption(Option.builder("P").hasArgs().valueSeparator('=')
+            .desc("Property in form key=value").get());
+        return options;
     }
 
     /// Find projects. The classpath is scanned for classes that implement

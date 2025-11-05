@@ -30,6 +30,9 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.logging.Level;
 import java.util.stream.Stream;
+import org.apache.commons.cli.CommandLine;
+import org.apache.commons.cli.DefaultParser;
+import org.apache.commons.cli.ParseException;
 import org.eclipse.aether.artifact.DefaultArtifact;
 import org.eclipse.aether.collection.CollectRequest;
 import org.eclipse.aether.graph.Dependency;
@@ -77,7 +80,13 @@ public class DirectLauncher extends AbstractLauncher {
             findProjects(extClsLdr, rootProjects, subprojects);
             rootProject = LauncherSupport.createProjects(rootProjects.get(0),
                 subprojects, jdbldProps, commandLine);
-            for (var arg : args) {
+            CommandLine commandLine;
+            try {
+                commandLine = new DefaultParser().parse(baseOptions(), args);
+            } catch (ParseException e) {
+                throw new BuildException(e);
+            }
+            for (var arg : commandLine.getArgs()) {
                 var reqs = LauncherSupport.lookupCommand(rootProject, arg);
                 if (reqs.length == 0) {
                     throw new BuildException("Unknown command: " + arg);
