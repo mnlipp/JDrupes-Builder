@@ -279,17 +279,17 @@ public class MvnPublisher extends AbstractGenerator {
         if (!requested.collects(MvnPublicationType)) {
             return Stream.empty();
         }
-        PomFile pomResource = resourceCheck(
-            project().from(Consume).get(requestFor(PomFile.class)), "POM file");
+        PomFile pomResource = resourceCheck(project().from(Supply, Consume)
+            .get(requestFor(PomFile.class)), "POM file");
         if (pomResource == null) {
             return Stream.empty();
         }
-        var jarResource = resourceCheck(project().from(Supply)
+        var jarResource = resourceCheck(project().from(Supply, Consume)
             .get(requestFor(LibraryJarFile.class)), "jar file");
         if (jarResource == null) {
             return Stream.empty();
         }
-        var srcsIter = project().from(Supply)
+        var srcsIter = project().from(Supply, Consume)
             .get(requestFor(SourcesJarFile.class)).iterator();
         SourcesJarFile srcsFile = null;
         if (srcsIter.hasNext()) {
