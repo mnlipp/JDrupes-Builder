@@ -29,6 +29,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.logging.Level;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.DefaultParser;
@@ -92,7 +93,7 @@ public class DirectLauncher extends AbstractLauncher {
                     throw new BuildException("Unknown command: " + arg);
                 }
                 for (var req : reqs) {
-                    rootProject.get(req)
+                    rootProject.get(req).collect(Collectors.toSet())
                         .forEach(r -> System.out.println(r.toString()));
                 }
             }
