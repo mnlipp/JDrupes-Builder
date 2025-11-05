@@ -67,8 +67,7 @@ public class DirectLauncher extends AbstractLauncher {
     /// @param classloader the classloader
     /// @param args the arguments
     ///
-    @SuppressWarnings({ "PMD.UseVarargs",
-        "PMD.AvoidInstantiatingObjectsInLoops", "PMD.SystemPrintln" })
+    @SuppressWarnings({ "PMD.UseVarargs", "PMD.SystemPrintln" })
     public DirectLauncher(ClassLoader classloader, String[] args) {
         super(args);
         unwrapBuildException(() -> {
@@ -81,7 +80,7 @@ public class DirectLauncher extends AbstractLauncher {
             for (var arg : args) {
                 var reqs = LauncherSupport.lookupCommand(rootProject, arg);
                 if (reqs.length == 0) {
-                    new BuildException("Unknown command: " + arg);
+                    throw new BuildException("Unknown command: " + arg);
                 }
                 for (var req : reqs) {
                     rootProject.get(req)
