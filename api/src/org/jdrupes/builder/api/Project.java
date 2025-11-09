@@ -18,6 +18,8 @@
 
 package org.jdrupes.builder.api;
 
+import java.io.IOException;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.EnumSet;
 import java.util.Set;
@@ -395,4 +397,21 @@ public interface Project extends ResourceProvider {
             Object... args) {
         return ResourceFactory.create(type, this, args);
     }
+
+    /// Convenience method for reading the content of a file into a
+    /// String. The path is resolved against the project's directory.
+    ///
+    /// @param path the path
+    /// @return the string
+    ///
+    @SuppressWarnings("PMD.PreserveStackTrace")
+    default String readString(Path path) {
+        try {
+            return Files.readString(directory().resolve(path));
+        } catch (IOException e) {
+            throw new BuildException("Cannot read file: " + e.getMessage());
+        }
+    }
+
+    
 }

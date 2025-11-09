@@ -329,21 +329,6 @@ public abstract class AbstractProject extends AbstractProvider
         return commands.getOrDefault(name, new ResourceRequest[0]);
     }
 
-    /// Convenience method for reading the content of a file into a
-    /// String.
-    ///
-    /// @param path the path
-    /// @return the string
-    ///
-    @SuppressWarnings("PMD.PreserveStackTrace")
-    public String readString(Path path) {
-        try {
-            return Files.readString(path);
-        } catch (IOException e) {
-            throw new BuildException("Cannot read file: " + e.getMessage());
-        }
-    }
-
     @Override
     public int hashCode() {
         return Objects.hash(projectDirectory, projectName);
