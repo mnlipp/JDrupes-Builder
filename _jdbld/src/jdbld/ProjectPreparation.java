@@ -19,28 +19,48 @@
 package jdbld;
 
 import static org.jdrupes.builder.mvnrepo.MvnProperties.GroupId;
-
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
 import java.util.List;
 import java.util.Map;
-
+import org.eclipse.jgit.api.Git;
 import org.jdrupes.builder.api.BuildException;
 import org.jdrupes.builder.api.Project;
+import static org.jdrupes.builder.api.Project.Properties.*;
 import org.jdrupes.builder.api.RootProject;
 import org.jdrupes.builder.eclipse.EclipseConfigurator;
 import org.jdrupes.builder.java.JavaCompiler;
 import org.jdrupes.builder.java.JavaProject;
 import org.jdrupes.builder.java.JavaResourceCollector;
 import org.jdrupes.builder.vscode.VscodeConfigurator;
+import org.jdrupes.gitversioning.api.VersionEvaluator;
+import org.jdrupes.gitversioning.core.DefaultTagFilter;
 import org.w3c.dom.Document;
 import org.w3c.dom.Node;
+import static jdbld.ExtProps.*;
 
 /// The Class ProjectPreparation.
 ///
 public class ProjectPreparation {
+
+    public static void setupVersion(Project project) {
+        try {
+            if (project instanceof RootProject) {
+                project.set(GitApi, Git.open(project.directory().toFile()));
+            }
+        } catch (IOException e) {
+            throw new BuildException(e);
+        }
+
+        var evaluator = VersionEvaluator
+            .forRepository(project.<Git> get(GitApi).getRepository())
+            .subDirectory(project.directory())
+            .tagFilter(new DefaultTagFilter().prepend("v"));
+        project.set(Version, evaluator.version());
+
+    }
 
     public static void setupCommonGenerators(Project project) {
         if (project instanceof JavaProject) {

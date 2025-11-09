@@ -40,6 +40,7 @@ public class Root extends AbstractProject implements RootProject {
 
     @Override
     public void prepareProject(Project project) {
+        ProjectPreparation.setupVersion(project);
         ProjectPreparation.setupCommonGenerators(project);
         ProjectPreparation.setupEclipseConfigurator(project);
         ProjectPreparation.setupVscodeConfiguration(project);
@@ -48,7 +49,6 @@ public class Root extends AbstractProject implements RootProject {
     public Root() {
         super(name("jdrupes-builder"));
         set(GroupId, "org.jdrupes");
-        set(Version, "0.0.5");
 
         dependency(Expose, project(Api.class));
         dependency(Expose, project(Core.class));
