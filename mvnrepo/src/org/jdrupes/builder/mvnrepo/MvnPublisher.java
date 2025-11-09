@@ -619,6 +619,7 @@ public class MvnPublisher extends AbstractGenerator {
             log.info(() -> "Uploading release bundle...");
             HttpResponse<String> response = client.send(request,
                 HttpResponse.BodyHandlers.ofString());
+            log.finest(() -> "Upload response: " + response.body());
             if (response.statusCode() / 100 != 2) {
                 throw new BuildException(
                     "Failed to upload release bundle: " + response.body());
@@ -637,13 +638,18 @@ public class MvnPublisher extends AbstractGenerator {
     private InputStream getAsMultipart(Path zipPath, String boundary) {
         // Use Piped streams for streaming multipart content
         var fromPipe = new PipedInputStream();
-        final String lineFeed = "\r\n";
 
         // Write multipart content to pipe
         ExecutorService executor = Executors.newVirtualThreadPerTaskExecutor();
+        OutputStream toPipe;
+        try {
+            toPipe = new PipedOutputStream(fromPipe);
+        } catch (IOException e) {
+            throw new UncheckedIOException(e);
+        }
         executor.submit(() -> {
-            try (var mpOut = new BufferedOutputStream(
-                new PipedOutputStream(fromPipe))) {
+            try (var mpOut = new BufferedOutputStream(toPipe)) {
+                final String lineFeed = "\r\n";
                 @SuppressWarnings("PMD.InefficientStringBuffering")
                 StringBuilder intro = new StringBuilder(100)
                     .append("--").append(boundary).append(lineFeed)
