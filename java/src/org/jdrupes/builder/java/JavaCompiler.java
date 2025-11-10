@@ -225,7 +225,7 @@ public class JavaCompiler extends JavaTool {
 
             // If no -g... option is given, add -g (full debug info)
             if (allOptions.stream()
-                .filter(o -> !o.startsWith("-g")).findAny().isEmpty()) {
+                .filter(o -> o.startsWith("-g")).findAny().isEmpty()) {
                 allOptions.add("-g");
             }
 
