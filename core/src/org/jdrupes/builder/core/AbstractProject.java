@@ -18,9 +18,7 @@
 
 package org.jdrupes.builder.core;
 
-import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
-import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Collections;
 import java.util.HashMap;
@@ -49,7 +47,7 @@ import org.jdrupes.builder.api.RootProject;
 
 /// A default implementation of a [Project].
 ///
-@SuppressWarnings({ "PMD.CouplingBetweenObjects", "PMD.GodClass" })
+@SuppressWarnings({ "PMD.CouplingBetweenObjects" })
 public abstract class AbstractProject extends AbstractProvider
         implements Project {
 
