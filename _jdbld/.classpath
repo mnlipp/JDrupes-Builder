@@ -17,11 +17,11 @@
 	<classpathentry combineaccessrules="false" kind="src" path="/org.jdrupes.builder.api"/>
 	<classpathentry combineaccessrules="false" kind="src" path="/org.jdrupes.gitversioning.api"/>
 	<classpathentry combineaccessrules="false" kind="src" path="/org.jdrupes.gitversioning.core"/>
-	<classpathentry kind="lib" path="/JDrupes-Builder/build/app/jdrupes-builder-0.0.7-SNAPSHOT.jar"/>
 	<classpathentry kind="lib" path="/home/mnl/.m2/repository/org/eclipse/jgit/org.eclipse.jgit/7.3.0.202506031305-r/org.eclipse.jgit-7.3.0.202506031305-r.jar" sourcepath="/home/mnl/.m2/repository/org/eclipse/jgit/org.eclipse.jgit/7.3.0.202506031305-r/org.eclipse.jgit-7.3.0.202506031305-r-sources.jar">
 		<attributes>
 			<attribute name="javadoc_location" value="jar:file:/home/mnl/.m2/repository/org/eclipse/jgit/org.eclipse.jgit/7.3.0.202506031305-r/org.eclipse.jgit-7.3.0.202506031305-r-javadoc.jar!/"/>
 		</attributes>
 	</classpathentry>
+	<classpathentry kind="lib" path="/JDrupes-Builder/build/app/jdrupes-builder-0.0.7-SNAPSHOT.jar"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>
