@@ -21,7 +21,9 @@ package org.jdrupes.builder.eclipse;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
+import java.util.HashSet;
 import java.util.Properties;
+import java.util.Set;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
@@ -46,10 +48,10 @@ import org.jdrupes.builder.api.ResourceType;
 import org.jdrupes.builder.core.AbstractGenerator;
 import org.jdrupes.builder.java.ClasspathElement;
 import org.jdrupes.builder.java.CompilationResources;
-import org.jdrupes.builder.java.JarFile;
 import org.jdrupes.builder.java.JavaCompiler;
 import org.jdrupes.builder.java.JavaProject;
 import org.jdrupes.builder.java.JavaResourceCollector;
+import org.jdrupes.builder.java.LibraryJarFile;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.Node;
@@ -290,6 +292,7 @@ public class EclipseConfigurator extends AbstractGenerator {
             });
 
         // Add projects
+        final Set<ClasspathElement> addedByProject = new HashSet<>();
         collectContributing(project()).collect(Collectors.toSet()).stream()
             .forEach(p -> {
                 var entry = (Element) classpath
@@ -304,13 +307,15 @@ public class EclipseConfigurator extends AbstractGenerator {
                 var attribute = (Element) attributes
                     .appendChild(doc.createElement("attribute"));
                 attribute.setAttribute("without_test_code", "true");
+                addedByProject.addAll(p.from(Intend.Supply)
+                    .get(requestFor(ClasspathElement.class)).toList());
             });
 
         // Add jars
         project().provided(requestFor(
-            new ResourceType<CompilationResources<ClasspathElement>>() {}))
-            .filter(p -> p instanceof JarFile)
-            .map(jf -> (JarFile) jf).forEach(jf -> {
+            new ResourceType<CompilationResources<LibraryJarFile>>() {}))
+            .filter(jf -> !addedByProject.contains(jf))
+            .forEach(jf -> {
                 var entry = (Element) classpath
                     .appendChild(doc.createElement("classpathentry"));
                 entry.setAttribute("kind", "lib");
