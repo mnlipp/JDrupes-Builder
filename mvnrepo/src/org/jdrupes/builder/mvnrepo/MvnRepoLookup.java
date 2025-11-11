@@ -54,7 +54,7 @@ import static org.jdrupes.builder.api.ResourceType.*;
 import org.jdrupes.builder.api.Resources;
 import org.jdrupes.builder.core.AbstractProvider;
 import org.jdrupes.builder.java.CompilationResources;
-import org.jdrupes.builder.java.JarFile;
+import org.jdrupes.builder.java.LibraryJarFile;
 import org.jdrupes.builder.mvnrepo.MvnRepoDependency.Scope;
 import static org.jdrupes.builder.mvnrepo.MvnRepoTypes.*;
 
@@ -64,9 +64,11 @@ import static org.jdrupes.builder.mvnrepo.MvnRepoTypes.*;
 ///     `CompilationResources<MavenRepoDependencies>`. The artifacts
 ///     to be resolved are those added with [resolve].
 ///
-///  2. The `CompilationResources<ClasspathElement>` 
-///     or `RuntimeResources<ClasspathElement>` (depending on the
+///  2. The `CompilationResources<LibraryJarFile>` 
+///     or `RuntimeResources<LibraryJarFile>` (depending on the
 ///     request) that result from resolving the artifacts to be resolved.
+///     The resources returned implement the additional marker interface
+///     `MvnRepoJarFile`.
 ///
 public class MvnRepoLookup extends AbstractProvider
         implements ResourceProvider {
@@ -184,8 +186,8 @@ public class MvnRepoLookup extends AbstractProvider
                 .flatMap(d -> d);
             return result;
         }
-        if (requested
-            .accepts(new ResourceType<CompilationResources<JarFile>>() {})) {
+        if (requested.accepts(
+            new ResourceType<CompilationResources<LibraryJarFile>>() {})) {
             return provideJars(requested);
         }
         return Stream.empty();
