@@ -51,6 +51,13 @@ public class JavaResourceFactory implements ResourceFactory {
                     (ResourceType<? extends ClassTree>) type, project,
                     (Path) args[0]));
         }
+        if (LibraryJarFileType.isAssignableFrom(type)
+            && type.rawType().getSuperclass() == null
+            && !addsMethod(LibraryJarFile.class,
+                (Class<? extends LibraryJarFile>) type.rawType())) {
+            return Optional.of((T) DefaultLibraryJarFile.createLibraryJarFile(
+                (ResourceType<? extends JarFile>) type, (Path) args[0]));
+        }
         if (JarFileType.isAssignableFrom(type)
             && type.rawType().getSuperclass() == null
             && !addsMethod(JarFile.class,

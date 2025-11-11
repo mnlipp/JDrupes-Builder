@@ -18,7 +18,9 @@
 
 package org.jdrupes.builder.core;
 
+import java.lang.reflect.Method;
 import java.nio.file.Path;
+import java.util.Arrays;
 import java.util.Optional;
 import static java.util.function.Predicate.not;
 import java.util.stream.Collectors;
@@ -55,8 +57,9 @@ public class CoreResourceFactory implements ResourceFactory {
             .collect(Collectors.toSet());
         return ResourceType.getAllInterfaces(derived)
             .filter(not(baseItfs::contains))
-            .filter(itf -> itf.getDeclaredMethods().length > 0).findAny()
-            .isPresent();
+            .filter(itf -> Arrays.stream(itf.getDeclaredMethods())
+                .filter(not(Method::isDefault)).findAny().isPresent())
+            .findAny().isPresent();
     }
 
     @Override

@@ -18,8 +18,15 @@
 
 package org.jdrupes.builder.java;
 
+import java.nio.file.Path;
+
 /// Marker interface for a jar file that is a library.
 ///
-public interface LibraryJarFile extends JarFile {
+public interface LibraryJarFile extends JarFile, ClasspathElement {
+
+    @Override
+    default Path toPath() {
+        return path();
+    }
 
 }

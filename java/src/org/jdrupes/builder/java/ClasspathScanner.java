@@ -77,7 +77,7 @@ public class ClasspathScanner extends AbstractGenerator {
                         ClassTreeType, p.toAbsolutePath());
                 } else {
                     return (ClasspathElement) project()
-                        .newResource(JarFileType, p.toAbsolutePath());
+                        .newResource(LibraryJarFileType, p.toAbsolutePath());
                 }
             }).filter(e -> requested.collects(e.type()));
         return result;

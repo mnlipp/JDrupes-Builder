@@ -22,6 +22,6 @@ import org.jdrupes.builder.api.FileResource;
 
 /// Defines a Jar file.
 ///
-public interface JarFile extends FileResource, ClasspathElement {
+public interface JarFile extends FileResource {
 
 }
