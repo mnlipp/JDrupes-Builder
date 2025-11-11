@@ -57,6 +57,11 @@ public final class MvnRepoTypes {
     public static final ResourceType<
             MvnRepoJarFile> MvnRepoJarFileType = new ResourceType<>() {};
 
+    /// A library jar file from the maven repository.
+    public static final ResourceType<
+            MvnRepoLibraryJarFile> MvnRepoLibraryJarFileType
+                = new ResourceType<>() {};
+
     /// The POM file type.
     public static final ResourceType<
             PomFile> PomFileType = new ResourceType<>() {};

@@ -16,10 +16,11 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package org.jdrupes.builder.java;
+package org.jdrupes.builder.mvnrepo;
 
-/// Marker interface for a jar file that is a library.
+import org.jdrupes.builder.java.LibraryJarFile;
+
+/// A [LibraryJarFile] that is obtained from a maven repository.
 ///
-public interface LibraryJarFile extends JarFile {
-
+public interface MvnRepoLibraryJarFile extends MvnRepoJarFile, LibraryJarFile {
 }
