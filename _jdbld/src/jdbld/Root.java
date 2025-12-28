@@ -59,7 +59,7 @@ public class Root extends AbstractProject implements RootProject {
         dependency(Expose, project(Vscode.class));
 
         // Generate POM
-        dependency(Consume, PomFileGenerator::new).adaptPom(model -> {
+        generator(PomFileGenerator::new).adaptPom(model -> {
             model.setDescription("See URL.");
             model.setUrl("https://builder.jdrupes.org/");
             var scm = new Scm();
@@ -81,7 +81,7 @@ public class Root extends AbstractProject implements RootProject {
         });
 
         // Provide app jar
-        dependency(Supply, new UberJarGenerator(this)
+        generator(new UberJarGenerator(this)
             .from(providers(Expose))
             .from(new MvnRepoLookup().resolve(Scope.Runtime,
                 "eu.maveniverse.maven.mima.runtime:standalone-static:2.4.34",
