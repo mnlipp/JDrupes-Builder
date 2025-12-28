@@ -315,7 +315,7 @@ public class EclipseConfigurator extends AbstractGenerator {
         project().provided(requestFor(
             new ResourceType<CompilationResources<LibraryJarFile>>() {}))
             .filter(jf -> !addedByProject.contains(jf))
-            .forEach(jf -> {
+            .collect(Collectors.toSet()).stream().forEach(jf -> {
                 var entry = (Element) classpath
                     .appendChild(doc.createElement("classpathentry"));
                 entry.setAttribute("kind", "lib");
