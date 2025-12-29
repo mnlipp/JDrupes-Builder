@@ -22,14 +22,13 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
-import static org.jdrupes.builder.api.Intend.*;
 import org.jdrupes.builder.api.BuildException;
 import org.jdrupes.builder.api.Project;
+import org.jdrupes.builder.api.MergedTestProject;
 import org.jdrupes.builder.eclipse.EclipseConfigurator;
 import org.jdrupes.builder.java.JavaCompiler;
 import org.jdrupes.builder.java.JavaProject;
 import org.jdrupes.builder.java.JavaResourceCollector;
-import org.jdrupes.builder.java.LibraryGenerator;
 
 /// The Class ProjectPreparation.
 ///
@@ -37,13 +36,13 @@ public class ProjectPreparation {
 
     public static void setupCommonGenerators(Project project) {
         if (project instanceof JavaProject) {
-            project.generator(JavaCompiler::new)
-                .addSources(Path.of("src"), "**/*.java")
-                .options("--release", "23");
+            project.generator(JavaCompiler::new).addSources(Path.of(
+                (project instanceof MergedTestProject) ? "test" : "src"),
+                "**/*.java");
             project.generator(JavaResourceCollector::new)
                 .add(Path.of("resources"), "**/*");
-            project.generator(LibraryGenerator::new)
-                .from(project.providers(Supply));
+//            project.generator(LibraryGenerator::new)
+//                .from(project.providers(Supply));
         }
     }
 

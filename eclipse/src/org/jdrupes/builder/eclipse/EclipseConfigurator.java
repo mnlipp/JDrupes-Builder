@@ -40,6 +40,7 @@ import javax.xml.transform.stream.StreamResult;
 import org.jdrupes.builder.api.BuildException;
 import org.jdrupes.builder.api.FileTree;
 import org.jdrupes.builder.api.Intend;
+import org.jdrupes.builder.api.MergedTestProject;
 import org.jdrupes.builder.api.Project;
 import org.jdrupes.builder.api.Resource;
 import org.jdrupes.builder.api.ResourceRequest;
@@ -145,6 +146,11 @@ public class EclipseConfigurator extends AbstractGenerator {
     protected <T extends Resource> Stream<T>
             doProvide(ResourceRequest<T> requested) {
         if (!requested.collects(new ResourceType<EclipseConfiguration>() {})) {
+            return Stream.empty();
+        }
+
+        // Generate nothing for test projects.
+        if (project() instanceof MergedTestProject) {
             return Stream.empty();
         }
 
@@ -256,25 +262,7 @@ public class EclipseConfigurator extends AbstractGenerator {
     @SuppressWarnings({ "PMD.AvoidDuplicateLiterals" })
     protected void generateClasspathConfiguration(Document doc) {
         var classpath = doc.appendChild(doc.createElement("classpath"));
-        project().providers(Intend.Supply)
-            .filter(p -> p instanceof JavaCompiler).map(p -> (JavaCompiler) p)
-            .findFirst().ifPresent(jc -> {
-                jc.sources().stream().map(FileTree::root)
-                    .map(p -> project().relativize(p)).forEach(p -> {
-                        var entry = (Element) classpath
-                            .appendChild(doc.createElement("classpathentry"));
-                        entry.setAttribute("kind", "src");
-                        entry.setAttribute("path", p.toString());
-                    });
-                var entry = (Element) classpath
-                    .appendChild(doc.createElement("classpathentry"));
-                entry.setAttribute("kind", "output");
-                entry.setAttribute("path",
-                    project().relativize(jc.destination()).toString());
-                jc.optionArgument("-target", "--target", "--release")
-                    .ifPresentOrElse(v -> addSpecificJre(doc, classpath, v),
-                        () -> addInheritedJre(doc, classpath));
-            });
+        addCompilationResources(doc, classpath, project());
 
         // Add resources
         project().providers(Intend.Supply)
@@ -293,23 +281,29 @@ public class EclipseConfigurator extends AbstractGenerator {
 
         // Add projects
         final Set<ClasspathElement> addedByProject = new HashSet<>();
-        collectContributing(project()).collect(Collectors.toSet()).stream()
-            .forEach(p -> {
-                var entry = (Element) classpath
-                    .appendChild(doc.createElement("classpathentry"));
-                entry.setAttribute("kind", "src");
-                var referenced = p.get(requestFor(EclipseConfiguration.class))
-                    .filter(c -> c.projectName().equals(p.name())).findFirst()
-                    .map(EclipseConfiguration::eclipseAlias).orElse(p.name());
-                entry.setAttribute("path", "/" + referenced);
-                var attributes
-                    = entry.appendChild(doc.createElement("attributes"));
-                var attribute = (Element) attributes
-                    .appendChild(doc.createElement("attribute"));
-                attribute.setAttribute("without_test_code", "true");
-                addedByProject.addAll(p.from(Intend.Supply)
-                    .get(requestFor(ClasspathElement.class)).toList());
-            });
+        final Set<Project> contributing = new HashSet<>();
+        collectContributing(contributing, project());
+        contributing.remove(project());
+        contributing.stream().forEach(p -> {
+            if (p instanceof MergedTestProject) {
+                // Test projects contribute their sources, not themselves
+                addCompilationResources(doc, classpath, p);
+                return;
+            }
+            var entry = (Element) classpath
+                .appendChild(doc.createElement("classpathentry"));
+            entry.setAttribute("kind", "src");
+            var referenced = p.get(requestFor(EclipseConfiguration.class))
+                .filter(c -> c.projectName().equals(p.name())).findFirst()
+                .map(EclipseConfiguration::eclipseAlias).orElse(p.name());
+            entry.setAttribute("path", "/" + referenced);
+            var attributes = entry.appendChild(doc.createElement("attributes"));
+            var attribute = (Element) attributes
+                .appendChild(doc.createElement("attribute"));
+            attribute.setAttribute("without_test_code", "true");
+            addedByProject.addAll(p.from(Intend.Supply)
+                .get(requestFor(ClasspathElement.class)).toList());
+        });
 
         // Add jars
         project().provided(requestFor(
@@ -345,11 +339,48 @@ public class EclipseConfigurator extends AbstractGenerator {
         classpathAdaptor.accept(doc, classpath);
     }
 
-    private Stream<Project> collectContributing(Project project) {
-        return project.providers(Intend.Consume, Intend.Forward, Intend.Expose)
+    private void addCompilationResources(Document doc, Node classpath,
+            Project project) {
+        project.providers(Intend.Supply, Intend.Consume)
+            .filter(p -> p instanceof JavaCompiler).map(p -> (JavaCompiler) p)
+            .findFirst().ifPresent(jc -> {
+                jc.sources().stream().map(FileTree::root)
+                    .map(project::relativize).forEach(p -> {
+                        var entry = (Element) classpath
+                            .appendChild(doc.createElement("classpathentry"));
+                        entry.setAttribute("kind", "src");
+                        entry.setAttribute("path", p.toString());
+                        var output = project.relativize(jc.destination());
+                        entry.setAttribute("output", output.toString());
+                        if (project instanceof MergedTestProject) {
+                            var attr = (Element) entry
+                                .appendChild(doc.createElement("attributes"))
+                                .appendChild(doc.createElement("attribute"));
+                            attr.setAttribute("name", "test");
+                            attr.setAttribute("value", "true");
+                        }
+                    });
+                if (!(project instanceof MergedTestProject)) {
+                    var entry = (Element) classpath
+                        .appendChild(doc.createElement("classpathentry"));
+                    entry.setAttribute("kind", "output");
+                    entry.setAttribute("path",
+                        project.relativize(jc.destination()).toString());
+                    jc.optionArgument("-target", "--target", "--release")
+                        .ifPresentOrElse(v -> addSpecificJre(doc, classpath, v),
+                            () -> addInheritedJre(doc, classpath));
+                }
+            });
+    }
+
+    private void collectContributing(Set<Project> collected, Project project) {
+        if (collected.contains(project)) {
+            return;
+        }
+        collected.add(project);
+        project.providers(Intend.Consume, Intend.Forward, Intend.Expose)
             .filter(p -> p instanceof Project).map(p -> (Project) p)
-            .map(p -> Stream.concat(Stream.of(p), collectContributing(p)))
-            .flatMap(s -> s);
+            .forEach(p -> collectContributing(collected, p));
     }
 
     private void addSpecificJre(Document doc, Node classpath,

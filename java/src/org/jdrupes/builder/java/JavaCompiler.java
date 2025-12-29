@@ -32,6 +32,7 @@ import javax.tools.ToolProvider;
 import org.jdrupes.builder.api.BuildException;
 import org.jdrupes.builder.api.FileResource;
 import org.jdrupes.builder.api.FileTree;
+import org.jdrupes.builder.api.MergedTestProject;
 import org.jdrupes.builder.api.Project;
 import static org.jdrupes.builder.api.Project.Properties.*;
 import org.jdrupes.builder.api.Resource;
@@ -68,7 +69,7 @@ public class JavaCompiler extends JavaTool {
 
     private final Resources<FileTree<JavaSourceFile>> sources
         = project().newResource(new ResourceType<>() {});
-    private Path destination = Path.of("classes");
+    private Path destination;
 
     /// Instantiates a new java compiler.
     ///
@@ -76,9 +77,16 @@ public class JavaCompiler extends JavaTool {
     ///
     public JavaCompiler(Project project) {
         super(project);
+        if (project instanceof MergedTestProject) {
+            destination = Path.of("test-classes");
+        } else {
+            destination = Path.of("classes");
+        }
     }
 
-    /// Returns the destination directory. Defaults to "`classes`".
+    /// Returns the destination directory. Defaults to "`classes`" for
+    /// "normal" projects and to "`test-classes`" for projects that
+    /// implement the [MergedTestProject] interface.
     ///
     /// @return the destination
     ///

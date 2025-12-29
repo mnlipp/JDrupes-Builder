@@ -201,8 +201,14 @@ public interface Project extends ResourceProvider {
     }
 
     /// Adds a provider to the project that generates resources which
-    /// are then provided by the project. This is short for
-    /// `dependency(provider, Intend.Provide)`. 
+    /// are then provided by the project. For "normal" projects, the
+    /// generated resources are assumed to be provided to dependents of
+    /// the project, so the invocation is short for  
+    /// `dependency(Intend.Supply, generator)`.
+    ///
+    /// For projects that implement [MergedTestProject], generated resources
+    /// are usually intended to be used by the project itself only, so
+    /// the invocation is short for `dependency(Intend.Consume, generator)`.
     ///
     /// @param generator the provider
     /// @return the project

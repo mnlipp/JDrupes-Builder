@@ -36,6 +36,7 @@ import org.jdrupes.builder.api.Cleanliness;
 import org.jdrupes.builder.api.Generator;
 import org.jdrupes.builder.api.Intend;
 import static org.jdrupes.builder.api.Intend.*;
+import org.jdrupes.builder.api.MergedTestProject;
 import org.jdrupes.builder.api.NamedParameter;
 import org.jdrupes.builder.api.Project;
 import org.jdrupes.builder.api.PropertyKey;
@@ -47,7 +48,7 @@ import org.jdrupes.builder.api.RootProject;
 
 /// A default implementation of a [Project].
 ///
-@SuppressWarnings({ "PMD.CouplingBetweenObjects" })
+@SuppressWarnings({ "PMD.CouplingBetweenObjects", "PMD.GodClass" })
 public abstract class AbstractProject extends AbstractProvider
         implements Project {
 
@@ -125,12 +126,18 @@ public abstract class AbstractProject extends AbstractProvider
     ///     set to the (simple) class name
     ///   * directory - the directory of the project. If not provided,
     ///     the directory is set to the name with uppercase letters
-    ///     converted to lowercase for subprojects. For root projects
-    ///     the directory is always set to the current working
+    ///     converted to lowercase for subprojects.
+    /// 
+    ///     If a project implements [MergedTestProject] and does not 
+    ///     specify a directory, its directory is set to the parent
+    ///     project's directory.
+    /// 
+    ///     For root projects the directory is always set to the current
+    ///     working directory.
     ///
     @SuppressWarnings({ "PMD.ConstructorCallsOverridableMethod",
         "PMD.UseLocaleWithCaseConversions", "PMD.AvoidCatchingGenericException",
-        "PMD.CognitiveComplexity" })
+        "PMD.CognitiveComplexity", "PMD.AvoidDeeplyNestedIfStmts" })
     protected AbstractProject(NamedParameter<?>... params) {
         // Evaluate parent project
         var parentProject = NamedParameter.<
@@ -172,7 +179,12 @@ public abstract class AbstractProject extends AbstractProvider
             projectDirectory = Path.of("").toAbsolutePath();
         } else {
             if (directory == null) {
-                directory = Path.of(projectName.toLowerCase());
+                if (this instanceof MergedTestProject
+                    && parentProject != null) {
+                    directory = parent.directory();
+                } else {
+                    directory = Path.of(projectName.toLowerCase());
+                }
             }
             projectDirectory = parent.directory().resolve(directory);
             // Fallback, will be replaced when the parent explicitly adds a
@@ -243,14 +255,13 @@ public abstract class AbstractProject extends AbstractProvider
         return projectDirectory;
     }
 
-    /// Generator.
-    ///
-    /// @param provider the provider
-    /// @return the project
-    ///
     @Override
     public Project generator(Generator provider) {
-        providers.put(provider, Supply);
+        if (this instanceof MergedTestProject) {
+            providers.put(provider, Consume);
+        } else {
+            providers.put(provider, Supply);
+        }
         return this;
     }
 
