@@ -22,6 +22,7 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.EnumSet;
+import java.util.Optional;
 import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Stream;
@@ -172,6 +173,12 @@ public interface Project extends ResourceProvider {
     ///
     Project project(Class<? extends Project> project);
 
+    /// Returns the parent project. The root project has no parent.
+    ///
+    /// @return the parent project
+    ///
+    Optional<Project> parentProject();
+    
     /// Returns the project's name. 
     ///
     /// @return the string

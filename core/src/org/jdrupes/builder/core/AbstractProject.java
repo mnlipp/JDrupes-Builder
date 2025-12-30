@@ -244,6 +244,11 @@ public abstract class AbstractProject extends AbstractProvider
     }
 
     @Override
+    public Optional<Project> parentProject() {
+        return Optional.ofNullable(parent);
+    }
+
+    @Override
     @SuppressWarnings("checkstyle:OverloadMethodsDeclarationOrder")
     public String name() {
         return projectName;
