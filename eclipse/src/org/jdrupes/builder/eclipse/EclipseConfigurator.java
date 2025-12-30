@@ -286,8 +286,11 @@ public class EclipseConfigurator extends AbstractGenerator {
         contributing.remove(project());
         contributing.stream().forEach(p -> {
             if (p instanceof MergedTestProject) {
-                // Test projects contribute their sources, not themselves
-                addCompilationResources(doc, classpath, p);
+                if (p.parentProject().map(pp -> pp.equals(project()))
+                    .orElse(false)) {
+                    // Test projects contribute their sources to the parent
+                    addCompilationResources(doc, classpath, p);
+                }
                 return;
             }
             var entry = (Element) classpath
@@ -360,16 +363,19 @@ public class EclipseConfigurator extends AbstractGenerator {
                             attr.setAttribute("value", "true");
                         }
                     });
-                if (!(project instanceof MergedTestProject)) {
-                    var entry = (Element) classpath
-                        .appendChild(doc.createElement("classpathentry"));
-                    entry.setAttribute("kind", "output");
-                    entry.setAttribute("path",
-                        project.relativize(jc.destination()).toString());
-                    jc.optionArgument("-target", "--target", "--release")
-                        .ifPresentOrElse(v -> addSpecificJre(doc, classpath, v),
-                            () -> addInheritedJre(doc, classpath));
+
+                // Configure default output directory for (base) project
+                if (project instanceof MergedTestProject) {
+                    return;
                 }
+                var entry = (Element) classpath
+                    .appendChild(doc.createElement("classpathentry"));
+                entry.setAttribute("kind", "output");
+                entry.setAttribute("path",
+                    project.relativize(jc.destination()).toString());
+                jc.optionArgument("-target", "--target", "--release")
+                    .ifPresentOrElse(v -> addSpecificJre(doc, classpath, v),
+                        () -> addInheritedJre(doc, classpath));
             });
     }
 
