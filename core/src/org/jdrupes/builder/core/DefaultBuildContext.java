@@ -66,7 +66,7 @@ public class DefaultBuildContext implements BuildContext {
     public <T extends Resource> Stream<T> get(ResourceProvider provider,
             ResourceRequest<T> request) {
         return cache.computeIfAbsent(new Key<>(provider, request),
-            k -> new FutureStream<T>(executor, k.provider(), k.requested()))
+            k -> new FutureStream<T>(executor, k.provider(), k.request()))
             .stream();
     }
 

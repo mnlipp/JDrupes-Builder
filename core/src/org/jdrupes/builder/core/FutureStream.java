@@ -19,12 +19,15 @@
 package org.jdrupes.builder.core;
 
 import java.util.Iterator;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Spliterators;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Consumer;
+import java.util.logging.Logger;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 import org.jdrupes.builder.api.BuildException;
@@ -38,27 +41,48 @@ import org.jdrupes.builder.api.ResourceRequest;
 ///
 public class FutureStream<T extends Resource> {
 
+    protected final Logger log = Logger.getLogger(FutureStream.class.getName());
     @SuppressWarnings("PMD.FieldNamingConventions")
-    private static final ThreadLocal<Boolean> providerInvocationAllowed
-        = ThreadLocal.withInitial(() -> false);
-    private final Future<List<T>> source;
+    private static final ScopedValue<AtomicBoolean> providerInvocationAllowed
+        = ScopedValue.newInstance();
+    @SuppressWarnings("PMD.FieldNamingConventions")
+    private static final ScopedValue<FutureStream<?>> caller
+        = ScopedValue.newInstance();
+    private final FutureStream<?> initiallyCalledBy;
+    private final FutureStreamCache.Key<?> holding;
+    private final Future<List<T>> values;
 
     /// Instantiates a new future resources.
     ///
     /// @param executor the executor
     /// @param provider the provider
-    /// @param requested the requested
+    /// @param request the requested
     ///
     public FutureStream(ExecutorService executor, ResourceProvider provider,
-            ResourceRequest<T> requested) {
-        source = executor.submit(() -> {
-            try {
-                providerInvocationAllowed.set(true);
-                return provider.provide(requested).toList();
-            } finally {
-                providerInvocationAllowed.set(false);
-            }
+            ResourceRequest<T> request) {
+        initiallyCalledBy = caller.isBound() ? caller.get() : null;
+        holding = new FutureStreamCache.Key<>(provider, request);
+        log.finer(() -> "Evaluating " + holding.request() + " → "
+            + holding.provider()
+            + (initiallyCalledBy != null ? " requested by " + initiallyCalledBy
+                : ""));
+        log.finest(() -> "Call chain: " + callChain());
+        values = executor.submit(() -> {
+            return ScopedValue
+                .where(providerInvocationAllowed, new AtomicBoolean(true))
+                .where(caller, this)
+                .call(() -> provider.provide(request).toList());
         });
+    }
+
+    private List<FutureStream<?>> callChain() {
+        List<FutureStream<?>> result = new LinkedList<>();
+        FutureStream<?> cur = this;
+        do {
+            result.add(0, cur);
+            cur = cur.initiallyCalledBy;
+        } while (cur != null);
+        return result;
     }
 
     /// Checks if is provider invocation is allowed. Clears the
@@ -67,9 +91,8 @@ public class FutureStream<T extends Resource> {
     /// @return true, if is provider invocation allowed
     ///
     public static boolean isProviderInvocationAllowed() {
-        var allowed = providerInvocationAllowed.get();
-        providerInvocationAllowed.set(false);
-        return allowed;
+        return providerInvocationAllowed.isBound()
+            && providerInvocationAllowed.get().getAndSet(false);
     }
 
     /// Returns the lazily evaluated stream of resources.
@@ -85,7 +108,7 @@ public class FutureStream<T extends Resource> {
                 private Iterator<T> iterator() {
                     if (theIterator == null) {
                         try {
-                            theIterator = source.get().iterator();
+                            theIterator = values.get().iterator();
                         } catch (InterruptedException | ExecutionException e) {
                             throw new BuildException(e);
                         }
@@ -108,6 +131,12 @@ public class FutureStream<T extends Resource> {
                 }
 
             }, false);
+    }
+
+    @Override
+    public String toString() {
+        return "FutureStream [" + holding.request() + " → "
+            + holding.provider() + "]";
     }
 
 }

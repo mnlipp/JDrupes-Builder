@@ -37,10 +37,10 @@ public class FutureStreamCache {
     ///
     /// @param <T> the generic type
     /// @param provider the provider
-    /// @param requested the requested resources
+    /// @param request the requested resources
     ///
     public record Key<T extends Resource>(ResourceProvider provider,
-            ResourceRequest<T> requested) {
+            ResourceRequest<T> request) {
     }
 
     /// Instantiates a new future stream cache.
