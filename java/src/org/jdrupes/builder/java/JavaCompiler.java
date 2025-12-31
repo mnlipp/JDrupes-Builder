@@ -32,6 +32,7 @@ import javax.tools.ToolProvider;
 import org.jdrupes.builder.api.BuildException;
 import org.jdrupes.builder.api.FileResource;
 import org.jdrupes.builder.api.FileTree;
+import static org.jdrupes.builder.api.Intend.*;
 import org.jdrupes.builder.api.MergedTestProject;
 import org.jdrupes.builder.api.Project;
 import static org.jdrupes.builder.api.Project.Properties.*;
@@ -65,6 +66,7 @@ import static org.jdrupes.builder.java.JavaTypes.*;
 /// default behavior of the java compiler, you have to specify
 /// `-g:[lines, source]` explicitly.
 ///
+@SuppressWarnings("PMD.TooManyStaticImports")
 public class JavaCompiler extends JavaTool {
 
     private final Resources<FileTree<JavaSourceFile>> sources
@@ -188,9 +190,11 @@ public class JavaCompiler extends JavaTool {
             return Stream.empty();
         }
 
-        // Get classpath for compilation.
+        // Get classpath for compilation. Filter myself, in case the
+        // compilation result is consumed (instead of supplied) by the project.
         var cpResources = newResource(ClasspathType).addAll(
-            project().provided(requestFor(CompilationClasspathType)));
+            project().from(Consume, Expose).without(this)
+                .get(requestFor(CompilationClasspathType)));
         log.finest(() -> "Compiling in " + project() + " with classpath "
             + cpResources.stream().map(e -> e.toPath().toString())
                 .collect(Collectors.joining(File.pathSeparator)));
