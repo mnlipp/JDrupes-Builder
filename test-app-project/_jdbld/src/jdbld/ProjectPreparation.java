@@ -23,12 +23,14 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
 import org.jdrupes.builder.api.BuildException;
+import static org.jdrupes.builder.api.Intend.*;
 import org.jdrupes.builder.api.Project;
 import org.jdrupes.builder.api.MergedTestProject;
 import org.jdrupes.builder.eclipse.EclipseConfigurator;
 import org.jdrupes.builder.java.JavaCompiler;
 import org.jdrupes.builder.java.JavaProject;
 import org.jdrupes.builder.java.JavaResourceCollector;
+import org.jdrupes.builder.junit.JUnitTestRunner;
 
 /// The Class ProjectPreparation.
 ///
@@ -40,9 +42,13 @@ public class ProjectPreparation {
                 (project instanceof MergedTestProject) ? "test" : "src"),
                 "**/*.java");
             project.generator(JavaResourceCollector::new)
-                .add(Path.of("resources"), "**/*");
-//            project.generator(LibraryGenerator::new)
-//                .from(project.providers(Supply));
+                .add(Path.of(
+                    (project instanceof MergedTestProject) ? "test-resources"
+                        : "resource"),
+                    "**/*");
+            if (project instanceof MergedTestProject) {
+                project.dependency(Supply, JUnitTestRunner::new);
+            }
         }
     }
 

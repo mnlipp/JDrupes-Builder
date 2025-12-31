@@ -57,6 +57,7 @@ public class Root extends AbstractProject implements RootProject {
         dependency(Expose, project(Startup.class));
         dependency(Expose, project(Eclipse.class));
         dependency(Expose, project(Vscode.class));
+        dependency(Expose, project(JUnit.class));
 
         // Generate POM
         generator(PomFileGenerator::new).adaptPom(model -> {

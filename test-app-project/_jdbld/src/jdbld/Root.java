@@ -4,6 +4,7 @@ import org.jdrupes.builder.api.Project;
 import org.jdrupes.builder.api.ResourceRequest;
 import org.jdrupes.builder.api.ResourceType;
 import org.jdrupes.builder.api.RootProject;
+import org.jdrupes.builder.api.TestResult;
 import org.jdrupes.builder.core.AbstractProject;
 import org.jdrupes.builder.eclipse.EclipseConfiguration;
 import org.jdrupes.builder.java.JarFile;
@@ -20,6 +21,8 @@ public class Root extends AbstractProject implements RootProject {
         super(name("test-app-project"));
         commandAlias("build",
             new ResourceRequest<JarFile>(new ResourceType<>() {}));
+        commandAlias("test",
+            new ResourceRequest<TestResult>(new ResourceType<>() {}));
         commandAlias("eclipse",
             new ResourceRequest<EclipseConfiguration>(new ResourceType<>() {}));
     }

@@ -68,6 +68,11 @@ public class ResourceType<T extends Resource> {
     public static final ResourceType<Resources<IOResource>> IOResourcesType
         = new ResourceType<>(Resources.class, IOResourceType) {};
 
+    /// The resource type for [TestResult].
+    @SuppressWarnings("PMD.FieldNamingConventions")
+    public static final ResourceType<TestResult> TestResultType
+        = new ResourceType<>() {};
+
     private final Class<T> type;
     private final ResourceType<?> containedType;
 

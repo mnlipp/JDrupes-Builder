@@ -31,6 +31,7 @@ import org.jdrupes.builder.api.Resource;
 import org.jdrupes.builder.api.ResourceFactory;
 import org.jdrupes.builder.api.ResourceType;
 import org.jdrupes.builder.api.Resources;
+import org.jdrupes.builder.api.TestResult;
 
 /// A factory for creating the Core resource objects.
 ///
@@ -63,7 +64,8 @@ public class CoreResourceFactory implements ResourceFactory {
     }
 
     @Override
-    @SuppressWarnings({ "unchecked" })
+    @SuppressWarnings({ "unchecked", "PMD.CyclomaticComplexity",
+        "PMD.NPathComplexity" })
     public <T extends Resource> Optional<T> newResource(ResourceType<T> type,
             Project project, Object... args) {
         if (ResourceType.FileResourceType.isAssignableFrom(type)
@@ -72,6 +74,14 @@ public class CoreResourceFactory implements ResourceFactory {
                 (Class<? extends FileResource>) type.rawType())) {
             return Optional.of((T) DefaultFileResource.createFileResource(
                 (ResourceType<? extends FileResource>) type, (Path) args[0]));
+        }
+        if (ResourceType.TestResultType.isAssignableFrom(type)
+            && type.rawType().getSuperclass() == null
+            && !addsMethod(TestResult.class,
+                (Class<? extends TestResult>) type.rawType())) {
+            return Optional.of((T) DefaultTestResult.createTestResult(
+                (ResourceType<? extends TestResult>) type, (String) args[0],
+                (int) args[1], (int) args[2]));
         }
         if (Resources.class.isAssignableFrom(type.rawType())
             && type.rawType().getSuperclass() == null
