@@ -18,15 +18,37 @@
 
 package org.jdrupes.builder.api;
 
+import java.util.HashSet;
+import java.util.Set;
 import java.util.stream.Stream;
 
 /// Helper class for implementing [Project#from].
 ///
-/// @param context the context
-/// @param providers the providers
-///
-public record FromHelper(BuildContext context,
-        Stream<ResourceProvider> providers) {
+public class FromHelper {
+    private final BuildContext context;
+    private final Stream<ResourceProvider> providers;
+    private final Set<ResourceProvider> excluded = new HashSet<>();
+
+    /// Initializes a new from helper.
+    ///
+    /// @param context the context
+    /// @param providers the providers
+    ///
+    public FromHelper(BuildContext context,
+            Stream<ResourceProvider> providers) {
+        this.context = context;
+        this.providers = providers;
+    }
+
+    /// Exclude the given provider when requesting resources.
+    ///
+    /// @param provider the provider
+    /// @return the from helper
+    ///
+    public FromHelper without(ResourceProvider provider) {
+        excluded.add(provider);
+        return this;
+    }
 
     /// Returns the requested resources using the context and providers 
     /// passed to the record's constructor.
@@ -36,7 +58,7 @@ public record FromHelper(BuildContext context,
     /// @return the stream
     ///
     public <T extends Resource> Stream<T> get(ResourceRequest<T> request) {
-        return providers.flatMap(provider -> context.get(provider, request));
+        return providers.filter(p -> !excluded.contains(p))
+            .flatMap(provider -> context.get(provider, request));
     }
-
 }
