@@ -41,6 +41,7 @@ import org.jdrupes.builder.api.ResourceRequest;
 ///
 public class FutureStream<T extends Resource> {
 
+    /// The logger.
     protected final Logger log = Logger.getLogger(FutureStream.class.getName());
     @SuppressWarnings("PMD.FieldNamingConventions")
     private static final ScopedValue<AtomicBoolean> providerInvocationAllowed
