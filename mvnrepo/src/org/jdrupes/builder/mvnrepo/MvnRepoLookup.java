@@ -29,6 +29,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Stream;
+import org.apache.maven.model.building.DefaultModelBuilderFactory;
+import org.apache.maven.model.building.DefaultModelBuildingRequest;
+import org.apache.maven.model.building.ModelBuildingException;
 import org.eclipse.aether.RepositorySystem;
 import org.eclipse.aether.RepositorySystemSession;
 import org.eclipse.aether.artifact.Artifact;
@@ -40,6 +43,7 @@ import org.eclipse.aether.repository.RemoteRepository;
 import org.eclipse.aether.repository.RepositoryPolicy;
 import org.eclipse.aether.resolution.ArtifactRequest;
 import org.eclipse.aether.resolution.ArtifactResolutionException;
+import org.eclipse.aether.resolution.ArtifactResult;
 import org.eclipse.aether.resolution.DependencyRequest;
 import org.eclipse.aether.resolution.DependencyResolutionException;
 import org.eclipse.aether.util.artifact.SubArtifact;
@@ -70,6 +74,7 @@ import static org.jdrupes.builder.mvnrepo.MvnRepoTypes.*;
 ///     The resources returned implement the additional marker interface
 ///     `MvnRepoJarFile`.
 ///
+@SuppressWarnings("PMD.CouplingBetweenObjects")
 public class MvnRepoLookup extends AbstractProvider
         implements ResourceProvider {
 
@@ -201,23 +206,32 @@ public class MvnRepoLookup extends AbstractProvider
         if (snapshotUri != null) {
             addSnapshotRepository(collectRequest);
         }
+        collectRequest.setManagedDependencies(
+            new ArrayList<>(collectRequest.getManagedDependencies()));
 
         // Retrieve coordinates and add to collect request
+        var repoSystem = rootContext().repositorySystem();
+        var repoSession = rootContext().repositorySystemSession();
         var asDepsType = resourceType(
             requested.type().rawType(), MvnRepoDependency.class);
         coordinates.entrySet().stream()
             .filter(e -> asDepsType.isAssignableFrom(e.getKey()))
-            .forEach(e -> e.getValue().stream().forEach(c -> collectRequest
-                .addDependency(new Dependency(new DefaultArtifact(c),
-                    e.getKey().equals(MvnRepoCompilationDepsType) ? "compile"
-                        : "runtime"))));
+            .forEach(e -> e.getValue().stream().forEach(c -> {
+                if (c.endsWith(":pom") || c.contains(":pom:")) {
+                    handleBom(repoSystem, repoSession, collectRequest, c);
+                    return;
+                }
+                collectRequest
+                    .addDependency(new Dependency(new DefaultArtifact(c),
+                        e.getKey().equals(MvnRepoCompilationDepsType)
+                            ? "compile"
+                            : "runtime"));
+            }));
 
         DependencyRequest dependencyRequest
             = new DependencyRequest(collectRequest, null);
         DependencyNode rootNode;
         try {
-            var repoSystem = rootContext().repositorySystem();
-            var repoSession = rootContext().repositorySystemSession();
             rootNode = repoSystem.resolveDependencies(repoSession,
                 dependencyRequest).getRoot();
 // For maven 2.x libraries:
@@ -243,6 +257,32 @@ public class MvnRepoLookup extends AbstractProvider
                 .map(p -> ResourceFactory.create(MvnRepoLibraryJarFileType, p));
             return result;
         } catch (DependencyResolutionException e) {
+            throw new BuildException(
+                "Cannot resolve: " + e.getMessage(), e);
+        }
+    }
+
+    private void handleBom(RepositorySystem repoSystem,
+            RepositorySystemSession repoSession, CollectRequest collectRequest,
+            String coord) {
+        try {
+            ArtifactRequest bomReq = new ArtifactRequest();
+            bomReq.setArtifact(new DefaultArtifact(coord));
+            bomReq.setRepositories(collectRequest.getRepositories());
+            ArtifactResult bomResult
+                = repoSystem.resolveArtifact(repoSession, bomReq);
+            var req = new DefaultModelBuildingRequest()
+                .setPomFile(bomResult.getArtifact().getFile());
+            var model = new DefaultModelBuilderFactory().newInstance()
+                .build(req).getEffectiveModel();
+            for (var dep : model.getDependencyManagement().getDependencies()) {
+                @SuppressWarnings("PMD.AvoidInstantiatingObjectsInLoops")
+                Dependency aetherDep = new Dependency(new DefaultArtifact(
+                    dep.getGroupId(), dep.getArtifactId(), dep.getClassifier(),
+                    dep.getType(), dep.getVersion()), dep.getScope());
+                collectRequest.getManagedDependencies().add(aetherDep);
+            }
+        } catch (ArtifactResolutionException | ModelBuildingException e) {
             throw new BuildException(
                 "Cannot resolve: " + e.getMessage(), e);
         }
