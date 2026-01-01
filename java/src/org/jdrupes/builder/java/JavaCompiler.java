@@ -246,10 +246,8 @@ public class JavaCompiler extends JavaTool {
                 "-d", destDir.toString(),
                 "-cp", classpath,
                 "-encoding", project().get(Encoding).toString()));
-            if (!javac.getTask(null, fileManager, null,
-                List.of("-d", destDir.toString(),
-                    "-cp", classpath),
-                null, compilationUnits).call()) {
+            if (!javac.getTask(null, fileManager, null, allOptions, null,
+                compilationUnits).call()) {
                 throw new BuildException("Compilation failed");
             }
         } catch (Exception e) {
