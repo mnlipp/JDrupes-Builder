@@ -39,7 +39,7 @@ import javax.xml.transform.dom.DOMSource;
 import javax.xml.transform.stream.StreamResult;
 import org.jdrupes.builder.api.BuildException;
 import org.jdrupes.builder.api.FileTree;
-import org.jdrupes.builder.api.Intend;
+import static org.jdrupes.builder.api.Intend.*;
 import org.jdrupes.builder.api.MergedTestProject;
 import org.jdrupes.builder.api.Project;
 import org.jdrupes.builder.api.Resource;
@@ -52,6 +52,7 @@ import org.jdrupes.builder.java.CompilationResources;
 import org.jdrupes.builder.java.JavaCompiler;
 import org.jdrupes.builder.java.JavaProject;
 import org.jdrupes.builder.java.JavaResourceCollector;
+import static org.jdrupes.builder.java.JavaTypes.CompilationLibrariesType;
 import org.jdrupes.builder.java.LibraryJarFile;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
@@ -265,7 +266,7 @@ public class EclipseConfigurator extends AbstractGenerator {
         addCompilationResources(doc, classpath, project());
 
         // Add resources
-        project().providers(Intend.Supply)
+        project().providers(Supply)
             .filter(p -> p instanceof JavaResourceCollector)
             .map(p -> (JavaResourceCollector) p)
             .findFirst().ifPresent(rc -> {
@@ -304,7 +305,7 @@ public class EclipseConfigurator extends AbstractGenerator {
             var attribute = (Element) attributes
                 .appendChild(doc.createElement("attribute"));
             attribute.setAttribute("without_test_code", "true");
-            addedByProject.addAll(p.from(Intend.Supply)
+            addedByProject.addAll(p.from(Supply)
                 .get(requestFor(ClasspathElement.class)).toList());
         });
 
@@ -344,7 +345,7 @@ public class EclipseConfigurator extends AbstractGenerator {
 
     private void addCompilationResources(Document doc, Node classpath,
             Project project) {
-        project.providers(Intend.Supply, Intend.Consume)
+        project.providers(Supply, Consume)
             .filter(p -> p instanceof JavaCompiler).map(p -> (JavaCompiler) p)
             .findFirst().ifPresent(jc -> {
                 jc.sources().stream().map(FileTree::root)
@@ -364,10 +365,27 @@ public class EclipseConfigurator extends AbstractGenerator {
                         }
                     });
 
-                // Configure default output directory for (base) project
+                // For merged test project also add compile path resources
                 if (project instanceof MergedTestProject) {
+                    project.from(Consume, Expose).without(jc)
+                        .without(project.parentProject().get())
+                        .get(requestFor(CompilationLibrariesType))
+                        .forEach(jf -> {
+                            var entry = (Element) classpath.appendChild(
+                                doc.createElement("classpathentry"));
+                            entry.setAttribute("kind", "lib");
+                            var jarPathName = jf.path().toString();
+                            entry.setAttribute("path", jarPathName);
+                            var attr = (Element) entry
+                                .appendChild(doc.createElement("attributes"))
+                                .appendChild(doc.createElement("attribute"));
+                            attr.setAttribute("name", "test");
+                            attr.setAttribute("value", "true");
+                        });
                     return;
                 }
+
+                // Configure default output directory for (base) project
                 var entry = (Element) classpath
                     .appendChild(doc.createElement("classpathentry"));
                 entry.setAttribute("kind", "output");
@@ -384,7 +402,7 @@ public class EclipseConfigurator extends AbstractGenerator {
             return;
         }
         collected.add(project);
-        project.providers(Intend.Consume, Intend.Forward, Intend.Expose)
+        project.providers(Consume, Forward, Expose)
             .filter(p -> p instanceof Project).map(p -> (Project) p)
             .forEach(p -> collectContributing(collected, p));
     }
@@ -500,7 +518,7 @@ public class EclipseConfigurator extends AbstractGenerator {
     protected void generateJdtCorePrefs() {
         var props = new Properties();
         props.setProperty("eclipse.preferences.version", "1");
-        project().providers(Intend.Supply)
+        project().providers(Supply)
             .filter(p -> p instanceof JavaCompiler).map(p -> (JavaCompiler) p)
             .findFirst().ifPresent(jc -> {
                 jc.optionArgument("-target", "--target", "--release")
