@@ -29,25 +29,40 @@ public class DefaultMvnRepoResource extends ResourceObject
 
     private final String groupId;
     private final String artifactId;
-    private final String version;
+    private String classifier = "";
+    private String mvnType = "";
+    private String version = "";
 
-    /// Instantiates a new default mvn repo dependency.
+    /// Instantiates a new default mvn repo dependency. The coordinate is
+    /// parsed into its component parts following the schema
+    /// `groupId:artifactId[[:classifier]:type]:version`.
     ///
     /// @param type the type
     /// @param coordinate the coordinate
     ///
-    @SuppressWarnings("PMD.AvoidLiteralsInIfCondition")
     public DefaultMvnRepoResource(ResourceType<? extends MvnRepoResource> type,
             String coordinate) {
         super(type);
         var parts = Objects.requireNonNull(coordinate).split(":");
-        if (parts.length != 3) {
+        switch (parts.length) {
+        case 5:
+            classifier = parts[2];
+            // fallthrough
+        case 4:
+            mvnType = parts[parts.length - 2];
+            // fallthrough
+        case 3:
+            version = parts[parts.length - 1];
+            // fallthrough
+        case 2:
+            artifactId = parts[1];
+            groupId = parts[0];
+            break;
+        default:
             throw new IllegalArgumentException(
                 "Invalid maven coordinate: " + coordinate);
+
         }
-        groupId = parts[0];
-        artifactId = parts[1];
-        version = parts[2];
     }
 
     /// Group id.
@@ -68,9 +83,19 @@ public class DefaultMvnRepoResource extends ResourceObject
         return artifactId;
     }
 
+    @Override
+    public String classifier() {
+        return classifier;
+    }
+
+    @Override
+    public String mvnType() {
+        return mvnType;
+    }
+
     /// Version.
     ///
-    /// @return the string
+    /// @return the string (defaults to "")
     ///
     @Override
     public String version() {
@@ -82,7 +107,7 @@ public class DefaultMvnRepoResource extends ResourceObject
         final int prime = 31;
         int result = super.hashCode();
         result = prime * result
-            + Objects.hash(artifactId, groupId, version);
+            + Objects.hash(groupId, artifactId, classifier, mvnType, version);
         return result;
     }
 
@@ -97,6 +122,8 @@ public class DefaultMvnRepoResource extends ResourceObject
         return (obj instanceof DefaultMvnRepoResource other)
             && Objects.equals(artifactId, other.artifactId)
             && Objects.equals(groupId, other.groupId)
+            && Objects.equals(classifier, other.classifier)
+            && Objects.equals(mvnType, other.mvnType)
             && Objects.equals(version, other.version);
     }
 

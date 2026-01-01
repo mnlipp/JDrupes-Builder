@@ -37,6 +37,18 @@ public interface MvnRepoResource extends Resource {
     ///
     String artifactId();
 
+    /// Classifier.
+    ///
+    /// @return the string (defaults to "")
+    ///
+    String classifier();
+
+    /// Maven type.
+    ///
+    /// @return the string (defaults to "")
+    ///
+    String mvnType();
+
     /// Version.
     ///
     /// @return the string
@@ -48,7 +60,10 @@ public interface MvnRepoResource extends Resource {
     /// @return the string
     ///
     default String coordinates() {
-        return groupId() + ":" + artifactId() + ":" + version();
+        return groupId() + ":" + artifactId()
+            + (classifier().isBlank() ? "" : ":" + classifier())
+            + (mvnType().isBlank() ? "" : ":" + mvnType())
+            + ":" + version();
 
     }
 }

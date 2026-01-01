@@ -31,6 +31,7 @@ import org.jdrupes.builder.java.JavaCompiler;
 import org.jdrupes.builder.java.JavaProject;
 import org.jdrupes.builder.java.JavaResourceCollector;
 import org.jdrupes.builder.junit.JUnitTestRunner;
+import org.jdrupes.builder.mvnrepo.MvnRepoLookup;
 
 /// The Class ProjectPreparation.
 ///
@@ -38,16 +39,21 @@ public class ProjectPreparation {
 
     public static void setupCommonGenerators(Project project) {
         if (project instanceof JavaProject) {
-            project.generator(JavaCompiler::new).addSources(Path.of(
-                (project instanceof MergedTestProject) ? "test" : "src"),
-                "**/*.java");
-            project.generator(JavaResourceCollector::new)
-                .add(Path.of(
-                    (project instanceof MergedTestProject) ? "test-resources"
-                        : "resource"),
-                    "**/*");
             if (project instanceof MergedTestProject) {
+                project.generator(JavaCompiler::new).addSources(Path.of("test"),
+                    "**/*.java");
+                project.generator(JavaResourceCollector::new).add(Path.of(
+                    "test-resources"), "**/*");
+                project.dependency(Consume, new MvnRepoLookup()
+                    .bom("org.junit:junit-bom:5.12.2")
+                    .resolve("org.junit.jupiter:junit-jupiter-api"));
                 project.dependency(Supply, JUnitTestRunner::new);
+            } else {
+                project.generator(JavaCompiler::new).addSources(Path.of("src"),
+                    "**/*.java");
+                project.generator(JavaResourceCollector::new).add(
+                    Path.of("resource"), "**/*");
+
             }
         }
     }

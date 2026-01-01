@@ -29,21 +29,21 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Stream;
+import org.apache.maven.model.DependencyManagement;
+import org.apache.maven.model.Model;
 import org.apache.maven.model.building.DefaultModelBuilderFactory;
 import org.apache.maven.model.building.DefaultModelBuildingRequest;
 import org.apache.maven.model.building.ModelBuildingException;
+import org.apache.maven.model.building.ModelBuildingRequest;
 import org.eclipse.aether.RepositorySystem;
 import org.eclipse.aether.RepositorySystemSession;
 import org.eclipse.aether.artifact.Artifact;
-import org.eclipse.aether.artifact.DefaultArtifact;
 import org.eclipse.aether.collection.CollectRequest;
-import org.eclipse.aether.graph.Dependency;
 import org.eclipse.aether.graph.DependencyNode;
 import org.eclipse.aether.repository.RemoteRepository;
 import org.eclipse.aether.repository.RepositoryPolicy;
 import org.eclipse.aether.resolution.ArtifactRequest;
 import org.eclipse.aether.resolution.ArtifactResolutionException;
-import org.eclipse.aether.resolution.ArtifactResult;
 import org.eclipse.aether.resolution.DependencyRequest;
 import org.eclipse.aether.resolution.DependencyResolutionException;
 import org.eclipse.aether.util.artifact.SubArtifact;
@@ -80,6 +80,7 @@ public class MvnRepoLookup extends AbstractProvider
 
     private final Map<ResourceType<? extends Resources<?>>,
             List<String>> coordinates = new ConcurrentHashMap<>();
+    private final List<String> boms = new ArrayList<>();
     private boolean downloadSources = true;
     private boolean downloadJavadoc = true;
     private URI snapshotUri;
@@ -150,6 +151,18 @@ public class MvnRepoLookup extends AbstractProvider
         return resolve(Scope.Compile, coordinates);
     }
 
+    /// Add a bill of materials. The coordinates are resolved as 
+    /// a dependency with scope `import` which is added to the
+    /// `dependencyManagement` section.
+    ///
+    /// @param coordinates the coordinates
+    /// @return the mvn repo lookup
+    ///
+    public MvnRepoLookup bom(String... coordinates) {
+        boms.addAll(Arrays.asList(coordinates));
+        return this;
+    }
+
     /// Whether to also download the sources. Defaults to `true`.
     ///
     /// @param enable the enable
@@ -193,103 +206,118 @@ public class MvnRepoLookup extends AbstractProvider
         }
         if (requested.accepts(
             new ResourceType<CompilationResources<LibraryJarFile>>() {})) {
-            return provideJars(requested);
+            try {
+                return provideJars(requested);
+            } catch (DependencyResolutionException | ModelBuildingException e) {
+                throw new BuildException(
+                    "Cannot resolve: " + e.getMessage(), e);
+            }
         }
         return Stream.empty();
     }
 
     private <T extends Resource> Stream<T>
-            provideJars(ResourceRequest<T> requested) {
-        // Base collect request, optionally with snapshots
-        CollectRequest collectRequest = new CollectRequest().setRepositories(
-            new ArrayList<>(rootContext().remoteRepositories()));
-        if (snapshotUri != null) {
-            addSnapshotRepository(collectRequest);
-        }
-        collectRequest.setManagedDependencies(
-            new ArrayList<>(collectRequest.getManagedDependencies()));
-
-        // Retrieve coordinates and add to collect request
+            provideJars(ResourceRequest<T> requested)
+                    throws DependencyResolutionException,
+                    ModelBuildingException {
         var repoSystem = rootContext().repositorySystem();
         var repoSession = rootContext().repositorySystemSession();
-        var asDepsType = resourceType(
-            requested.type().rawType(), MvnRepoDependency.class);
-        coordinates.entrySet().stream()
-            .filter(e -> asDepsType.isAssignableFrom(e.getKey()))
-            .forEach(e -> e.getValue().stream().forEach(c -> {
-                if (c.endsWith(":pom") || c.contains(":pom:")) {
-                    handleBom(repoSystem, repoSession, collectRequest, c);
-                    return;
-                }
-                collectRequest
-                    .addDependency(new Dependency(new DefaultArtifact(c),
-                        e.getKey().equals(MvnRepoCompilationDepsType)
-                            ? "compile"
-                            : "runtime"));
-            }));
+        var repos = new ArrayList<>(rootContext().remoteRepositories());
+        if (snapshotUri != null) {
+            repos.add(createSnapshotRepository());
+        }
 
+        // Create an effective model. This make sure that BOMs are
+        // handled correctly.
+        Model model = getEffectiveModel(repoSystem, repoSession,
+            repos, requested);
+
+        // Create collect request using data from the (effective) model
+        CollectRequest collectRequest
+            = new CollectRequest().setRepositories(repos);
+        collectRequest.setManagedDependencies(
+            model.getDependencyManagement().getDependencies().stream()
+                .map(DependencyConverter::convert).toList());
+        model.getDependencies().stream().map(DependencyConverter::convert)
+            .forEach(collectRequest::addDependency);
+
+        // Resolve dependencies
         DependencyRequest dependencyRequest
             = new DependencyRequest(collectRequest, null);
         DependencyNode rootNode;
-        try {
-            rootNode = repoSystem.resolveDependencies(repoSession,
-                dependencyRequest).getRoot();
+        rootNode = repoSystem.resolveDependencies(repoSession,
+            dependencyRequest).getRoot();
 // For maven 2.x libraries:
 //                List<DependencyNode> dependencyNodes = new ArrayList<>();
 //                rootNode.accept(new PreorderDependencyNodeConsumerVisitor(
 //                    dependencyNodes::add));
-            PreorderNodeListGenerator nlg = new PreorderNodeListGenerator();
-            rootNode.accept(nlg);
-            List<DependencyNode> dependencyNodes = nlg.getNodes();
-            @SuppressWarnings("unchecked")
-            var result = (Stream<T>) dependencyNodes.stream()
-                .filter(d -> d.getArtifact() != null)
-                .map(DependencyNode::getArtifact)
-                .map(a -> {
-                    if (downloadSources) {
-                        downloadSourceJar(repoSystem, repoSession, a);
-                    }
-                    if (downloadJavadoc) {
-                        downloadJavadocJar(repoSystem, repoSession, a);
-                    }
-                    return a;
-                }).map(a -> a.getFile().toPath())
-                .map(p -> ResourceFactory.create(MvnRepoLibraryJarFileType, p));
-            return result;
-        } catch (DependencyResolutionException e) {
-            throw new BuildException(
-                "Cannot resolve: " + e.getMessage(), e);
-        }
+        PreorderNodeListGenerator nlg = new PreorderNodeListGenerator();
+        rootNode.accept(nlg);
+        List<DependencyNode> dependencyNodes = nlg.getNodes();
+        @SuppressWarnings("unchecked")
+        var result = (Stream<T>) dependencyNodes.stream()
+            .filter(d -> d.getArtifact() != null)
+            .map(DependencyNode::getArtifact)
+            .map(a -> {
+                if (downloadSources) {
+                    downloadSourceJar(repoSystem, repoSession, a);
+                }
+                if (downloadJavadoc) {
+                    downloadJavadocJar(repoSystem, repoSession, a);
+                }
+                return a;
+            }).map(a -> a.getFile().toPath())
+            .map(p -> ResourceFactory.create(MvnRepoLibraryJarFileType, p));
+        return result;
     }
 
-    private void handleBom(RepositorySystem repoSystem,
-            RepositorySystemSession repoSession, CollectRequest collectRequest,
-            String coord) {
-        try {
-            ArtifactRequest bomReq = new ArtifactRequest();
-            bomReq.setArtifact(new DefaultArtifact(coord));
-            bomReq.setRepositories(collectRequest.getRepositories());
-            ArtifactResult bomResult
-                = repoSystem.resolveArtifact(repoSession, bomReq);
-            var req = new DefaultModelBuildingRequest()
-                .setPomFile(bomResult.getArtifact().getFile());
-            var model = new DefaultModelBuilderFactory().newInstance()
-                .build(req).getEffectiveModel();
-            for (var dep : model.getDependencyManagement().getDependencies()) {
-                @SuppressWarnings("PMD.AvoidInstantiatingObjectsInLoops")
-                Dependency aetherDep = new Dependency(new DefaultArtifact(
-                    dep.getGroupId(), dep.getArtifactId(), dep.getClassifier(),
-                    dep.getType(), dep.getVersion()), dep.getScope());
-                collectRequest.getManagedDependencies().add(aetherDep);
-            }
-        } catch (ArtifactResolutionException | ModelBuildingException e) {
-            throw new BuildException(
-                "Cannot resolve: " + e.getMessage(), e);
-        }
+    private Model getEffectiveModel(RepositorySystem repoSystem,
+            RepositorySystemSession repoSession, List<RemoteRepository> repos,
+            ResourceRequest<?> requested)
+            throws ModelBuildingException {
+        // First build raw model
+        Model model = new Model();
+        model.setModelVersion("4.0.0");
+        model.setGroupId("model.group");
+        model.setArtifactId("model.artifact");
+        model.setVersion("0.0.0");
+        var depMgmt = new DependencyManagement();
+        model.setDependencyManagement(depMgmt);
+        boms.stream().forEach(c -> {
+            var mvnResource = new DefaultMvnRepoDependency(
+                MvnRepoDependencyType, c, Scope.Runtime);
+            var dep = DependencyConverter.convert(mvnResource);
+            dep.setScope("import");
+            dep.setType("pom");
+            depMgmt.addDependency(dep);
+        });
+        var asDepsType
+            = resourceType(requested.type().rawType(), MvnRepoDependency.class);
+        coordinates.entrySet().stream()
+            .filter(e -> asDepsType.isAssignableFrom(e.getKey()))
+            .forEach(e -> e.getValue().stream().forEach(c -> {
+                var mvnResource = new DefaultMvnRepoDependency(
+                    MvnRepoDependencyType, c,
+                    e.getKey().equals(MvnRepoCompilationDepsType)
+                        ? Scope.Compile
+                        : Scope.Runtime);
+                model.addDependency(DependencyConverter.convert(mvnResource));
+            }));
+
+        // Now build (derive) effective model
+        var buildingRequest = new DefaultModelBuildingRequest();
+        buildingRequest.setRawModel(model);
+        buildingRequest.setProcessPlugins(false);
+        buildingRequest
+            .setValidationLevel(ModelBuildingRequest.VALIDATION_LEVEL_MINIMAL);
+        var resolver = new MvnModelResolver(repoSystem, repoSession, repos);
+        buildingRequest.setModelResolver(resolver);
+        return new DefaultModelBuilderFactory()
+            .newInstance().build(buildingRequest).getEffectiveModel();
     }
 
-    private void addSnapshotRepository(CollectRequest collectRequest) {
-        RemoteRepository snapshotsRepo = new RemoteRepository.Builder(
+    private RemoteRepository createSnapshotRepository() {
+        return new RemoteRepository.Builder(
             "snapshots", "default", snapshotUri.toString())
                 .setSnapshotPolicy(new RepositoryPolicy(
                     true,  // enable snapshots
@@ -300,7 +328,6 @@ public class MvnRepoLookup extends AbstractProvider
                     RepositoryPolicy.UPDATE_POLICY_NEVER,
                     RepositoryPolicy.CHECKSUM_POLICY_IGNORE))
                 .build();
-        collectRequest.addRepository(snapshotsRepo);
     }
 
     private void downloadSourceJar(RepositorySystem repoSystem,
