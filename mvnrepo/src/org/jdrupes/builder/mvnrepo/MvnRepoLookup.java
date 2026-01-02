@@ -65,10 +65,14 @@ import static org.jdrupes.builder.mvnrepo.MvnRepoTypes.*;
 /// Depending on the request, this provider provides two types of resources.
 /// 
 ///  1. The artifacts to be resolved as
-///     `CompilationResources<MavenRepoDependencies>`. The artifacts
+///     `Resources<MvnRepoDependency>` (or more specifically
+///     `CompilationResources<MvnRepoDependency>` or
+///     `RuntimeResources<MvnRepoDependency>`). The artifacts
 ///     to be resolved are those added with [resolve].
 ///
-///  2. The `CompilationResources<LibraryJarFile>` 
+///  2. The BOMs added with [bom] as `Resources<MvnRepoBom>`.
+///
+///  3. The `CompilationResources<LibraryJarFile>` 
 ///     or `RuntimeResources<LibraryJarFile>` (depending on the
 ///     request) that result from resolving the artifacts to be resolved.
 ///     The resources returned implement the additional marker interface
@@ -192,17 +196,9 @@ public class MvnRepoLookup extends AbstractProvider
     @Override
     protected <T extends Resource> Stream<T>
             doProvide(ResourceRequest<T> requested) {
-        if (requested.accepts(MvnRepoCompilationDepsType)) {
-            @SuppressWarnings("unchecked")
-            var result = (Stream<T>) coordinates.entrySet().stream()
-                .filter(e -> requested.accepts(e.getKey()))
-                .map(e -> e.getValue().stream().map(c -> ResourceFactory
-                    .create(MvnRepoDependencyType, null, c,
-                        e.getKey().equals(MvnRepoCompilationDepsType)
-                            ? Scope.Compile
-                            : Scope.Runtime)))
-                .flatMap(d -> d);
-            return result;
+        if (requested
+            .accepts(new ResourceType<Resources<MvnRepoResource>>() {})) {
+            return provideMvnDeps(requested);
         }
         if (requested.accepts(
             new ResourceType<CompilationResources<LibraryJarFile>>() {})) {
@@ -214,6 +210,32 @@ public class MvnRepoLookup extends AbstractProvider
             }
         }
         return Stream.empty();
+    }
+
+    private <T extends Resource> Stream<T>
+            provideMvnDeps(ResourceRequest<T> requested) {
+        Stream<T> boms = Stream.empty();
+        if (requested.accepts(new ResourceType<Resources<MvnRepoBom>>() {})) {
+            @SuppressWarnings("unchecked")
+            var result = (Stream<T>) this.boms.stream().map(c -> ResourceFactory
+                .create(MvnRepoBomType, null, c));
+            boms = result;
+        }
+        Stream<T> deps = Stream.empty();
+        if (requested
+            .accepts(new ResourceType<Resources<MvnRepoDependency>>() {})) {
+            @SuppressWarnings("unchecked")
+            var result = (Stream<T>) coordinates.entrySet().stream()
+                .filter(e -> requested.accepts(e.getKey()))
+                .map(e -> e.getValue().stream().map(c -> ResourceFactory
+                    .create(MvnRepoDependencyType, null, c,
+                        e.getKey().equals(MvnRepoCompilationDepsType)
+                            ? Scope.Compile
+                            : Scope.Runtime)))
+                .flatMap(d -> d);
+            deps = result;
+        }
+        return Stream.concat(boms, deps);
     }
 
     private <T extends Resource> Stream<T>

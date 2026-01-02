@@ -34,6 +34,10 @@ public final class MvnRepoTypes {
     public static final ResourceType<MvnRepoResource> MvnRepoResourceType
         = new ResourceType<>() {};
 
+    /// The maven repository BOM type.
+    public static final ResourceType<
+            MvnRepoBom> MvnRepoBomType = new ResourceType<>() {};
+
     /// The maven repository dependency type.
     public static final ResourceType<
             MvnRepoDependency> MvnRepoDependencyType = new ResourceType<>() {};
