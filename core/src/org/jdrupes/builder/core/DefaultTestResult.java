@@ -35,6 +35,7 @@ public class DefaultTestResult extends ResourceObject implements TestResult {
 
     /// Initializes a new default test result.
     ///
+    /// @param project the project
     /// @param name the name
     /// @param executed the executed
     /// @param failed the failed
@@ -51,6 +52,7 @@ public class DefaultTestResult extends ResourceObject implements TestResult {
     ///
     /// @param <T> the resource type
     /// @param type the type
+    /// @param project the project
     /// @param name the name
     /// @param executed the number of tests executed
     /// @param failed the number of tests failed
