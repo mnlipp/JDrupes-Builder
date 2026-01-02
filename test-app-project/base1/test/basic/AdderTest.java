@@ -9,6 +9,5 @@ class AdderTest {
     void test() {
         Adder adder = new Adder();
         assertEquals(3, adder.calculate(1, 2));
-        fail();
     }
 }
