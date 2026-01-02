@@ -19,6 +19,7 @@
 package org.jdrupes.builder.core;
 
 import java.lang.reflect.Proxy;
+import org.jdrupes.builder.api.Project;
 import org.jdrupes.builder.api.Proxyable;
 import org.jdrupes.builder.api.ResourceType;
 import org.jdrupes.builder.api.TestResult;
@@ -27,9 +28,10 @@ import org.jdrupes.builder.api.TestResult;
 ///
 public class DefaultTestResult extends ResourceObject implements TestResult {
 
+    private final Project project;
     private final String name;
-    private final int executed;
-    private final int failed;
+    private final long executed;
+    private final long failed;
 
     /// Initializes a new default test result.
     ///
@@ -37,8 +39,9 @@ public class DefaultTestResult extends ResourceObject implements TestResult {
     /// @param executed the executed
     /// @param failed the failed
     ///
-    protected DefaultTestResult(String name, int executed, int failed) {
-        super();
+    protected DefaultTestResult(Project project, String name, long executed,
+            long failed) {
+        this.project = project;
         this.name = name;
         this.executed = executed;
         this.failed = failed;
@@ -55,11 +58,17 @@ public class DefaultTestResult extends ResourceObject implements TestResult {
     ///
     @SuppressWarnings({ "unchecked" })
     public static <T extends TestResult> T createTestResult(
-            ResourceType<T> type, String name, int executed, int failed) {
+            ResourceType<T> type, Project project, String name, long executed,
+            long failed) {
         return (T) Proxy.newProxyInstance(type.rawType().getClassLoader(),
             new Class<?>[] { type.rawType(), Proxyable.class },
             new ForwardingHandler(
-                new DefaultTestResult(name, executed, failed)));
+                new DefaultTestResult(project, name, executed, failed)));
+    }
+
+    @Override
+    public Project project() {
+        return project;
     }
 
     @Override
@@ -68,12 +77,12 @@ public class DefaultTestResult extends ResourceObject implements TestResult {
     }
 
     @Override
-    public int executed() {
+    public long executed() {
         return executed;
     }
 
     @Override
-    public int failed() {
+    public long failed() {
         return failed;
     }
 
@@ -83,7 +92,8 @@ public class DefaultTestResult extends ResourceObject implements TestResult {
     ///
     @Override
     public String toString() {
-        return type().toString() + " " + name() + ": failed " + failed() + "/"
-            + executed();
+        return TestResult.class.getSimpleName() + " from " + project().name()
+            + " ("
+            + name() + "): failed " + failed() + "/" + executed();
     }
 }

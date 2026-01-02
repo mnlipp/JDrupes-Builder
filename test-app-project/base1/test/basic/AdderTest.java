@@ -1,9 +1,14 @@
 package basic;
 
 import builder.test.base1.Adder;
+import static org.junit.jupiter.api.Assertions.*;
+import org.junit.jupiter.api.Test;
 
 class AdderTest {
-    public static void main(String[] args) {
-        System.out.println(new Adder().calculate(2, 3));
+    @Test
+    void test() {
+        Adder adder = new Adder();
+        assertEquals(3, adder.calculate(1, 2));
+        fail();
     }
 }

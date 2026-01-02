@@ -22,6 +22,12 @@ package org.jdrupes.builder.api;
 ///
 public interface TestResult extends Resource {
 
+    /// The test project.
+    ///
+    /// @return the project
+    ///
+    Project project();
+
     /// The name of the test or test suite.
     ///
     /// @return the name
@@ -32,11 +38,11 @@ public interface TestResult extends Resource {
     ///
     /// @return the number
     ///
-    int executed();
+    long executed();
 
     /// Returns the number of test failures.
     ///
     /// @return the number
     ///
-    int failed();
+    long failed();
 }

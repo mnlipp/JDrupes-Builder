@@ -80,8 +80,8 @@ public class CoreResourceFactory implements ResourceFactory {
             && !addsMethod(TestResult.class,
                 (Class<? extends TestResult>) type.rawType())) {
             return Optional.of((T) DefaultTestResult.createTestResult(
-                (ResourceType<? extends TestResult>) type, (String) args[0],
-                (int) args[1], (int) args[2]));
+                (ResourceType<? extends TestResult>) type, project,
+                (String) args[0], (long) args[1], (long) args[2]));
         }
         if (Resources.class.isAssignableFrom(type.rawType())
             && type.rawType().getSuperclass() == null
