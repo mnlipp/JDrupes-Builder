@@ -196,8 +196,8 @@ public class MvnRepoLookup extends AbstractProvider
     @Override
     protected <T extends Resource> Stream<T>
             doProvide(ResourceRequest<T> requested) {
-        if (requested
-            .accepts(new ResourceType<Resources<MvnRepoResource>>() {})) {
+        if (new ResourceType<Resources<MvnRepoResource>>() {}
+            .isAssignableFrom(requested.type())) {
             return provideMvnDeps(requested);
         }
         if (requested.accepts(
@@ -222,8 +222,7 @@ public class MvnRepoLookup extends AbstractProvider
             boms = result;
         }
         Stream<T> deps = Stream.empty();
-        if (requested
-            .accepts(new ResourceType<Resources<MvnRepoDependency>>() {})) {
+        if (requested.accepts(MvnRepoCompilationDepsType)) {
             @SuppressWarnings("unchecked")
             var result = (Stream<T>) coordinates.entrySet().stream()
                 .filter(e -> requested.accepts(e.getKey()))
