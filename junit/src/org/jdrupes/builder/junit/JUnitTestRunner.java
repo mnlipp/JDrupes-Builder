@@ -101,7 +101,7 @@ public class JUnitTestRunner extends AbstractGenerator {
                         throw new IllegalArgumentException(e);
                     }
                 }).toArray(URL[]::new),
-            oldLoader)) {
+            ClassLoader.getSystemClassLoader())) {
             Thread.currentThread().setContextClassLoader(testLoader);
 
             // Discover all tests from compiler's output
