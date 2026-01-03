@@ -94,8 +94,13 @@ public class DefaultTestResult extends ResourceObject implements TestResult {
     ///
     @Override
     public String toString() {
+        String details;
+        if (failed() > 0) {
+            details = "failed " + failed() + "/" + executed();
+        } else {
+            details = executed() + " passed";
+        }
         return TestResult.class.getSimpleName() + " from " + project().name()
-            + " ("
-            + name() + "): failed " + failed() + "/" + executed();
+            + " (" + name() + "): " + details;
     }
 }
