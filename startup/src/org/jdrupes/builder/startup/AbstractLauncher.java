@@ -25,13 +25,13 @@ import java.net.URISyntaxException;
 import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.security.CodeSource;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 import java.util.Properties;
 import java.util.concurrent.Callable;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.logging.Level;
 import java.util.logging.LogManager;
 import java.util.logging.Logger;
@@ -42,13 +42,13 @@ import org.apache.commons.cli.Option;
 import org.apache.commons.cli.Options;
 import org.apache.commons.cli.ParseException;
 import org.jdrupes.builder.api.BuildException;
-import org.jdrupes.builder.api.FileTree;
 import org.jdrupes.builder.api.Launcher;
 import org.jdrupes.builder.api.Masked;
 import org.jdrupes.builder.api.Project;
 import org.jdrupes.builder.api.ResourceFactory;
 import org.jdrupes.builder.api.RootProject;
 import org.jdrupes.builder.core.DefaultBuildContext;
+import org.jdrupes.builder.java.ClassTree;
 import static org.jdrupes.builder.java.JavaTypes.*;
 
 /// A default implementation of a [Launcher].
@@ -139,7 +139,7 @@ public abstract class AbstractLauncher implements Launcher {
     /// @param subprojects classes that implement [Project] but not
     /// [RootProject]
     ///
-    @SuppressWarnings({ "unchecked", "PMD.AvoidLiteralsInIfCondition" })
+    @SuppressWarnings({ "PMD.AvoidLiteralsInIfCondition" })
     protected void findProjects(ClassLoader clsLoader,
             List<Class<? extends RootProject>> rootProjects,
             List<Class<? extends Project>> subprojects) {
@@ -149,6 +149,8 @@ public abstract class AbstractLauncher implements Launcher {
         } catch (IOException e) {
             throw new BuildException("Problem scanning classpath", e);
         }
+        Map<Path, List<Class<? extends RootProject>>> rootProjectMap
+            = new ConcurrentHashMap<>();
         classDirUrls.parallelStream()
             .filter(uri -> !"jar".equals(uri.getProtocol())).map(uri -> {
                 try {
@@ -156,11 +158,30 @@ public abstract class AbstractLauncher implements Launcher {
                 } catch (URISyntaxException e) {
                     throw new BuildException("Problem scanning classpath", e);
                 }
-            })
-            .map(
-                p -> ResourceFactory.create(ClassTreeType, p, "**/*.class",
-                    false))
-            .flatMap(FileTree::entries).map(Path::toString)
+            }).map(p -> ResourceFactory.create(ClassTreeType, p, "**/*.class",
+                false))
+            .forEach(tree -> searchTree(clsLoader, rootProjectMap, subprojects,
+                tree));
+        if (rootProjectMap.isEmpty()) {
+            throw new BuildException("No project implements RootProject");
+        }
+        if (rootProjectMap.size() > 1) {
+            StringBuilder msg = new StringBuilder(50);
+            msg.append("More than one class implements RootProject: ")
+                .append(rootProjectMap.entrySet().stream()
+                    .map(e -> e.getValue().get(0).getName() + " (in "
+                        + e.getKey() + ")")
+                    .collect(Collectors.joining(", ")));
+            throw new BuildException(msg.toString());
+        }
+        rootProjects.addAll(rootProjectMap.values().iterator().next());
+    }
+
+    @SuppressWarnings("unchecked")
+    private void searchTree(ClassLoader clsLoader,
+            Map<Path, List<Class<? extends RootProject>>> rootProjects,
+            List<Class<? extends Project>> subprojects, ClassTree tree) {
+        tree.entries().map(Path::toString)
             .map(p -> p.substring(0, p.length() - 6).replace('/', '.'))
             .map(cn -> {
                 try {
@@ -170,39 +191,22 @@ public abstract class AbstractLauncher implements Launcher {
                         "Cannot load detected class", e);
                 }
             }).forEach(cls -> {
-                if (!Masked.class.isAssignableFrom(cls) && !cls.isInterface()
+                if (!Masked.class.isAssignableFrom(cls)
+                    && !cls.isInterface()
                     && !Modifier.isAbstract(cls.getModifiers())) {
                     if (RootProject.class.isAssignableFrom(cls)) {
-                        rootProjects.add((Class<? extends RootProject>) cls);
+                        log.finer(() -> "Found root project: " + cls + " in "
+                            + tree.root());
+                        rootProjects.computeIfAbsent(tree.root(),
+                            _ -> new ArrayList<>())
+                            .add((Class<? extends RootProject>) cls);
                     } else if (Project.class.isAssignableFrom(cls)) {
+                        log.finer(() -> "Found sub project: " + cls + " in "
+                            + tree.root());
                         subprojects.add((Class<? extends Project>) cls);
                     }
                 }
             });
-        if (rootProjects.isEmpty()) {
-            throw new BuildException("No project implements RootProject");
-        }
-        if (rootProjects.size() > 1) {
-            StringBuilder msg = new StringBuilder(50);
-            msg.append("More than one class implements RootProject: ")
-                .append(rootProjects.stream().map(cls -> {
-                    return cls.getName() + getClassFileLocation(cls)
-                        .map(p -> " (in " + p + ")").orElse("");
-                }).collect(Collectors.joining(", ")));
-            throw new BuildException(msg.toString());
-        }
-    }
-
-    private static Optional<Path> getClassFileLocation(Class<?> clazz) {
-        CodeSource codeSource = clazz.getProtectionDomain().getCodeSource();
-        if (codeSource == null) {
-            return Optional.empty();
-        }
-        try {
-            return Optional.of(Path.of(codeSource.getLocation().toURI()));
-        } catch (URISyntaxException e) {
-            return Optional.empty();
-        }
     }
 
     /// A utility method that invokes the callable. If an exception
