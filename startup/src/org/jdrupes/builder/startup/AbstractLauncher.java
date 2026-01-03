@@ -25,9 +25,11 @@ import java.net.URISyntaxException;
 import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.security.CodeSource;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Properties;
 import java.util.concurrent.Callable;
 import java.util.logging.Level;
@@ -182,10 +184,24 @@ public abstract class AbstractLauncher implements Launcher {
         }
         if (rootProjects.size() > 1) {
             StringBuilder msg = new StringBuilder(50);
-            msg.append("More than one project implements RootProject: ")
-                .append(rootProjects.stream().map(Class::getName)
-                    .collect(Collectors.joining(", ")));
+            msg.append("More than one class implements RootProject: ")
+                .append(rootProjects.stream().map(cls -> {
+                    return cls.getName() + getClassFileLocation(cls)
+                        .map(p -> " (in " + p + ")").orElse("");
+                }).collect(Collectors.joining(", ")));
             throw new BuildException(msg.toString());
+        }
+    }
+
+    private static Optional<Path> getClassFileLocation(Class<?> clazz) {
+        CodeSource codeSource = clazz.getProtectionDomain().getCodeSource();
+        if (codeSource == null) {
+            return Optional.empty();
+        }
+        try {
+            return Optional.of(Path.of(codeSource.getLocation().toURI()));
+        } catch (URISyntaxException e) {
+            return Optional.empty();
         }
     }
 
