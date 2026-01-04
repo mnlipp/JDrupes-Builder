@@ -99,8 +99,8 @@ public class BootstrapLauncher extends AbstractLauncher {
                 }).toArray(URL[]::new);
             log.fine(() -> "Launching build project with classpath: "
                 + Arrays.toString(cpUrls));
-            new DirectLauncher(
-                new URLClassLoader(cpUrls, getClass().getClassLoader()), args);
+            new DirectLauncher(new URLClassLoader(
+                cpUrls, getClass().getClassLoader()), args).command(args);
             return null;
         });
     }

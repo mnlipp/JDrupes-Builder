@@ -29,7 +29,6 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.logging.Level;
-import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.DefaultParser;
@@ -71,7 +70,7 @@ public class DirectLauncher extends AbstractLauncher {
     /// @param classloader the classloader
     /// @param args the arguments
     ///
-    @SuppressWarnings({ "PMD.UseVarargs", "PMD.SystemPrintln" })
+    @SuppressWarnings({ "PMD.UseVarargs" })
     public DirectLauncher(ClassLoader classloader, String[] args) {
         super(args);
         unwrapBuildException(() -> {
@@ -81,22 +80,6 @@ public class DirectLauncher extends AbstractLauncher {
             findProjects(extClsLdr, rootProjects, subprojects);
             rootProject = LauncherSupport.createProjects(rootProjects.get(0),
                 subprojects, jdbldProps, commandLine);
-            CommandLine commandLine;
-            try {
-                commandLine = new DefaultParser().parse(baseOptions(), args);
-            } catch (ParseException e) {
-                throw new BuildException(e);
-            }
-            for (var arg : commandLine.getArgs()) {
-                var reqs = LauncherSupport.lookupCommand(rootProject, arg);
-                if (reqs.length == 0) {
-                    throw new BuildException("Unknown command: " + arg);
-                }
-                for (var req : reqs) {
-                    rootProject.get(req).collect(Collectors.toSet())
-                        .forEach(r -> System.out.println(r.toString()));
-                }
-            }
             return null;
         });
     }
@@ -170,6 +153,29 @@ public class DirectLauncher extends AbstractLauncher {
         });
     }
 
+    /// Execute a command.
+    ///
+    /// @param args the args
+    ///
+    @SuppressWarnings("PMD.SystemPrintln")
+    public void command(String... args) {
+        CommandLine commandLine;
+        try {
+            commandLine = new DefaultParser().parse(baseOptions(), args);
+        } catch (ParseException e) {
+            throw new BuildException(e);
+        }
+        for (var arg : commandLine.getArgs()) {
+            var reqs = LauncherSupport.lookupCommand(rootProject, arg);
+            if (reqs.length == 0) {
+                throw new BuildException("Unknown command: " + arg);
+            }
+            for (var req : reqs) {
+                provide(req).forEach(r -> System.out.println(r.toString()));
+            }
+        }
+    }
+
     /// This main can be used to start the user's JDrupes Builder
     /// project from an IDE for debugging purposes. It expects that
     /// the JDrupes Builder project has already been compiled (typically
@@ -179,6 +185,6 @@ public class DirectLauncher extends AbstractLauncher {
     ///
     public static void main(String[] args) {
         new DirectLauncher(Thread.currentThread().getContextClassLoader(),
-            args);
+            args).command(args);
     }
 }
