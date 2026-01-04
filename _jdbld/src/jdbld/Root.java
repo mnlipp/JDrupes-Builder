@@ -14,6 +14,7 @@ import org.jdrupes.builder.api.ResourceRequest;
 import static org.jdrupes.builder.api.ResourceRequest.requestFor;
 import org.jdrupes.builder.api.ResourceType;
 import org.jdrupes.builder.api.RootProject;
+import org.jdrupes.builder.api.TestResult;
 import org.jdrupes.builder.core.AbstractProject;
 import org.jdrupes.builder.eclipse.EclipseConfiguration;
 import org.jdrupes.builder.java.AppJarFile;
@@ -140,6 +141,8 @@ public class Root extends AbstractProject implements RootProject {
         // Commands
         commandAlias("build", requestFor(AppJarFile.class),
             requestFor(JavadocDirectory.class));
+        commandAlias("test",
+            new ResourceRequest<TestResult>(new ResourceType<>() {}));
         commandAlias("sourcesJar", requestFor(SourcesJarFile.class));
         commandAlias("javadoc", requestFor(JavadocDirectory.class));
         commandAlias("javadocJar", requestFor(JavadocJarFile.class));
