@@ -23,6 +23,6 @@ steps:
     #- echo gpgkey=https://packages.adoptium.net/artifactory/api/gpg/key/public >> /etc/yum.repos.d/adoptium.repo
     #- cat /etc/yum.repos.d/adoptium.repo
     - dnf install -y graphviz java-25-openjdk-headless xmlstarlet
-    - /usr/lib/jvm/java-25-openjdk/javac
+    - /usr/lib/jvm/java-25-openjdk/bin/javac
     - JAVA_HOME=/usr/lib/jvm/java-25-openjdk ./jdbld -B-x 'test-*-project' -B-x 'test-projects/*project*' build
  
