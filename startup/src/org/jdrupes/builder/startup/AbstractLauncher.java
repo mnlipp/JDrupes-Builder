@@ -37,10 +37,8 @@ import java.util.logging.LogManager;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
 import org.apache.commons.cli.CommandLine;
-import org.apache.commons.cli.DefaultParser;
 import org.apache.commons.cli.Option;
 import org.apache.commons.cli.Options;
-import org.apache.commons.cli.ParseException;
 import org.jdrupes.builder.api.BuildException;
 import org.jdrupes.builder.api.Launcher;
 import org.jdrupes.builder.api.Masked;
@@ -56,23 +54,28 @@ import static org.jdrupes.builder.java.JavaTypes.*;
 @SuppressWarnings("PMD.AvoidInstantiatingObjectsInLoops")
 public abstract class AbstractLauncher implements Launcher {
 
-    /// The JDrupes Builder properties read from the file
-    /// `.jdbld.properties` in the root project.
-    @SuppressWarnings("PMD.FieldNamingConventions")
-    protected static final Properties jdbldProps;
     /// The log.
     protected final Logger log = Logger.getLogger(getClass().getName());
-    /// The command line.
-    protected final CommandLine commandLine;
 
-    static {
-        // Get builder configuration
+    /// Initializes a new abstract launcher.
+    ///
+    protected AbstractLauncher() {
+        // Makes javadoc happy
+    }
+
+    /// Get the properties from the properties files in the user's home 
+    /// directory and the build root directory.
+    ///
+    /// @param buildRoot the build root directory
+    /// @return the properties
+    ///
+    protected static Properties propertiesFromFiles(Path buildRoot) {
         Properties fallbacks = new Properties();
         fallbacks.putAll(Map.of(DefaultBuildContext.JDBLD_DIRECTORY, "_jdbld"));
         for (Path propsPath : List.of(
             Path.of(System.getProperty("user.home"))
                 .resolve(".jdbld").resolve("jdbld.properties"),
-            Path.of("").toAbsolutePath().resolve(".jdbld.properties"))) {
+            buildRoot.resolve(".jdbld.properties"))) {
             try {
                 if (propsPath.toFile().canRead()) {
                     fallbacks = new Properties(fallbacks);
@@ -83,8 +86,28 @@ public abstract class AbstractLauncher implements Launcher {
                     "Cannot read properties from " + propsPath, e);
             }
         }
-        jdbldProps = new Properties(fallbacks);
+        return new Properties(fallbacks);
+    }
 
+    /// Adds properties or overrides existing properties with those from
+    /// the command line.
+    ///
+    /// @param jdbldProps the jdbld props
+    /// @param commandLine the command line
+    ///
+    protected static void addCliProperties(Properties jdbldProps,
+            CommandLine commandLine) {
+        jdbldProps.putAll(commandLine.getOptionProperties("P"));
+    }
+
+    /// Configure the logging from logging properties found in
+    /// `DefaultBuildContext.JDBLD_DIRECTORY` resolved against `buildRoot`.
+    ///
+    /// @param buildRoot the build root
+    /// @param jdbldProps the jdbld properties
+    ///
+    protected static void configureLogging(Path buildRoot,
+            Properties jdbldProps) {
         // Get logging configuration
         InputStream props;
         try {
@@ -101,22 +124,6 @@ public abstract class AbstractLauncher implements Launcher {
         } catch (SecurityException | IOException e) {
             e.printStackTrace(); // NOPMD
         }
-    }
-
-    /// Instantiates a new abstract launcher.
-    ///
-    /// @param args the command line arguments
-    ///
-    @SuppressWarnings("PMD.UseVarargs")
-    public AbstractLauncher(String[] args) {
-        try {
-            commandLine = new DefaultParser().parse(baseOptions(), args);
-        } catch (ParseException e) {
-            throw new BuildException(e);
-        }
-
-        // Set properties from command line
-        jdbldProps.putAll(commandLine.getOptionProperties("P"));
     }
 
     /// Return the handled options.

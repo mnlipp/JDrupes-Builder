@@ -19,6 +19,7 @@
 package org.jdrupes.builder.core;
 
 import java.lang.reflect.InvocationTargetException;
+import java.nio.file.Path;
 import java.util.List;
 import java.util.Properties;
 import org.apache.commons.cli.CommandLine;
@@ -30,6 +31,7 @@ import org.jdrupes.builder.api.RootProject;
 ///
 public final class LauncherSupport {
 
+    private static Path buildRoot;
     private static Properties jdbldProps;
     private static CommandLine commandLine;
 
@@ -42,6 +44,7 @@ public final class LauncherSupport {
     /// e.g. by reflection and the root project does not add its sub
     /// projects itself.
     ///
+    /// @param buildRoot the build root
     /// @param rootProject the root project
     /// @param subprojects the sub projects
     /// @param jdbldProps the builder properties
@@ -49,10 +52,11 @@ public final class LauncherSupport {
     /// @return the root project
     ///
     public static RootProject createProjects(
-            Class<? extends RootProject> rootProject,
+            Path buildRoot, Class<? extends RootProject> rootProject,
             List<Class<? extends Project>> subprojects,
             Properties jdbldProps, CommandLine commandLine) {
         try {
+            LauncherSupport.buildRoot = buildRoot;
             LauncherSupport.jdbldProps = jdbldProps;
             LauncherSupport.commandLine = commandLine;
             var result = rootProject.getConstructor().newInstance();
@@ -66,12 +70,15 @@ public final class LauncherSupport {
         }
     }
 
+    /* default */ static Path buildRoot() {
+        return buildRoot;
+    }
+
     /* default */ static Properties jdbldProperties() {
         return jdbldProps;
     }
 
-    /* default */
-    static CommandLine commandLine() {
+    /* default */ static CommandLine commandLine() {
         return commandLine;
     }
 

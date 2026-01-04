@@ -176,7 +176,7 @@ public abstract class AbstractProject extends AbstractProvider
                     + getClass().getSimpleName()
                     + " cannot specify a directory.");
             }
-            projectDirectory = Path.of("").toAbsolutePath();
+            projectDirectory = LauncherSupport.buildRoot();
         } else {
             if (directory == null) {
                 if (this instanceof MergedTestProject

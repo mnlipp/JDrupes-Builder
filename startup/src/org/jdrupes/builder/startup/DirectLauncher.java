@@ -25,9 +25,11 @@ import eu.maveniverse.maven.mima.context.Runtimes;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLClassLoader;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Properties;
 import java.util.logging.Level;
 import java.util.stream.Stream;
 import org.apache.commons.cli.CommandLine;
@@ -58,6 +60,11 @@ import static org.jdrupes.builder.java.JavaTypes.*;
 ///
 public class DirectLauncher extends AbstractLauncher {
 
+    /// The JDrupes Builder properties read from the file
+    /// `.jdbld.properties` in the root project.
+    protected Properties jdbldProps;
+    /// The command line.
+    protected CommandLine commandLine;
     private static final String RUNTIME_EXTENSIONS = "runtimeExtensions";
     private RootProject rootProject;
 
@@ -68,18 +75,29 @@ public class DirectLauncher extends AbstractLauncher {
     /// other classes found as direct sub projects.
     ///
     /// @param classloader the classloader
-    /// @param args the arguments
+    /// @param buildRoot the build root
+    /// @param args the arguments. Flags are processed in the constructor,
+    /// command line arguments are processed in [runCommands].
     ///
     @SuppressWarnings({ "PMD.UseVarargs" })
-    public DirectLauncher(ClassLoader classloader, String[] args) {
-        super(args);
+    public DirectLauncher(ClassLoader classloader, Path buildRoot,
+            String[] args) {
         unwrapBuildException(() -> {
+            jdbldProps = propertiesFromFiles(buildRoot);
+            try {
+                commandLine = new DefaultParser().parse(baseOptions(), args);
+            } catch (ParseException e) {
+                throw new BuildException(e);
+            }
+            addCliProperties(jdbldProps, commandLine);
+            configureLogging(buildRoot, jdbldProps);
+
             final var extClsLdr = addRuntimeExts(classloader);
             var rootProjects = new ArrayList<Class<? extends RootProject>>();
             var subprojects = new ArrayList<Class<? extends Project>>();
             findProjects(extClsLdr, rootProjects, subprojects);
-            rootProject = LauncherSupport.createProjects(rootProjects.get(0),
-                subprojects, jdbldProps, commandLine);
+            rootProject = LauncherSupport.createProjects(buildRoot,
+                rootProjects.get(0), subprojects, jdbldProps, commandLine);
             return null;
         });
     }
@@ -153,18 +171,10 @@ public class DirectLauncher extends AbstractLauncher {
         });
     }
 
-    /// Execute a command.
-    ///
-    /// @param args the args
+    /// Execute the commands from the command line.
     ///
     @SuppressWarnings("PMD.SystemPrintln")
-    public void command(String... args) {
-        CommandLine commandLine;
-        try {
-            commandLine = new DefaultParser().parse(baseOptions(), args);
-        } catch (ParseException e) {
-            throw new BuildException(e);
-        }
+    public void runCommands() {
         for (var arg : commandLine.getArgs()) {
             var reqs = LauncherSupport.lookupCommand(rootProject, arg);
             if (reqs.length == 0) {
@@ -185,6 +195,6 @@ public class DirectLauncher extends AbstractLauncher {
     ///
     public static void main(String[] args) {
         new DirectLauncher(Thread.currentThread().getContextClassLoader(),
-            args).command(args);
+            Path.of("").toAbsolutePath(), args).runCommands();
     }
 }

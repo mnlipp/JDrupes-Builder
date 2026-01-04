@@ -22,11 +22,15 @@ import java.net.MalformedURLException;
 import java.net.URI;
 import java.net.URL;
 import java.net.URLClassLoader;
+import java.nio.file.Path;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.Optional;
-import java.util.logging.Logger;
+import java.util.Properties;
 import java.util.stream.Stream;
+import org.apache.commons.cli.CommandLine;
+import org.apache.commons.cli.DefaultParser;
+import org.apache.commons.cli.ParseException;
 import org.jdrupes.builder.api.BuildException;
 import org.jdrupes.builder.api.FileResource;
 import org.jdrupes.builder.api.FileTree;
@@ -48,8 +52,11 @@ import org.jdrupes.builder.mvnrepo.MvnRepoLookup;
 ///
 public class BootstrapLauncher extends AbstractLauncher {
 
-    /// The log.
-    protected final Logger log = Logger.getLogger(getClass().getName());
+    /// The JDrupes Builder properties read from the file
+    /// `.jdbld.properties` in the root project.
+    protected Properties jdbldProps;
+    /// The command line.
+    protected CommandLine commandLine;
     private RootProject rootProject;
 
     /// Instantiates a new bootstrap launcher. An instance of the class
@@ -66,9 +73,18 @@ public class BootstrapLauncher extends AbstractLauncher {
     @SuppressWarnings("PMD.UseVarargs")
     public BootstrapLauncher(
             Class<? extends RootProject> rootPrjCls, String[] args) {
-        super(args);
         unwrapBuildException(() -> {
-            rootProject = LauncherSupport.createProjects(
+            Path buildRoot = Path.of("").toAbsolutePath();
+            jdbldProps = propertiesFromFiles(buildRoot);
+            try {
+                commandLine = new DefaultParser().parse(baseOptions(), args);
+            } catch (ParseException e) {
+                throw new BuildException(e);
+            }
+            addCliProperties(jdbldProps, commandLine);
+            configureLogging(buildRoot, jdbldProps);
+
+            rootProject = LauncherSupport.createProjects(buildRoot,
                 rootPrjCls, Collections.emptyList(), jdbldProps, commandLine);
 
             // Add build extensions to the build project.
@@ -99,8 +115,9 @@ public class BootstrapLauncher extends AbstractLauncher {
                 }).toArray(URL[]::new);
             log.fine(() -> "Launching build project with classpath: "
                 + Arrays.toString(cpUrls));
-            new DirectLauncher(new URLClassLoader(
-                cpUrls, getClass().getClassLoader()), args).command(args);
+            new DirectLauncher(
+                new URLClassLoader(cpUrls, getClass().getClassLoader()),
+                buildRoot, args).runCommands();
             return null;
         });
     }
