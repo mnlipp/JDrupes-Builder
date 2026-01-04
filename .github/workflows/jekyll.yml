@@ -45,7 +45,7 @@ jobs:
           java-version: '25'
           distribution: 'temurin'
       - name: Build javadoc
-        run: ./jdbld -B-x 'test-*-project' javadoc
+        run: ./jdbld -B-x 'test-*-project' -B-x 'test-projects/*project*' javadoc
       - name: Setup Ruby
         uses: ruby/setup-ruby@v1
         with:
