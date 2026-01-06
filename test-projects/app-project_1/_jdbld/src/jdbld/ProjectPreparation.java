@@ -25,6 +25,7 @@ import java.nio.file.StandardCopyOption;
 import static org.jdrupes.builder.api.Intend.*;
 import org.jdrupes.builder.api.BuildException;
 import org.jdrupes.builder.api.Project;
+import org.jdrupes.builder.api.RootProject;
 import org.jdrupes.builder.eclipse.EclipseConfigurator;
 import org.jdrupes.builder.java.JavaCompiler;
 import org.jdrupes.builder.java.JavaProject;
@@ -49,6 +50,8 @@ public class ProjectPreparation {
 
     public static void setupEclipseConfigurator(Project project) {
         project.generator(new EclipseConfigurator(project)
+            .eclipseAlias(project instanceof RootProject ? project.name()
+                : "org.jdrupes.builder.test.app1." + project.name())
             .adaptProjectConfiguration((doc, buildSpec, natures) -> {
                 if (project instanceof JavaProject) {
                     var cmd = buildSpec

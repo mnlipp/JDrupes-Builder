@@ -24,7 +24,10 @@ import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
 import org.jdrupes.builder.api.BuildException;
 import static org.jdrupes.builder.api.Intend.*;
+import static org.jdrupes.builder.mvnrepo.MvnProperties.GroupId;
+
 import org.jdrupes.builder.api.Project;
+import org.jdrupes.builder.api.RootProject;
 import org.jdrupes.builder.api.MergedTestProject;
 import org.jdrupes.builder.eclipse.EclipseConfigurator;
 import org.jdrupes.builder.java.JavaCompiler;
@@ -70,6 +73,8 @@ public class ProjectPreparation {
 
     public static void setupEclipseConfigurator(Project project) {
         project.generator(new EclipseConfigurator(project)
+            .eclipseAlias(project instanceof RootProject ? project.name()
+                : "org.jdrupes.builder.demo.subprojects." + project.name())
             .adaptProjectConfiguration((doc, buildSpec, natures) -> {
                 if (project instanceof JavaProject) {
                     var cmd = buildSpec

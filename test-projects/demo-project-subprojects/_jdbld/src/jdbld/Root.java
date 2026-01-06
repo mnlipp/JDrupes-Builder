@@ -1,12 +1,7 @@
 package jdbld;
 
-import static org.jdrupes.builder.api.Intend.Consume;
-import static org.jdrupes.builder.api.Intend.Expose;
-import static org.jdrupes.builder.mvnrepo.MvnProperties.GroupId;
-
+import static org.jdrupes.builder.api.Intend.*;
 import java.nio.file.Path;
-import java.util.Map;
-
 import org.jdrupes.builder.api.Project;
 import org.jdrupes.builder.api.ResourceRequest;
 import org.jdrupes.builder.api.ResourceType;
@@ -15,9 +10,6 @@ import org.jdrupes.builder.api.TestResult;
 import org.jdrupes.builder.core.AbstractProject;
 import org.jdrupes.builder.eclipse.EclipseConfiguration;
 import org.jdrupes.builder.java.JarFile;
-import org.jdrupes.builder.mvnrepo.MvnRepoLookup;
-import org.jdrupes.builder.mvnrepo.PomFile;
-import org.jdrupes.builder.mvnrepo.MvnRepoDependency.Scope;
 import org.jdrupes.builder.uberjar.UberJarGenerator;
 
 public class Root extends AbstractProject implements RootProject {
