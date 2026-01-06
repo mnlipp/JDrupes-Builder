@@ -15,6 +15,7 @@ Generators are marked with a "(G)".
   * [JavaCompiler](javadoc/org/jdrupes/builder/java/JavaCompiler.html) (G)
   * [Javadoc](javadoc/org/jdrupes/builder/java/Javadoc.html) (G)
   * [JavadocJarGenerator](javadoc/org/jdrupes/builder/mvnrepo/JavadocJarGenerator.html) (G)
+  * [JUnitTestRunner](javadoc/org/jdrupes/builder/junit/JUnitTestRunner.html) (G)
   * [LibraryGenerator](javadoc/org/jdrupes/builder/java/LibraryGenerator.html) (G)
   * [MvnRepoLookup](javadoc/org/jdrupes/builder/mvnrepo/MvnRepoLookup.html)
   * [MvnPublisher](javadoc/org/jdrupes/builder/mvnrepo/MvnPublisher.html) (G)

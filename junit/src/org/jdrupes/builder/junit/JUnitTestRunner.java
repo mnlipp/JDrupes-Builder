@@ -31,6 +31,7 @@ import java.util.logging.Level;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import org.jdrupes.builder.api.Generator;
+import org.jdrupes.builder.api.Intend;
 import static org.jdrupes.builder.api.Intend.*;
 import org.jdrupes.builder.api.Project;
 import org.jdrupes.builder.api.Resource;
@@ -42,7 +43,9 @@ import org.jdrupes.builder.api.TestResult;
 import org.jdrupes.builder.core.AbstractGenerator;
 import org.jdrupes.builder.java.ClasspathElement;
 import org.jdrupes.builder.java.JavaCompiler;
+import org.jdrupes.builder.java.JavaTypes;
 import static org.jdrupes.builder.java.JavaTypes.*;
+import org.junit.platform.engine.TestDescriptor.Type;
 import org.junit.platform.engine.TestExecutionResult;
 import org.junit.platform.engine.TestExecutionResult.Status;
 import org.junit.platform.engine.discovery.DiscoverySelectors;
@@ -58,8 +61,28 @@ import org.junit.platform.launcher.core.LauncherFactory;
 import org.junit.platform.launcher.listeners.LoggingListener;
 import org.junit.platform.launcher.listeners.SummaryGeneratingListener;
 
-/// A [Generator] for [TestResult]s using JUnit.
+/// A [Generator] for [TestResult]s using the JUnit platform. The test
+/// runner uses the
+/// [compilation classpath resources][JavaTypes#CompilationClasspathType]
+/// from its associated project's [consumed][Intend#Consume] dependencies
+/// to detect test classes. It then runs the tests using all compilation
+/// classpath resources from dependencies with [Intend#Consume],
+/// [Intend#Expose], and [Intend#Supply].
+/// 
+/// Libraries for compiling the tests and a test engine of your choice
+/// must be provided explicitly to the runner's project as dependencies,
+///  e.g. as:
+/// ```
+/// project.dependency(Consume, new MvnRepoLookup()
+///     .bom("org.junit:junit-bom:5.12.2")
+///     .resolve("org.junit.jupiter:junit-jupiter-api")
+///     .resolve(Scope.Runtime,
+///        "org.junit.jupiter:junit-jupiter-engine"));
+/// ```
 ///
+/// In order to track the execution of the each test, you can enable
+/// [Level#FINE] logging for this class.
+/// 
 public class JUnitTestRunner extends AbstractGenerator {
 
     /// Initializes a new test runner.
@@ -218,15 +241,21 @@ public class JUnitTestRunner extends AbstractGenerator {
         @SuppressWarnings("PMD.GuardLogStatement")
         public void executionFinished(TestIdentifier testIdentifier,
                 TestExecutionResult testExecutionResult) {
-            if (testExecutionResult.getStatus() != Status.SUCCESSFUL) {
-                if (testExecutionResult.getThrowable().isEmpty()) {
-                    log.log(Level.WARNING,
-                        () -> "Failed: " + prettyTestName(testIdentifier));
+            if (testExecutionResult.getStatus() == Status.SUCCESSFUL) {
+                if (testIdentifier.getType() != Type.TEST) {
                     return;
                 }
-                log.log(Level.WARNING, testExecutionResult.getThrowable().get(),
-                    () -> "Failed: " + prettyTestName(testIdentifier));
+                log.log(Level.FINE,
+                    () -> "Succeeded: " + prettyTestName(testIdentifier));
+                return;
             }
+            if (testExecutionResult.getThrowable().isEmpty()) {
+                log.log(Level.WARNING,
+                    () -> "Failed: " + prettyTestName(testIdentifier));
+                return;
+            }
+            log.log(Level.WARNING, testExecutionResult.getThrowable().get(),
+                () -> "Failed: " + prettyTestName(testIdentifier));
         }
 
         @Override
