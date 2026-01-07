@@ -39,8 +39,7 @@ public class ProjectPreparation {
     public static void setupCommonGenerators(Project project) {
         if (project instanceof JavaProject) {
             project.dependency(Consume, JavaCompiler::new)
-                .addSources(Path.of("src"), "**/*.java")
-                .options("--release", "23");
+                .addSources(Path.of("src"), "**/*.java");
             project.dependency(Consume, JavaResourceCollector::new)
                 .add(Path.of("resources"), "**/*");
             project.generator(LibraryGenerator::new)
