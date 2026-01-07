@@ -19,8 +19,10 @@
 package org.jdrupes.builder.core;
 
 import java.lang.reflect.Proxy;
+import java.util.Objects;
 import org.jdrupes.builder.api.Project;
 import org.jdrupes.builder.api.Proxyable;
+import org.jdrupes.builder.api.ResourceProvider;
 import org.jdrupes.builder.api.ResourceType;
 import org.jdrupes.builder.api.TestResult;
 
@@ -29,6 +31,7 @@ import org.jdrupes.builder.api.TestResult;
 public class DefaultTestResult extends ResourceObject implements TestResult {
 
     private final Project project;
+    private final ResourceProvider provider;
     private final String name;
     private final long executed;
     private final long failed;
@@ -36,13 +39,16 @@ public class DefaultTestResult extends ResourceObject implements TestResult {
     /// Initializes a new default test result.
     ///
     /// @param project the project
+    /// @param provider the provider of the test result, used to check 
+    /// for equality
     /// @param name the name
     /// @param executed the executed
     /// @param failed the failed
     ///
-    protected DefaultTestResult(Project project, String name, long executed,
-            long failed) {
+    protected DefaultTestResult(Project project, ResourceProvider provider,
+            String name, long executed, long failed) {
         this.project = project;
+        this.provider = provider;
         this.name = name;
         this.executed = executed;
         this.failed = failed;
@@ -53,6 +59,7 @@ public class DefaultTestResult extends ResourceObject implements TestResult {
     /// @param <T> the resource type
     /// @param type the type
     /// @param project the project
+    /// @param provider the provider
     /// @param name the name
     /// @param executed the number of tests executed
     /// @param failed the number of tests failed
@@ -60,12 +67,12 @@ public class DefaultTestResult extends ResourceObject implements TestResult {
     ///
     @SuppressWarnings({ "unchecked" })
     public static <T extends TestResult> T createTestResult(
-            ResourceType<T> type, Project project, String name, long executed,
-            long failed) {
+            ResourceType<T> type, Project project, ResourceProvider provider,
+            String name, long executed, long failed) {
         return (T) Proxy.newProxyInstance(type.rawType().getClassLoader(),
             new Class<?>[] { type.rawType(), Proxyable.class },
-            new ForwardingHandler(
-                new DefaultTestResult(project, name, executed, failed)));
+            new ForwardingHandler(new DefaultTestResult(project, provider,
+                name, executed, failed)));
     }
 
     @Override
@@ -86,6 +93,30 @@ public class DefaultTestResult extends ResourceObject implements TestResult {
     @Override
     public long failed() {
         return failed;
+    }
+
+    @Override
+    public int hashCode() {
+        final int prime = 31;
+        int result = super.hashCode();
+        result = prime * result + Objects.hash(name, provider);
+        return result;
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        if (this == obj) {
+            return true;
+        }
+        if (!super.equals(obj)) {
+            return false;
+        }
+        if (!(obj instanceof DefaultTestResult)) {
+            return false;
+        }
+        DefaultTestResult other = (DefaultTestResult) obj;
+        return Objects.equals(name, other.name)
+            && Objects.equals(provider, other.provider);
     }
 
     /// To string.

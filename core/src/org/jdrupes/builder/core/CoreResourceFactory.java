@@ -29,6 +29,7 @@ import org.jdrupes.builder.api.FileTree;
 import org.jdrupes.builder.api.Project;
 import org.jdrupes.builder.api.Resource;
 import org.jdrupes.builder.api.ResourceFactory;
+import org.jdrupes.builder.api.ResourceProvider;
 import org.jdrupes.builder.api.ResourceType;
 import org.jdrupes.builder.api.Resources;
 import org.jdrupes.builder.api.TestResult;
@@ -81,7 +82,8 @@ public class CoreResourceFactory implements ResourceFactory {
                 (Class<? extends TestResult>) type.rawType())) {
             return Optional.of((T) DefaultTestResult.createTestResult(
                 (ResourceType<? extends TestResult>) type, project,
-                (String) args[0], (long) args[1], (long) args[2]));
+                (ResourceProvider) args[0], (String) args[1], (long) args[2],
+                (long) args[3]));
         }
         if (Resources.class.isAssignableFrom(type.rawType())
             && type.rawType().getSuperclass() == null
