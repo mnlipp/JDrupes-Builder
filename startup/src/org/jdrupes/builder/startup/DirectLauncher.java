@@ -164,6 +164,11 @@ public class DirectLauncher extends AbstractLauncher {
     }
 
     @Override
+    public RootProject rootProject() {
+        return rootProject;
+    }
+
+    @Override
     public <T extends Resource> Stream<T> provide(ResourceRequest<T> request) {
         return unwrapBuildException(() -> {
             // Provide requested resource, handling all exceptions here

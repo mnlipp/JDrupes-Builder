@@ -22,7 +22,6 @@ import java.util.stream.Stream;
 
 /// Defines the methods provided by a launcher.
 ///
-@SuppressWarnings("PMD.ImplicitFunctionalInterface")
 public interface Launcher {
 
     /// Provide the requested resources from the root project.
@@ -32,4 +31,10 @@ public interface Launcher {
     /// @return the stream
     ///
     <T extends Resource> Stream<T> provide(ResourceRequest<T> requested);
+
+    /// Return the root project.
+    ///
+    /// @return the root project
+    ///
+    RootProject rootProject();
 }
