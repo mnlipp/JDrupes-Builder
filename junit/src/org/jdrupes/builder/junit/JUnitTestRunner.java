@@ -150,7 +150,7 @@ public class JUnitTestRunner extends AbstractGenerator {
             var summary = summaryListener.getSummary();
             @SuppressWarnings("unchecked")
             var result = Stream.of((T) project().newResource(TestResultType,
-                buildName(testListener), summary.getTestsStartedCount(),
+                this, buildName(testListener), summary.getTestsStartedCount(),
                 summary.getTestsFailedCount()));
             return result;
         } catch (IOException e) {

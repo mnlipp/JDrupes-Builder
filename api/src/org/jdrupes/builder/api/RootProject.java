@@ -18,6 +18,8 @@
 
 package org.jdrupes.builder.api;
 
+import java.util.stream.Stream;
+
 /// A marker interface to identify the root project.
 ///
 public interface RootProject extends Project {
@@ -37,6 +39,16 @@ public interface RootProject extends Project {
     default void prepareProject(Project project) throws Exception {
         // Default does nothing
     }
+
+    /// Return the projects matching the pattern. The pattern is a glob
+    /// pattern applied to the project's directory. `""`matches the root
+    /// project. `"*"` matches the root project and all immediate
+    /// sub project. `"**"` matches all projects.
+    ///
+    /// @param pattern the pattern
+    /// @return the stream
+    ///
+    Stream<Project> projects(String pattern);
 
     /// Define an alias for requesting one more more specific resources.
     ///

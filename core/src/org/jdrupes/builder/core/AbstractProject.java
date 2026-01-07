@@ -19,18 +19,27 @@
 package org.jdrupes.builder.core;
 
 import java.lang.reflect.InvocationTargetException;
+import java.nio.file.FileSystems;
 import java.nio.file.Path;
+import java.nio.file.PathMatcher;
 import java.util.Collections;
+import java.util.EnumSet;
 import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Iterator;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
+import java.util.Spliterators.AbstractSpliterator;
+import java.util.Stack;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
+import java.util.function.Consumer;
 import java.util.stream.Stream;
+import java.util.stream.StreamSupport;
 import org.jdrupes.builder.api.BuildException;
 import org.jdrupes.builder.api.Cleanliness;
 import org.jdrupes.builder.api.Generator;
@@ -48,7 +57,8 @@ import org.jdrupes.builder.api.RootProject;
 
 /// A default implementation of a [Project].
 ///
-@SuppressWarnings({ "PMD.CouplingBetweenObjects", "PMD.GodClass" })
+@SuppressWarnings({ "PMD.CouplingBetweenObjects", "PMD.GodClass",
+    "PMD.TooManyMethods" })
 public abstract class AbstractProject extends AbstractProvider
         implements Project {
 
@@ -198,6 +208,10 @@ public abstract class AbstractProject extends AbstractProvider
         }
     }
 
+    /// Root project.
+    ///
+    /// @return the root project
+    ///
     @Override
     public final RootProject rootProject() {
         if (this instanceof RootProject root) {
@@ -212,6 +226,11 @@ public abstract class AbstractProject extends AbstractProvider
             .rootProject();
     }
 
+    /// Project.
+    ///
+    /// @param prjCls the prj cls
+    /// @return the project
+    ///
     @Override
     public Project project(Class<? extends Project> prjCls) {
         if (this.getClass().equals(prjCls)) {
@@ -243,23 +262,40 @@ public abstract class AbstractProject extends AbstractProvider
         }
     }
 
+    /// Parent project.
+    ///
+    /// @return the optional
+    ///
     @Override
     public Optional<Project> parentProject() {
         return Optional.ofNullable(parent);
     }
 
+    /// Name.
+    ///
+    /// @return the string
+    ///
     @Override
     @SuppressWarnings("checkstyle:OverloadMethodsDeclarationOrder")
     public String name() {
         return projectName;
     }
 
+    /// Directory.
+    ///
+    /// @return the path
+    ///
     @Override
     @SuppressWarnings("checkstyle:OverloadMethodsDeclarationOrder")
     public Path directory() {
         return projectDirectory;
     }
 
+    /// Generator.
+    ///
+    /// @param provider the provider
+    /// @return the project
+    ///
     @Override
     public Project generator(Generator provider) {
         if (this instanceof MergedTestProject) {
@@ -270,23 +306,44 @@ public abstract class AbstractProject extends AbstractProvider
         return this;
     }
 
+    /// Dependency.
+    ///
+    /// @param intend the intend
+    /// @param provider the provider
+    /// @return the project
+    ///
     @Override
     public Project dependency(Intend intend, ResourceProvider provider) {
         providers.put(provider, intend);
         return this;
     }
 
+    /// Providers.
+    ///
+    /// @param intends the intends
+    /// @return the stream
+    ///
     @Override
     public Stream<ResourceProvider> providers(Set<Intend> intends) {
         return providers.entrySet().stream()
             .filter(e -> intends.contains(e.getValue())).map(Entry::getKey);
     }
 
+    /// Context.
+    ///
+    /// @return the default build context
+    ///
     @Override
     public DefaultBuildContext context() {
         return ((AbstractProject) rootProject()).context;
     }
 
+    /// Returns the.
+    ///
+    /// @param <T> the generic type
+    /// @param property the property
+    /// @return the t
+    ///
     @Override
     @SuppressWarnings("unchecked")
     public <T> T get(PropertyKey property) {
@@ -299,6 +356,12 @@ public abstract class AbstractProject extends AbstractProvider
             });
     }
 
+    /// Sets the.
+    ///
+    /// @param property the property
+    /// @param value the value
+    /// @return the abstract project
+    ///
     @Override
     public AbstractProject set(PropertyKey property, Object value) {
         if (!property.type().isAssignableFrom(value.getClass())) {
@@ -343,11 +406,84 @@ public abstract class AbstractProject extends AbstractProvider
         return commands.getOrDefault(name, new ResourceRequest[0]);
     }
 
+    @SuppressWarnings("PMD.CommentRequired")
+    private static class ProjectTreeSpliterator
+            extends AbstractSpliterator<Project> {
+
+        private Project next;
+        @SuppressWarnings("PMD.LooseCoupling")
+        private final Stack<Iterator<Project>> stack = new Stack<>();
+        private final Set<Project> seen = new HashSet<>();
+
+        /// Initializes a new project tree spliterator.
+        ///
+        /// @param root the root
+        ///
+        public ProjectTreeSpliterator(Project root) {
+            super(Long.MAX_VALUE, ORDERED | DISTINCT | IMMUTABLE | NONNULL);
+            this.next = root;
+        }
+
+        private Iterator<Project> children(Project project) {
+            return project.providers(EnumSet.allOf(Intend.class))
+                .filter(p -> p instanceof Project).map(Project.class::cast)
+                .filter(p -> !seen.contains(p))
+                .iterator();
+        }
+
+        @Override
+        public boolean tryAdvance(Consumer<? super Project> action) {
+            if (next == null) {
+                return false;
+            }
+            action.accept(next);
+            seen.add(next);
+            var children = children(next);
+            if (children.hasNext()) {
+                next = children.next();
+                stack.push(children);
+                return true;
+            }
+            while (!stack.isEmpty()) {
+                if (stack.peek().hasNext()) {
+                    next = stack.peek().next();
+                    return true;
+                }
+                stack.pop();
+            }
+            next = null;
+            return true;
+        }
+    }
+
+    /// Provide the projects matching the pattern.
+    ///
+    /// @param pattern the pattern
+    /// @return the stream
+    /// @see RootProject#projects(String)
+    ///
+    public Stream<Project> projects(String pattern) {
+        final PathMatcher pathMatcher = FileSystems.getDefault()
+            .getPathMatcher("glob:" + pattern);
+        return StreamSupport.stream(new ProjectTreeSpliterator(this), false)
+            .filter(p -> pathMatcher
+                .matches(rootProject().directory().relativize(p.directory())));
+    }
+
+    /// Hash code.
+    ///
+    /// @return the int
+    ///
     @Override
     public int hashCode() {
         return Objects.hash(projectDirectory, projectName);
     }
 
+    /// Equals.
+    ///
+    /// @param obj the obj
+    /// @return true, if successful
+    ///
     @Override
     public boolean equals(Object obj) {
         if (this == obj) {
