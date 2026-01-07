@@ -27,7 +27,6 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.Optional;
 import java.util.Properties;
-import java.util.stream.Stream;
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.DefaultParser;
 import org.apache.commons.cli.ParseException;
@@ -36,8 +35,6 @@ import org.jdrupes.builder.api.FileResource;
 import org.jdrupes.builder.api.FileTree;
 import static org.jdrupes.builder.api.Intend.*;
 import org.jdrupes.builder.api.Launcher;
-import org.jdrupes.builder.api.Resource;
-import org.jdrupes.builder.api.ResourceRequest;
 import static org.jdrupes.builder.api.ResourceRequest.*;
 import org.jdrupes.builder.api.RootProject;
 import org.jdrupes.builder.core.LauncherSupport;
@@ -125,15 +122,6 @@ public class BootstrapLauncher extends AbstractLauncher {
     @Override
     public RootProject rootProject() {
         return rootProject;
-    }
-
-    @Override
-    public <T extends Resource> Stream<T> provide(ResourceRequest<T> request) {
-        return unwrapBuildException(() -> {
-            // Provide requested resource, handling all exceptions here
-            var result = rootProject.get(request).toList();
-            return result.stream();
-        });
     }
 
     /// The main method.

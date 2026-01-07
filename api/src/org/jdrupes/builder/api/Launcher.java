@@ -24,13 +24,15 @@ import java.util.stream.Stream;
 ///
 public interface Launcher {
 
-    /// Provide the requested resources from the root project.
+    /// Provide the requested resources from the given projects.
     ///
     /// @param <T> the requested type
+    /// @param projects the projects
     /// @param requested the request
-    /// @return the stream
+    /// @return the results
     ///
-    <T extends Resource> Stream<T> provide(ResourceRequest<T> requested);
+    <T extends Resource> Stream<T> provide(Stream<Project> projects,
+            ResourceRequest<T> requested);
 
     /// Return the root project.
     ///

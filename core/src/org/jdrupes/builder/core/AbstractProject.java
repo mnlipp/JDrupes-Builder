@@ -53,7 +53,9 @@ import org.jdrupes.builder.api.Resource;
 import org.jdrupes.builder.api.ResourceProvider;
 import org.jdrupes.builder.api.ResourceRequest;
 import org.jdrupes.builder.api.ResourceType;
+import static org.jdrupes.builder.api.ResourceType.CleanlinessType;
 import org.jdrupes.builder.api.RootProject;
+import org.jdrupes.builder.core.LauncherSupport.CommandData;
 
 /// A default implementation of a [Project].
 ///
@@ -75,7 +77,7 @@ public abstract class AbstractProject extends AbstractProvider
     private final Map<PropertyKey, Object> properties = new HashMap<>();
     // Only non null in the root project
     private DefaultBuildContext context;
-    private Map<String, ResourceRequest<?>[]> commands;
+    private Map<String, CommandData> commands;
 
     /// Named parameter for specifying the parent project.
     ///
@@ -164,9 +166,9 @@ public abstract class AbstractProject extends AbstractProvider
                 projects = Collections.synchronizedMap(new HashMap<>());
                 context = new DefaultBuildContext();
                 commands = new HashMap<>(Map.of(
-                    "clean", new ResourceRequest<?>[] {
+                    "clean", new CommandData("**", new ResourceRequest<?>[] {
                         new ResourceRequest<Cleanliness>(
-                            new ResourceType<>() {}) }));
+                            new ResourceType<>() {}) })));
             }
         } else {
             parent = (AbstractProject) project(parentProject);
@@ -383,7 +385,13 @@ public abstract class AbstractProject extends AbstractProvider
     @Override
     protected <R extends Resource> Stream<R>
             doProvide(ResourceRequest<R> requested) {
-        return from(Forward, Expose, Supply).get(requested);
+        var providers = providers(Forward, Expose, Supply);
+        if (CleanlinessType
+            .isAssignableFrom(requested.type().containedType())) {
+            providers = Stream.concat(providers,
+                providers(Consume).filter(p -> !(p instanceof Project)));
+        }
+        return from(providers).get(requested);
     }
 
     /// Define command, see [RootProject#commandAlias].
@@ -398,12 +406,13 @@ public abstract class AbstractProject extends AbstractProvider
             throw new BuildException("Commands can only be defined for"
                 + " the root project.");
         }
-        commands.put(name, requests);
+        commands.put(name, new CommandData("", requests));
         return (RootProject) this;
     }
 
-    /* default */ ResourceRequest<?>[] lookupCommand(String name) {
-        return commands.getOrDefault(name, new ResourceRequest[0]);
+    /* default */ CommandData lookupCommand(String name) {
+        return commands.getOrDefault(name,
+            new CommandData("", new ResourceRequest[0]));
     }
 
     @SuppressWarnings("PMD.CommentRequired")

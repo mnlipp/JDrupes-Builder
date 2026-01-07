@@ -27,6 +27,7 @@ import org.jdrupes.builder.api.Project;
 import org.jdrupes.builder.api.ResourceRequest;
 import org.jdrupes.builder.api.RootProject;
 
+// TODO: Auto-generated Javadoc
 /// Provides support for creating projects based on [AbstractProject].
 ///
 public final class LauncherSupport {
@@ -82,13 +83,22 @@ public final class LauncherSupport {
         return commandLine;
     }
 
+    /// The Record CommandData.
+    ///
+    /// @param pattern the pattern
+    /// @param requests the requests
+    ///
+    public record CommandData(String pattern,
+            ResourceRequest<?>[] requests) {
+    }
+
     /// Lookup the command in the given root project.
     ///
     /// @param project the project
     /// @param name the name
     /// @return the optional
     ///
-    public static ResourceRequest<?>[]
+    public static CommandData
             lookupCommand(RootProject project, String name) {
         return ((AbstractProject) project).lookupCommand(name);
     }

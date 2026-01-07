@@ -8,6 +8,8 @@ import java.nio.file.Path;
 import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
+
 import org.jdrupes.builder.api.Cleanliness;
 import org.jdrupes.builder.api.Launcher;
 import org.jdrupes.builder.api.Project;
@@ -27,7 +29,8 @@ class SubprojectsTests {
         launcher = new DirectLauncher(
             Thread.currentThread().getContextClassLoader(), buildRoot,
             new String[0]);
-        launcher.provide(requestFor(Cleanliness.class));
+        launcher.provide(launcher.rootProject().projects("**"),
+            requestFor(Cleanliness.class));
     }
 
     @Test
@@ -49,8 +52,8 @@ class SubprojectsTests {
 
     @Test
     public void testLibraries() throws IOException {
-        var jars = launcher.provide(requestFor(JarFile.class))
-            .collect(Collectors.toSet());
+        var jars = launcher.provide(Stream.of(launcher.rootProject()),
+            requestFor(JarFile.class)).collect(Collectors.toSet());
         var paths = jars.stream().map(JarFile::path).toList();
         assertEquals(1, paths.stream().filter(
             p -> p.toString()

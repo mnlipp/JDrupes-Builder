@@ -36,6 +36,7 @@ import java.util.logging.Level;
 import java.util.logging.LogManager;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.Option;
 import org.apache.commons.cli.Options;
@@ -43,7 +44,9 @@ import org.jdrupes.builder.api.BuildException;
 import org.jdrupes.builder.api.Launcher;
 import org.jdrupes.builder.api.Masked;
 import org.jdrupes.builder.api.Project;
+import org.jdrupes.builder.api.Resource;
 import org.jdrupes.builder.api.ResourceFactory;
+import org.jdrupes.builder.api.ResourceRequest;
 import org.jdrupes.builder.api.RootProject;
 import org.jdrupes.builder.core.DefaultBuildContext;
 import org.jdrupes.builder.java.ClassTree;
@@ -254,5 +257,16 @@ public abstract class AbstractLauncher implements Launcher {
             System.exit(1);
             return null;
         }
+    }
+
+    @Override
+    public <T extends Resource> Stream<T> provide(Stream<Project> projects,
+            ResourceRequest<T> request) {
+        return unwrapBuildException(() -> {
+            // Provide requested resource, handling all exceptions here
+            var result
+                = projects.map(p -> p.get(request)).flatMap(r -> r).toList();
+            return result.stream();
+        });
     }
 }

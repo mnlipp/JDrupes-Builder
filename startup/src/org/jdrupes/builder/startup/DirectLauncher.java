@@ -47,9 +47,7 @@ import org.jdrupes.builder.api.BuildException;
 import org.jdrupes.builder.api.Launcher;
 import org.jdrupes.builder.api.Masked;
 import org.jdrupes.builder.api.Project;
-import org.jdrupes.builder.api.Resource;
 import org.jdrupes.builder.api.ResourceFactory;
-import org.jdrupes.builder.api.ResourceRequest;
 import org.jdrupes.builder.api.RootProject;
 import org.jdrupes.builder.core.LauncherSupport;
 import org.jdrupes.builder.java.JarFile;
@@ -168,26 +166,24 @@ public class DirectLauncher extends AbstractLauncher {
         return rootProject;
     }
 
-    @Override
-    public <T extends Resource> Stream<T> provide(ResourceRequest<T> request) {
-        return unwrapBuildException(() -> {
-            // Provide requested resource, handling all exceptions here
-            var result = rootProject.get(request).toList();
-            return result.stream();
-        });
-    }
-
     /// Execute the commands from the command line.
     ///
-    @SuppressWarnings("PMD.SystemPrintln")
+    @SuppressWarnings({ "PMD.SystemPrintln", "PMD.AvoidLiteralsInIfCondition" })
     public void runCommands() {
         for (var arg : commandLine.getArgs()) {
-            var reqs = LauncherSupport.lookupCommand(rootProject, arg);
-            if (reqs.length == 0) {
+            var parts = arg.split(":");
+            String resource = parts[parts.length - 1];
+            var cmdData = LauncherSupport.lookupCommand(rootProject, resource);
+            if (cmdData.requests().length == 0) {
                 throw new BuildException("Unknown command: " + arg);
             }
-            for (var req : reqs) {
-                provide(req).collect(Collectors.toSet())
+            String pattern = cmdData.pattern();
+            if (parts.length > 1) {
+                pattern = parts[0];
+            }
+            for (var req : cmdData.requests()) {
+                provide(rootProject().projects(pattern), req)
+                    .collect(Collectors.toSet())
                     .forEach(r -> System.out.println(r.toString()));
             }
         }
