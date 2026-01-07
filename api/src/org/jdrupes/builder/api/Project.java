@@ -32,7 +32,7 @@ import static org.jdrupes.builder.api.Intend.*;
 /// build configuration has a single root project and can have
 /// sub-projects. The root project is the entry point for the build.
 /// The resources provided by the builder are usually provided by the
-/// root project that serves as n entry point to the build configuration.
+/// root project that serves as an entry point for the build configuration.
 ///
 /// Projects are [ResourceProvider]s that obtain resources from related
 /// [ResourceProvider]s. Projects can be thought of as routers for
@@ -79,6 +79,23 @@ import static org.jdrupes.builder.api.Intend.*;
 /// project's generators, although these cannot be prevented from
 /// accessing them through [Project#provide].
 ///
+/// ## Behavior as resource provider
+/// 
+/// In its role as [ResourceProvider], a [Project]
+/// [provides][ResourceProvider#provide] all resources that are
+/// provided to the project by its dependencies with [Intend#Forward],
+/// [Intend#Expose], and [Intend#Supply]. As explained above, resources
+/// from dependencies with [Intend#Consume] are only available to
+/// a project's generators and therefore not provided by the [Project].
+/// 
+/// There is one exception to this rule. Requests for
+/// [Cleanliness][ResourceType#CleanlinessType] are also forwarded to
+/// dependencies with [Intend#Consume], unless the related provider is
+/// a [Project]. With respect to resources generated for use by the
+/// project only (its generators, to be precise), the [Project] itself
+/// indirectly acts as a [Generator] and is therefore responsible for
+/// handling the requests for [Cleanliness].
+/// 
 /// ## Factory methods
 ///
 /// As a convenience, the interface also defines factory methods
