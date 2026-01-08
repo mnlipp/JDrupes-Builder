@@ -76,11 +76,17 @@ import org.w3c.dom.Node;
 ///
 /// Eclipse provides project nesting, but the outer project does not
 /// define a namespace. This can lead to problems if you have multiple
-/// (sub)projects in the workspace with the same name. The configurator
+/// (sub)projects with the same name in the workspace. The configurator
 /// allows you to define an alias for the project name to avoid this
-/// problem. The alias is used as Eclipse project name in all generated
+/// problem. This alias is used as Eclipse project name in all generated
 /// files.
 ///
+/// If a project is a [MergedTestProject], the configurator merges the
+/// information from this test project into the configuration files of
+/// its parent project. Resources that the test project depends
+/// on will be added as "test only" class path resources and the folder
+/// with the sources for the java compiler will be added as "test sources".
+/// 
 public class EclipseConfigurator extends AbstractGenerator {
 
     /// The Constant GENERATED_BY.

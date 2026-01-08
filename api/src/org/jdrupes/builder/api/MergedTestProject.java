@@ -18,10 +18,15 @@
 
 package org.jdrupes.builder.api;
 
-/// Marker interface for merged test projects. Implementing this interface
-/// has an effect on the behavior of some of the project's methods
+/// Marker interface for merged test projects. Merged test projects are
+/// conceptually merged with their parent project. Implementing this
+/// interface has an effect on the behavior of some of the project's methods
 /// (see e.g. [Project#generator(Generator)]). It may also have an effect
-/// on providers.
+/// on providers (see the respective provider's documentation).
+/// 
+/// Projects that implement this interface must specify the project under
+/// test as their parent project. They must not specify a directory as
+/// it will automatically be set to the parent project's directory. 
 ///
 public interface MergedTestProject {
 

@@ -33,17 +33,18 @@ import java.util.stream.Stream;
 import org.jdrupes.builder.api.Generator;
 import org.jdrupes.builder.api.Intend;
 import static org.jdrupes.builder.api.Intend.*;
+import org.jdrupes.builder.api.MergedTestProject;
 import org.jdrupes.builder.api.Project;
 import org.jdrupes.builder.api.Resource;
 import org.jdrupes.builder.api.ResourceRequest;
 import static org.jdrupes.builder.api.ResourceRequest.requestFor;
 import org.jdrupes.builder.api.ResourceType;
 import static org.jdrupes.builder.api.ResourceType.*;
+import org.jdrupes.builder.api.Resources;
 import org.jdrupes.builder.api.TestResult;
 import org.jdrupes.builder.core.AbstractGenerator;
+import org.jdrupes.builder.java.ClassTree;
 import org.jdrupes.builder.java.ClasspathElement;
-import org.jdrupes.builder.java.JavaCompiler;
-import org.jdrupes.builder.java.JavaTypes;
 import static org.jdrupes.builder.java.JavaTypes.*;
 import org.junit.platform.engine.TestDescriptor.Type;
 import org.junit.platform.engine.TestExecutionResult;
@@ -61,13 +62,31 @@ import org.junit.platform.launcher.core.LauncherFactory;
 import org.junit.platform.launcher.listeners.LoggingListener;
 import org.junit.platform.launcher.listeners.SummaryGeneratingListener;
 
-/// A [Generator] for [TestResult]s using the JUnit platform. The test
-/// runner uses the
-/// [compilation classpath resources][JavaTypes#CompilationClasspathType]
-/// from its associated project's [consumed][Intend#Consume] dependencies
-/// to detect test classes. It then runs the tests using all compilation
-/// classpath resources from dependencies with [Intend#Consume],
-/// [Intend#Expose], and [Intend#Supply].
+/// A [Generator] for [TestResult]s using the JUnit platform. The runner
+/// assumes that it is configured as [Generator] for a test project. 
+/// The class path for running the tests is build as follows:
+/// 
+///  1. Request compilation classpath resources from the test project's
+///     dependencies with [Intend#Consume], [Intend#Expose],
+///     and [Intend#Supply]. This makes the resources available that
+///     are used for compiling test classes as well as the compiled
+///     test classes. 
+/// 
+///  2. If the project implements [MergedTestProject], get the
+///     [Project#parentProject()], request compilation class path
+///     resources from its dependencies with [Intend#Consume],
+///     [Intend#Expose], and [Intend#Supply] and add them to the
+///     class path. This makes the resources available that are used
+///     for compiling the classes under test as well as the classes
+///     under test. Note that this is partially redundant, because
+///     test projects most likely have a dependency with [Intend#Consume]
+///     on the project under test anyway in order to compile the test
+///     classes. This dependency does not, however, provide all resources
+///     that are required to test the project under test.  
+/// 
+/// The runner then requests all resources of type [ClassTree] from
+/// the test projects's [Generator]'s and passes them to JUnit's
+/// test class detector.
 /// 
 /// Libraries for compiling the tests and a test engine of your choice
 /// must be provided explicitly to the runner's project as dependencies,
@@ -81,7 +100,8 @@ import org.junit.platform.launcher.listeners.SummaryGeneratingListener;
 /// ```
 ///
 /// In order to track the execution of the each test, you can enable
-/// [Level#FINE] logging for this class.
+/// [Level#FINE] logging for this class. [Level#FINER] will also
+/// provide information about the class paths.
 /// 
 public class JUnitTestRunner extends AbstractGenerator {
 
@@ -100,14 +120,16 @@ public class JUnitTestRunner extends AbstractGenerator {
             return Stream.empty();
         }
 
-        // Collect the classpath. The project under test and the test
-        // classes are usually consumed by the test project. Just in case
-        // we also include the usual exposed and supplied resources to
-        // avoid unexpected behavior.
+        // Collect the classpath.
         var cpResources = newResource(ClasspathType)
             .addAll(project().from(Consume, Expose, Supply)
                 .get(requestFor(CompilationClasspathType)));
-        log.finest(() -> "Testing in " + project() + " with classpath "
+        if (project() instanceof MergedTestProject) {
+            cpResources.addAll(
+                project().parentProject().get().from(Consume, Expose, Supply)
+                    .get(requestFor(CompilationClasspathType)));
+        }
+        log.finer(() -> "Testing in " + project() + " with classpath "
             + cpResources.stream().map(e -> e.toPath().toString())
                 .collect(Collectors.joining(File.pathSeparator)));
 
@@ -127,11 +149,12 @@ public class JUnitTestRunner extends AbstractGenerator {
             ClassLoader.getSystemClassLoader())) {
             Thread.currentThread().setContextClassLoader(testLoader);
 
-            // Discover all tests from compiler's output
-            var testClassTrees = project().providers(Supply, Consume)
-                .filter(p -> p instanceof JavaCompiler)
-                .map(p -> ((JavaCompiler) p).destination())
-                .collect(Collectors.toSet());
+            // Discover all tests from generator's output
+            var testClassTrees = project()
+                .from(project().providers(Supply, Consume)
+                    .filter(p -> p instanceof Generator))
+                .get(requestFor(new ResourceType<Resources<ClassTree>>() {}))
+                .map(ClassTree::root).collect(Collectors.toSet());
             LauncherDiscoveryRequest request
                 = LauncherDiscoveryRequestBuilder.request().selectors(
                     DiscoverySelectors.selectClasspathRoots(testClassTrees))

@@ -149,7 +149,8 @@ public abstract class AbstractProject extends AbstractProvider
     ///
     @SuppressWarnings({ "PMD.ConstructorCallsOverridableMethod",
         "PMD.UseLocaleWithCaseConversions", "PMD.AvoidCatchingGenericException",
-        "PMD.CognitiveComplexity", "PMD.AvoidDeeplyNestedIfStmts" })
+        "PMD.CognitiveComplexity", "PMD.AvoidDeeplyNestedIfStmts",
+        "PMD.CyclomaticComplexity", "PMD.NcssCount" })
     protected AbstractProject(NamedParameter<?>... params) {
         // Evaluate parent project
         var parentProject = NamedParameter.<
@@ -182,7 +183,17 @@ public abstract class AbstractProject extends AbstractProvider
         if (directory == jdbldDirectory) { // NOPMD
             directory = context().jdbldDirectory();
         }
-        if (parent == null) {
+
+        // Evaluate the project's directory and add to hierarchy
+        if (this instanceof MergedTestProject) {
+            // Special handling
+            if (directory != null || parentProject == null) {
+                throw new BuildException("Merged test projects must specify"
+                    + " a parent project and must not specify a directory.");
+            }
+            projectDirectory = parent.directory();
+            parent.dependency(Forward, this);
+        } else if (parent == null) {
             if (directory != null) {
                 throw new BuildException("Root project of type "
                     + getClass().getSimpleName()
@@ -191,12 +202,7 @@ public abstract class AbstractProject extends AbstractProvider
             projectDirectory = LauncherSupport.buildRoot();
         } else {
             if (directory == null) {
-                if (this instanceof MergedTestProject
-                    && parentProject != null) {
-                    directory = parent.directory();
-                } else {
-                    directory = Path.of(projectName.toLowerCase());
-                }
+                directory = Path.of(projectName.toLowerCase());
             }
             projectDirectory = parent.directory().resolve(directory);
             // Fallback, will be replaced when the parent explicitly adds a
