@@ -20,6 +20,7 @@ package org.jdrupes.builder.api;
 
 import java.util.HashSet;
 import java.util.Set;
+import java.util.function.Consumer;
 import java.util.stream.Stream;
 
 /// Helper class for implementing [Project#from].
@@ -30,6 +31,8 @@ public class FromHelper {
     private final Set<ResourceProvider> excluded = new HashSet<>();
     private final Set<Class<? extends ResourceProvider>> excludedTypes
         = new HashSet<>();
+    private Consumer<ResourceProvider> providerLog = _ -> {
+    };
 
     /// Initializes a new from helper.
     ///
@@ -62,6 +65,16 @@ public class FromHelper {
         return this;
     }
 
+    /// Register a callback for logging the providers used.
+    ///
+    /// @param providerLog the provider log
+    /// @return the from helper
+    ///
+    public FromHelper log(Consumer<ResourceProvider> providerLog) {
+        this.providerLog = providerLog;
+        return this;
+    }
+
     /// Returns the requested resources using the context and providers 
     /// passed to the record's constructor.
     ///
@@ -71,7 +84,10 @@ public class FromHelper {
     ///
     public <T extends Resource> Stream<T> get(ResourceRequest<T> request) {
         return providers.filter(p -> !excluded.contains(p))
-            .filter(p -> !excludedTypes.contains(p.getClass()))
+            .filter(p -> excludedTypes.stream()
+                .filter(t -> t.isAssignableFrom(p.getClass())).findAny()
+                .isEmpty())
+            .peek(providerLog::accept)
             .flatMap(provider -> context.get(provider, request));
     }
 }
