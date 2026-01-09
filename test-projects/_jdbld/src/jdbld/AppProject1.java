@@ -25,7 +25,6 @@ import org.jdrupes.builder.java.JavaCompiler;
 import org.jdrupes.builder.java.JavaResourceCollector;
 import org.jdrupes.builder.junit.JUnitTestRunner;
 import org.jdrupes.builder.mvnrepo.MvnRepoLookup;
-import org.jdrupes.builder.mvnrepo.MvnRepoDependency.Scope;
 
 public class AppProject1 extends AbstractProject implements JdbldTestProject {
 
@@ -40,8 +39,7 @@ public class AppProject1 extends AbstractProject implements JdbldTestProject {
         dependency(Consume, new MvnRepoLookup()
             .bom("org.junit:junit-bom:5.12.2")
             .resolve("org.junit.jupiter:junit-jupiter-api")
-            .resolve(Scope.Runtime,
-                "org.junit.jupiter:junit-jupiter-engine"));
+            .resolve("org.junit.jupiter:junit-jupiter-engine"));
 
         // Consume only generators
         dependency(Consume, JavaCompiler::new).addSources(Path.of("_jdbld/src"),

@@ -32,7 +32,6 @@ import org.jdrupes.builder.java.JavaCompiler;
 import org.jdrupes.builder.java.JavaProject;
 import org.jdrupes.builder.java.JavaResourceCollector;
 import org.jdrupes.builder.junit.JUnitTestRunner;
-import org.jdrupes.builder.mvnrepo.MvnRepoDependency.Scope;
 import org.jdrupes.builder.mvnrepo.MvnRepoLookup;
 
 /// The Class ProjectPreparation.
@@ -64,8 +63,7 @@ public class ProjectPreparation {
         project.dependency(Consume, new MvnRepoLookup()
             .bom("org.junit:junit-bom:5.12.2")
             .resolve("org.junit.jupiter:junit-jupiter-api")
-            .resolve(Scope.Runtime,
-                "org.junit.jupiter:junit-jupiter-engine"));
+            .resolve("org.junit.jupiter:junit-jupiter-engine"));
         project.dependency(Supply, JUnitTestRunner::new);
     }
 
