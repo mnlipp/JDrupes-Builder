@@ -90,7 +90,7 @@ public class Root extends AbstractProject implements RootProject {
                 "org.slf4j:slf4j-api:2.0.17",
                 "org.slf4j:slf4j-jdk14:2.0.17"))
             .mainClass("org.jdrupes.builder.startup.BootstrapLauncher")
-            .addEntries(from(Consume)
+            .addEntries(from(Supply)
                 .get(new ResourceRequest<PomFile>(new ResourceType<>() {}))
                 .map(pomFile -> Map.entry(Path.of("META-INF/maven")
                     .resolve((String) get(GroupId)).resolve(name())
