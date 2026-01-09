@@ -27,7 +27,7 @@ public class Impl extends AbstractProject implements JavaLibraryProject {
 
     public Impl() {
         super(name("impl"));
-        dependency(Consume, project(Api.class));
+        dependency(Expose, project(Api.class));
         dependency(Consume, new MvnRepoLookup().resolve(
             "com.electronwill.night-config:yaml:[3.6.7,3.7.0)",
             // https://security.snyk.io/package/maven/org.yaml:snakeyaml
