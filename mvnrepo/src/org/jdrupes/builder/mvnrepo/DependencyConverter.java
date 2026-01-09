@@ -19,7 +19,6 @@
 package org.jdrupes.builder.mvnrepo;
 
 import java.util.stream.Collectors;
-import org.jdrupes.builder.mvnrepo.MvnRepoDependency.Scope;
 
 /// Converts between maven models and aether dependencies.
 ///
@@ -105,10 +104,11 @@ public final class DependencyConverter {
     /// Convert a maven model dependency to an aether dependency.
     ///
     /// @param mvnResource the maven resource
+    /// @param scope the scope of aether dependency
     /// @return the aether dependency
     ///
     public static org.apache.maven.model.Dependency
-            convert(MvnRepoDependency mvnResource) {
+            convert(MvnRepoDependency mvnResource, String scope) {
         var dep = new org.apache.maven.model.Dependency();
         dep.setGroupId(mvnResource.groupId());
         dep.setArtifactId(mvnResource.artifactId());
@@ -120,8 +120,7 @@ public final class DependencyConverter {
         if (!mvnResource.version().isBlank()) {
             dep.setVersion(mvnResource.version());
         }
-        dep.setScope(
-            mvnResource.scope() == Scope.Compile ? "compile" : "runtime");
+        dep.setScope(scope);
         return dep;
     }
 

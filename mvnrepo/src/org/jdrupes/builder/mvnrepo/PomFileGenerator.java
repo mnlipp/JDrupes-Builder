@@ -143,13 +143,7 @@ public class PomFileGenerator extends AbstractGenerator {
         }
 
         pomPath.getParent().toFile().mkdirs();
-        var deps = newResource(MvnRepoCompilationDepsType)
-            .addAll(project().providers(Supply, Expose, Consume)
-                // Don't add dependency on self
-                .filter(p -> !p.equals(this)).flatMap(
-                    p -> project().context().get(p, requestFor(
-                        MvnRepoCompilationDepsType))));
-        Model model = generatePom(deps);
+        Model model = generatePom();
 
         // create, compare and maybe write model
         pomPath.getParent().toFile().mkdirs();
@@ -183,7 +177,7 @@ public class PomFileGenerator extends AbstractGenerator {
         return result;
     }
 
-    private Model generatePom(Resources<MvnRepoDependency> deps) {
+    private Model generatePom() {
         Model model = new Model();
         model.setModelVersion("4.0.0");
         var groupId = project().<String> get(GroupId);
@@ -194,18 +188,32 @@ public class PomFileGenerator extends AbstractGenerator {
             .<String> get(ArtifactId)).orElse(project().name()));
         model.setVersion(project().get(Version));
         model.setName(project().name());
+
+        // Get dependencies
+        var runtimeDeps = newResource(MvnRepoRuntimeDepsType)
+            .addAll(project().from(Consume).without(this)
+                .get(requestFor(MvnRepoCompilationDepsType)));
+        var compilationDeps = newResource(MvnRepoRuntimeDepsType)
+            .addAll(project().from(Supply, Expose).without(this)
+                .get(requestFor(MvnRepoCompilationDepsType)));
+        addDependencies(model, compilationDeps, Scope.Compile);
+        addDependencies(model, runtimeDeps, Scope.Runtime);
+
+        // Adapt
+        pomAdapter.accept(model);
+        return model;
+    }
+
+    private void addDependencies(Model model,
+            Resources<MvnRepoDependency> deps, Scope scope) {
         deps.stream().forEach(d -> {
             var dep = new Dependency();
             dep.setGroupId(d.groupId());
             dep.setArtifactId(d.artifactId());
             dep.setVersion(d.version());
-            dep.setScope(d.scope() == Scope.Compile ? "compile" : "runtime");
+            dep.setScope(scope == Scope.Compile ? "compile" : "runtime");
             model.addDependency(dep);
         });
-
-        // Adapt
-        pomAdapter.accept(model);
-        return model;
     }
 
     /// Allow derived classes to post process the generated POM.

@@ -1,6 +1,6 @@
 /*
  * JDrupes Builder
- * Copyright (C) 2025 Michael N. Lipp
+ * Copyright (C) 2025, 2026 Michael N. Lipp
  * 
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as
@@ -26,8 +26,6 @@ import java.net.URI;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Stream;
 import org.apache.maven.model.DependencyManagement;
 import org.apache.maven.model.Model;
@@ -54,7 +52,6 @@ import org.jdrupes.builder.api.ResourceFactory;
 import org.jdrupes.builder.api.ResourceProvider;
 import org.jdrupes.builder.api.ResourceRequest;
 import org.jdrupes.builder.api.ResourceType;
-import static org.jdrupes.builder.api.ResourceType.*;
 import org.jdrupes.builder.api.Resources;
 import org.jdrupes.builder.core.AbstractProvider;
 import org.jdrupes.builder.java.CompilationResources;
@@ -65,9 +62,7 @@ import static org.jdrupes.builder.mvnrepo.MvnRepoTypes.*;
 /// Depending on the request, this provider provides two types of resources.
 /// 
 ///  1. The artifacts to be resolved as
-///     `Resources<MvnRepoDependency>` (or more specifically
-///     `CompilationResources<MvnRepoDependency>` or
-///     `RuntimeResources<MvnRepoDependency>`). The artifacts
+///     `Resources<MvnRepoDependency>`. The artifacts
 ///     to be resolved are those added with [resolve].
 ///
 ///  2. The BOMs added with [bom] as `Resources<MvnRepoBom>`.
@@ -82,8 +77,7 @@ import static org.jdrupes.builder.mvnrepo.MvnRepoTypes.*;
 public class MvnRepoLookup extends AbstractProvider
         implements ResourceProvider {
 
-    private final Map<ResourceType<? extends Resources<?>>,
-            List<String>> coordinates = new ConcurrentHashMap<>();
+    private final List<String> coordinates = new ArrayList<>();
     private final List<String> boms = new ArrayList<>();
     private boolean downloadSources = true;
     private boolean downloadJavadoc = true;
@@ -92,7 +86,6 @@ public class MvnRepoLookup extends AbstractProvider
 
     /// Instantiates a new mvn repo lookup.
     ///
-    @SuppressWarnings("PMD.UnnecessaryConstructor")
     public MvnRepoLookup() {
         // Make javadoc happy.
     }
@@ -136,23 +129,24 @@ public class MvnRepoLookup extends AbstractProvider
     /// @param scope the scope
     /// @param coordinates the coordinates
     /// @return the mvn repo lookup
+    /// @deprecated Coordinates are no longer distinguished by scope,
+    /// use {@link #resolve(String...)} instead
     ///
+    @Deprecated
     public MvnRepoLookup resolve(Scope scope, String... coordinates) {
-        this.coordinates
-            .computeIfAbsent(scope == Scope.Compile ? MvnRepoCompilationDepsType
-                : MvnRepoRuntimeDepsType, _ -> new ArrayList<>())
-            .addAll(Arrays.asList(coordinates));
+        this.coordinates.addAll(Arrays.asList(coordinates));
         return this;
     }
 
     /// Add artifacts, specified by their coordinates
-    /// (`groupId:artifactId:version`) as compilation resources.
+    /// (`groupId:artifactId:version`) as resources.
     ///
     /// @param coordinates the coordinates
     /// @return the mvn repo lookup
     ///
     public MvnRepoLookup resolve(String... coordinates) {
-        return resolve(Scope.Compile, coordinates);
+        this.coordinates.addAll(Arrays.asList(coordinates));
+        return this;
     }
 
     /// Add a bill of materials. The coordinates are resolved as 
@@ -203,7 +197,7 @@ public class MvnRepoLookup extends AbstractProvider
         if (requested.accepts(
             new ResourceType<CompilationResources<LibraryJarFile>>() {})) {
             try {
-                return provideJars(requested);
+                return provideJars();
             } catch (DependencyResolutionException | ModelBuildingException e) {
                 throw new BuildException(
                     "Cannot resolve: " + e.getMessage(), e);
@@ -224,23 +218,16 @@ public class MvnRepoLookup extends AbstractProvider
         Stream<T> deps = Stream.empty();
         if (requested.accepts(MvnRepoCompilationDepsType)) {
             @SuppressWarnings("unchecked")
-            var result = (Stream<T>) coordinates.entrySet().stream()
-                .filter(e -> requested.accepts(e.getKey()))
-                .map(e -> e.getValue().stream().map(c -> ResourceFactory
-                    .create(MvnRepoDependencyType, null, c,
-                        e.getKey().equals(MvnRepoCompilationDepsType)
-                            ? Scope.Compile
-                            : Scope.Runtime)))
-                .flatMap(d -> d);
+            var result = (Stream<T>) coordinates.stream()
+                .map(c -> ResourceFactory.create(MvnRepoDependencyType, null,
+                    c));
             deps = result;
         }
         return Stream.concat(boms, deps);
     }
 
-    private <T extends Resource> Stream<T>
-            provideJars(ResourceRequest<T> requested)
-                    throws DependencyResolutionException,
-                    ModelBuildingException {
+    private <T extends Resource> Stream<T> provideJars()
+            throws DependencyResolutionException, ModelBuildingException {
         var repoSystem = rootContext().repositorySystem();
         var repoSession = rootContext().repositorySystemSession();
         var repos = new ArrayList<>(rootContext().remoteRepositories());
@@ -251,7 +238,7 @@ public class MvnRepoLookup extends AbstractProvider
         // Create an effective model. This make sure that BOMs are
         // handled correctly.
         Model model = getEffectiveModel(repoSystem, repoSession,
-            repos, requested);
+            repos);
 
         // Create collect request using data from the (effective) model
         CollectRequest collectRequest
@@ -293,8 +280,7 @@ public class MvnRepoLookup extends AbstractProvider
     }
 
     private Model getEffectiveModel(RepositorySystem repoSystem,
-            RepositorySystemSession repoSession, List<RemoteRepository> repos,
-            ResourceRequest<?> requested)
+            RepositorySystemSession repoSession, List<RemoteRepository> repos)
             throws ModelBuildingException {
         // First build raw model
         Model model = new Model();
@@ -305,25 +291,18 @@ public class MvnRepoLookup extends AbstractProvider
         var depMgmt = new DependencyManagement();
         model.setDependencyManagement(depMgmt);
         boms.stream().forEach(c -> {
-            var mvnResource = new DefaultMvnRepoDependency(
-                MvnRepoDependencyType, c, Scope.Runtime);
-            var dep = DependencyConverter.convert(mvnResource);
-            dep.setScope("import");
+            var mvnResource
+                = ResourceFactory.create(MvnRepoDependencyType, null, c);
+            var dep = DependencyConverter.convert(mvnResource, "import");
             dep.setType("pom");
             depMgmt.addDependency(dep);
         });
-        var asDepsType
-            = resourceType(requested.type().rawType(), MvnRepoDependency.class);
-        coordinates.entrySet().stream()
-            .filter(e -> asDepsType.isAssignableFrom(e.getKey()))
-            .forEach(e -> e.getValue().stream().forEach(c -> {
-                var mvnResource = new DefaultMvnRepoDependency(
-                    MvnRepoDependencyType, c,
-                    e.getKey().equals(MvnRepoCompilationDepsType)
-                        ? Scope.Compile
-                        : Scope.Runtime);
-                model.addDependency(DependencyConverter.convert(mvnResource));
-            }));
+        coordinates.forEach(c -> {
+            var mvnResource
+                = ResourceFactory.create(MvnRepoDependencyType, null, c);
+            model.addDependency(
+                DependencyConverter.convert(mvnResource, "compile"));
+        });
 
         // Now build (derive) effective model
         var buildingRequest = new DefaultModelBuildingRequest();

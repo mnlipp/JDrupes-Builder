@@ -33,10 +33,4 @@ public interface MvnRepoDependency extends MvnRepoResource {
         /// Scope for dependencies requires at runtime.
         Runtime
     }
-    
-    /// The scope.
-    ///
-    /// @return the scope
-    ///
-    Scope scope();
 }
