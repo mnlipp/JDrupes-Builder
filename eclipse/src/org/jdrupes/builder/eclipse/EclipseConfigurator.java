@@ -47,12 +47,13 @@ import org.jdrupes.builder.api.ResourceRequest;
 import static org.jdrupes.builder.api.ResourceRequest.*;
 import org.jdrupes.builder.api.ResourceType;
 import org.jdrupes.builder.core.AbstractGenerator;
+import org.jdrupes.builder.core.DefaultFileTree;
 import org.jdrupes.builder.java.ClasspathElement;
 import org.jdrupes.builder.java.CompilationResources;
 import org.jdrupes.builder.java.JavaCompiler;
 import org.jdrupes.builder.java.JavaProject;
-import org.jdrupes.builder.java.JavaResourceCollector;
-import static org.jdrupes.builder.java.JavaTypes.CompilationLibrariesType;
+import org.jdrupes.builder.java.JavaResourceTree;
+import static org.jdrupes.builder.java.JavaTypes.*;
 import org.jdrupes.builder.java.LibraryJarFile;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
@@ -87,6 +88,7 @@ import org.w3c.dom.Node;
 /// on will be added as "test only" class path resources and the folder
 /// with the sources for the java compiler will be added as "test sources".
 /// 
+@SuppressWarnings("PMD.TooManyMethods")
 public class EclipseConfigurator extends AbstractGenerator {
 
     /// The Constant GENERATED_BY.
@@ -270,21 +272,7 @@ public class EclipseConfigurator extends AbstractGenerator {
     protected void generateClasspathConfiguration(Document doc) {
         var classpath = doc.appendChild(doc.createElement("classpath"));
         addCompilationResources(doc, classpath, project());
-
-        // Add resources
-        project().providers(Supply)
-            .filter(p -> p instanceof JavaResourceCollector)
-            .map(p -> (JavaResourceCollector) p)
-            .findFirst().ifPresent(rc -> {
-                rc.resources().stream().map(FileTree::root)
-                    .filter(p -> p.toFile().canRead())
-                    .map(p -> project().relativize(p)).forEach(p -> {
-                        var entry = (Element) classpath
-                            .appendChild(doc.createElement("classpathentry"));
-                        entry.setAttribute("kind", "src");
-                        entry.setAttribute("path", p.toString());
-                    });
-            });
+        addJavaResources(doc, classpath, project());
 
         // Add projects
         final Set<ClasspathElement> addedByProject = new HashSet<>();
@@ -293,10 +281,10 @@ public class EclipseConfigurator extends AbstractGenerator {
         contributing.remove(project());
         contributing.stream().forEach(p -> {
             if (p instanceof MergedTestProject) {
-                if (p.parentProject().map(pp -> pp.equals(project()))
-                    .orElse(false)) {
-                    // Test projects contribute their sources to the parent
+                if (p.parentProject().get().equals(project())) {
+                    // Test projects contribute their resources to the parent
                     addCompilationResources(doc, classpath, p);
+                    addJavaResources(doc, classpath, p);
                 }
                 return;
             }
@@ -349,58 +337,106 @@ public class EclipseConfigurator extends AbstractGenerator {
         classpathAdaptor.accept(doc, classpath);
     }
 
-    private void addCompilationResources(Document doc, Node classpath,
+    private void addJavaResources(Document doc, Node classpath,
             Project project) {
-        project.providers(Supply, Consume)
-            .filter(p -> p instanceof JavaCompiler).map(p -> (JavaCompiler) p)
-            .findFirst().ifPresent(jc -> {
-                jc.sources().stream().map(FileTree::root)
-                    .map(project::relativize).forEach(p -> {
-                        var entry = (Element) classpath
-                            .appendChild(doc.createElement("classpathentry"));
-                        entry.setAttribute("kind", "src");
-                        entry.setAttribute("path", p.toString());
-                        var output = project.relativize(jc.destination());
-                        entry.setAttribute("output", output.toString());
-                        if (project instanceof MergedTestProject) {
-                            var attr = (Element) entry
-                                .appendChild(doc.createElement("attributes"))
-                                .appendChild(doc.createElement("attribute"));
-                            attr.setAttribute("name", "test");
-                            attr.setAttribute("value", "true");
-                        }
-                    });
+        // TODO Generalize. Currently we assume a Java compiler exists
+        // and use it to obtain the output directory for all generators
+        var javaCompiler = project.providers(Supply, Consume)
+            .filter(p -> p instanceof JavaCompiler)
+            .map(JavaCompiler.class::cast).findFirst();
+        var outputDirectory
+            = javaCompiler.map(jc -> project.relativize(jc.destination()));
 
-                // For merged test project also add compile path resources
-                if (project instanceof MergedTestProject) {
-                    project.from(Consume, Expose).without(jc)
-                        .without(project.parentProject().get())
-                        .get(requestFor(CompilationLibrariesType))
-                        .forEach(jf -> {
-                            var entry = (Element) classpath.appendChild(
-                                doc.createElement("classpathentry"));
-                            entry.setAttribute("kind", "lib");
-                            var jarPathName = jf.path().toString();
-                            entry.setAttribute("path", jarPathName);
-                            var attr = (Element) entry
-                                .appendChild(doc.createElement("attributes"))
-                                .appendChild(doc.createElement("attribute"));
-                            attr.setAttribute("name", "test");
-                            attr.setAttribute("value", "true");
-                        });
-                    return;
-                }
-
-                // Configure default output directory for (base) project
+        // Add resources
+        project.from(Supply, Consume).without(Project.class)
+            .get(requestFor(JavaResourceTree.class)).map(DefaultFileTree::root)
+            .filter(p -> p.toFile().canRead()).map(project::relativize)
+            .forEach(p -> {
                 var entry = (Element) classpath
                     .appendChild(doc.createElement("classpathentry"));
-                entry.setAttribute("kind", "output");
-                entry.setAttribute("path",
-                    project.relativize(jc.destination()).toString());
-                jc.optionArgument("-target", "--target", "--release")
-                    .ifPresentOrElse(v -> addSpecificJre(doc, classpath, v),
-                        () -> addInheritedJre(doc, classpath));
+                entry.appendChild(doc.createComment("From " + project));
+                entry.setAttribute("kind", "src");
+                entry.setAttribute("path", p.toString());
+                if (project instanceof MergedTestProject) {
+                    outputDirectory.ifPresent(o -> {
+                        entry.setAttribute("output", o.toString());
+                    });
+                    var attr = (Element) entry
+                        .appendChild(doc.createElement("attributes"))
+                        .appendChild(doc.createElement("attribute"));
+                    attr.setAttribute("name", "test");
+                    attr.setAttribute("value", "true");
+                }
             });
+    }
+
+    private void addCompilationResources(Document doc, Node classpath,
+            Project project) {
+        // TODO Generalize. Currently we assume a Java compiler exists
+        // and use it to obtain the output directory for all generators
+        var javaCompiler = project.providers(Supply, Consume)
+            .filter(p -> p instanceof JavaCompiler)
+            .map(JavaCompiler.class::cast).findFirst();
+        var outputDirectory
+            = javaCompiler.map(jc -> project.relativize(jc.destination()));
+
+        // Add source trees
+        project.from(Supply, Consume).without(Project.class)
+            .get(new ResourceRequest<>(JavaSourceTreesType)).map(FileTree::root)
+            .filter(p -> p.toFile().canRead()).map(project::relativize)
+            .forEach(p -> {
+                var entry = (Element) classpath
+                    .appendChild(doc.createElement("classpathentry"));
+                entry.appendChild(doc.createComment("From " + project));
+                entry.setAttribute("kind", "src");
+                entry.setAttribute("path", p.toString());
+                if (project instanceof MergedTestProject) {
+                    outputDirectory.ifPresent(o -> {
+                        entry.setAttribute("output", o.toString());
+                    });
+                    var attr = (Element) entry
+                        .appendChild(doc.createElement("attributes"))
+                        .appendChild(doc.createElement("attribute"));
+                    attr.setAttribute("name", "test");
+                    attr.setAttribute("value", "true");
+                }
+            });
+
+        // For merged test project also add compile path resources
+        if (project instanceof MergedTestProject) {
+            var from = project.from(Consume, Expose)
+                .without(project.parentProject().get());
+            javaCompiler.ifPresent(from::without);
+            from.get(requestFor(CompilationLibrariesType))
+                .forEach(jf -> {
+                    var entry = (Element) classpath.appendChild(
+                        doc.createElement("classpathentry"));
+                    entry.setAttribute("kind", "lib");
+                    var jarPathName = jf.path().toString();
+                    entry.setAttribute("path", jarPathName);
+                    var attr = (Element) entry
+                        .appendChild(doc.createElement("attributes"))
+                        .appendChild(doc.createElement("attribute"));
+                    attr.setAttribute("name", "test");
+                    attr.setAttribute("value", "true");
+                });
+            return;
+        }
+
+        // For "normal projects" configure default output directory
+        outputDirectory.ifPresent(o -> {
+            var entry = (Element) classpath
+                .appendChild(doc.createElement("classpathentry"));
+            entry.setAttribute("kind", "output");
+            entry.setAttribute("path", o.toString());
+        });
+
+        // Finally Add JRE
+        javaCompiler.ifPresent(jc -> {
+            jc.optionArgument("-target", "--target", "--release")
+                .ifPresentOrElse(v -> addSpecificJre(doc, classpath, v),
+                    () -> addInheritedJre(doc, classpath));
+        });
     }
 
     private void collectContributing(Set<Project> collected, Project project) {
