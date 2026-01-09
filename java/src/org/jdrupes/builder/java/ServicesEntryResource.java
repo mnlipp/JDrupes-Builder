@@ -41,7 +41,6 @@ public class ServicesEntryResource extends ResourceObject
 
     /// Initializes a new services entry resource.
     ///
-    @SuppressWarnings("PMD.UnnecessaryConstructor")
     public ServicesEntryResource() {
         // Makes javadoc happy.
     }

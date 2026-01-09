@@ -31,7 +31,6 @@ import org.jdrupes.builder.api.ResourceRequest;
 public abstract class AbstractProvider implements ResourceProvider {
 
     /// The log.
-    @SuppressWarnings("PMD.LambdaCanBeMethodReference")
     // Use first non-anomymous class for logger.
     protected final Logger log = Logger.getLogger(
         Stream.iterate((Class<?>) getClass(),
@@ -41,7 +40,6 @@ public abstract class AbstractProvider implements ResourceProvider {
 
     /// Initializes a new abstract provider.
     ///
-    @SuppressWarnings("PMD.UnnecessaryConstructor")
     public AbstractProvider() {
         // Make javadoc happy.
     }

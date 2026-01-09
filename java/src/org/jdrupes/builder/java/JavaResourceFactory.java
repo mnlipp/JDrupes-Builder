@@ -33,7 +33,6 @@ public class JavaResourceFactory implements ResourceFactory {
 
     /// Instantiates a new java resource factory.
     ///
-    @SuppressWarnings("PMD.UnnecessaryConstructor")
     public JavaResourceFactory() {
         // Make javadoc happy
     }

@@ -33,7 +33,6 @@ public class EclipseResourceFactory implements ResourceFactory {
 
     /// Instantiates a new java resource factory.
     ///
-    @SuppressWarnings("PMD.UnnecessaryConstructor")
     public EclipseResourceFactory() {
         // Make javadoc happy
     }

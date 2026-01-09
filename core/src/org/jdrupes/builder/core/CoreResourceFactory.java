@@ -40,7 +40,6 @@ public class CoreResourceFactory implements ResourceFactory {
 
     /// Instantiates a new core resource factory.
     ///
-    @SuppressWarnings("PMD.UnnecessaryConstructor")
     public CoreResourceFactory() {
         // Make javadoc happy.
     }
