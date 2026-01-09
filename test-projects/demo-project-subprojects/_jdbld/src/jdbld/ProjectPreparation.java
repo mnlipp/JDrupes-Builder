@@ -53,7 +53,7 @@ public class ProjectPreparation {
         project.generator(JavaCompiler::new).addSources(Path.of("src"),
             "**/*.java");
         project.generator(JavaResourceCollector::new).add(
-            Path.of("resource"), "**/*");
+            Path.of("resources"), "**/*");
     }
 
     private static void setupTestProject(Project project) {
