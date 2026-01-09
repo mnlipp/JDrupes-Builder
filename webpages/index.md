@@ -70,7 +70,7 @@ provides resources of type
 ```
 
 The second generator is an
-[UberJarGenerator](javadoc/org/jdrupes/builder/java/UberJarGenerator.html).
+[UberJarGenerator](javadoc/org/jdrupes/builder/uberjar/UberJarGenerator.html).
 
 ```java
         generator(UberJarGenerator::new).from(providers(Supply))
