@@ -97,6 +97,10 @@ Marking a project as a merged test project has the greatest impact on the
 [EclipseConfigurator](javadoc/org/jdrupes/builder/eclipse/EclipseConfigurator.html).
 See the documentation of this generator for details.
 
+The [JavaCompiler](javadoc/org/jdrupes/builder/java/JavaCompiler.html)
+changes the default destination directory for the compiled classes if
+the project is marked as a merged test project.
+
 The default class path used by the
 [JUnitTestRunner](javadoc/org/jdrupes/builder/junit/JUnitTestRunner.html) is
 also affected by the test project being marked as a merged test project.
