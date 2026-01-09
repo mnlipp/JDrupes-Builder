@@ -28,6 +28,8 @@ public class FromHelper {
     private final BuildContext context;
     private final Stream<ResourceProvider> providers;
     private final Set<ResourceProvider> excluded = new HashSet<>();
+    private final Set<Class<? extends ResourceProvider>> excludedTypes
+        = new HashSet<>();
 
     /// Initializes a new from helper.
     ///
@@ -50,6 +52,16 @@ public class FromHelper {
         return this;
     }
 
+    /// Exclude providers of the given type when requesting resources.
+    ///
+    /// @param providerType the provider type
+    /// @return the from helper
+    ///
+    public FromHelper without(Class<? extends ResourceProvider> providerType) {
+        excludedTypes.add(providerType);
+        return this;
+    }
+
     /// Returns the requested resources using the context and providers 
     /// passed to the record's constructor.
     ///
@@ -59,6 +71,7 @@ public class FromHelper {
     ///
     public <T extends Resource> Stream<T> get(ResourceRequest<T> request) {
         return providers.filter(p -> !excluded.contains(p))
+            .filter(p -> !excludedTypes.contains(p.getClass()))
             .flatMap(provider -> context.get(provider, request));
     }
 }
