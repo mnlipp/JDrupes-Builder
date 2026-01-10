@@ -24,7 +24,6 @@ import org.jdrupes.builder.api.FileTree;
 import static org.jdrupes.builder.api.Intend.Supply;
 import org.jdrupes.builder.api.Project;
 import static org.jdrupes.builder.api.Project.Properties.Version;
-import org.jdrupes.builder.api.ResourceRequest;
 import org.jdrupes.builder.api.ResourceType;
 import org.jdrupes.builder.java.JarGenerator;
 import static org.jdrupes.builder.java.JavaTypes.*;
@@ -53,7 +52,7 @@ public class JavadocJarGenerator extends JarGenerator {
     public JavadocJarGenerator(Project project) {
         super(project, JavadocJarFileType);
         var trees = project().from(Supply).get(
-            new ResourceRequest<JavadocDirectory>(new ResourceType<>() {})).map(
+            this.<JavadocDirectory> requestFor(new ResourceType<>() {})).map(
                 d -> project().newResource(
                     new ResourceType<FileTree<FileResource>>() {},
                     d.path(), "**/*"));

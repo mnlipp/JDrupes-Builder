@@ -9,12 +9,10 @@ import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
-
 import org.jdrupes.builder.api.Cleanliness;
 import org.jdrupes.builder.api.Launcher;
 import org.jdrupes.builder.api.Project;
 import org.jdrupes.builder.java.JarFile;
-import static org.jdrupes.builder.api.ResourceRequest.requestFor;
 import org.jdrupes.builder.startup.DirectLauncher;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
@@ -30,7 +28,7 @@ class SubprojectsTests {
             Thread.currentThread().getContextClassLoader(), buildRoot,
             new String[0]);
         launcher.provide(launcher.rootProject().projects("**"),
-            requestFor(Cleanliness.class));
+            launcher.rootProject().requestFor(Cleanliness.class));
     }
 
     @Test
@@ -53,7 +51,8 @@ class SubprojectsTests {
     @Test
     public void testLibraries() throws IOException {
         var jars = launcher.provide(Stream.of(launcher.rootProject()),
-            requestFor(JarFile.class)).collect(Collectors.toSet());
+            launcher.rootProject().requestFor(JarFile.class))
+            .collect(Collectors.toSet());
         var paths = jars.stream().map(JarFile::path).toList();
         assertEquals(1, paths.stream().filter(
             p -> p.toString()

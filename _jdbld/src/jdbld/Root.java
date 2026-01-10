@@ -10,8 +10,6 @@ import org.apache.maven.model.Scm;
 import org.jdrupes.builder.api.FileTree;
 import static org.jdrupes.builder.api.Intend.*;
 import org.jdrupes.builder.api.Project;
-import org.jdrupes.builder.api.ResourceRequest;
-import static org.jdrupes.builder.api.ResourceRequest.requestFor;
 import org.jdrupes.builder.api.ResourceType;
 import org.jdrupes.builder.api.RootProject;
 import org.jdrupes.builder.api.TestResult;
@@ -91,7 +89,7 @@ public class Root extends AbstractProject implements RootProject {
                 "org.slf4j:slf4j-jdk14:2.0.17"))
             .mainClass("org.jdrupes.builder.startup.BootstrapLauncher")
             .addEntries(from(Supply)
-                .get(new ResourceRequest<PomFile>(new ResourceType<>() {}))
+                .get(this.<PomFile> requestFor(new ResourceType<>() {}))
                 .map(pomFile -> Map.entry(Path.of("META-INF/maven")
                     .resolve((String) get(GroupId)).resolve(name())
                     .resolve("pom.xml"), pomFile)))
@@ -128,7 +126,7 @@ public class Root extends AbstractProject implements RootProject {
 
         // Supply sources jar
         generator(SourcesJarGenerator::new)
-            .addTrees(get(new ResourceRequest<FileTree<JavaSourceFile>>(
+            .addTrees(get(this.<FileTree<JavaSourceFile>> requestFor(
                 new ResourceType<>() {})));
 
         // Supply javadoc jar
@@ -142,7 +140,7 @@ public class Root extends AbstractProject implements RootProject {
         commandAlias("build", requestFor(AppJarFile.class),
             requestFor(JavadocDirectory.class));
         commandAlias("test",
-            new ResourceRequest<TestResult>(new ResourceType<>() {}));
+            this.<TestResult> requestFor(new ResourceType<>() {}));
         commandAlias("sourcesJar", requestFor(SourcesJarFile.class));
         commandAlias("javadoc", requestFor(JavadocDirectory.class));
         commandAlias("javadocJar", requestFor(JavadocJarFile.class));

@@ -37,7 +37,6 @@ import org.jdrupes.builder.api.MergedTestProject;
 import org.jdrupes.builder.api.Project;
 import org.jdrupes.builder.api.Resource;
 import org.jdrupes.builder.api.ResourceRequest;
-import static org.jdrupes.builder.api.ResourceRequest.requestFor;
 import org.jdrupes.builder.api.ResourceType;
 import static org.jdrupes.builder.api.ResourceType.*;
 import org.jdrupes.builder.api.Resources;
@@ -123,11 +122,11 @@ public class JUnitTestRunner extends AbstractGenerator {
         // Collect the classpath.
         var cpResources = newResource(ClasspathType)
             .addAll(project().from(Consume, Expose, Supply)
-                .get(requestFor(CompilationClasspathType)));
+                .get(requestFor(ClasspathType)));
         if (project() instanceof MergedTestProject) {
             cpResources.addAll(
                 project().parentProject().get().from(Consume, Expose, Supply)
-                    .get(requestFor(CompilationClasspathType)));
+                    .get(requestFor(ClasspathType)));
         }
         log.finer(() -> "Testing in " + project() + " with classpath "
             + cpResources.stream().map(e -> e.toPath().toString())

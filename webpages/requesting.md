@@ -45,29 +45,38 @@ of class files (which are denoted in the classpath by their root
 directory).
 
 Using [ClasspathElement](javadoc/org/jdrupes/builder/java/ClasspathElement.html)
-as common supertype for jar files and class trees, we could ask for the
+as common supertype for jar files and class trees, we could ask for 
 resource type
 [ClasspathElement](javadoc/org/jdrupes/builder/java/ClasspathElement.html).
 However, we cannot expect to receive a single classpath element.
 Instead, we should expect to get a collection of classpath elements.
 Therefore it makes more sense to ask for a collection of classpath
 elements, which results in the requested type being
-`Resources<ClasspathElement>`.
+[Resources](javadoc/org/jdrupes/builder/api/Resources.html)&lt;[ClasspathElement](javadoc/org/jdrupes/builder/java/ClasspathElement.html)&gt;.
 
 ![Java base types](javadoc/java-base-types.svg)
 
-Another point to consider is that there are different kinds of
-classpaths such as compile-time and a runtime classpaths. Both are 
-collections of
-[ClasspathElement](javadoc/org/jdrupes/builder/java/ClasspathElement.html)s.
-However, depending on the kind of classpath, a
-[ResourceProvider](javadoc/org/jdrupes/builder/api/ResourceProvider.html)
-may deliver different subsets of these elements. We can include this
-information in the requested resource type by using a specialized
-container whose type indicates the desired subset of instances. For Java
-classpaths, the specialized container types are
-[CompilationResources](javadoc/org/jdrupes/builder/java/CompilationResources.html)
-and [RuntimeResources](javadoc/org/jdrupes/builder/java/RuntimeResources.html).
+What we expect from a provider when requesting the
+[ClasspathElement](javadoc/org/jdrupes/builder/java/ClasspathElement.html)s
+are resources required for a build that uses the provider as dependency.
+These classes are commonly referred to as the "compile classpath".
+
+For executing Java code (e.g. when running unit tests) we additionally
+need the classes that were used during the build, but are not provided
+by the project because they are not part of the provided artifacts'
+API. These classes (together with the classes from the compile classpath)
+are commonly referred to as the "runtime classpath".
+
+The runtime classpath is unusual because it is not a build result. It's
+a collection of resources that is generated for a specific purpose.
+Obtaining *all* classpath elements requires a project (in its role
+as provider) to change its behavior and to also return the results
+from providers with intend `Consume`. Such a change of behavior can be
+controlled by using a specialized container type, which indicates the
+desired change. In the case of a
+[Project](javadoc/org/jdrupes/builder/api/Project.html)
+the behavior changes if the container implements
+[AllResources](javadoc/org/jdrupes/builder/api/AllResources.html).
 
 From this example, we derive the common pattern for resource requests.
 

@@ -51,23 +51,17 @@ import org.jdrupes.builder.api.Resource;
 import org.jdrupes.builder.api.ResourceFactory;
 import org.jdrupes.builder.api.ResourceProvider;
 import org.jdrupes.builder.api.ResourceRequest;
-import org.jdrupes.builder.api.ResourceType;
-import org.jdrupes.builder.api.Resources;
 import org.jdrupes.builder.core.AbstractProvider;
-import org.jdrupes.builder.java.CompilationResources;
-import org.jdrupes.builder.java.LibraryJarFile;
-import org.jdrupes.builder.mvnrepo.MvnRepoDependency.Scope;
+import static org.jdrupes.builder.java.JavaTypes.*;
 import static org.jdrupes.builder.mvnrepo.MvnRepoTypes.*;
 
 /// Depending on the request, this provider provides two types of resources.
 /// 
-///  1. The artifacts to be resolved as
-///     `Resources<MvnRepoDependency>`. The artifacts
-///     to be resolved are those added with [resolve].
+///  1. The artifacts to be resolved as `Resources<MvnRepoDependency>`.
+///     The artifacts to be resolved are those added with [resolve].
+///     Note that the result also includes the [MvnRepoBom]s.
 ///
-///  2. The BOMs added with [bom] as `Resources<MvnRepoBom>`.
-///
-///  3. The `CompilationResources<LibraryJarFile>` 
+///  2. The `CompilationResources<LibraryJarFile>` 
 ///     or `RuntimeResources<LibraryJarFile>` (depending on the
 ///     request) that result from resolving the artifacts to be resolved.
 ///     The resources returned implement the additional marker interface
@@ -123,18 +117,15 @@ public class MvnRepoLookup extends AbstractProvider
         return snapshotUri;
     }
 
-    /// Add artifacts, specified by their coordinates
-    /// (`groupId:artifactId:version`) with the given scope.
+    /// Add a bill of materials. The coordinates are resolved as 
+    /// a dependency with scope `import` which is added to the
+    /// `dependencyManagement` section.
     ///
-    /// @param scope the scope
     /// @param coordinates the coordinates
     /// @return the mvn repo lookup
-    /// @deprecated Coordinates are no longer distinguished by scope,
-    /// use {@link #resolve(String...)} instead
     ///
-    @Deprecated
-    public MvnRepoLookup resolve(Scope scope, String... coordinates) {
-        this.coordinates.addAll(Arrays.asList(coordinates));
+    public MvnRepoLookup bom(String... coordinates) {
+        boms.addAll(Arrays.asList(coordinates));
         return this;
     }
 
@@ -149,15 +140,19 @@ public class MvnRepoLookup extends AbstractProvider
         return this;
     }
 
-    /// Add a bill of materials. The coordinates are resolved as 
-    /// a dependency with scope `import` which is added to the
-    /// `dependencyManagement` section.
+    /// Add artifacts. The method handles [MvnRepoBom]s correctly.
     ///
-    /// @param coordinates the coordinates
+    /// @param resources the resources
     /// @return the mvn repo lookup
     ///
-    public MvnRepoLookup bom(String... coordinates) {
-        boms.addAll(Arrays.asList(coordinates));
+    public MvnRepoLookup resolve(Stream<? extends MvnRepoResource> resources) {
+        resources.forEach(r -> {
+            if (r instanceof MvnRepoBom) {
+                bom(r.coordinates());
+            } else {
+                resolve(r.coordinates());
+            }
+        });
         return this;
     }
 
@@ -190,12 +185,10 @@ public class MvnRepoLookup extends AbstractProvider
     @Override
     protected <T extends Resource> Stream<T>
             doProvide(ResourceRequest<T> requested) {
-        if (new ResourceType<Resources<MvnRepoResource>>() {}
-            .isAssignableFrom(requested.type())) {
-            return provideMvnDeps(requested);
+        if (requested.collects(MvnRepoDependencyType)) {
+            return provideMvnDeps();
         }
-        if (requested.accepts(
-            new ResourceType<CompilationResources<LibraryJarFile>>() {})) {
+        if (requested.collects(LibraryJarFileType)) {
             try {
                 return provideJars();
             } catch (DependencyResolutionException | ModelBuildingException e) {
@@ -206,23 +199,14 @@ public class MvnRepoLookup extends AbstractProvider
         return Stream.empty();
     }
 
-    private <T extends Resource> Stream<T>
-            provideMvnDeps(ResourceRequest<T> requested) {
-        Stream<T> boms = Stream.empty();
-        if (requested.accepts(new ResourceType<Resources<MvnRepoBom>>() {})) {
-            @SuppressWarnings("unchecked")
-            var result = (Stream<T>) this.boms.stream().map(c -> ResourceFactory
-                .create(MvnRepoBomType, null, c));
-            boms = result;
-        }
-        Stream<T> deps = Stream.empty();
-        if (requested.accepts(MvnRepoCompilationDepsType)) {
-            @SuppressWarnings("unchecked")
-            var result = (Stream<T>) coordinates.stream()
-                .map(c -> ResourceFactory.create(MvnRepoDependencyType, null,
-                    c));
-            deps = result;
-        }
+    private <T extends Resource> Stream<T> provideMvnDeps() {
+        @SuppressWarnings("unchecked")
+        var boms = (Stream<T>) this.boms.stream().map(c -> ResourceFactory
+            .create(MvnRepoBomType, null, c));
+        @SuppressWarnings("unchecked")
+        var deps = (Stream<T>) coordinates.stream()
+            .map(c -> ResourceFactory.create(MvnRepoDependencyType, null,
+                c));
         return Stream.concat(boms, deps);
     }
 

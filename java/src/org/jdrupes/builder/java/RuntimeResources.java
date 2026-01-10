@@ -18,12 +18,12 @@
 
 package org.jdrupes.builder.java;
 
+import org.jdrupes.builder.api.AllResources;
 import org.jdrupes.builder.api.Resource;
-import org.jdrupes.builder.api.Resources;
 
 /// A container for [Resource]s needed at runtime.
 ///
 /// @param <T> the contained type
 ///
-public interface RuntimeResources<T extends Resource> extends Resources<T> {
+public interface RuntimeResources<T extends Resource> extends AllResources<T> {
 }

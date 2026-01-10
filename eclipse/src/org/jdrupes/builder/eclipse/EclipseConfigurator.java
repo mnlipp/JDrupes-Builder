@@ -44,17 +44,14 @@ import org.jdrupes.builder.api.MergedTestProject;
 import org.jdrupes.builder.api.Project;
 import org.jdrupes.builder.api.Resource;
 import org.jdrupes.builder.api.ResourceRequest;
-import static org.jdrupes.builder.api.ResourceRequest.*;
 import org.jdrupes.builder.api.ResourceType;
 import org.jdrupes.builder.core.AbstractGenerator;
 import org.jdrupes.builder.core.DefaultFileTree;
 import org.jdrupes.builder.java.ClasspathElement;
-import org.jdrupes.builder.java.CompilationResources;
 import org.jdrupes.builder.java.JavaCompiler;
 import org.jdrupes.builder.java.JavaProject;
 import org.jdrupes.builder.java.JavaResourceTree;
 import static org.jdrupes.builder.java.JavaTypes.*;
-import org.jdrupes.builder.java.LibraryJarFile;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.Node;
@@ -304,8 +301,7 @@ public class EclipseConfigurator extends AbstractGenerator {
         });
 
         // Add jars
-        project().provided(requestFor(
-            new ResourceType<CompilationResources<LibraryJarFile>>() {}))
+        project().provided(requestFor(JarLibrariesType))
             .filter(jf -> !addedByProject.contains(jf))
             .collect(Collectors.toSet()).stream().forEach(jf -> {
                 var entry = (Element) classpath
@@ -382,7 +378,7 @@ public class EclipseConfigurator extends AbstractGenerator {
 
         // Add source trees
         project.from(Supply, Consume).without(Project.class)
-            .get(new ResourceRequest<>(JavaSourceTreesType)).map(FileTree::root)
+            .get(requestFor(JavaSourceTreesType)).map(FileTree::root)
             .filter(p -> p.toFile().canRead()).map(project::relativize)
             .forEach(p -> {
                 var entry = (Element) classpath
@@ -407,19 +403,18 @@ public class EclipseConfigurator extends AbstractGenerator {
             var from = project.from(Consume, Expose)
                 .without(project.parentProject().get());
             javaCompiler.ifPresent(from::without);
-            from.get(requestFor(CompilationLibrariesType))
-                .forEach(jf -> {
-                    var entry = (Element) classpath.appendChild(
-                        doc.createElement("classpathentry"));
-                    entry.setAttribute("kind", "lib");
-                    var jarPathName = jf.path().toString();
-                    entry.setAttribute("path", jarPathName);
-                    var attr = (Element) entry
-                        .appendChild(doc.createElement("attributes"))
-                        .appendChild(doc.createElement("attribute"));
-                    attr.setAttribute("name", "test");
-                    attr.setAttribute("value", "true");
-                });
+            from.get(requestFor(JarLibrariesType)).forEach(jf -> {
+                var entry = (Element) classpath.appendChild(
+                    doc.createElement("classpathentry"));
+                entry.setAttribute("kind", "lib");
+                var jarPathName = jf.path().toString();
+                entry.setAttribute("path", jarPathName);
+                var attr = (Element) entry
+                    .appendChild(doc.createElement("attributes"))
+                    .appendChild(doc.createElement("attribute"));
+                attr.setAttribute("name", "test");
+                attr.setAttribute("value", "true");
+            });
             return;
         }
 

@@ -10,12 +10,10 @@ import java.util.List;
 import java.util.jar.Attributes;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
-
 import org.jdrupes.builder.api.Cleanliness;
 import org.jdrupes.builder.api.Launcher;
 import org.jdrupes.builder.java.AppJarFile;
 import org.jdrupes.builder.java.JarFile;
-import static org.jdrupes.builder.api.ResourceRequest.requestFor;
 import org.jdrupes.builder.startup.DirectLauncher;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
@@ -31,13 +29,14 @@ class BuildTest {
             Thread.currentThread().getContextClassLoader(), buildRoot,
             new String[0]);
         launcher.provide(launcher.rootProject().projects("**"),
-            requestFor(Cleanliness.class));
+            launcher.rootProject().requestFor(Cleanliness.class));
     }
 
     @Test
     public void testAppJar() throws IOException {
         var jars = launcher.provide(Stream.of(launcher.rootProject()),
-            requestFor(AppJarFile.class)).collect(Collectors.toSet());
+            launcher.rootProject().requestFor(AppJarFile.class))
+            .collect(Collectors.toSet());
         var paths = jars.stream().map(JarFile::path).toList();
         assertEquals(1, paths.stream().filter(p -> p.toString()
             .endsWith("build/libs/demo-project-simple-app-0.0.0.jar"))

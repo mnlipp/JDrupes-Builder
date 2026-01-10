@@ -83,7 +83,6 @@ import static org.jdrupes.builder.api.Intend.*;
 import org.jdrupes.builder.api.Project;
 import org.jdrupes.builder.api.Resource;
 import org.jdrupes.builder.api.ResourceRequest;
-import static org.jdrupes.builder.api.ResourceRequest.requestFor;
 import org.jdrupes.builder.core.AbstractGenerator;
 import org.jdrupes.builder.java.JavadocJarFile;
 import org.jdrupes.builder.java.LibraryJarFile;

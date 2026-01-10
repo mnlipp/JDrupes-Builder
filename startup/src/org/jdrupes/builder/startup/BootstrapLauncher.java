@@ -35,7 +35,6 @@ import org.jdrupes.builder.api.FileResource;
 import org.jdrupes.builder.api.FileTree;
 import static org.jdrupes.builder.api.Intend.*;
 import org.jdrupes.builder.api.Launcher;
-import static org.jdrupes.builder.api.ResourceRequest.*;
 import org.jdrupes.builder.api.RootProject;
 import org.jdrupes.builder.core.LauncherSupport;
 import static org.jdrupes.builder.java.JavaTypes.*;
@@ -97,7 +96,7 @@ public class BootstrapLauncher extends AbstractLauncher {
             buildCoords.forEach(mvnLookup::resolve);
             rootProject.project(BootstrapBuild.class).dependency(Expose,
                 mvnLookup);
-            var cpUrls = rootProject.get(requestFor(CompilationClasspathType))
+            var cpUrls = rootProject.get(rootProject.requestFor(ClasspathType))
                 .map(cpe -> {
                     try {
                         if (cpe instanceof FileTree tree) {

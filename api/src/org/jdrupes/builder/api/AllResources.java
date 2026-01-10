@@ -1,6 +1,6 @@
 /*
  * JDrupes Builder
- * Copyright (C) 2025 Michael N. Lipp
+ * Copyright (C) 2026 Michael N. Lipp
  * 
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as
@@ -16,14 +16,12 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package org.jdrupes.builder.java;
+package org.jdrupes.builder.api;
 
-import org.jdrupes.builder.api.Resource;
-import org.jdrupes.builder.api.Resources;
+/// The Interface AllResources.
+///
+/// @param <T> the contained resource type
+///
+public interface AllResources<T extends Resource> extends Resources<T> {
 
-/// A container for [Resource]s needed at runtime.
-///
-/// @param <T> the contained type
-///
-public interface RuntimeResources2<T extends Resource> extends Resources<T> {
 }

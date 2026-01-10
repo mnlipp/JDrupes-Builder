@@ -23,7 +23,6 @@ import org.jdrupes.builder.api.FileTree;
 import static org.jdrupes.builder.api.Intend.Supply;
 import org.jdrupes.builder.api.Project;
 import static org.jdrupes.builder.api.Project.Properties.Version;
-import org.jdrupes.builder.api.ResourceRequest;
 import org.jdrupes.builder.api.ResourceType;
 import org.jdrupes.builder.java.JarGenerator;
 import org.jdrupes.builder.java.JavaSourceFile;
@@ -52,7 +51,7 @@ public class SourcesJarGenerator extends JarGenerator {
     public SourcesJarGenerator(Project project) {
         super(project, SourcesJarFileType);
         addTrees(project().from(Supply).get(
-            new ResourceRequest<FileTree<JavaSourceFile>>(
+            this.<FileTree<JavaSourceFile>> requestFor(
                 new ResourceType<>() {})));
         jarName(Optional.ofNullable(project().get(ArtifactId))
             .orElse(project().name()) + "-" + project().get(Version)

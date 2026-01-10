@@ -1,7 +1,6 @@
 package jdbld;
 
 import org.jdrupes.builder.api.Project;
-import org.jdrupes.builder.api.ResourceRequest;
 import org.jdrupes.builder.api.ResourceType;
 import org.jdrupes.builder.api.RootProject;
 import org.jdrupes.builder.core.AbstractProject;
@@ -19,9 +18,9 @@ public class Root extends AbstractProject implements RootProject {
     public Root() {
         super(name("app-project_1"));
         commandAlias("build",
-            new ResourceRequest<JarFile>(new ResourceType<>() {}));
+            this.<JarFile> requestFor(new ResourceType<>() {}));
         commandAlias("eclipse",
-            new ResourceRequest<EclipseConfiguration>(new ResourceType<>() {}));
+            this.<EclipseConfiguration> requestFor(new ResourceType<>() {}));
     }
 
 }

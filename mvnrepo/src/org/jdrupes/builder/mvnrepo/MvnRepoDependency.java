@@ -26,7 +26,7 @@ public interface MvnRepoDependency extends MvnRepoResource {
     /// The dependency scope.
     ///
     @SuppressWarnings("PMD.FieldNamingConventions")
-    enum Scope {
+    @Deprecated enum Scope {
         /// The default scope.
         Compile, 
         

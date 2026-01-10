@@ -32,7 +32,6 @@ import org.jdrupes.builder.api.IOResource;
 import org.jdrupes.builder.api.Project;
 import org.jdrupes.builder.api.Resource;
 import org.jdrupes.builder.api.ResourceRequest;
-import static org.jdrupes.builder.api.ResourceRequest.*;
 import org.jdrupes.builder.api.ResourceType;
 import static org.jdrupes.builder.api.ResourceType.*;
 import org.jdrupes.builder.api.Resources;
@@ -142,11 +141,9 @@ public class UberJarGenerator extends LibraryGenerator {
         // they can be added to the uber jar, i.e. they must be added
         // with their transitive dependencies.
         var lookup = new MvnRepoLookup();
-        project().from(providers().stream()).get(
-            requestFor(MvnRepoRuntimeDepsType))
-            .forEach(d -> lookup.resolve(d.coordinates()));
-        project().context().get(lookup,
-            new ResourceRequest<>(RuntimeClasspathType))
+        lookup.resolve(project().from(providers().stream())
+            .get(requestFor(MvnRepoRuntimeDepsType)));
+        project().context().get(lookup, requestFor(RuntimeClasspathType))
             .parallel().forEach(cpe -> {
                 if (cpe instanceof MvnRepoJarFile jarFile) {
                     addJarFile(contents, jarFile, openJars);

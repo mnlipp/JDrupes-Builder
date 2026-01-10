@@ -23,8 +23,10 @@ import java.util.stream.Stream;
 /// A provider of a resource. This interface is intended to be implemented
 /// by providers. It is not intended to be invoked directly. Rather, it 
 /// must be invoked via [BuildContext#get].
+/// 
+/// The interface also serves as a factory for creating the resource
+/// requests to be passed to the providers.
 ///
-@SuppressWarnings("PMD.ImplicitFunctionalInterface")
 public interface ResourceProvider {
 
     /// Provide the requested resources.
@@ -42,4 +44,43 @@ public interface ResourceProvider {
     /// @return the provided resource(s) as stream
     ///
     <T extends Resource> Stream<T> provide(ResourceRequest<T> requested);
+
+    /// Create a new request for the given resource.
+    ///
+    /// @param <T> the generic type
+    /// @param type the type
+    /// @return the resource request
+    ///
+    <T extends Resource> ResourceRequest<T>
+            requestFor(ResourceType<? extends Resources<T>> type);
+
+    /// Creates a request for a resource of the given type in a
+    /// container of type [Resources]. The recommended usage pattern
+    /// is to import this method statically.
+    ///
+    /// @param <T> the generic type
+    /// @param requested the requested
+    /// @return the resource request
+    ///
+    default <T extends Resource>
+            ResourceRequest<T> requestFor(Class<T> requested) {
+        return requestFor(new ResourceType<>(Resources.class,
+            new ResourceType<>(requested, null)));
+    }
+
+    /// Creates a request for a resource of the given type, in the
+    /// given container type. The recommended usage pattern is
+    /// to import this method statically.
+    ///
+    /// @param <C> the generic type
+    /// @param <T> the generic type
+    /// @param container the container
+    /// @param requested the requested
+    /// @return the resource request
+    ///
+    default <C extends Resources<T>, T extends Resource> ResourceRequest<T>
+            requestFor(Class<C> container, Class<T> requested) {
+        return requestFor(new ResourceType<>(container,
+            new ResourceType<>(requested, null)));
+    }
 }

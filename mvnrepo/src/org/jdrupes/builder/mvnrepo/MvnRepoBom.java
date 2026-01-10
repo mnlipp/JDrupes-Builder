@@ -18,7 +18,7 @@
 
 package org.jdrupes.builder.mvnrepo;
 
-/// Represents a POM in a maven repository.
+/// Represents a BOM in a maven repository.
 ///
 public interface MvnRepoBom extends MvnRepoPom {
 }

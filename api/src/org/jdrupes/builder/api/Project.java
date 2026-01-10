@@ -1,6 +1,6 @@
 /*
  * JDrupes Builder
- * Copyright (C) 2025 Michael N. Lipp
+ * Copyright (C) 2025, 2026 Michael N. Lipp
  * 
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as
@@ -86,15 +86,18 @@ import static org.jdrupes.builder.api.Intend.*;
 /// provided to the project by its dependencies with [Intend#Forward],
 /// [Intend#Expose], and [Intend#Supply]. As explained above, resources
 /// from dependencies with [Intend#Consume] are only available to
-/// a project's generators and therefore not provided by the [Project].
+/// a project's generators and are therefore usually not provided by
+/// the [Project].
 /// 
-/// There is one exception to this rule. Requests for
-/// [Cleanliness][ResourceType#CleanlinessType] are also forwarded to
-/// dependencies with [Intend#Consume], unless the related provider is
-/// a [Project]. With respect to resources generated for use by the
-/// project only (its generators, to be precise), the [Project] itself
-/// indirectly acts as a [Generator] and is therefore responsible for
-/// handling the requests for [Cleanliness].
+/// However, if the container type of the request implements [AllResources]
+/// the project will also forward the request to dependencies with
+/// [Intend#Consume].
+/// 
+/// For example, such a request is needed to clean the build properly
+/// with a request for [Cleanliness]. A "normal" request for
+/// `Resources<Cleanliness>` is not forwarded to providers with
+/// [Intend#Consume]. Only a request for `AllResources<Cleanliness>`
+/// will therefore clean everything.
 /// 
 /// ## Factory methods
 ///

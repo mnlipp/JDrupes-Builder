@@ -33,7 +33,6 @@ import static org.jdrupes.builder.api.Intend.*;
 import org.jdrupes.builder.api.Project;
 import org.jdrupes.builder.api.Resource;
 import org.jdrupes.builder.api.ResourceRequest;
-import static org.jdrupes.builder.api.ResourceRequest.*;
 import static org.jdrupes.builder.api.ResourceType.resourceType;
 import org.jdrupes.builder.core.AbstractGenerator;
 import org.jdrupes.builder.java.JarFile;
@@ -152,8 +151,7 @@ public class VscodeConfigurator extends AbstractGenerator {
 
         // Add JARs to classpath
         referenced.addAll(project().provided(
-            requestFor(CompilationClasspathType))
-            .filter(p -> p instanceof JarFile)
+            requestFor(ClasspathType)).filter(p -> p instanceof JarFile)
             .map(jf -> ((JarFile) jf).path().toString())
             .collect(Collectors.toList()));
         if (!referenced.isEmpty()) {

@@ -8,18 +8,14 @@ import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
-
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
-
 import org.jdrupes.builder.api.Cleanliness;
 import org.jdrupes.builder.api.Launcher;
 import org.jdrupes.builder.java.JarFile;
 import org.jdrupes.builder.mvnrepo.PomFile;
-import static org.jdrupes.builder.api.ResourceRequest.requestFor;
 import static org.junit.jupiter.api.Assertions.*;
-
 import org.jdrupes.builder.startup.DirectLauncher;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
@@ -38,13 +34,14 @@ class LibrariesTests {
             Thread.currentThread().getContextClassLoader(), buildRoot,
             new String[0]);
         launcher.provide(launcher.rootProject().projects("**"),
-            requestFor(Cleanliness.class));
+            launcher.rootProject().requestFor(Cleanliness.class));
     }
 
     @Test
     public void testLibraries() throws IOException {
         var jars = launcher.provide(Stream.of(launcher.rootProject()),
-            requestFor(JarFile.class)).collect(Collectors.toSet());
+            launcher.rootProject().requestFor(JarFile.class))
+            .collect(Collectors.toSet());
         var paths = jars.stream().map(JarFile::path).toList();
         var apiLib = paths.stream().filter(p -> p.toString()
             .endsWith("api/build/libs/api-0.0.0.jar")).findAny();
@@ -74,7 +71,8 @@ class LibrariesTests {
             throws IOException, ParserConfigurationException, SAXException {
         // Request POMs
         var poms = launcher.provide(Stream.of(launcher.rootProject()),
-            requestFor(PomFile.class)).collect(Collectors.toSet());
+            launcher.rootProject().requestFor(PomFile.class))
+            .collect(Collectors.toSet());
         var implPom = poms.stream().map(PomFile::path)
             .filter(p -> p.toString().contains("impl-pom.xml")).findAny();
         assertTrue(implPom.isPresent());

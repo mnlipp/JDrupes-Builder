@@ -36,7 +36,6 @@ import org.jdrupes.builder.api.FileTree;
 import org.jdrupes.builder.api.Project;
 import org.jdrupes.builder.api.Resource;
 import org.jdrupes.builder.api.ResourceRequest;
-import static org.jdrupes.builder.api.ResourceRequest.*;
 import org.jdrupes.builder.api.ResourceType;
 import static org.jdrupes.builder.api.ResourceType.*;
 import org.jdrupes.builder.api.Resources;
@@ -207,7 +206,7 @@ public class Javadoc extends JavaTool {
             var sourcePaths = sourcePaths(sources.stream());
             if (sourcePaths.isEmpty()) {
                 sourcePaths = sourcePaths(projects.stream().flatMap(p -> p
-                    .get(new ResourceRequest<FileTree<JavaSourceFile>>(
+                    .get(this.<FileTree<JavaSourceFile>> requestFor(
                         new ResourceType<>() {}))));
             }
             var finalSourcePaths = sourcePaths;

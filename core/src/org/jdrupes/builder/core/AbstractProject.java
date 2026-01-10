@@ -22,6 +22,7 @@ import java.lang.reflect.InvocationTargetException;
 import java.nio.file.FileSystems;
 import java.nio.file.Path;
 import java.nio.file.PathMatcher;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.EnumSet;
 import java.util.HashMap;
@@ -40,6 +41,7 @@ import java.util.concurrent.Future;
 import java.util.function.Consumer;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
+import org.jdrupes.builder.api.AllResources;
 import org.jdrupes.builder.api.BuildException;
 import org.jdrupes.builder.api.Cleanliness;
 import org.jdrupes.builder.api.Generator;
@@ -53,7 +55,6 @@ import org.jdrupes.builder.api.Resource;
 import org.jdrupes.builder.api.ResourceProvider;
 import org.jdrupes.builder.api.ResourceRequest;
 import org.jdrupes.builder.api.ResourceType;
-import static org.jdrupes.builder.api.ResourceType.CleanlinessType;
 import org.jdrupes.builder.api.RootProject;
 import org.jdrupes.builder.core.LauncherSupport.CommandData;
 
@@ -166,10 +167,9 @@ public abstract class AbstractProject extends AbstractProvider
                 // ConcurrentHashMap does not support null values.
                 projects = Collections.synchronizedMap(new HashMap<>());
                 context = new DefaultBuildContext();
-                commands = new HashMap<>(Map.of(
-                    "clean", new CommandData("**", new ResourceRequest<?>[] {
-                        new ResourceRequest<Cleanliness>(
-                            new ResourceType<>() {}) })));
+                commands = new HashMap<>();
+                commandAlias("clean", requestFor(
+                    new ResourceType<AllResources<Cleanliness>>() {}));
             }
         } else {
             parent = (AbstractProject) project(parentProject);
@@ -380,10 +380,8 @@ public abstract class AbstractProject extends AbstractProvider
         return this;
     }
 
-    /// A project itself does not provide any resources. Rather, requests
-    /// for resources are forwarded to the project's providers with intend
-    /// [Intend#Forward], [Intend#Expose] or [Intend#Supply].
-    ///
+    /// Forward the request as described by [Project].
+    /// 
     /// @param <R> the generic type
     /// @param requested the requested
     /// @return the provided resources
@@ -392,11 +390,16 @@ public abstract class AbstractProject extends AbstractProvider
     protected <R extends Resource> Stream<R>
             doProvide(ResourceRequest<R> requested) {
         var providers = providers(Forward, Expose, Supply);
-        if (CleanlinessType
-            .isAssignableFrom(requested.type().containedType())) {
+        if (AllResources.class.isAssignableFrom(requested.type().rawType())) {
             providers = Stream.concat(providers,
-                providers(Consume).filter(p -> !(p instanceof Project)));
+                providers(Consume));
         }
+
+        // Freeze for use during stream evaluation
+        var curQueried = new ArrayList<>(
+            ((DefaultResourceRequest<R>) requested).queried());
+        providers = providers.filter(p -> !curQueried.contains(p));
+        ((DefaultResourceRequest<R>) requested).queried(this);
         return from(providers).get(requested);
     }
 

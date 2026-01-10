@@ -64,16 +64,17 @@ deactivate project
 @startuml java-base-types.svg
 class ClassTree
 class JarFile
-class ClasspathElement
+interface ClasspathElement
 
-ClasspathElement <|-down- JarFile
-ClasspathElement <|-down- ClassTree
+ClasspathElement <|.down. JarFile
+ClasspathElement <|.down. ClassTree
 
-class Resources<ClasspathElement>
+interface Resources<ClasspathElement>
 Resources *-left-> ClasspathElement
 
-class RuntimeResources
-Resources <|-- RuntimeResources
-class CompilationResources
-RuntimeResources <|-- CompilationResources
+interface AllResources<ClasspathElement>
+Resources <|-- AllResources
+
+interface RuntimeResources<ClasspathElement>
+AllResources <|-- RuntimeResources
 @enduml

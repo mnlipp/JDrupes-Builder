@@ -19,7 +19,7 @@
 package org.jdrupes.builder.mvnrepo;
 
 import org.jdrupes.builder.api.ResourceType;
-import org.jdrupes.builder.java.CompilationResources;
+import org.jdrupes.builder.api.Resources;
 import org.jdrupes.builder.java.RuntimeResources;
 
 /// A collection of Maven specific [ResourceType]s.
@@ -43,12 +43,11 @@ public final class MvnRepoTypes {
             MvnRepoDependency> MvnRepoDependencyType = new ResourceType<>() {};
 
     /// The maven repository compilation dependencies type.
-    @SuppressWarnings("PMD.LongVariable")
     public static final ResourceType<
-            CompilationResources<MvnRepoDependency>> MvnRepoCompilationDepsType
+            Resources<MvnRepoDependency>> MvnRepoDependenciesType
                 = new ResourceType<>() {};
 
-    /// The maven repository runtime dependencies type.
+    /// The maven repository compilation dependencies type.
     public static final ResourceType<
             RuntimeResources<MvnRepoDependency>> MvnRepoRuntimeDepsType
                 = new ResourceType<>() {};

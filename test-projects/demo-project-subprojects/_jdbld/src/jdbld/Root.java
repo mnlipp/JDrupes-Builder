@@ -3,7 +3,6 @@ package jdbld;
 import static org.jdrupes.builder.api.Intend.*;
 import java.nio.file.Path;
 import org.jdrupes.builder.api.Project;
-import org.jdrupes.builder.api.ResourceRequest;
 import org.jdrupes.builder.api.ResourceType;
 import org.jdrupes.builder.api.RootProject;
 import org.jdrupes.builder.api.TestResult;
@@ -35,11 +34,11 @@ public class Root extends AbstractProject implements RootProject {
             .destination(buildDirectory().resolve(Path.of("app"))));
 
         commandAlias("build",
-            new ResourceRequest<JarFile>(new ResourceType<>() {}));
+            this.<JarFile> requestFor(new ResourceType<>() {}));
         commandAlias("test",
-            new ResourceRequest<TestResult>(new ResourceType<>() {}));
+            this.<TestResult> requestFor(new ResourceType<>() {}));
         commandAlias("eclipse",
-            new ResourceRequest<EclipseConfiguration>(new ResourceType<>() {}));
+            this.<EclipseConfiguration> requestFor(new ResourceType<>() {}));
     }
 
 }

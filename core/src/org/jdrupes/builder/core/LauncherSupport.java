@@ -88,8 +88,7 @@ public final class LauncherSupport {
     /// @param pattern the pattern
     /// @param requests the requests
     ///
-    public record CommandData(String pattern,
-            ResourceRequest<?>[] requests) {
+    public record CommandData(String pattern, ResourceRequest<?>... requests) {
     }
 
     /// Lookup the command in the given root project.
@@ -98,8 +97,7 @@ public final class LauncherSupport {
     /// @param name the name
     /// @return the optional
     ///
-    public static CommandData
-            lookupCommand(RootProject project, String name) {
+    public static CommandData lookupCommand(RootProject project, String name) {
         return ((AbstractProject) project).lookupCommand(name);
     }
 }

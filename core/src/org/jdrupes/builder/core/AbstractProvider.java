@@ -25,6 +25,8 @@ import org.jdrupes.builder.api.BuildContext;
 import org.jdrupes.builder.api.Resource;
 import org.jdrupes.builder.api.ResourceProvider;
 import org.jdrupes.builder.api.ResourceRequest;
+import org.jdrupes.builder.api.ResourceType;
+import org.jdrupes.builder.api.Resources;
 
 /// A base implementation for[ResourceProvider]s.
 ///
@@ -69,6 +71,12 @@ public abstract class AbstractProvider implements ResourceProvider {
     ///
     protected abstract <T extends Resource> Stream<T>
             doProvide(ResourceRequest<T> requested);
+
+    @Override
+    public <T extends Resource> ResourceRequest<T>
+            requestFor(ResourceType<? extends Resources<T>> type) {
+        return new DefaultResourceRequest<>(type);
+    }
 
     @Override
     public String toString() {

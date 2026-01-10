@@ -76,7 +76,7 @@ public class ProjectPreparation {
                     IMPLEMENTATION_VENDOR, "Michael N. Lipp (mnl@mnl.de)")
                     .entrySet().stream())
                 .addEntries(project.from(Supply)
-                    .get(new ResourceRequest<PomFile>(new ResourceType<>() {}))
+                    .get(project.<PomFile> requestFor(new ResourceType<>() {}))
                     .map(pomFile -> Map.entry(Path.of("META-INF/maven")
                         .resolve((String) project.get(GroupId))
                         .resolve(project.name())

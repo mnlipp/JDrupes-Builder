@@ -38,7 +38,6 @@ import org.jdrupes.builder.api.Project;
 import static org.jdrupes.builder.api.Project.Properties.*;
 import org.jdrupes.builder.api.Resource;
 import org.jdrupes.builder.api.ResourceRequest;
-import static org.jdrupes.builder.api.ResourceRequest.*;
 import org.jdrupes.builder.api.ResourceType;
 import static org.jdrupes.builder.api.ResourceType.*;
 import org.jdrupes.builder.api.Resources;
@@ -66,7 +65,6 @@ import static org.jdrupes.builder.java.JavaTypes.*;
 /// default behavior of the java compiler, you have to specify
 /// `-g:[lines, source]` explicitly.
 ///
-@SuppressWarnings("PMD.TooManyStaticImports")
 public class JavaCompiler extends JavaTool {
 
     private final Resources<FileTree<JavaSourceFile>> sources
@@ -194,7 +192,7 @@ public class JavaCompiler extends JavaTool {
         // compilation result is consumed (instead of supplied) by the project.
         var cpResources = newResource(ClasspathType).addAll(
             project().from(Consume, Expose).without(this)
-                .get(requestFor(CompilationClasspathType)));
+                .get(requestFor(ClasspathType)));
         log.finest(() -> "Compiling in " + project() + " with classpath "
             + cpResources.stream().map(e -> e.toPath().toString())
                 .collect(Collectors.joining(File.pathSeparator)));
