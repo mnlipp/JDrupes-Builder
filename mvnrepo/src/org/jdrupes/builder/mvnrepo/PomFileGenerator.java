@@ -40,7 +40,6 @@ import org.jdrupes.builder.api.ResourceRequest;
 import org.jdrupes.builder.api.Resources;
 import org.jdrupes.builder.core.AbstractGenerator;
 import static org.jdrupes.builder.mvnrepo.MvnProperties.*;
-import org.jdrupes.builder.mvnrepo.MvnRepoDependency.Scope;
 import static org.jdrupes.builder.mvnrepo.MvnRepoTypes.*;
 
 /// A [Generator] (mainly) for POM files. In response to requests for
@@ -181,8 +180,8 @@ public class PomFileGenerator extends AbstractGenerator {
         var compilationDeps = newResource(MvnRepoDependenciesType)
             .addAll(project().from(Supply, Expose).without(this)
                 .get(requestFor(MvnRepoDependenciesType)));
-        addDependencies(model, compilationDeps, Scope.Compile);
-        addDependencies(model, runtimeDeps, Scope.Runtime);
+        addDependencies(model, compilationDeps, "compile");
+        addDependencies(model, runtimeDeps, "runtime");
 
         // Adapt
         pomAdapter.accept(model);
@@ -190,13 +189,13 @@ public class PomFileGenerator extends AbstractGenerator {
     }
 
     private void addDependencies(Model model,
-            Resources<MvnRepoDependency> deps, Scope scope) {
+            Resources<MvnRepoDependency> deps, String scope) {
         deps.stream().forEach(d -> {
             var dep = new Dependency();
             dep.setGroupId(d.groupId());
             dep.setArtifactId(d.artifactId());
             dep.setVersion(d.version());
-            dep.setScope(scope == Scope.Compile ? "compile" : "runtime");
+            dep.setScope(scope);
             model.addDependency(dep);
         });
     }

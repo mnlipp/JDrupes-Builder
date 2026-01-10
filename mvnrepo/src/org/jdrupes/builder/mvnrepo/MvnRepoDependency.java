@@ -22,15 +22,4 @@ package org.jdrupes.builder.mvnrepo;
 /// maven repository.
 ///
 public interface MvnRepoDependency extends MvnRepoResource {
-
-    /// The dependency scope.
-    ///
-    @SuppressWarnings("PMD.FieldNamingConventions")
-    @Deprecated enum Scope {
-        /// The default scope.
-        Compile, 
-        
-        /// Scope for dependencies requires at runtime.
-        Runtime
-    }
 }
