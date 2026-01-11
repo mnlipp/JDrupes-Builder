@@ -192,7 +192,7 @@ public class JUnitTestRunner extends AbstractGenerator {
             if (!asList.isEmpty()) {
                 asList.append(", ");
             }
-            if (asList.length() > 20) {
+            if (asList.length() > 30) {
                 asList.append(" ...");
                 break;
             }
