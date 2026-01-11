@@ -48,7 +48,7 @@ import static org.jdrupes.builder.java.JavaTypes.*;
 /// 2. An [AppJarFile]. When requesting this special jar type, the
 ///    generator checks if a main class is specified.
 ///
-/// Instead of explicitly adding resources, this generator also supports
+/// In addition to explicitly adding resources, this generator supports
 /// resource retrieval from added providers. The providers will be used
 /// to retrieve resources of type [ClassTree] and [JavaResourceTree] in
 /// addition to the explicitly added resources.
@@ -138,13 +138,12 @@ public class LibraryGenerator extends JarGenerator
     ///
     /// @param contents the contents
     ///
-    protected void
-            collectFromProviders(Map<Path, Resources<IOResource>> contents) {
-        project().from(providers().stream())
-            .get(this.<ClassTree> requestFor(new ResourceType<>() {}))
+    protected void collectFromProviders(
+            Map<Path, Resources<IOResource>> contents) {
+        project().from(providers().stream()).get(requestFor(ClassTree.class))
             .parallel().forEach(t -> collect(contents, t));
         project().from(providers().stream())
-            .get(this.<JavaResourceTree> requestFor(new ResourceType<>() {}))
+            .get(requestFor(JavaResourceTree.class))
             .parallel().forEach(t -> collect(contents, t));
     }
 
