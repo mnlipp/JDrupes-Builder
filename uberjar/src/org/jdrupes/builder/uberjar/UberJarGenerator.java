@@ -29,6 +29,7 @@ import org.jdrupes.builder.api.BuildException;
 import org.jdrupes.builder.api.FileTree;
 import org.jdrupes.builder.api.Generator;
 import org.jdrupes.builder.api.IOResource;
+import org.jdrupes.builder.api.Intend;
 import org.jdrupes.builder.api.Project;
 import org.jdrupes.builder.api.Resource;
 import org.jdrupes.builder.api.ResourceRequest;
@@ -36,11 +37,15 @@ import org.jdrupes.builder.api.ResourceType;
 import static org.jdrupes.builder.api.ResourceType.*;
 import org.jdrupes.builder.api.Resources;
 import org.jdrupes.builder.java.AppJarFile;
+import org.jdrupes.builder.java.ClassTree;
 import org.jdrupes.builder.java.ClasspathElement;
 import org.jdrupes.builder.java.JarFile;
 import org.jdrupes.builder.java.JarFileEntry;
+import org.jdrupes.builder.java.JavaResourceTree;
 import static org.jdrupes.builder.java.JavaTypes.*;
 import org.jdrupes.builder.java.LibraryGenerator;
+import org.jdrupes.builder.java.LibraryJarFile;
+import org.jdrupes.builder.java.RuntimeResources;
 import org.jdrupes.builder.java.ServicesEntryResource;
 import org.jdrupes.builder.mvnrepo.MvnRepoJarFile;
 import org.jdrupes.builder.mvnrepo.MvnRepoLookup;
@@ -59,7 +64,7 @@ import static org.jdrupes.builder.mvnrepo.MvnRepoTypes.*;
 ///
 /// The generator takes the following approach:
 /// 
-///   * Request all [ClasspathElement]s from the providers. Add the
+///   * Request `Resources<ClasspathElement>` from the providers. Add the
 ///     resource trees and the jar files to the sources to be processed.
 ///     Ignore jar files from maven repositories (instances of
 ///     [MvnRepoJarFile]).
@@ -73,7 +78,13 @@ import static org.jdrupes.builder.mvnrepo.MvnRepoTypes.*;
 ///     that is not applicable to the uber jar.
 ///   * Filter out any module-info.class entries.
 ///
-/// Note that the resource type of the uber jar generator's output is one
+/// Note that the [UberJarGenerator] does deliberately not request the
+/// [ClasspathElement]s as [RuntimeResources] because this may return
+/// resources twice if a project uses another project as runtime
+/// dependency (i.e. with [Intend#Consume]. If this rule causes entries
+/// to be missing, simply add them explicitly.  
+/// 
+/// The resource type of the uber jar generator's output is one
 /// of the resource types of its inputs, because uber jars can also be used
 /// as [ClasspathElement]. Therefore, if you want to create an uber jar
 /// from all resources provided by a project, you must not add the
@@ -112,6 +123,7 @@ import static org.jdrupes.builder.mvnrepo.MvnRepoTypes.*;
 public class UberJarGenerator extends LibraryGenerator {
 
     private Map<Path, java.util.jar.JarFile> openJars = Map.of();
+    private Predicate<Resource> resourceFilter = _ -> true;
 
     /// Instantiates a new uber jar generator.
     ///
@@ -126,8 +138,8 @@ public class UberJarGenerator extends LibraryGenerator {
             collectFromProviders(Map<Path, Resources<IOResource>> contents) {
         openJars = new ConcurrentHashMap<>();
         project().from(providers().stream())
-            .get(requestFor(RuntimeClasspathType))
-            .parallel().forEach(cpe -> {
+            .get(requestFor(ClasspathType)).parallel()
+            .filter(resourceFilter::test).forEach(cpe -> {
                 if (cpe instanceof FileTree<?> fileTree) {
                     collect(contents, fileTree);
                 } else if (cpe instanceof JarFile jarFile
@@ -144,11 +156,26 @@ public class UberJarGenerator extends LibraryGenerator {
         lookup.resolve(project().from(providers().stream())
             .get(requestFor(MvnRepoRuntimeDepsType)));
         project().context().get(lookup, requestFor(RuntimeClasspathType))
-            .parallel().forEach(cpe -> {
+            .parallel().filter(resourceFilter::test).forEach(cpe -> {
                 if (cpe instanceof MvnRepoJarFile jarFile) {
                     addJarFile(contents, jarFile, openJars);
                 }
             });
+    }
+
+    /// Apply the given filter to the resources obtained from the provider.
+    /// The resources can be [ClasspathElement]s or [MvnRepoResource]s.
+    /// This may be required to avoid warnings about duplicates if e.g.
+    /// a sub-project provides generated resources both as
+    /// [ClassTree]/[JavaResourceTree] and as [LibraryJarFile].
+    ///
+    /// @param filter the filter. Returns `true` for resources to be
+    /// included.
+    /// @return the uber jar generator
+    ///
+    public UberJarGenerator resourceFilter(Predicate<Resource> filter) {
+        resourceFilter = filter;
+        return this;
     }
 
     private void addJarFile(Map<Path, Resources<IOResource>> entries,
