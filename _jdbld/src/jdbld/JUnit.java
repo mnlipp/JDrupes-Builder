@@ -11,7 +11,8 @@ public class JUnit extends AbstractProject implements JavaProject {
         super(name("junit"));
         dependency(Consume, project(Core.class));
         dependency(Consume, project(Java.class));
-        dependency(Expose, new MvnRepoLookup().resolve(
-            "org.junit.platform:junit-platform-launcher:1.12.2"));
+        dependency(Expose, new MvnRepoLookup()
+            .bom("org.junit:junit-bom:5.14.2")
+            .resolve("org.junit.platform:junit-platform-launcher"));
     }
 }

@@ -18,10 +18,21 @@
 
 package jdbld;
 
+import static org.jdrupes.builder.api.Intend.Consume;
+
+import org.jdrupes.builder.api.Project;
 import org.jdrupes.builder.core.AbstractProject;
 import org.jdrupes.builder.java.JavaProject;
+import org.jdrupes.builder.mvnrepo.MvnRepoLookup;
 
 public class TestProjects extends AbstractProject implements JavaProject {
+
+    public static void prepareProject(Project project) {
+        project.dependency(Consume, new MvnRepoLookup()
+            .bom("org.junit:junit-bom:5.14.2")
+            .resolve("org.junit.jupiter:junit-jupiter-api")
+            .resolve("org.junit.jupiter:junit-jupiter-engine"));
+    }
 
     public TestProjects() {
         super(name("test-projects"));
