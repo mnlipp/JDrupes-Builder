@@ -52,6 +52,7 @@ import org.jdrupes.builder.java.JavaCompiler;
 import org.jdrupes.builder.java.JavaProject;
 import org.jdrupes.builder.java.JavaResourceTree;
 import static org.jdrupes.builder.java.JavaTypes.*;
+import org.jdrupes.builder.java.LibraryJarFile;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.Node;
@@ -304,33 +305,45 @@ public class EclipseConfigurator extends AbstractGenerator {
         project().provided(requestFor(JarLibrariesType))
             .filter(jf -> !addedByProject.contains(jf))
             .collect(Collectors.toSet()).stream().forEach(jf -> {
-                var entry = (Element) classpath
-                    .appendChild(doc.createElement("classpathentry"));
-                entry.setAttribute("kind", "lib");
-                var jarPathName = jf.path().toString();
-                entry.setAttribute("path", jarPathName);
-
-                // Educated guesses
-                var sourcesJar = new File(
-                    jarPathName.replaceFirst("\\.jar$", "-sources.jar"));
-                if (sourcesJar.canRead()) {
-                    entry.setAttribute("sourcepath",
-                        sourcesJar.getAbsolutePath());
-                }
-                var javadocJar = new File(
-                    jarPathName.replaceFirst("\\.jar$", "-javadoc.jar"));
-                if (javadocJar.canRead()) {
-                    var attr = (Element) entry
-                        .appendChild(doc.createElement("attributes"))
-                        .appendChild(doc.createElement("attribute"));
-                    attr.setAttribute("name", "javadoc_location");
-                    attr.setAttribute("value",
-                        "jar:file:" + javadocJar.getAbsolutePath() + "!/");
-                }
+                addJarFileEntry(doc, classpath, jf, false);
             });
 
         // Allow derived class to override
         classpathAdaptor.accept(doc, classpath);
+    }
+
+    @SuppressWarnings("PMD.AvoidDuplicateLiterals")
+    private void addJarFileEntry(Document doc, Node classpath,
+            LibraryJarFile jarFile, boolean test) {
+        var entry = (Element) classpath
+            .appendChild(doc.createElement("classpathentry"));
+        entry.setAttribute("kind", "lib");
+        var jarPathName = jarFile.path().toString();
+        entry.setAttribute("path", jarPathName);
+        if (test) {
+            var attr = (Element) entry
+                .appendChild(doc.createElement("attributes"))
+                .appendChild(doc.createElement("attribute"));
+            attr.setAttribute("name", "test");
+            attr.setAttribute("value", "true");
+        }
+
+        // Educated guesses
+        var sourcesJar
+            = new File(jarPathName.replaceFirst("\\.jar$", "-sources.jar"));
+        if (sourcesJar.canRead()) {
+            entry.setAttribute("sourcepath", sourcesJar.getAbsolutePath());
+        }
+        var javadocJar = new File(
+            jarPathName.replaceFirst("\\.jar$", "-javadoc.jar"));
+        if (javadocJar.canRead()) {
+            var attr = (Element) entry
+                .appendChild(doc.createElement("attributes"))
+                .appendChild(doc.createElement("attribute"));
+            attr.setAttribute("name", "javadoc_location");
+            attr.setAttribute("value",
+                "jar:file:" + javadocJar.getAbsolutePath() + "!/");
+        }
     }
 
     private void addJavaResources(Document doc, Node classpath,
@@ -404,16 +417,7 @@ public class EclipseConfigurator extends AbstractGenerator {
                 .without(project.parentProject().get());
             javaCompiler.ifPresent(from::without);
             from.get(requestFor(JarLibrariesType)).forEach(jf -> {
-                var entry = (Element) classpath.appendChild(
-                    doc.createElement("classpathentry"));
-                entry.setAttribute("kind", "lib");
-                var jarPathName = jf.path().toString();
-                entry.setAttribute("path", jarPathName);
-                var attr = (Element) entry
-                    .appendChild(doc.createElement("attributes"))
-                    .appendChild(doc.createElement("attribute"));
-                attr.setAttribute("name", "test");
-                attr.setAttribute("value", "true");
+                addJarFileEntry(doc, classpath, jf, true);
             });
             return;
         }
