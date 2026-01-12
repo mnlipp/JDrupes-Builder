@@ -273,7 +273,7 @@ public class EclipseConfigurator extends AbstractGenerator {
         addJavaResources(doc, classpath, project());
 
         // Add projects
-        final Set<ClasspathElement> addedByProject = new HashSet<>();
+        final Set<ClasspathElement> suppliedByProject = new HashSet<>();
         final Set<Project> contributing = new HashSet<>();
         collectContributing(contributing, project());
         contributing.remove(project());
@@ -297,15 +297,19 @@ public class EclipseConfigurator extends AbstractGenerator {
             var attribute = (Element) attributes
                 .appendChild(doc.createElement("attribute"));
             attribute.setAttribute("without_test_code", "true");
-            addedByProject.addAll(p.from(Supply)
+            suppliedByProject.addAll(p.from(Supply)
                 .get(requestFor(ClasspathElement.class)).toList());
         });
 
         // Add jars
+        final Set<ClasspathElement> exposedByProject = new HashSet<>();
+        exposedByProject.addAll(project().from(Expose)
+            .get(requestFor(ClasspathElement.class)).toList());
         project().provided(requestFor(JarLibrariesType))
-            .filter(jf -> !addedByProject.contains(jf))
+            .filter(jf -> !suppliedByProject.contains(jf))
             .collect(Collectors.toSet()).stream().forEach(jf -> {
-                addJarFileEntry(doc, classpath, jf, false);
+                addJarFileEntry(doc, classpath, jf,
+                    exposedByProject.contains(jf), false);
             });
 
         // Allow derived class to override
@@ -314,12 +318,15 @@ public class EclipseConfigurator extends AbstractGenerator {
 
     @SuppressWarnings("PMD.AvoidDuplicateLiterals")
     private void addJarFileEntry(Document doc, Node classpath,
-            LibraryJarFile jarFile, boolean test) {
+            LibraryJarFile jarFile, boolean exported, boolean test) {
         var entry = (Element) classpath
             .appendChild(doc.createElement("classpathentry"));
         entry.setAttribute("kind", "lib");
         var jarPathName = jarFile.path().toString();
         entry.setAttribute("path", jarPathName);
+        if (exported) {
+            entry.setAttribute("exported", "true");
+        }
         if (test) {
             var attr = (Element) entry
                 .appendChild(doc.createElement("attributes"))
@@ -417,7 +424,7 @@ public class EclipseConfigurator extends AbstractGenerator {
                 .without(project.parentProject().get());
             javaCompiler.ifPresent(from::without);
             from.get(requestFor(JarLibrariesType)).forEach(jf -> {
-                addJarFileEntry(doc, classpath, jf, true);
+                addJarFileEntry(doc, classpath, jf, false, true);
             });
             return;
         }
