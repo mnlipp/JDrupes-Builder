@@ -63,7 +63,7 @@ public interface MvnRepoResource extends Resource {
         return groupId() + ":" + artifactId()
             + (classifier().isBlank() ? "" : ":" + classifier())
             + (mvnType().isBlank() ? "" : ":" + mvnType())
-            + ":" + version();
+            + (version() == null ? "" : ":" + version());
 
     }
 }

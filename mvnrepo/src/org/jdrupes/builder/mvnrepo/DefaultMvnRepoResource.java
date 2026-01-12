@@ -31,7 +31,7 @@ public class DefaultMvnRepoResource extends ResourceObject
     private final String artifactId;
     private String classifier = "";
     private String mvnType = "";
-    private String version = "";
+    private String version;
 
     /// Instantiates a new default mvn repo dependency. The coordinate is
     /// parsed into its component parts following the schema

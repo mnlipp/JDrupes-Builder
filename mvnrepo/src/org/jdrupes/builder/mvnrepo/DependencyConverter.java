@@ -117,9 +117,7 @@ public final class DependencyConverter {
         if (!mvnResource.classifier().isBlank()) {
             dep.setClassifier(mvnResource.classifier());
         }
-        if (!mvnResource.version().isBlank()) {
-            dep.setVersion(mvnResource.version());
-        }
+        dep.setVersion(mvnResource.version());
         dep.setScope(scope);
         return dep;
     }
