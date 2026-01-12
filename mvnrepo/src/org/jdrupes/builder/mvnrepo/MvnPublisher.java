@@ -53,6 +53,7 @@ import java.util.zip.ZipOutputStream;
 import org.apache.maven.model.building.DefaultModelBuilderFactory;
 import org.apache.maven.model.building.DefaultModelBuildingRequest;
 import org.apache.maven.model.building.ModelBuildingException;
+import org.apache.maven.model.building.ModelBuildingRequest;
 import org.bouncycastle.bcpg.ArmoredOutputStream;
 import org.bouncycastle.jce.provider.BouncyCastleProvider;
 import org.bouncycastle.openpgp.PGPException;
@@ -74,6 +75,7 @@ import org.eclipse.aether.artifact.DefaultArtifact;
 import org.eclipse.aether.deployment.DeployRequest;
 import org.eclipse.aether.deployment.DeploymentException;
 import org.eclipse.aether.repository.RemoteRepository;
+import org.eclipse.aether.repository.RepositoryPolicy;
 import org.eclipse.aether.util.artifact.SubArtifact;
 import org.eclipse.aether.util.repository.AuthenticationBuilder;
 import org.jdrupes.builder.api.BuildContext;
@@ -384,12 +386,37 @@ public class MvnPublisher extends AbstractGenerator {
 
     private Artifact mainArtifact(PomFile pomResource)
             throws ModelBuildingException {
+        var repoSystem = MvnRepoLookup.rootContext().repositorySystem();
+        var repoSession = MvnRepoLookup.rootContext().repositorySystemSession();
+        var repos
+            = new ArrayList<>(MvnRepoLookup.rootContext().remoteRepositories());
+        if (snapshotUri != null) {
+            repos.add(createSnapshotRepository());
+        }
         var pomFile = pomResource.path().toFile();
-        var req = new DefaultModelBuildingRequest().setPomFile(pomFile);
+        var buildingRequest = new DefaultModelBuildingRequest()
+            .setPomFile(pomFile).setProcessPlugins(false)
+            .setValidationLevel(ModelBuildingRequest.VALIDATION_LEVEL_MINIMAL)
+            .setModelResolver(
+                new MvnModelResolver(repoSystem, repoSession, repos));
         var model = new DefaultModelBuilderFactory().newInstance()
-            .build(req).getEffectiveModel();
+            .build(buildingRequest).getEffectiveModel();
         return new DefaultArtifact(model.getGroupId(), model.getArtifactId(),
             "jar", model.getVersion());
+    }
+
+    private RemoteRepository createSnapshotRepository() {
+        return new RemoteRepository.Builder(
+            "snapshots", "default", snapshotUri.toString())
+                .setSnapshotPolicy(new RepositoryPolicy(
+                    true,  // enable snapshots
+                    RepositoryPolicy.UPDATE_POLICY_ALWAYS,
+                    RepositoryPolicy.CHECKSUM_POLICY_WARN))
+                .setReleasePolicy(new RepositoryPolicy(
+                    false,
+                    RepositoryPolicy.UPDATE_POLICY_NEVER,
+                    RepositoryPolicy.CHECKSUM_POLICY_IGNORE))
+                .build();
     }
 
     private void addWithGenerated(List<Deployable> toDeploy,
