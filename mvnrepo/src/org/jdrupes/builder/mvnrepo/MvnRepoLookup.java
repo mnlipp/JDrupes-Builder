@@ -289,13 +289,11 @@ public class MvnRepoLookup extends AbstractProvider
         });
 
         // Now build (derive) effective model
-        var buildingRequest = new DefaultModelBuildingRequest();
-        buildingRequest.setRawModel(model);
-        buildingRequest.setProcessPlugins(false);
-        buildingRequest
-            .setValidationLevel(ModelBuildingRequest.VALIDATION_LEVEL_MINIMAL);
-        var resolver = new MvnModelResolver(repoSystem, repoSession, repos);
-        buildingRequest.setModelResolver(resolver);
+        var buildingRequest = new DefaultModelBuildingRequest()
+            .setRawModel(model).setProcessPlugins(false)
+            .setValidationLevel(ModelBuildingRequest.VALIDATION_LEVEL_MINIMAL)
+            .setModelResolver(
+                new MvnModelResolver(repoSystem, repoSession, repos));
         return new DefaultModelBuilderFactory()
             .newInstance().build(buildingRequest).getEffectiveModel();
     }
