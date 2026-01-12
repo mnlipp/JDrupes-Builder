@@ -193,7 +193,7 @@ public class JavaCompiler extends JavaTool {
         var cpResources = newResource(ClasspathType).addAll(
             project().from(Consume, Expose).without(this)
                 .get(requestFor(ClasspathType)));
-        log.finest(() -> "Compiling in " + project() + " with classpath "
+        log.finer(() -> "Compiling in " + project() + " with classpath "
             + cpResources.stream().map(e -> e.toPath().toString())
                 .collect(Collectors.joining(File.pathSeparator)));
 
