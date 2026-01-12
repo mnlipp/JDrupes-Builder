@@ -28,6 +28,7 @@ import java.util.function.Consumer;
 import java.util.function.Supplier;
 import java.util.stream.Stream;
 import org.apache.maven.model.Dependency;
+import org.apache.maven.model.DependencyManagement;
 import org.apache.maven.model.Model;
 import org.apache.maven.model.io.DefaultModelWriter;
 import org.jdrupes.builder.api.BuildException;
@@ -164,6 +165,7 @@ public class PomFileGenerator extends AbstractGenerator {
     private Model generatePom() {
         Model model = new Model();
         model.setModelVersion("4.0.0");
+        model.setDependencyManagement(new DependencyManagement());
         var groupId = project().<String> get(GroupId);
         if (groupId != null) {
             model.setGroupId(groupId);
@@ -188,15 +190,21 @@ public class PomFileGenerator extends AbstractGenerator {
         return model;
     }
 
-    private void addDependencies(Model model,
-            Resources<MvnRepoDependency> deps, String scope) {
+    private void addDependencies(Model model, Resources<MvnRepoDependency> deps,
+            String scope) {
         deps.stream().forEach(d -> {
             var dep = new Dependency();
             dep.setGroupId(d.groupId());
             dep.setArtifactId(d.artifactId());
             dep.setVersion(d.version());
-            dep.setScope(scope);
-            model.addDependency(dep);
+            if (d instanceof MvnRepoBom) {
+                dep.setScope("import");
+                dep.setType("pom");
+                model.getDependencyManagement().addDependency(dep);
+            } else {
+                dep.setScope(scope);
+                model.addDependency(dep);
+            }
         });
     }
 
