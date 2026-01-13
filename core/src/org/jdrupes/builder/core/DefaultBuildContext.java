@@ -19,11 +19,13 @@
 package org.jdrupes.builder.core;
 
 import java.nio.file.Path;
+import java.util.Arrays;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.stream.Stream;
 import org.apache.commons.cli.CommandLine;
 import org.jdrupes.builder.api.BuildContext;
+import org.jdrupes.builder.api.Project;
 import org.jdrupes.builder.api.Resource;
 import org.jdrupes.builder.api.ResourceProvider;
 import org.jdrupes.builder.api.ResourceRequest;
@@ -65,6 +67,13 @@ public class DefaultBuildContext implements BuildContext {
     @Override
     public <T extends Resource> Stream<T> get(ResourceProvider provider,
             ResourceRequest<T> request) {
+        if (provider instanceof Project project) {
+            var defReq = (DefaultResourceRequest<T>) request;
+            if (Arrays.asList(defReq.queried()).contains(provider)) {
+                return Stream.empty();
+            }
+            request = defReq.queried(project);
+        }
         return cache.computeIfAbsent(new Key<>(provider, request),
             k -> new FutureStream<T>(executor, k.provider(), k.request()))
             .stream();

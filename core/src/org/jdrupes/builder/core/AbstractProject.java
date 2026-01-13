@@ -22,7 +22,6 @@ import java.lang.reflect.InvocationTargetException;
 import java.nio.file.FileSystems;
 import java.nio.file.Path;
 import java.nio.file.PathMatcher;
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.EnumSet;
 import java.util.HashMap;
@@ -394,12 +393,6 @@ public abstract class AbstractProject extends AbstractProvider
             providers = Stream.concat(providers,
                 providers(Consume));
         }
-
-        // Freeze for use during stream evaluation
-        var curQueried = new ArrayList<>(
-            ((DefaultResourceRequest<R>) requested).queried());
-        providers = providers.filter(p -> !curQueried.contains(p));
-        ((DefaultResourceRequest<R>) requested).queried(this);
         return from(providers).get(requested);
     }
 

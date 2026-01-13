@@ -18,8 +18,7 @@
 
 package org.jdrupes.builder.core;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.util.Arrays;
 import java.util.Objects;
 import java.util.Optional;
 import org.jdrupes.builder.api.Cleanliness;
@@ -56,14 +55,21 @@ public class DefaultResourceRequest<T extends Resource>
         implements ResourceRequest<T> {
 
     private final ResourceType<? extends Resources<T>> type;
-    private final List<Project> queried = new ArrayList<>();
+    private final Project[] queried;
 
     /// Instantiates a new resource request without any restriction.
     ///
     /// @param type the requested type
     ///
     public DefaultResourceRequest(ResourceType<? extends Resources<T>> type) {
+        this(type, new Project[0]);
+    }
+
+    @SuppressWarnings("PMD.UseVarargs")
+    private DefaultResourceRequest(ResourceType<? extends Resources<T>> type,
+            Project[] queried) {
         this.type = type;
+        this.queried = queried;
     }
 
     @Override
@@ -88,17 +94,20 @@ public class DefaultResourceRequest<T extends Resource>
             .map(ct -> ct.isAssignableFrom(type)).orElse(false);
     }
 
-    /* default */ List<Project> queried() {
+    @SuppressWarnings("PMD.MethodReturnsInternalArray")
+    /* default */ Project[] queried() {
         return queried;
     }
 
-    /* default */ void queried(Project project) {
-        queried.add(project);
+    /* default */ DefaultResourceRequest<T> queried(Project project) {
+        var newQueried = Arrays.copyOf(queried, queried.length + 1);
+        newQueried[newQueried.length - 1] = project;
+        return new DefaultResourceRequest<>(type(), newQueried);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(type, queried);
+        return Objects.hash(type);
     }
 
     @Override
@@ -113,8 +122,7 @@ public class DefaultResourceRequest<T extends Resource>
             return false;
         }
         DefaultResourceRequest<?> other = (DefaultResourceRequest<?>) obj;
-        return Objects.equals(type, other.type)
-            && Objects.equals(queried, other.queried);
+        return Objects.equals(type, other.type);
     }
 
     @Override
