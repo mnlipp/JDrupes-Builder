@@ -98,7 +98,7 @@ public class DefaultResourceRequest<T extends Resource>
 
     @Override
     public int hashCode() {
-        return Objects.hash(type);
+        return Objects.hash(type, queried);
     }
 
     @Override
@@ -113,7 +113,8 @@ public class DefaultResourceRequest<T extends Resource>
             return false;
         }
         DefaultResourceRequest<?> other = (DefaultResourceRequest<?>) obj;
-        return Objects.equals(type, other.type);
+        return Objects.equals(type, other.type)
+            && Objects.equals(queried, other.queried);
     }
 
     @Override
