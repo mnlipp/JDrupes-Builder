@@ -166,6 +166,7 @@ public class JUnitTestRunner extends AbstractGenerator {
             launcher.registerTestExecutionListeners(
                 LoggingListener.forJavaUtilLogging(), summaryListener,
                 testListener);
+            log.info(() -> "Running tests in project " + project().name());
             launcher.execute(request);
 
             // Evaluate results
