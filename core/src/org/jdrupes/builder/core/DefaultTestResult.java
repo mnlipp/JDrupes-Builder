@@ -127,7 +127,7 @@ public class DefaultTestResult extends ResourceObject implements TestResult {
     public String toString() {
         String details;
         if (failed() > 0) {
-            details = "failed " + failed() + "/" + executed();
+            details = failed() + "/" + executed() + " failed";
         } else {
             details = executed() + " passed";
         }
