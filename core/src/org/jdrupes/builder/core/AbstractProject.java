@@ -400,7 +400,11 @@ public abstract class AbstractProject extends AbstractProvider
             ((DefaultResourceRequest<R>) requested).queried());
         providers = providers.filter(p -> !curQueried.contains(p));
         ((DefaultResourceRequest<R>) requested).queried(this);
-        return from(providers).get(requested);
+
+        // Don't use contxt()'s caching (implicit with "from"). Won't
+        // work due to additional info in queried().
+        return providers.flatMap(
+            provider -> ((AbstractProvider) provider).doProvide(requested));
     }
 
     /// Define command, see [RootProject#commandAlias].
