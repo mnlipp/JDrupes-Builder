@@ -273,40 +273,46 @@ public class EclipseConfigurator extends AbstractGenerator {
         addJavaResources(doc, classpath, project());
 
         // Add projects
-        final Set<ClasspathElement> suppliedByProject = new HashSet<>();
-        final Set<Project> contributing = new HashSet<>();
-        collectContributing(contributing, project());
-        contributing.remove(project());
-        contributing.stream().forEach(p -> {
-            if (p instanceof MergedTestProject) {
-                if (p.parentProject().get().equals(project())) {
-                    // Test projects contribute their resources to the parent
-                    addCompilationResources(doc, classpath, p);
-                    addJavaResources(doc, classpath, p);
+        final Set<ClasspathElement> providedByProject = new HashSet<>();
+        final Set<Project> exposed = project().providers(Expose)
+            .filter(p -> p instanceof Project).map(Project.class::cast)
+            .collect(Collectors.toSet());
+        project().providers(Consume, Expose).filter(p -> p instanceof Project)
+            .map(Project.class::cast).forEach(p -> {
+                if (p instanceof MergedTestProject) {
+                    if (p.parentProject().get().equals(project())) {
+                        // Test projects contribute their resources to the
+                        // parent
+                        addCompilationResources(doc, classpath, p);
+                        addJavaResources(doc, classpath, p);
+                    }
+                    return;
                 }
-                return;
-            }
-            var entry = (Element) classpath
-                .appendChild(doc.createElement("classpathentry"));
-            entry.setAttribute("kind", "src");
-            var referenced = p.get(requestFor(EclipseConfiguration.class))
-                .filter(c -> c.projectName().equals(p.name())).findFirst()
-                .map(EclipseConfiguration::eclipseAlias).orElse(p.name());
-            entry.setAttribute("path", "/" + referenced);
-            var attributes = entry.appendChild(doc.createElement("attributes"));
-            var attribute = (Element) attributes
-                .appendChild(doc.createElement("attribute"));
-            attribute.setAttribute("without_test_code", "true");
-            suppliedByProject.addAll(p.from(Supply)
-                .get(requestFor(ClasspathElement.class)).toList());
-        });
+                var entry = (Element) classpath
+                    .appendChild(doc.createElement("classpathentry"));
+                entry.setAttribute("kind", "src");
+                var referenced = p.get(requestFor(EclipseConfiguration.class))
+                    .filter(c -> c.projectName().equals(p.name())).findFirst()
+                    .map(EclipseConfiguration::eclipseAlias).orElse(p.name());
+                entry.setAttribute("path", "/" + referenced);
+                if (exposed.contains(p)) {
+                    entry.setAttribute("exported", "true");
+                }
+                var attributes
+                    = entry.appendChild(doc.createElement("attributes"));
+                var attribute = (Element) attributes
+                    .appendChild(doc.createElement("attribute"));
+                attribute.setAttribute("without_test_code", "true");
+                providedByProject.addAll(p.from(Supply, Expose)
+                    .get(requestFor(ClasspathElement.class)).toList());
+            });
 
         // Add jars
         final Set<ClasspathElement> exposedByProject = new HashSet<>();
         exposedByProject.addAll(project().from(Expose)
             .get(requestFor(ClasspathElement.class)).toList());
         project().provided(requestFor(JarLibrariesType))
-            .filter(jf -> !suppliedByProject.contains(jf))
+            .filter(jf -> !providedByProject.contains(jf))
             .collect(Collectors.toSet()).stream().forEach(jf -> {
                 addJarFileEntry(doc, classpath, jf,
                     exposedByProject.contains(jf), false);
