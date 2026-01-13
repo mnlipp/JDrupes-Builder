@@ -22,6 +22,7 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.EnumSet;
+import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 import java.util.function.Function;
@@ -144,6 +145,7 @@ import static org.jdrupes.builder.api.Intend.*;
 /// project *-down-> generator
 /// @enduml
 ///
+@SuppressWarnings("PMD.TooManyMethods")
 public interface Project extends ResourceProvider {
 
     /// The common project properties.
@@ -307,18 +309,46 @@ public interface Project extends ResourceProvider {
         return provider;
     }
     
+    /// Returns the providers that have been added with the given 
+    /// intended usages as [Stream]. The stream may only be terminated
+    /// after all projects have been created.
+    ///
+    /// @param intend the intend
+    /// @return the stream
+    ///
+    Stream<ResourceProvider> providers(Intend intend);
+
     /// Returns the providers that have been added with one of the given 
     /// intended usages as [Stream]. The stream may only be terminated
     /// after all projects have been created.
+    /// 
+    /// Providers are sorted by their intend: `Consume`, `Supply`,
+    /// `Expose`, `Forward`.
     ///
     /// @param intends the intends
     /// @return the stream
     ///
-    Stream<ResourceProvider> providers(Set<Intend> intends);
+    default Stream<ResourceProvider> providers(Set<Intend> intends) {
+        Stream<ResourceProvider> result = null;
+        for (Intend intend: List.of(Consume, Supply, Expose, Forward)) {
+            if (intends.contains(intend)) {
+                var append = providers(intend);
+                if (result == null) {
+                    result = append;
+                } else {
+                    result = Stream.concat(result, append);
+                }
+            }
+        }
+        if (result == null) {
+            return Stream.empty();
+        }
+        return result;
+    }
 
     /// Returns the providers that have been added with the given 
     /// intended usage as [Stream]. This is short for
-    /// `providers(Set.of(intend))`.
+    /// `providers(Set.of(intend, intends))`.
     ///
     /// @param intend the intend
     /// @param intends more intends

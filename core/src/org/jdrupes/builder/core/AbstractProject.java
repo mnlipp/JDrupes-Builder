@@ -1,6 +1,6 @@
 /*
  * JDrupes Builder
- * Copyright (C) 2025 Michael N. Lipp
+ * Copyright (C) 2025, 2026 Michael N. Lipp
  * 
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as
@@ -215,10 +215,6 @@ public abstract class AbstractProject extends AbstractProvider
         }
     }
 
-    /// Root project.
-    ///
-    /// @return the root project
-    ///
     @Override
     public final RootProject rootProject() {
         if (this instanceof RootProject root) {
@@ -233,11 +229,6 @@ public abstract class AbstractProject extends AbstractProvider
             .rootProject();
     }
 
-    /// Project.
-    ///
-    /// @param prjCls the prj cls
-    /// @return the project
-    ///
     @Override
     public Project project(Class<? extends Project> prjCls) {
         if (this.getClass().equals(prjCls)) {
@@ -269,40 +260,23 @@ public abstract class AbstractProject extends AbstractProvider
         }
     }
 
-    /// Parent project.
-    ///
-    /// @return the optional
-    ///
     @Override
     public Optional<Project> parentProject() {
         return Optional.ofNullable(parent);
     }
 
-    /// Name.
-    ///
-    /// @return the string
-    ///
     @Override
     @SuppressWarnings("checkstyle:OverloadMethodsDeclarationOrder")
     public String name() {
         return projectName;
     }
 
-    /// Directory.
-    ///
-    /// @return the path
-    ///
     @Override
     @SuppressWarnings("checkstyle:OverloadMethodsDeclarationOrder")
     public Path directory() {
         return projectDirectory;
     }
 
-    /// Generator.
-    ///
-    /// @param provider the provider
-    /// @return the project
-    ///
     @Override
     public Project generator(Generator provider) {
         if (this instanceof MergedTestProject) {
@@ -313,44 +287,23 @@ public abstract class AbstractProject extends AbstractProvider
         return this;
     }
 
-    /// Dependency.
-    ///
-    /// @param intend the intend
-    /// @param provider the provider
-    /// @return the project
-    ///
     @Override
     public Project dependency(Intend intend, ResourceProvider provider) {
         providers.put(provider, intend);
         return this;
     }
 
-    /// Providers.
-    ///
-    /// @param intends the intends
-    /// @return the stream
-    ///
     @Override
-    public Stream<ResourceProvider> providers(Set<Intend> intends) {
+    public Stream<ResourceProvider> providers(Intend intend) {
         return providers.entrySet().stream()
-            .filter(e -> intends.contains(e.getValue())).map(Entry::getKey);
+            .filter(e -> e.getValue() == intend).map(Entry::getKey);
     }
 
-    /// Context.
-    ///
-    /// @return the default build context
-    ///
     @Override
     public DefaultBuildContext context() {
         return ((AbstractProject) rootProject()).context;
     }
 
-    /// Returns the.
-    ///
-    /// @param <T> the generic type
-    /// @param property the property
-    /// @return the t
-    ///
     @Override
     @SuppressWarnings("unchecked")
     public <T> T get(PropertyKey property) {
@@ -363,12 +316,6 @@ public abstract class AbstractProject extends AbstractProvider
             });
     }
 
-    /// Sets the.
-    ///
-    /// @param property the property
-    /// @param value the value
-    /// @return the abstract project
-    ///
     @Override
     public AbstractProject set(PropertyKey property, Object value) {
         if (!property.type().isAssignableFrom(value.getClass())) {
@@ -379,12 +326,6 @@ public abstract class AbstractProject extends AbstractProvider
         return this;
     }
 
-    /// Forward the request as described by [Project].
-    /// 
-    /// @param <R> the generic type
-    /// @param requested the requested
-    /// @return the provided resources
-    ///
     @Override
     protected <R extends Resource> Stream<R>
             doProvide(ResourceRequest<R> requested) {

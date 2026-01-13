@@ -29,21 +29,22 @@ public enum Intend {
     /// in its role as provider does not provide them to others.
     Consume,
     
-    /// The resources from the provider are forwarded to other
-    /// projects that have this project as a dependency but
-    /// are not used (consumed) by this project.
-    Forward,
-    
-    /// The project consumes the resources from the associated
-    /// provider and makes them available to other projects that
-    /// have this project as a dependency.
-    Expose,
-    
     /// The resources from the associated provider are genuinely
     /// provided by this project, i.e. supplied by this project.
     /// This is the default relationship between a project and its
     /// generators. It implies that the resources obtained through
     /// this dependency are exposed to projects that have this
     /// project as a dependency.
-    Supply;
+    Supply,
+    
+    /// The project consumes the resources from the associated
+    /// provider and makes them available to other projects that
+    /// have this project as a dependency.
+    /// 
+    Expose,
+    
+    /// The resources from the provider are forwarded to other
+    /// projects that have this project as a dependency but
+    /// are not used (consumed) by this project.
+    Forward;
 }
