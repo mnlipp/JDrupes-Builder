@@ -452,16 +452,6 @@ public class EclipseConfigurator extends AbstractGenerator {
         });
     }
 
-    private void collectContributing(Set<Project> collected, Project project) {
-        if (collected.contains(project)) {
-            return;
-        }
-        collected.add(project);
-        project.providers(Consume, Forward, Expose)
-            .filter(p -> p instanceof Project).map(p -> (Project) p)
-            .forEach(p -> collectContributing(collected, p));
-    }
-
     private void addSpecificJre(Document doc, Node classpath,
             String version) {
         var entry = (Element) classpath
