@@ -299,7 +299,7 @@ public abstract class AbstractProject extends AbstractProvider
         Stream<ResourceProvider> result = null;
         for (Intend intend : List.of(Consume, Supply, Expose, Forward)) {
             if (intends.contains(intend)) {
-                var append = ownProviders(intend);
+                var append = providersWithIntend(intend);
                 if (result == null) {
                     result = append;
                 } else {
@@ -313,7 +313,7 @@ public abstract class AbstractProject extends AbstractProvider
         return result;
     }
 
-    private Stream<ResourceProvider> ownProviders(Intend intend) {
+    private Stream<ResourceProvider> providersWithIntend(Intend intend) {
         return providers.entrySet().stream()
             .filter(e -> e.getValue() == intend).map(Entry::getKey);
     }
