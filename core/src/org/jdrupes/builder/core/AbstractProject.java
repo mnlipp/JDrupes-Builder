@@ -27,6 +27,7 @@ import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Objects;
@@ -294,7 +295,25 @@ public abstract class AbstractProject extends AbstractProvider
     }
 
     @Override
-    public Stream<ResourceProvider> providers(Intend intend) {
+    public Stream<ResourceProvider> providers(Set<Intend> intends) {
+        Stream<ResourceProvider> result = null;
+        for (Intend intend : List.of(Consume, Supply, Expose, Forward)) {
+            if (intends.contains(intend)) {
+                var append = ownProviders(intend);
+                if (result == null) {
+                    result = append;
+                } else {
+                    result = Stream.concat(result, append);
+                }
+            }
+        }
+        if (result == null) {
+            return Stream.empty();
+        }
+        return result;
+    }
+
+    private Stream<ResourceProvider> ownProviders(Intend intend) {
         return providers.entrySet().stream()
             .filter(e -> e.getValue() == intend).map(Entry::getKey);
     }
