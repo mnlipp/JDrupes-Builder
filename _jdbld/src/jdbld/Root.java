@@ -7,10 +7,8 @@ import java.util.stream.Stream;
 import org.apache.maven.model.Developer;
 import org.apache.maven.model.License;
 import org.apache.maven.model.Scm;
-import org.jdrupes.builder.api.FileTree;
 import static org.jdrupes.builder.api.Intent.*;
 import org.jdrupes.builder.api.Project;
-import org.jdrupes.builder.api.ResourceType;
 import org.jdrupes.builder.api.RootProject;
 import org.jdrupes.builder.api.TestResult;
 import org.jdrupes.builder.core.AbstractProject;
@@ -31,7 +29,6 @@ import org.jdrupes.builder.java.JavadocDirectory;
 import org.jdrupes.builder.java.JavadocJarFile;
 import static org.jdrupes.builder.java.JavaTypes.*;
 import org.jdrupes.builder.java.SourcesJarFile;
-import org.jdrupes.builder.java.JavaSourceFile;
 
 public class Root extends AbstractProject implements RootProject {
 
@@ -124,7 +121,7 @@ public class Root extends AbstractProject implements RootProject {
 
         // Supply sources jar
         generator(SourcesJarGenerator::new).addTrees(resources(
-            of(new ResourceType<FileTree<JavaSourceFile>>() {})));
+            of(JavaSourceTreeType).using(Supply, Expose)));
 
         // Supply javadoc jar
         generator(JavadocJarGenerator::new);
