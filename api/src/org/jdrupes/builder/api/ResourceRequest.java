@@ -18,63 +18,78 @@
 
 package org.jdrupes.builder.api;
 
-/// Represents a request for [Resource]s of a specified type.
-/// The specified type provides two kinds of type information:
+import java.util.EnumSet;
+import java.util.Set;
+
+/// Represents a request for [Resource]s of a specified type, to be
+/// processed by a [ResourceProvider].
+/// 
+/// When requesting resources from a [Project], the [Project] forwards
+/// the request to its dependencies that have been associated with one
+/// of the [Intent]s specified with [#using(Set)].
 ///
-/// 1. The type of the [Resource]s that are actually provided.
-/// 2. The type of the "context" in which the [Resource]s are to be provided.
-///
-/// As an example, consider requests for a compile time and a runtime
-/// classpath. In both cases, the actually provided [Resource]s are
-/// of type "classpath element". However, depending on the kind of
-/// classpath, a [ResourceProvider] may deliver different collections of
-/// instances of "classpath elements". So instead of requesting
-/// "classpath element", 
-///
-/// Not all requested resource types require context information. For
-/// example, a request for [Cleanliness] usually refers to all resources
-/// that a [Generator] has created and does not depend on a context.
-/// However, in order to keep the API simple, the context is always
-/// required. 
-///
-/// @param <T> the generic type
+/// @param <T> the requested type
 ///
 public interface ResourceRequest<T extends Resource> {
 
-    /// Create a widened resource request by replacing the requested
-    /// top-level type with the given super type, thus widening the
-    /// request.
+    /// Create a copy with the same type but without intents.
     ///
-    /// @param <R> the generic type
-    /// @param type the desired super type. This should actually be
-    /// declared as `Class <R>`, but there is no way to specify a 
-    /// parameterized type as actual parameter.
-    /// @return the new resource request
+    /// @return the resource request
     ///
-    <R extends Resources<T>> ResourceRequest<T> widened(
-            @SuppressWarnings("rawtypes") Class<? extends Resources> type);
+    ResourceRequest<T> copyWithType();
 
     /// Return the requested type.
     ///
     /// @return the resource type
     ///
-    ResourceType<? extends Resources<T>> type();
+    ResourceType<? extends T> type();
 
-    /// Checks if this request accepts a resource of the given type.
-    /// Short for `type().isAssignableFrom(other)`.
+    /// Return a new resource request that uses project providers with
+    /// the given intents.
     ///
-    /// @param other the other
-    /// @return true, if successful
+    /// @param intents the intents
+    /// @return the resource request
     ///
-    boolean accepts(ResourceType<?> other);
+    ResourceRequest<T> using(Set<Intent> intents);
 
-    /// Checks if the requested type is a container type and if the
-    /// contained type of the container type is assignable from the
-    /// given type. 
+    /// Return a new resource request that uses project providers with
+    /// the given intents.
+    ///
+    /// @param intent the intent
+    /// @param intents the intents
+    /// @return the resource request
+    ///
+    default ResourceRequest<T> using(Intent intent, Intent... intents) {
+        return using(EnumSet.of(intent, intents));
+    }
+
+    /// Return a new resource request that uses all providers of projects.
+    ///
+    /// @return the resource request
+    ///
+    default ResourceRequest<T> usingAll() {
+        return using(EnumSet.allOf(Intent.class));
+    }
+
+    /// Returns the intents to be used for selecting providers.
+    ///
+    /// @return the sets the
+    ///
+    Set<Intent> uses();
+
+    /// Checks if the query accepts results of the given type. This
+    /// is short for `type().isAssignableFrom(type)`. 
     ///
     /// @param type the type to check
     /// @return true, if successful
     ///
-    boolean collects(ResourceType<?> type);
+    boolean accepts(ResourceType<?> type);
 
+    /// Checks if the query requires results of the given type. This
+    /// is short for `type.isAssignableFrom(type())`. 
+    ///
+    /// @param type the type to check
+    /// @return true, if successful
+    ///
+    boolean requires(ResourceType<?> type);
 }

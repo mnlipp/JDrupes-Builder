@@ -65,16 +65,23 @@ public class DefaultBuildContext implements BuildContext {
     }
 
     @Override
-    public <T extends Resource> Stream<T> get(ResourceProvider provider,
-            ResourceRequest<T> request) {
+    public <T extends Resource> Stream<T> resources(ResourceProvider provider,
+            ResourceRequest<T> requested) {
         if (provider instanceof Project project) {
-            var defReq = (DefaultResourceRequest<T>) request;
+            var defReq = (DefaultResourceRequest<T>) requested;
             if (Arrays.asList(defReq.queried()).contains(provider)) {
                 return Stream.empty();
             }
-            request = defReq.queried(project);
+            // Log invocation
+            requested = defReq.queried(project);
+            // As a project's provide only delegates to other providers
+            // it is inefficient to invoke it asynchronously. Besides, it
+            // leads to recursive invocations of the project's deploy
+            // method too easily and results in a loop detection without
+            // there really being a loop.
+            return ((AbstractProvider) provider).doProvide(requested);
         }
-        return cache.computeIfAbsent(new Key<>(provider, request),
+        return cache.computeIfAbsent(new Key<>(provider, requested),
             k -> new FutureStream<T>(executor, k.provider(), k.request()))
             .stream();
     }

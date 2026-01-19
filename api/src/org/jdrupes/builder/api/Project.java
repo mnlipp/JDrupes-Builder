@@ -25,8 +25,6 @@ import java.util.EnumSet;
 import java.util.Optional;
 import java.util.Set;
 import java.util.function.Function;
-import java.util.stream.Stream;
-import static org.jdrupes.builder.api.Intend.*;
 
 /// [Project]s are used to structure the build configuration. Every
 /// build configuration has a single root project and can have
@@ -38,42 +36,43 @@ import static org.jdrupes.builder.api.Intend.*;
 /// [ResourceProvider]s. Projects can be thought of as routers for
 /// resources with their behavior depending on the intended usage of the
 /// resources from the related providers. The intended usage is specified
-/// by the [Intend] that attributes the relationship between a project
+/// by the [Intent] that attributes the relationship between a project
 /// and its related resource providers.
 ///
 /// ## Attributing relationships to providers
 ///
-/// ### Intend Supply
+/// ### Intent Supply
 ///
-/// ![Intend Supply](supply-demo.svg)
+/// ![Intent Supply](supply-demo.svg)
 ///
-/// Resources from a provider added with [Intend#Supply] are provided
-/// by the project to entities that depend on the project. [Intend#Supply]
+/// Resources from a provider added with [Intent#Supply] are provided
+/// by the project to entities that depend on the project. [Intent#Supply]
 /// implies that the resources are genuinely generated for the project
 /// (typically by a [Generator] that belongs to the project).
 ///
-/// ### Intend Consume
+/// ### Intent Consume and Reveal
 ///
-/// ![Intend Consume](consume-demo.svg)
+/// ![Intent Consume](consume-demo.svg)
 ///
-/// Resources from a provider added with [Intend#Consume] (typically
-/// another project) are only available to a project's generators
-/// through [Project#provided].   
+/// Resources from a provider added with [Intent#Consume] or
+/// [Intent#Reveal] are usually only used by a project's generators.
+/// However, if a provider has been added with [Intent#Reveal], its
+/// resources are provided by the project if explicitly included in
+/// the request. 
+/// 
+/// ### Intent Expose
 ///
-/// ### Intend Expose
+/// ![Intent Expose](expose-demo.svg)
 ///
-/// ![Intend Expose](expose-demo.svg)
+/// Resources from a provider added with [Intent#Expose] (typically
+/// another project) are used by a project's generators and provided
+/// by the project to entities that depend on the project.
 ///
-/// Resources from a provider added with [Intend#Expose] (typically
-/// another project) are provided by the project to entities that
-/// depend on the project. They are also available to a project's
-/// generators through [Project#provided].
+/// ### Intent Forward
 ///
-/// ### Intend Forward
+/// ![Intent Forward](forward-demo.svg)
 ///
-/// ![Intend Forward](forward-demo.svg)
-///
-/// Resources from a provider added with [Intend#Forward] (typically
+/// Resources from a provider added with [Intent#Forward] (typically
 /// another project) are provided by the project to entities that
 /// depend on the project. They are not intended to be used by a
 /// project's generators, although these cannot be prevented from
@@ -83,20 +82,20 @@ import static org.jdrupes.builder.api.Intend.*;
 /// 
 /// In its role as [ResourceProvider], a [Project]
 /// [provides][ResourceProvider#provide] all resources that are
-/// provided to the project by its dependencies with [Intend#Forward],
-/// [Intend#Expose], and [Intend#Supply]. As explained above, resources
-/// from dependencies with [Intend#Consume] are only available to
+/// provided to the project by its dependencies with [Intent#Forward],
+/// [Intent#Expose], and [Intent#Supply]. As explained above, resources
+/// from dependencies with [Intent#Consume] are only available to
 /// a project's generators and are therefore usually not provided by
 /// the [Project].
 /// 
-/// However, if the container type of the request implements [AllResources]
+/// However, if the container type of the request implements `AllResources`
 /// the project will also forward the request to dependencies with
-/// [Intend#Consume].
+/// [Intent#Consume].
 /// 
 /// For example, such a request is needed to clean the build properly
 /// with a request for [Cleanliness]. A "normal" request for
 /// `Resources<Cleanliness>` is not forwarded to providers with
-/// [Intend#Consume]. Only a request for `AllResources<Cleanliness>`
+/// [Intent#Consume]. Only a request for `AllResources<Cleanliness>`
 /// will therefore clean everything.
 /// 
 /// ## Factory methods
@@ -211,12 +210,6 @@ public interface Project extends ResourceProvider {
     ///
     Path directory();
 
-    /// Returns the build context.
-    ///
-    /// @return the builder configuration
-    ///
-    BuildContext context();
-
     /// Returns the directory where the project's [Generator]s should
     /// create the artifacts. This is short for 
     /// `directory().resolve((Path) get(Properties.BuildDirectory))`.
@@ -231,11 +224,11 @@ public interface Project extends ResourceProvider {
     /// are then provided by the project. For "normal" projects, the
     /// generated resources are assumed to be provided to dependents of
     /// the project, so the invocation is short for  
-    /// `dependency(Intend.Supply, generator)`.
+    /// `dependency(Intent.Supply, generator)`.
     ///
     /// For projects that implement [MergedTestProject], generated resources
     /// are usually intended to be used by the project itself only, so
-    /// the invocation is short for `dependency(Intend.Consume, generator)`.
+    /// the invocation is short for `dependency(Intent.Consume, generator)`.
     ///
     /// @param generator the provider
     /// @return the project
@@ -270,16 +263,16 @@ public interface Project extends ResourceProvider {
     /// the given intended usage.
     ///
     /// While this could be used to add a [Generator] to the project
-    /// as a provider with [Intend#Supply], it is recommended to use
+    /// as a provider with [Intent#Supply], it is recommended to use
     /// one of the "generator" methods for better readability.
     ///
-    /// @param intend the dependency type
+    /// @param intent the dependency type
     /// @param provider the provider
     /// @return the project for method chaining
     /// @see generator(Generator)
     /// @see generator(Function)
     ///
-    Project dependency(Intend intend, ResourceProvider provider);
+    Project dependency(Intent intent, ResourceProvider provider);
 
     /// Uses the supplier to create a provider, passing this project as 
     /// argument and adds the result as a dependency to this project. This
@@ -287,61 +280,47 @@ public interface Project extends ResourceProvider {
     /// (in a project's constructor):
     /// 
     /// ```java
-    /// dependency(intend, Provider::new);
+    /// dependency(intent, Provider::new);
     /// ```
     /// instead of:
     /// 
     /// ```java
-    /// dependency(intend, new Provider(this));
+    /// dependency(intent, new Provider(this));
     /// ```
     ///
     /// @param <T> the generic type
-    /// @param intend the intend
+    /// @param intent the intent
     /// @param supplier the supplier
     /// @return the project for method chaining
     ///
-    default <T extends ResourceProvider> T dependency(Intend intend,
+    default <T extends ResourceProvider> T dependency(Intent intent,
             Function<Project, T> supplier) {
         var provider = supplier.apply(this);
-        dependency(intend, provider);
+        dependency(intent, provider);
         return provider;
     }
     
-    /// Returns the providers that have been added with one of the given 
-    /// intended usages as [Stream]. The stream may only be terminated
-    /// after all projects have been created.
-    /// 
-    /// Providers are sorted by their intend: `Consume`, `Supply`,
-    /// `Expose`, `Forward`.
+    /// Return a provider selection without any restrictions.
+    ///
+    /// @return the provider selection
+    ///
+    ProviderSelection providers();
+    
+    /// Return a provider selection that is restricted to the given intends.
     ///
     /// @param intends the intends
-    /// @return the stream
+    /// @return the provider selection
     ///
-    Stream<ResourceProvider> providers(Set<Intend> intends);
-
-    /// Returns the providers that have been added with the given 
-    /// intended usage as [Stream]. This is short for
-    /// `providers(Set.of(intend, intends))`.
+    ProviderSelection providers(Set<Intent> intends);
+    
+    /// Return a provider selection that is restricted to the given intends.
     ///
-    /// @param intend the intend
-    /// @param intends more intends
-    /// @return the stream
+    /// @param intent the intent
+    /// @param intents the intents
+    /// @return the provider selection
     ///
-    default Stream<ResourceProvider> providers(
-            Intend intend, Intend... intends) {
-        return providers(EnumSet.of(intend, intends));
-    }
-
-    /// Returns all resources that are provided for the given request
-    /// by providers associated with [Intend#Consume] or [Intend#Expose].
-    ///
-    /// @param <T> the requested type
-    /// @param requested the requested
-    /// @return the provided resources
-    ///
-    default <T extends Resource> Stream<T>
-            provided(ResourceRequest<T> requested) {
-        return from(Consume, Expose).get(requested);
+    default ProviderSelection providers(Intent intent, Intent... intents) {
+        return providers(EnumSet.of(intent, intents));
     }
 
     /// Short for `directory().relativize(other)`.
@@ -375,51 +354,7 @@ public interface Project extends ResourceProvider {
     /// @return the t
     ///
     <T> T get(PropertyKey property);
-
-    /// Returns resources provided by the project. Short for
-    /// `context().get(this, request)`.
-    ///
-    /// @param <T> the generic type
-    /// @param request the request
-    /// @return the stream
-    ///
-    default <T extends Resource> Stream<T> get(ResourceRequest<T> request) {
-        return context().get(this, request);
-    }
-    
-    /// "Syntactic sugar" that allows to obtain resources from a provider
-    /// with `from(provider).get(resourceRequest)` instead of
-    /// `context().get(provider, resourceRequest)`.
-    ///
-    /// @param provider the provider
-    /// @return the stream of resources
-    ///
-    default FromHelper from(ResourceProvider provider) {
-        return new FromHelper(context(), Stream.of(provider));
-    }
-
-    /// Returns a new [FromHelper] instance for a subsequent call to
-    /// [FromHelper#get].
-    ///
-    /// @param providers the providers
-    /// @return the stream of resources
-    ///
-    default FromHelper from(Stream<ResourceProvider> providers) {
-        return new FromHelper(context(), providers);
-    }
-
-    /// Retrieves the providers with the specified intend(s)
-    /// (see [#providers]) and returns a new [FromHelper] instance
-    /// for a subsequent call to [FromHelper#get].
-    ///
-    /// @param intend the intend
-    /// @param intends the intends
-    /// @return the from helper
-    ///
-    default FromHelper from(Intend intend, Intend... intends) {
-        return new FromHelper(context(), providers(intend, intends));
-    }
-    
+   
     /// Returns a new resource with the given type. Short for invoking
     /// [ResourceFactory#create] with the current project as first argument
     /// and the given arguments appended.

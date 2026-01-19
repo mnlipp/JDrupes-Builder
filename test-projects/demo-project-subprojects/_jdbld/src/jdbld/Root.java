@@ -1,9 +1,8 @@
 package jdbld;
 
-import static org.jdrupes.builder.api.Intend.*;
+import static org.jdrupes.builder.api.Intent.*;
 import java.nio.file.Path;
 import org.jdrupes.builder.api.Project;
-import org.jdrupes.builder.api.ResourceType;
 import org.jdrupes.builder.api.RootProject;
 import org.jdrupes.builder.api.TestResult;
 import org.jdrupes.builder.core.AbstractProject;
@@ -29,16 +28,14 @@ public class Root extends AbstractProject implements RootProject {
 
         // Provide app jar
         generator(new UberJarGenerator(this)
-            .from(providers(Expose))
+            .from(providers().select(Expose))
             .mainClass("jdbld.demo.subprojects.app")
             .destination(buildDirectory().resolve(Path.of("app"))));
 
-        commandAlias("build",
-            this.<JarFile> requestFor(new ResourceType<>() {}));
-        commandAlias("test",
-            this.<TestResult> requestFor(new ResourceType<>() {}));
+        commandAlias("build", of(JarFile.class).usingAll());
+        commandAlias("test", of(TestResult.class).usingAll());
         commandAlias("eclipse",
-            this.<EclipseConfiguration> requestFor(new ResourceType<>() {}));
+            of(EclipseConfiguration.class).usingAll());
     }
 
 }

@@ -39,7 +39,7 @@ import javax.xml.transform.dom.DOMSource;
 import javax.xml.transform.stream.StreamResult;
 import org.jdrupes.builder.api.BuildException;
 import org.jdrupes.builder.api.FileTree;
-import static org.jdrupes.builder.api.Intend.*;
+import static org.jdrupes.builder.api.Intent.*;
 import org.jdrupes.builder.api.MergedTestProject;
 import org.jdrupes.builder.api.Project;
 import org.jdrupes.builder.api.Resource;
@@ -152,7 +152,7 @@ public class EclipseConfigurator extends AbstractGenerator {
     @Override
     protected <T extends Resource> Stream<T>
             doProvide(ResourceRequest<T> requested) {
-        if (!requested.collects(new ResourceType<EclipseConfiguration>() {})) {
+        if (!requested.accepts(new ResourceType<EclipseConfiguration>() {})) {
             return Stream.empty();
         }
 
@@ -274,10 +274,10 @@ public class EclipseConfigurator extends AbstractGenerator {
 
         // Add projects
         final Set<ClasspathElement> providedByProject = new HashSet<>();
-        final Set<Project> exposed = project().providers(Expose)
+        final Set<Project> exposed = project().providers().select(Expose)
             .filter(p -> p instanceof Project).map(Project.class::cast)
             .collect(Collectors.toSet());
-        project().providers(Consume, Expose, Forward)
+        project().providers().select(Consume, Reveal, Expose, Forward)
             .filter(p -> p instanceof Project)
             .map(Project.class::cast).forEach(p -> {
                 if (p instanceof MergedTestProject) {
@@ -292,7 +292,8 @@ public class EclipseConfigurator extends AbstractGenerator {
                 var entry = (Element) classpath
                     .appendChild(doc.createElement("classpathentry"));
                 entry.setAttribute("kind", "src");
-                var referenced = p.get(requestFor(EclipseConfiguration.class))
+                var referenced = p.resources(
+                    of(EclipseConfiguration.class).using(Supply, Expose))
                     .filter(c -> c.projectName().equals(p.name())).findFirst()
                     .map(EclipseConfiguration::eclipseAlias).orElse(p.name());
                 entry.setAttribute("path", "/" + referenced);
@@ -304,15 +305,17 @@ public class EclipseConfigurator extends AbstractGenerator {
                 var attribute = (Element) attributes
                     .appendChild(doc.createElement("attribute"));
                 attribute.setAttribute("without_test_code", "true");
-                providedByProject.addAll(p.from(Supply, Expose)
-                    .get(requestFor(ClasspathElement.class)).toList());
+                providedByProject.addAll(
+                    p.resources(of(ClasspathElement.class)).toList());
             });
 
         // Add jars
         final Set<ClasspathElement> exposedByProject = new HashSet<>();
-        exposedByProject.addAll(project().from(Expose)
-            .get(requestFor(ClasspathElement.class)).toList());
-        project().provided(requestFor(JarLibrariesType))
+        exposedByProject.addAll(project()
+            .resources(of(ClasspathElement.class).using(Expose))
+            .toList());
+        project().resources(of(LibraryJarFileType)
+            .using(Consume, Reveal, Expose))
             .filter(jf -> !providedByProject.contains(jf))
             .collect(Collectors.toSet()).stream().forEach(jf -> {
                 addJarFileEntry(doc, classpath, jf,
@@ -364,17 +367,17 @@ public class EclipseConfigurator extends AbstractGenerator {
             Project project) {
         // TODO Generalize. Currently we assume a Java compiler exists
         // and use it to obtain the output directory for all generators
-        var javaCompiler = project.providers(Supply, Consume)
+        var javaCompiler = project.providers().select(Consume, Reveal, Supply)
             .filter(p -> p instanceof JavaCompiler)
             .map(JavaCompiler.class::cast).findFirst();
         var outputDirectory
             = javaCompiler.map(jc -> project.relativize(jc.destination()));
 
         // Add resources
-        project.from(Supply, Consume).without(Project.class)
-            .get(requestFor(JavaResourceTree.class)).map(DefaultFileTree::root)
-            .filter(p -> p.toFile().canRead()).map(project::relativize)
-            .forEach(p -> {
+        project.providers().without(Project.class).resources(
+            of(JavaResourceTree.class).using(Consume, Reveal, Supply))
+            .map(DefaultFileTree::root).filter(p -> p.toFile().canRead())
+            .map(project::relativize).forEach(p -> {
                 var entry = (Element) classpath
                     .appendChild(doc.createElement("classpathentry"));
                 entry.appendChild(doc.createComment("From " + project));
@@ -397,17 +400,17 @@ public class EclipseConfigurator extends AbstractGenerator {
             Project project) {
         // TODO Generalize. Currently we assume a Java compiler exists
         // and use it to obtain the output directory for all generators
-        var javaCompiler = project.providers(Supply, Consume)
+        var javaCompiler = project.providers().select(Consume, Reveal, Supply)
             .filter(p -> p instanceof JavaCompiler)
             .map(JavaCompiler.class::cast).findFirst();
         var outputDirectory
             = javaCompiler.map(jc -> project.relativize(jc.destination()));
 
         // Add source trees
-        project.from(Supply, Consume).without(Project.class)
-            .get(requestFor(JavaSourceTreesType)).map(FileTree::root)
-            .filter(p -> p.toFile().canRead()).map(project::relativize)
-            .forEach(p -> {
+        project.providers().without(Project.class).resources(
+            of(JavaSourceTreeType).using(Consume, Reveal, Supply))
+            .map(FileTree::root).filter(p -> p.toFile().canRead())
+            .map(project::relativize).forEach(p -> {
                 var entry = (Element) classpath
                     .appendChild(doc.createElement("classpathentry"));
                 entry.appendChild(doc.createComment("From " + project));
@@ -427,12 +430,13 @@ public class EclipseConfigurator extends AbstractGenerator {
 
         // For merged test project also add compile path resources
         if (project instanceof MergedTestProject) {
-            var from = project.from(Consume, Expose)
-                .without(project.parentProject().get());
-            javaCompiler.ifPresent(from::without);
-            from.get(requestFor(JarLibrariesType)).forEach(jf -> {
-                addJarFileEntry(doc, classpath, jf, false, true);
-            });
+            project.providers().without(project.parentProject().get()).filter(
+                p -> javaCompiler.map(jc -> !p.equals(jc)).orElse(true))
+                .resources(of(
+                    LibraryJarFile.class).using(Consume, Reveal, Expose))
+                .forEach(jf -> {
+                    addJarFileEntry(doc, classpath, jf, false, true);
+                });
             return;
         }
 
@@ -563,7 +567,7 @@ public class EclipseConfigurator extends AbstractGenerator {
     protected void generateJdtCorePrefs() {
         var props = new Properties();
         props.setProperty("eclipse.preferences.version", "1");
-        project().providers(Supply)
+        project().providers().select(Supply)
             .filter(p -> p instanceof JavaCompiler).map(p -> (JavaCompiler) p)
             .findFirst().ifPresent(jc -> {
                 jc.optionArgument("-target", "--target", "--release")

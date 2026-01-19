@@ -26,14 +26,14 @@ class BuildTest {
         launcher = new DirectLauncher(
             Thread.currentThread().getContextClassLoader(), buildRoot,
             new String[0]);
-        launcher.provide(launcher.rootProject().projects("**"),
-            launcher.rootProject().requestFor(Cleanliness.class));
+        launcher.resources(launcher.rootProject().projects("**"),
+            launcher.rootProject().of(Cleanliness.class).usingAll());
     }
 
     @Test
     public void testLibraries() throws IOException {
-        var jars = launcher.provide(Stream.of(launcher.rootProject()),
-            launcher.rootProject().requestFor(JarFile.class))
+        var jars = launcher.resources(Stream.of(launcher.rootProject()),
+            launcher.rootProject().of(JarFile.class).usingAll())
             .collect(Collectors.toSet());
         var paths = jars.stream().map(JarFile::path).toList();
         assertEquals(1, paths.stream().filter(

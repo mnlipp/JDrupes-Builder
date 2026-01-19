@@ -18,7 +18,7 @@
 
 package jdbld;
 
-import static org.jdrupes.builder.api.Intend.*;
+import static org.jdrupes.builder.api.Intent.*;
 import org.jdrupes.builder.core.AbstractProject;
 import org.jdrupes.builder.java.JavaLibraryProject;
 import org.jdrupes.builder.mvnrepo.MvnRepoLookup;
@@ -28,7 +28,7 @@ public class Impl extends AbstractProject implements JavaLibraryProject {
     public Impl() {
         super(name("impl"));
         dependency(Expose, project(Api.class));
-        dependency(Consume, new MvnRepoLookup().resolve(
+        dependency(Reveal, new MvnRepoLookup().resolve(
             "com.electronwill.night-config:yaml:[3.6.7,3.7.0)",
             // https://security.snyk.io/package/maven/org.yaml:snakeyaml
             "org.yaml:snakeyaml:[1.33,2)"));

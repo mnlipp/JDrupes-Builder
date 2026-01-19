@@ -1,6 +1,6 @@
 package jdbld;
 
-import static org.jdrupes.builder.api.Intend.Expose;
+import static org.jdrupes.builder.api.Intent.Expose;
 
 import org.jdrupes.builder.core.AbstractProject;
 import org.jdrupes.builder.java.JavaProject;

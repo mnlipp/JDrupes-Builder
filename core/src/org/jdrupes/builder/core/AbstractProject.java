@@ -41,20 +41,19 @@ import java.util.concurrent.Future;
 import java.util.function.Consumer;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
-import org.jdrupes.builder.api.AllResources;
 import org.jdrupes.builder.api.BuildException;
 import org.jdrupes.builder.api.Cleanliness;
 import org.jdrupes.builder.api.Generator;
-import org.jdrupes.builder.api.Intend;
-import static org.jdrupes.builder.api.Intend.*;
+import org.jdrupes.builder.api.Intent;
+import static org.jdrupes.builder.api.Intent.*;
 import org.jdrupes.builder.api.MergedTestProject;
 import org.jdrupes.builder.api.NamedParameter;
 import org.jdrupes.builder.api.Project;
 import org.jdrupes.builder.api.PropertyKey;
+import org.jdrupes.builder.api.ProviderSelection;
 import org.jdrupes.builder.api.Resource;
 import org.jdrupes.builder.api.ResourceProvider;
 import org.jdrupes.builder.api.ResourceRequest;
-import org.jdrupes.builder.api.ResourceType;
 import org.jdrupes.builder.api.RootProject;
 import org.jdrupes.builder.core.LauncherSupport.CommandData;
 
@@ -72,12 +71,10 @@ public abstract class AbstractProject extends AbstractProvider
     private final AbstractProject parent;
     private final String projectName;
     private final Path projectDirectory;
-    private final Map<ResourceProvider, Intend> providers
+    private final Map<ResourceProvider, Intent> providers
         = new ConcurrentHashMap<>();
     @SuppressWarnings("PMD.UseConcurrentHashMap")
     private final Map<PropertyKey, Object> properties = new HashMap<>();
-    // Only non null in the root project
-    private DefaultBuildContext context;
     private Map<String, CommandData> commands;
 
     /// Named parameter for specifying the parent project.
@@ -129,7 +126,7 @@ public abstract class AbstractProject extends AbstractProvider
     /// A sub project that wants to specify a parent project must invoke this
     /// constructor with the parent project's class. If a sub project does not
     /// specify a parent project, the root project is used as parent. In both
-    /// cases, the constructor adds a [Intend#Forward] dependency between the
+    /// cases, the constructor adds a [Intent#Forward] dependency between the
     /// parent project and the new project. This can then be overridden in the
     /// sub project's constructor.
     ///
@@ -166,10 +163,8 @@ public abstract class AbstractProject extends AbstractProvider
                 }
                 // ConcurrentHashMap does not support null values.
                 projects = Collections.synchronizedMap(new HashMap<>());
-                context = new DefaultBuildContext();
                 commands = new HashMap<>();
-                commandAlias("clean", requestFor(
-                    new ResourceType<AllResources<Cleanliness>>() {}));
+                commandAlias("clean", of(Cleanliness.class).usingAll());
             }
         } else {
             parent = (AbstractProject) project(parentProject);
@@ -289,17 +284,17 @@ public abstract class AbstractProject extends AbstractProvider
     }
 
     @Override
-    public Project dependency(Intend intend, ResourceProvider provider) {
-        providers.put(provider, intend);
+    public Project dependency(Intent intent, ResourceProvider provider) {
+        providers.put(provider, intent);
         return this;
     }
 
-    @Override
-    public Stream<ResourceProvider> providers(Set<Intend> intends) {
+    /* default */ Stream<ResourceProvider> dependencies(Set<Intent> intents) {
         Stream<ResourceProvider> result = null;
-        for (Intend intend : List.of(Consume, Supply, Expose, Forward)) {
-            if (intends.contains(intend)) {
-                var append = providersWithIntend(intend);
+        for (Intent intent : List.of(Consume, Reveal, Supply, Expose,
+            Forward)) {
+            if (intents.contains(intent)) {
+                var append = providersWithIntent(intent);
                 if (result == null) {
                     result = append;
                 } else {
@@ -313,14 +308,19 @@ public abstract class AbstractProject extends AbstractProvider
         return result;
     }
 
-    private Stream<ResourceProvider> providersWithIntend(Intend intend) {
+    private Stream<ResourceProvider> providersWithIntent(Intent intent) {
         return providers.entrySet().stream()
-            .filter(e -> e.getValue() == intend).map(Entry::getKey);
+            .filter(e -> e.getValue() == intent).map(Entry::getKey);
     }
 
     @Override
-    public DefaultBuildContext context() {
-        return ((AbstractProject) rootProject()).context;
+    public DefaultProviderSelection providers() {
+        return new DefaultProviderSelection(this);
+    }
+
+    @Override
+    public ProviderSelection providers(Set<Intent> intends) {
+        return new DefaultProviderSelection(this, intends);
     }
 
     @Override
@@ -346,14 +346,9 @@ public abstract class AbstractProject extends AbstractProvider
     }
 
     @Override
-    protected <R extends Resource> Stream<R>
-            doProvide(ResourceRequest<R> requested) {
-        var providers = providers(Forward, Expose, Supply);
-        if (AllResources.class.isAssignableFrom(requested.type().rawType())) {
-            providers = Stream.concat(providers,
-                providers(Consume));
-        }
-        return from(providers).get(requested);
+    protected <T extends Resource> Stream<T>
+            doProvide(ResourceRequest<T> request) {
+        return providers().resources(request);
     }
 
     /// Define command, see [RootProject#commandAlias].
@@ -396,7 +391,7 @@ public abstract class AbstractProject extends AbstractProvider
         }
 
         private Iterator<Project> children(Project project) {
-            return project.providers(EnumSet.allOf(Intend.class))
+            return project.providers().select(EnumSet.allOf(Intent.class))
                 .filter(p -> p instanceof Project).map(Project.class::cast)
                 .filter(p -> !seen.contains(p))
                 .iterator();

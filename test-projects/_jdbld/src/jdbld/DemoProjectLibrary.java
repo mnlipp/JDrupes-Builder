@@ -19,7 +19,7 @@
 package jdbld;
 
 import java.nio.file.Path;
-import static org.jdrupes.builder.api.Intend.*;
+import static org.jdrupes.builder.api.Intent.*;
 import org.jdrupes.builder.core.AbstractProject;
 import org.jdrupes.builder.java.JavaCompiler;
 import org.jdrupes.builder.java.JavaResourceCollector;

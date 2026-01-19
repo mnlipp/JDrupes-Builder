@@ -33,14 +33,14 @@ class LibrariesTests {
         launcher = new DirectLauncher(
             Thread.currentThread().getContextClassLoader(), buildRoot,
             new String[0]);
-        launcher.provide(launcher.rootProject().projects("**"),
-            launcher.rootProject().requestFor(Cleanliness.class));
+        launcher.resources(launcher.rootProject().projects("**"),
+            launcher.rootProject().of(Cleanliness.class).usingAll());
     }
 
     @Test
     public void testLibraries() throws IOException {
-        var jars = launcher.provide(Stream.of(launcher.rootProject()),
-            launcher.rootProject().requestFor(JarFile.class))
+        var jars = launcher.resources(Stream.of(launcher.rootProject()),
+            launcher.rootProject().of(JarFile.class).usingAll())
             .collect(Collectors.toSet());
         var paths = jars.stream().map(JarFile::path).toList();
         var apiLib = paths.stream().filter(p -> p.toString()
@@ -70,8 +70,8 @@ class LibrariesTests {
     public void testPom()
             throws IOException, ParserConfigurationException, SAXException {
         // Request POMs
-        var poms = launcher.provide(Stream.of(launcher.rootProject()),
-            launcher.rootProject().requestFor(PomFile.class))
+        var poms = launcher.resources(Stream.of(launcher.rootProject()),
+            launcher.rootProject().of(PomFile.class).usingAll())
             .collect(Collectors.toSet());
         var implPom = poms.stream().map(PomFile::path)
             .filter(p -> p.toString().contains("impl-pom.xml")).findAny();

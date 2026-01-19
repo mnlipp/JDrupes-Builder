@@ -58,15 +58,8 @@ public class ClasspathScanner extends AbstractGenerator {
     protected <T extends Resource> Stream<T>
             doProvide(ResourceRequest<T> requested) {
         // This supports requests for classpath elements only.
-        if (!requested.collects(ClasspathElementType)) {
+        if (!requested.accepts(ClasspathElementType)) {
             return Stream.empty();
-        }
-
-        // Map special requests ([RuntimeResources], [CompilationResources])
-        // to the base request
-        if (!ClasspathType.rawType().equals(requested.type().rawType())) {
-            return project().from(this)
-                .get(requested.widened(ClasspathType.rawType()));
         }
 
         @SuppressWarnings("unchecked")
@@ -79,7 +72,7 @@ public class ClasspathScanner extends AbstractGenerator {
                     return (ClasspathElement) project()
                         .newResource(LibraryJarFileType, p.toAbsolutePath());
                 }
-            }).filter(e -> requested.collects(e.type()));
+            }).filter(e -> requested.accepts(e.type()));
         return result;
     }
 

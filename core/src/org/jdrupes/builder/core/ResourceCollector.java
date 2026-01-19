@@ -83,7 +83,7 @@ public class ResourceCollector<T extends Resource> extends AbstractGenerator {
     @SuppressWarnings("unchecked")
     protected <R extends Resource> Stream<R>
             doProvide(ResourceRequest<R> requested) {
-        if (!requested.type().containedType().isAssignableFrom(type)) {
+        if (!requested.accepts(type)) {
             return Stream.empty();
         }
         return (Stream<R>) resources.stream();

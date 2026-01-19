@@ -1,7 +1,7 @@
 package jdbld;
 
+import static org.jdrupes.builder.api.Intent.*;
 import org.jdrupes.builder.api.Project;
-import org.jdrupes.builder.api.ResourceType;
 import org.jdrupes.builder.api.RootProject;
 import org.jdrupes.builder.api.TestResult;
 import org.jdrupes.builder.core.AbstractProject;
@@ -24,13 +24,10 @@ public class Root extends AbstractProject implements RootProject {
         set(GroupId, "org.jdrupes.builder.demo.library");
 
         // Commands
-        commandAlias("build",
-            this.<JarFile> requestFor(new ResourceType<>() {}));
-        commandAlias("test",
-            this.<TestResult> requestFor(new ResourceType<>() {}));
-        commandAlias("pomFile", requestFor(PomFile.class));
-        commandAlias("eclipse",
-            this.<EclipseConfiguration> requestFor(new ResourceType<>() {}));
+        commandAlias("build", of(JarFile.class).using(Supply, Expose));
+        commandAlias("test", of(TestResult.class));
+        commandAlias("pomFile", of(PomFile.class));
+        commandAlias("eclipse", of(EclipseConfiguration.class));
     }
 
 }

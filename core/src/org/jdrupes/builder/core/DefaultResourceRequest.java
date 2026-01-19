@@ -1,6 +1,6 @@
 /*
  * JDrupes Builder
- * Copyright (C) 2026 Michael N. Lipp
+ * Copyright (C) 2025, 2026 Michael N. Lipp
  * 
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as
@@ -19,79 +19,72 @@
 package org.jdrupes.builder.core;
 
 import java.util.Arrays;
+import java.util.EnumSet;
 import java.util.Objects;
-import java.util.Optional;
-import org.jdrupes.builder.api.Cleanliness;
-import org.jdrupes.builder.api.Generator;
+import java.util.Set;
+import org.jdrupes.builder.api.Intent;
 import org.jdrupes.builder.api.Project;
 import org.jdrupes.builder.api.Resource;
-import org.jdrupes.builder.api.ResourceProvider;
 import org.jdrupes.builder.api.ResourceRequest;
 import org.jdrupes.builder.api.ResourceType;
-import org.jdrupes.builder.api.Resources;
 
-/// Represents a request for [Resource]s of a specified type.
-/// The specified type provides two kinds of type information:
-///
-/// 1. The type of the [Resource]s that are actually provided.
-/// 2. The type of the "context" in which the [Resource]s are to be provided.
-///
-/// As an example, consider requests for a compile time and a runtime
-/// classpath. In both cases, the actually provided [Resource]s are
-/// of type "classpath element". However, depending on the kind of
-/// classpath, a [ResourceProvider] may deliver different collections of
-/// instances of "classpath elements". So instead of requesting
-/// "classpath element", 
-///
-/// Not all requested resource types require context information. For
-/// example, a request for [Cleanliness] usually refers to all resources
-/// that a [Generator] has created and does not depend on a context.
-/// However, in order to keep the API simple, the context is always
-/// required. 
+/// An implementation of [ResourceRequest]. 
 ///
 /// @param <T> the generic type
 ///
 public class DefaultResourceRequest<T extends Resource>
         implements ResourceRequest<T> {
 
-    private final ResourceType<? extends Resources<T>> type;
+    private final ResourceType<? extends T> type;
     private final Project[] queried;
+    private Set<Intent> uses;
 
-    /// Instantiates a new resource request without any restriction.
+    /// Instantiates a new resource request without any intents.
     ///
     /// @param type the requested type
     ///
-    public DefaultResourceRequest(ResourceType<? extends Resources<T>> type) {
-        this(type, new Project[0]);
+    /* default */ DefaultResourceRequest(ResourceType<? extends T> type) {
+        this(type, EnumSet.noneOf(Intent.class), new Project[0]);
     }
 
     @SuppressWarnings("PMD.UseVarargs")
-    private DefaultResourceRequest(ResourceType<? extends Resources<T>> type,
-            Project[] queried) {
+    private DefaultResourceRequest(ResourceType<? extends T> type,
+            Set<Intent> using, Project[] queried) {
         this.type = type;
+        uses = using;
         this.queried = queried;
     }
 
     @Override
-    public <R extends Resources<T>> ResourceRequest<T> widened(
-            @SuppressWarnings("rawtypes") Class<? extends Resources> type) {
-        return new DefaultResourceRequest<>(type().widened(type));
+    public ResourceRequest<T> copyWithType() {
+        return new DefaultResourceRequest<>(type(),
+            EnumSet.noneOf(Intent.class), queried);
     }
 
     @Override
-    public ResourceType<? extends Resources<T>> type() {
+    public ResourceRequest<T> using(Set<Intent> intents) {
+        uses = intents;
+        return this;
+    }
+
+    @Override
+    public Set<Intent> uses() {
+        return EnumSet.copyOf(uses);
+    }
+
+    @Override
+    public ResourceType<? extends T> type() {
         return type;
     }
 
     @Override
-    public boolean accepts(ResourceType<?> other) {
-        return type().isAssignableFrom(other);
+    public boolean accepts(ResourceType<?> type) {
+        return this.type.isAssignableFrom(type);
     }
 
     @Override
-    public boolean collects(ResourceType<?> type) {
-        return Optional.ofNullable(type().containedType())
-            .map(ct -> ct.isAssignableFrom(type)).orElse(false);
+    public boolean requires(ResourceType<?> type) {
+        return type.isAssignableFrom(this.type);
     }
 
     @SuppressWarnings("PMD.MethodReturnsInternalArray")
@@ -102,12 +95,12 @@ public class DefaultResourceRequest<T extends Resource>
     /* default */ DefaultResourceRequest<T> queried(Project project) {
         var newQueried = Arrays.copyOf(queried, queried.length + 1);
         newQueried[newQueried.length - 1] = project;
-        return new DefaultResourceRequest<>(type(), newQueried);
+        return new DefaultResourceRequest<>(type(), uses, newQueried);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(type);
+        return Objects.hash(type, uses);
     }
 
     @Override
@@ -122,7 +115,8 @@ public class DefaultResourceRequest<T extends Resource>
             return false;
         }
         DefaultResourceRequest<?> other = (DefaultResourceRequest<?>) obj;
-        return Objects.equals(type, other.type);
+        return Objects.equals(type, other.type)
+            && Objects.equals(uses, other.uses);
     }
 
     @Override

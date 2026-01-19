@@ -26,7 +26,6 @@ import org.jdrupes.builder.api.Resource;
 import org.jdrupes.builder.api.ResourceProvider;
 import org.jdrupes.builder.api.ResourceRequest;
 import org.jdrupes.builder.api.ResourceType;
-import org.jdrupes.builder.api.Resources;
 
 /// A base implementation for[ResourceProvider]s.
 ///
@@ -47,7 +46,7 @@ public abstract class AbstractProvider implements ResourceProvider {
     }
 
     /// Checks if the the current thread executes a provider invocation
-    /// from [BuildContext#get]. Generates a warning if the invocation
+    /// from [BuildContext#resources]. Generates a warning if the invocation
     /// is not allowed. Then invokes [#doProvide].
     ///
     /// @return true, if allowed
@@ -73,9 +72,15 @@ public abstract class AbstractProvider implements ResourceProvider {
             doProvide(ResourceRequest<T> requested);
 
     @Override
+    @SuppressWarnings("PMD.ShortMethodName")
     public <T extends Resource> ResourceRequest<T>
-            requestFor(ResourceType<? extends Resources<T>> type) {
+            of(ResourceType<? extends T> type) {
         return new DefaultResourceRequest<>(type);
+    }
+
+    @Override
+    public DefaultBuildContext context() {
+        return LauncherSupport.buildContext();
     }
 
     @Override

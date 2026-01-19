@@ -22,7 +22,7 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
-import static org.jdrupes.builder.api.Intend.*;
+import static org.jdrupes.builder.api.Intent.*;
 import org.jdrupes.builder.api.BuildException;
 import org.jdrupes.builder.api.Project;
 import org.jdrupes.builder.api.RootProject;
@@ -43,7 +43,7 @@ public class ProjectPreparation {
             project.dependency(Consume, JavaResourceCollector::new)
                 .add(Path.of("resources"), "**/*");
             project.generator(LibraryGenerator::new)
-                .from(project.providers(Consume));
+                .from(project.providers().select(Consume));
         }
     }
 

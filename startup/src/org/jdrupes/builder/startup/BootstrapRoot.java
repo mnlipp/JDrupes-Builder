@@ -18,7 +18,7 @@
 
 package org.jdrupes.builder.startup;
 
-import static org.jdrupes.builder.api.Intend.*;
+import static org.jdrupes.builder.api.Intent.*;
 import org.jdrupes.builder.api.Masked;
 import org.jdrupes.builder.api.RootProject;
 import org.jdrupes.builder.core.AbstractProject;

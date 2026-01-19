@@ -33,6 +33,7 @@ import javax.tools.ToolProvider;
 import org.jdrupes.builder.api.BuildException;
 import org.jdrupes.builder.api.FileResource;
 import org.jdrupes.builder.api.FileTree;
+import static org.jdrupes.builder.api.Intent.*;
 import org.jdrupes.builder.api.Project;
 import org.jdrupes.builder.api.Resource;
 import org.jdrupes.builder.api.ResourceRequest;
@@ -182,15 +183,15 @@ public class Javadoc extends JavaTool {
         "PMD.ExceptionAsFlowControl" })
     protected <T extends Resource> Stream<T>
             doProvide(ResourceRequest<T> requested) {
-        if (!requested.collects(JavadocDirectoryType)
-            && !requested.collects(CleanlinessType)) {
+        if (!requested.accepts(JavadocDirectoryType)
+            && !requested.accepts(CleanlinessType)) {
             return Stream.empty();
         }
 
         // Get destination and check if we only have to cleanup.
         var destDir = project().buildDirectory().resolve(destination);
         var generated = project().newResource(ClassTreeType, destDir, "**/*");
-        if (requested.collects(CleanlinessType)) {
+        if (requested.accepts(CleanlinessType)) {
             generated.delete();
             destDir.toFile().delete();
             return Stream.empty();
@@ -206,8 +207,7 @@ public class Javadoc extends JavaTool {
             var sourcePaths = sourcePaths(sources.stream());
             if (sourcePaths.isEmpty()) {
                 sourcePaths = sourcePaths(projects.stream().flatMap(p -> p
-                    .get(this.<FileTree<JavaSourceFile>> requestFor(
-                        new ResourceType<>() {}))));
+                    .resources(of(JavaSourceTreeType).using(Supply, Expose))));
             }
             var finalSourcePaths = sourcePaths;
             log.finest(() -> "Javadoc sources: " + finalSourcePaths);
@@ -242,7 +242,8 @@ public class Javadoc extends JavaTool {
 
         // Handle classpath
         var cpResources = newResource(ClasspathType).addAll(projects.stream()
-            .flatMap(p -> p.provided(requestFor(ClasspathElement.class))));
+            .flatMap(p -> p.resources(of(ClasspathElement.class)
+                .using(Consume, Reveal, Expose))));
         log.finest(() -> "Generating in " + project() + " with classpath "
             + cpResources.stream().map(Resource::toString).toList());
         if (!cpResources.isEmpty()) {

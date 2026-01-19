@@ -50,7 +50,7 @@ public interface BuildContext {
     /// @param request the request
     /// @return the results
     ///
-    <T extends Resource> Stream<T> get(ResourceProvider provider,
+    <T extends Resource> Stream<T> resources(ResourceProvider provider,
             ResourceRequest<T> request);
 
     /// Return the value of the given property. Properties are defined by

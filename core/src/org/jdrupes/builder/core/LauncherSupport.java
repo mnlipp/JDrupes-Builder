@@ -1,6 +1,6 @@
 /*
  * JDrupes Builder
- * Copyright (C) 2025 Michael N. Lipp
+ * Copyright (C) 2025, 2026 Michael N. Lipp
  * 
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as
@@ -27,7 +27,6 @@ import org.jdrupes.builder.api.Project;
 import org.jdrupes.builder.api.ResourceRequest;
 import org.jdrupes.builder.api.RootProject;
 
-// TODO: Auto-generated Javadoc
 /// Provides support for creating projects based on [AbstractProject].
 ///
 public final class LauncherSupport {
@@ -35,6 +34,7 @@ public final class LauncherSupport {
     private static Path buildRoot;
     private static Properties jdbldProps;
     private static CommandLine commandLine;
+    private static DefaultBuildContext buildContext;
 
     private LauncherSupport() {
     }
@@ -57,6 +57,7 @@ public final class LauncherSupport {
             List<Class<? extends Project>> subprojects,
             Properties jdbldProps, CommandLine commandLine) {
         try {
+            buildContext = new DefaultBuildContext();
             LauncherSupport.buildRoot = buildRoot;
             LauncherSupport.jdbldProps = jdbldProps;
             LauncherSupport.commandLine = commandLine;
@@ -69,6 +70,10 @@ public final class LauncherSupport {
                 | NoSuchMethodException e) {
             throw new IllegalArgumentException(e);
         }
+    }
+
+    /* default */ static DefaultBuildContext buildContext() {
+        return buildContext;
     }
 
     /* default */ static Path buildRoot() {

@@ -33,11 +33,11 @@ import org.apache.commons.cli.ParseException;
 import org.jdrupes.builder.api.BuildException;
 import org.jdrupes.builder.api.FileResource;
 import org.jdrupes.builder.api.FileTree;
-import static org.jdrupes.builder.api.Intend.*;
+import static org.jdrupes.builder.api.Intent.*;
 import org.jdrupes.builder.api.Launcher;
 import org.jdrupes.builder.api.RootProject;
 import org.jdrupes.builder.core.LauncherSupport;
-import static org.jdrupes.builder.java.JavaTypes.*;
+import org.jdrupes.builder.java.ClasspathElement;
 import org.jdrupes.builder.mvnrepo.MvnRepoLookup;
 
 /// A default implementation of a [Launcher]. The launcher first builds
@@ -96,8 +96,8 @@ public class BootstrapLauncher extends AbstractLauncher {
             buildCoords.forEach(mvnLookup::resolve);
             rootProject.project(BootstrapBuild.class).dependency(Expose,
                 mvnLookup);
-            var cpUrls = rootProject.get(rootProject.requestFor(ClasspathType))
-                .map(cpe -> {
+            var cpUrls = rootProject.resources(rootProject
+                .of(ClasspathElement.class).using(Supply, Expose)).map(cpe -> {
                     try {
                         if (cpe instanceof FileTree tree) {
                             return tree.root().toFile().toURI().toURL();

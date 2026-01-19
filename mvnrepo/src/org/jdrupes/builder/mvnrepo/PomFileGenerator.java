@@ -33,7 +33,7 @@ import org.apache.maven.model.Model;
 import org.apache.maven.model.io.DefaultModelWriter;
 import org.jdrupes.builder.api.BuildException;
 import org.jdrupes.builder.api.Generator;
-import static org.jdrupes.builder.api.Intend.*;
+import static org.jdrupes.builder.api.Intent.*;
 import org.jdrupes.builder.api.Project;
 import static org.jdrupes.builder.api.Project.Properties.*;
 import org.jdrupes.builder.api.Resource;
@@ -119,11 +119,11 @@ public class PomFileGenerator extends AbstractGenerator {
             return Stream.empty();
         }
 
-        if (requested.collects(MvnRepoDependencyType)) {
+        if (requested.accepts(MvnRepoDependencyType)) {
             return generateRepoDependency(requested);
         }
 
-        if (!requested.collects(PomFileType)) {
+        if (!requested.accepts(PomFileType)) {
             return Stream.empty();
         }
 
@@ -177,11 +177,11 @@ public class PomFileGenerator extends AbstractGenerator {
 
         // Get dependencies
         var runtimeDeps = newResource(MvnRepoDependenciesType)
-            .addAll(project().from(Consume).without(this)
-                .get(requestFor(MvnRepoDependenciesType)));
+            .addAll(project().providers(Consume, Reveal).without(this)
+                .resources(of(MvnRepoDependencyType)));
         var compilationDeps = newResource(MvnRepoDependenciesType)
-            .addAll(project().from(Supply, Expose).without(this)
-                .get(requestFor(MvnRepoDependenciesType)));
+            .addAll(project().providers(Supply, Expose).without(this)
+                .resources(of(MvnRepoDependencyType)));
         addDependencies(model, compilationDeps, "compile");
         addDependencies(model, runtimeDeps, "runtime");
 
@@ -221,7 +221,7 @@ public class PomFileGenerator extends AbstractGenerator {
     @SuppressWarnings("unchecked")
     private <T extends Resource> Stream<T>
             generateRepoDependency(ResourceRequest<T> requested) {
-        if (requested.collects(MvnRepoDependenciesType)) {
+        if (requested.accepts(MvnRepoDependenciesType)) {
             return Stream.empty();
         }
         return Stream.of((T) newResource(MvnRepoDependencyType,

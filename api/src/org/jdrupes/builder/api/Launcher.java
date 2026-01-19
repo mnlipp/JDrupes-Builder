@@ -31,7 +31,7 @@ public interface Launcher {
     /// @param requested the request
     /// @return the results
     ///
-    <T extends Resource> Stream<T> provide(Stream<Project> projects,
+    <T extends Resource> Stream<T> resources(Stream<Project> projects,
             ResourceRequest<T> requested);
 
     /// Return the root project.

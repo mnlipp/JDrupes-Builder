@@ -260,12 +260,12 @@ public abstract class AbstractLauncher implements Launcher {
     }
 
     @Override
-    public <T extends Resource> Stream<T> provide(Stream<Project> projects,
+    public <T extends Resource> Stream<T> resources(Stream<Project> projects,
             ResourceRequest<T> request) {
         return unwrapBuildException(() -> {
             // Provide requested resource, handling all exceptions here
             var result
-                = projects.map(p -> p.get(request)).flatMap(r -> r).toList();
+                = projects.map(p -> p.resources(request)).flatMap(r -> r).toList();
             return result.stream();
         });
     }

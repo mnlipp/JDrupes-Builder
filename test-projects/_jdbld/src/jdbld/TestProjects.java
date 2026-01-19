@@ -18,7 +18,7 @@
 
 package jdbld;
 
-import static org.jdrupes.builder.api.Intend.Consume;
+import static org.jdrupes.builder.api.Intent.Consume;
 
 import org.jdrupes.builder.api.Project;
 import org.jdrupes.builder.core.AbstractProject;

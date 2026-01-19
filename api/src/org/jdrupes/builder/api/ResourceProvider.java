@@ -22,9 +22,9 @@ import java.util.stream.Stream;
 
 /// A provider of a resource. This interface is intended to be implemented
 /// by providers. It is not intended to be invoked directly. Rather, it 
-/// must be invoked via [BuildContext#get].
+/// must be invoked via [BuildContext#resources].
 /// 
-/// The interface also serves as a factory for creating the resource
+/// The interface also serves as a factory for creating resource
 /// requests to be passed to the providers.
 ///
 public interface ResourceProvider {
@@ -32,12 +32,12 @@ public interface ResourceProvider {
     /// Provide the requested resources.
     /// 
     /// This method is never invoked concurrently for the same request
-    /// when invoked through [Project#get]. It may, however, be invoked
-    /// concurrently for different requests. Providers that evaluate all
-    /// possibly provided resources anyway and return only a subset for
-    /// some kinds of request should therefore invoke themselves (through
-    /// [Project#get]) with a request for all resources and filter the
-    /// (automatically cached) result.
+    /// when invoked through [BuildContext#resources]. It may, however,
+    /// be invoked concurrently for different requests. Providers that
+    /// evaluate all possibly provided resources anyway and return only
+    /// a subset for some kinds of request should therefore invoke
+    /// themselves (through [BuildContext#resources]) with a request for
+    /// all resources and filter the (automatically cached) result.
     ///
     /// @param <T> the type of the requested (and provided) resource
     /// @param requested the requested resources
@@ -45,14 +45,32 @@ public interface ResourceProvider {
     ///
     <T extends Resource> Stream<T> provide(ResourceRequest<T> requested);
 
+    /// Returns resources provided by this provider. Short for
+    /// `context().resources(this, request)`.
+    ///
+    /// @param <T> the generic type
+    /// @param requested the request
+    /// @return the stream
+    ///
+    default <T extends Resource> Stream<T>
+            resources(ResourceRequest<T> requested) {
+        return context().resources(this, requested);
+    }
+
+    /// Returns the build context.
+    ///
+    /// @return the builder configuration
+    ///
+    BuildContext context();
+
     /// Create a new request for the given resource.
     ///
     /// @param <T> the generic type
     /// @param type the type
     /// @return the resource request
     ///
-    <T extends Resource> ResourceRequest<T>
-            requestFor(ResourceType<? extends Resources<T>> type);
+    @SuppressWarnings("PMD.ShortMethodName")
+    <T extends Resource> ResourceRequest<T> of(ResourceType<? extends T> type);
 
     /// Creates a request for a resource of the given type in a
     /// container of type [Resources]. The recommended usage pattern
@@ -62,25 +80,8 @@ public interface ResourceProvider {
     /// @param requested the requested
     /// @return the resource request
     ///
-    default <T extends Resource>
-            ResourceRequest<T> requestFor(Class<T> requested) {
-        return requestFor(new ResourceType<>(Resources.class,
-            new ResourceType<>(requested, null)));
-    }
-
-    /// Creates a request for a resource of the given type, in the
-    /// given container type. The recommended usage pattern is
-    /// to import this method statically.
-    ///
-    /// @param <C> the generic type
-    /// @param <T> the generic type
-    /// @param container the container
-    /// @param requested the requested
-    /// @return the resource request
-    ///
-    default <C extends Resources<T>, T extends Resource> ResourceRequest<T>
-            requestFor(Class<C> container, Class<T> requested) {
-        return requestFor(new ResourceType<>(container,
-            new ResourceType<>(requested, null)));
+    @SuppressWarnings("PMD.ShortMethodName")
+    default <T extends Resource> ResourceRequest<T> of(Class<T> requested) {
+        return of(new ResourceType<>(requested, null));
     }
 }

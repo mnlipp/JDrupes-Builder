@@ -98,7 +98,7 @@ public abstract class AbstractGenerator extends AbstractProvider
     /// @return true, if successful
     ///
     protected boolean cleanup(ResourceRequest<?> requested, Path... files) {
-        if (!requested.collects(CleanlinessType)) {
+        if (!requested.accepts(CleanlinessType)) {
             return false;
         }
         for (Path file : files) {

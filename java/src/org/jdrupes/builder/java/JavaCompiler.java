@@ -32,7 +32,7 @@ import javax.tools.ToolProvider;
 import org.jdrupes.builder.api.BuildException;
 import org.jdrupes.builder.api.FileResource;
 import org.jdrupes.builder.api.FileTree;
-import static org.jdrupes.builder.api.Intend.*;
+import static org.jdrupes.builder.api.Intent.*;
 import org.jdrupes.builder.api.MergedTestProject;
 import org.jdrupes.builder.api.Project;
 import static org.jdrupes.builder.api.Project.Properties.*;
@@ -161,38 +161,31 @@ public class JavaCompiler extends JavaTool {
     @Override
     protected <T extends Resource> Stream<T>
             doProvide(ResourceRequest<T> requested) {
-        if (requested.collects(JavaSourceTreeType)) {
+        if (requested.accepts(JavaSourceTreeType)) {
             @SuppressWarnings({ "unchecked" })
             var result = (Stream<T>) sources.stream();
             return result;
         }
 
-        if (!requested.collects(ClassTreeType)
-            && !requested.collects(CleanlinessType)) {
+        if (!requested.accepts(ClassTreeType)
+            && !requested.accepts(CleanlinessType)) {
             return Stream.empty();
-        }
-
-        // Map special requests ([RuntimeResources], [CompilationResources])
-        // to the base request
-        if (!ClasspathType.rawType().equals(requested.type().rawType())) {
-            return project().from(this)
-                .get(requested.widened(ClasspathType.rawType()));
         }
 
         // Get this project's previously generated classes for checking
         // or deleting.
         var destDir = project().buildDirectory().resolve(destination);
         final var classSet = project().newResource(ClassTreeType, destDir);
-        if (requested.collects(CleanlinessType)) {
+        if (requested.accepts(CleanlinessType)) {
             classSet.delete();
             return Stream.empty();
         }
 
         // Get classpath for compilation. Filter myself, in case the
-        // compilation result is consumed (instead of supplied) by the project.
+        // compilation result is consumed by the project.
         var cpResources = newResource(ClasspathType).addAll(
-            project().from(Consume, Expose).without(this)
-                .get(requestFor(ClasspathType)));
+            project().providers(Consume, Reveal, Expose).without(this)
+                .resources(of(ClasspathElementType)));
         log.finer(() -> "Compiling in " + project() + " with classpath "
             + cpResources.stream().map(e -> e.toPath().toString())
                 .collect(Collectors.joining(File.pathSeparator)));

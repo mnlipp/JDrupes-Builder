@@ -27,7 +27,7 @@ import java.util.List;
 import java.util.Map;
 import org.apache.maven.model.*;
 import org.jdrupes.builder.api.*;
-import static org.jdrupes.builder.api.Intend.*;
+import static org.jdrupes.builder.api.Intent.*;
 import static org.jdrupes.builder.api.Project.Properties.*;
 import org.jdrupes.builder.eclipse.EclipseConfigurator;
 import org.jdrupes.builder.java.*;
@@ -69,14 +69,14 @@ public class ProjectPreparation {
             });
 
             project.generator(LibraryGenerator::new)
-                .from(project.providers(Supply))
+                .from(project.providers().select(Supply))
                 .attributes(Map.of(
                     IMPLEMENTATION_TITLE, project.name(),
                     IMPLEMENTATION_VERSION, project.get(Version),
                     IMPLEMENTATION_VENDOR, "Michael N. Lipp (mnl@mnl.de)")
                     .entrySet().stream())
-                .addEntries(project.from(Supply)
-                    .get(project.<PomFile> requestFor(new ResourceType<>() {}))
+                .addEntries(project.resources(project
+                    .of(PomFile.class).using(Supply))
                     .map(pomFile -> Map.entry(Path.of("META-INF/maven")
                         .resolve((String) project.get(GroupId))
                         .resolve(project.name())

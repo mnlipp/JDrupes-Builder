@@ -23,7 +23,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
 import org.jdrupes.builder.api.BuildException;
-import static org.jdrupes.builder.api.Intend.*;
+import static org.jdrupes.builder.api.Intent.*;
 import org.jdrupes.builder.api.Project;
 import org.jdrupes.builder.api.RootProject;
 import org.jdrupes.builder.api.MergedTestProject;

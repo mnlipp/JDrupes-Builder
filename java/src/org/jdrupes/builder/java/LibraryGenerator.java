@@ -25,6 +25,7 @@ import java.util.stream.Stream;
 import org.jdrupes.builder.api.BuildException;
 import org.jdrupes.builder.api.Generator;
 import org.jdrupes.builder.api.IOResource;
+import static org.jdrupes.builder.api.Intent.*;
 import org.jdrupes.builder.api.Project;
 import org.jdrupes.builder.api.Resource;
 import org.jdrupes.builder.api.ResourceProvider;
@@ -49,13 +50,13 @@ import static org.jdrupes.builder.java.JavaTypes.*;
 ///    generator checks if a main class is specified.
 ///
 /// In addition to explicitly adding resources, this generator supports
-/// resource retrieval from added providers. The providers will be used
-/// to retrieve resources of type [ClassTree] and [JavaResourceTree] in
+/// resource retrieval from added providers. The resources of type [ClassTree]
+/// and [JavaResourceTree] that the providers supply will be used in
 /// addition to the explicitly added resources.
 ///
 /// The standard pattern for creating a library is simply:
 /// ```java
-/// generator(LibraryGenerator::new).from(providers(Supply));
+/// generator(LibraryGenerator::new).from(this);
 /// ```
 ///
 public class LibraryGenerator extends JarGenerator
@@ -140,25 +141,25 @@ public class LibraryGenerator extends JarGenerator
     ///
     protected void collectFromProviders(
             Map<Path, Resources<IOResource>> contents) {
-        project().from(providers().stream()).get(requestFor(ClassTree.class))
-            .parallel().forEach(t -> collect(contents, t));
-        project().from(providers().stream())
-            .get(requestFor(JavaResourceTree.class))
-            .parallel().forEach(t -> collect(contents, t));
+        providers().stream().map(
+            p -> p.resources(of(ClassTree.class).using(Supply)))
+            .flatMap(s -> s).parallel().forEach(t -> collect(contents, t));
+        providers().stream().map(p -> p.resources(
+            of(JavaResourceTree.class).using(Supply)))
+            .flatMap(s -> s).parallel().forEach(t -> collect(contents, t));
     }
 
     @Override
     @SuppressWarnings({ "PMD.CollapsibleIfStatements", "unchecked" })
     protected <T extends Resource> Stream<T>
             doProvide(ResourceRequest<T> requested) {
-        if (!requested.collects(LibraryJarFileType)
-            && !requested.collects(CleanlinessType)) {
+        if (!requested.accepts(LibraryJarFileType)
+            && !requested.accepts(CleanlinessType)) {
             return Stream.empty();
         }
 
         // Make sure mainClass is set for app jar
-        if (AppJarFileType.isAssignableFrom(requested.type().containedType())
-            && mainClass() == null) {
+        if (requested.requires(AppJarFileType) && mainClass() == null) {
             throw new BuildException("Main class must be set for "
                 + name() + " in " + project());
         }
@@ -170,15 +171,14 @@ public class LibraryGenerator extends JarGenerator
                 throw new BuildException("Cannot create directory " + destDir);
             }
         }
-        var jarResource
-            = AppJarFileType.isAssignableFrom(requested.type().containedType())
-                ? project().newResource(AppJarFileType,
-                    destDir.resolve(jarName()))
-                : project().newResource(LibraryJarFileType,
-                    destDir.resolve(jarName()));
+        var jarResource = requested.requires(AppJarFileType)
+            ? project().newResource(AppJarFileType,
+                destDir.resolve(jarName()))
+            : project().newResource(LibraryJarFileType,
+                destDir.resolve(jarName()));
 
         // Maybe only delete
-        if (requested.collects(CleanlinessType)) {
+        if (requested.accepts(CleanlinessType)) {
             jarResource.delete();
             return Stream.empty();
         }

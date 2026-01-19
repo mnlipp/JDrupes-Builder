@@ -182,7 +182,7 @@ public class DirectLauncher extends AbstractLauncher {
                 pattern = parts[0];
             }
             for (var req : cmdData.requests()) {
-                provide(rootProject().projects(pattern), req)
+                resources(rootProject().projects(pattern), req)
                     .collect(Collectors.toSet())
                     .forEach(r -> System.out.println(r.toString()));
             }

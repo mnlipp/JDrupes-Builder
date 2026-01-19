@@ -29,7 +29,8 @@ import org.jdrupes.builder.api.BuildException;
 import org.jdrupes.builder.api.FileTree;
 import org.jdrupes.builder.api.Generator;
 import org.jdrupes.builder.api.IOResource;
-import org.jdrupes.builder.api.Intend;
+import org.jdrupes.builder.api.Intent;
+import static org.jdrupes.builder.api.Intent.*;
 import org.jdrupes.builder.api.Project;
 import org.jdrupes.builder.api.Resource;
 import org.jdrupes.builder.api.ResourceRequest;
@@ -45,7 +46,6 @@ import org.jdrupes.builder.java.JavaResourceTree;
 import static org.jdrupes.builder.java.JavaTypes.*;
 import org.jdrupes.builder.java.LibraryGenerator;
 import org.jdrupes.builder.java.LibraryJarFile;
-import org.jdrupes.builder.java.RuntimeResources;
 import org.jdrupes.builder.java.ServicesEntryResource;
 import org.jdrupes.builder.mvnrepo.MvnRepoJarFile;
 import org.jdrupes.builder.mvnrepo.MvnRepoLookup;
@@ -79,9 +79,9 @@ import static org.jdrupes.builder.mvnrepo.MvnRepoTypes.*;
 ///   * Filter out any module-info.class entries.
 ///
 /// Note that the [UberJarGenerator] does deliberately not request the
-/// [ClasspathElement]s as [RuntimeResources] because this may return
+/// [ClasspathElement]s as `RuntimeResources` because this may return
 /// resources twice if a project uses another project as runtime
-/// dependency (i.e. with [Intend#Consume]. If this rule causes entries
+/// dependency (i.e. with [Intent#Consume]. If this rule causes entries
 /// to be missing, simply add them explicitly.  
 /// 
 /// The resource type of the uber jar generator's output is one
@@ -105,14 +105,14 @@ import static org.jdrupes.builder.mvnrepo.MvnRepoTypes.*;
 /// This requests the same providers from the project as 
 /// [Project.provide][Project#provide] does, but allows the uber jar
 /// generator's [from] method to filter out the uber jar
-/// generator itself from the providers. The given intends can
+/// generator itself from the providers. The given intents can
 /// vary depending on the requirements.
 ///
 /// If you don't want the generated uber jar to be available to other
 /// generators of your project, you can also add it to a project like this:
 /// ```java
 ///     dependency(new UberJarGenerator(this)
-///         .from(providers(EnumSet.of(Forward, Expose, Supply))), Intend.Forward)
+///         .from(providers(EnumSet.of(Forward, Expose, Supply))), Intent.Forward)
 /// ```
 ///
 /// Of course, the easiest thing to do is separate the generation of
@@ -137,8 +137,9 @@ public class UberJarGenerator extends LibraryGenerator {
     protected void
             collectFromProviders(Map<Path, Resources<IOResource>> contents) {
         openJars = new ConcurrentHashMap<>();
-        project().from(providers().stream())
-            .get(requestFor(ClasspathType)).parallel()
+        providers().stream().map(p -> p.resources(
+            of(ClasspathElementType).using(Supply, Expose)))
+            .flatMap(s -> s).parallel()
             .filter(resourceFilter::test).forEach(cpe -> {
                 if (cpe instanceof FileTree<?> fileTree) {
                     collect(contents, fileTree);
@@ -153,9 +154,11 @@ public class UberJarGenerator extends LibraryGenerator {
         // they can be added to the uber jar, i.e. they must be added
         // with their transitive dependencies.
         var lookup = new MvnRepoLookup();
-        lookup.resolve(project().from(providers().stream())
-            .get(requestFor(MvnRepoRuntimeDepsType)));
-        project().context().get(lookup, requestFor(RuntimeClasspathType))
+        lookup.resolve(providers().stream().map(
+            p -> p.resources(of(MvnRepoDependencyType).usingAll()))
+            .flatMap(s -> s));
+        project().context().resources(lookup, of(ClasspathElementType)
+            .using(Consume, Reveal, Supply, Expose, Forward))
             .parallel().filter(resourceFilter::test).forEach(cpe -> {
                 if (cpe instanceof MvnRepoJarFile jarFile) {
                     addJarFile(contents, jarFile, openJars);
@@ -248,14 +251,13 @@ public class UberJarGenerator extends LibraryGenerator {
         "PMD.CloseResource", "PMD.UseTryWithResources" })
     protected <T extends Resource> Stream<T>
             doProvide(ResourceRequest<T> requested) {
-        if (!requested.collects(AppJarFileType)
-            && !requested.collects(CleanlinessType)) {
+        if (!requested.accepts(AppJarFileType)
+            && !requested.accepts(CleanlinessType)) {
             return Stream.empty();
         }
 
         // Make sure mainClass is set for app jar
-        if (AppJarFileType.isAssignableFrom(requested.type().containedType())
-            && mainClass() == null) {
+        if (requested.requires(AppJarFileType) && mainClass() == null) {
             throw new BuildException("Main class must be set for "
                 + name() + " in " + project());
         }
@@ -267,15 +269,14 @@ public class UberJarGenerator extends LibraryGenerator {
                 throw new BuildException("Cannot create directory " + destDir);
             }
         }
-        var jarResource
-            = AppJarFileType.isAssignableFrom(requested.type().containedType())
-                ? project().newResource(AppJarFileType,
-                    destDir.resolve(jarName()))
-                : project().newResource(LibraryJarFileType,
-                    destDir.resolve(jarName()));
+        var jarResource = requested.requires(AppJarFileType)
+            ? project().newResource(AppJarFileType,
+                destDir.resolve(jarName()))
+            : project().newResource(LibraryJarFileType,
+                destDir.resolve(jarName()));
 
         // Maybe only delete
-        if (requested.collects(CleanlinessType)) {
+        if (requested.accepts(CleanlinessType)) {
             jarResource.delete();
             return Stream.empty();
         }

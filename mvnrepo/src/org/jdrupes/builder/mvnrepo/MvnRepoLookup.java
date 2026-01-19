@@ -185,10 +185,10 @@ public class MvnRepoLookup extends AbstractProvider
     @Override
     protected <T extends Resource> Stream<T>
             doProvide(ResourceRequest<T> requested) {
-        if (requested.collects(MvnRepoDependencyType)) {
+        if (requested.accepts(MvnRepoDependencyType)) {
             return provideMvnDeps();
         }
-        if (requested.collects(LibraryJarFileType)) {
+        if (requested.accepts(LibraryJarFileType)) {
             try {
                 return provideJars();
             } catch (DependencyResolutionException | ModelBuildingException e) {

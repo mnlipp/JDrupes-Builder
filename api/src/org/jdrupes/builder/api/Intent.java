@@ -22,18 +22,22 @@ package org.jdrupes.builder.api;
 /// and an associated [ResourceProvider].
 ///
 @SuppressWarnings("PMD.FieldNamingConventions")
-public enum Intend {
+public enum Intent {
     
     /// The project consumes the resources from the associated
-    /// provider, but it does not expose them, i.e. the project
-    /// in its role as provider does not provide them to others.
+    /// provider, but in its role as provider does never provide
+    /// them to others.
     Consume,
+    
+    /// The project consumes the resources from the associated
+    /// provider. It provides them upon request.
+    Reveal,
     
     /// The resources from the associated provider are genuinely
     /// provided by this project, i.e. supplied by this project.
     /// This is the default relationship between a project and its
     /// generators. It implies that the resources obtained through
-    /// this dependency are exposed to projects that have this
+    /// this dependency are provided to projects that have this
     /// project as a dependency.
     Supply,
     

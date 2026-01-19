@@ -8,7 +8,7 @@ import org.apache.maven.model.Developer;
 import org.apache.maven.model.License;
 import org.apache.maven.model.Scm;
 import org.jdrupes.builder.api.FileTree;
-import static org.jdrupes.builder.api.Intend.*;
+import static org.jdrupes.builder.api.Intent.*;
 import org.jdrupes.builder.api.Project;
 import org.jdrupes.builder.api.ResourceType;
 import org.jdrupes.builder.api.RootProject;
@@ -80,16 +80,14 @@ public class Root extends AbstractProject implements RootProject {
         });
 
         // Provide app jar
-        generator(new UberJarGenerator(this)
-            .from(providers(Expose))
+        generator(new UberJarGenerator(this).from(providers().select(Expose))
             // Runtime (only) dependencies of executable jar
             .from(new MvnRepoLookup().resolve(
                 "eu.maveniverse.maven.mima.runtime:standalone-static:2.4.34",
                 "org.slf4j:slf4j-api:2.0.17",
                 "org.slf4j:slf4j-jdk14:2.0.17"))
             .mainClass("org.jdrupes.builder.startup.BootstrapLauncher")
-            .addEntries(from(Supply)
-                .get(this.<PomFile> requestFor(new ResourceType<>() {}))
+            .addEntries(resources(of(PomFile.class).using(Supply))
                 .map(pomFile -> Map.entry(Path.of("META-INF/maven")
                     .resolve((String) get(GroupId)).resolve(name())
                     .resolve("pom.xml"), pomFile)))
@@ -98,10 +96,10 @@ public class Root extends AbstractProject implements RootProject {
         // Supply javadoc
         generator(Javadoc::new)
             .destination(rootProject().directory().resolve("webpages/javadoc"))
-            .tagletpath(from(new MvnRepoLookup()
+            .tagletpath(new MvnRepoLookup()
                 .resolve("org.jdrupes.taglets:plantuml-taglet:3.1.0",
-                    "net.sourceforge.plantuml:plantuml:1.2023.11"))
-                        .get(requestFor(RuntimeClasspathType)))
+                    "net.sourceforge.plantuml:plantuml:1.2023.11")
+                .resources(of(ClasspathElementType).using(Supply, Expose)))
             .taglets(Stream.of("org.jdrupes.taglets.plantUml.PlantUml",
                 "org.jdrupes.taglets.plantUml.StartUml",
                 "org.jdrupes.taglets.plantUml.EndUml"))
@@ -125,9 +123,8 @@ public class Root extends AbstractProject implements RootProject {
             .options("-quiet");
 
         // Supply sources jar
-        generator(SourcesJarGenerator::new)
-            .addTrees(get(this.<FileTree<JavaSourceFile>> requestFor(
-                new ResourceType<>() {})));
+        generator(SourcesJarGenerator::new).addTrees(resources(
+            of(new ResourceType<FileTree<JavaSourceFile>>() {})));
 
         // Supply javadoc jar
         generator(JavadocJarGenerator::new);
@@ -137,16 +134,18 @@ public class Root extends AbstractProject implements RootProject {
         generator(MvnPublisher::new);
 
         // Commands
-        commandAlias("build", requestFor(AppJarFile.class),
-            requestFor(JavadocDirectory.class));
-        commandAlias("test",
-            this.<TestResult> requestFor(new ResourceType<>() {}));
-        commandAlias("sourcesJar", requestFor(SourcesJarFile.class));
-        commandAlias("javadoc", requestFor(JavadocDirectory.class));
-        commandAlias("javadocJar", requestFor(JavadocJarFile.class));
-        commandAlias("eclipse", requestFor(EclipseConfiguration.class));
-        commandAlias("vscode", requestFor(VscodeConfiguration.class));
-        commandAlias("pomFile", requestFor(PomFile.class));
-        commandAlias("mavenPublication", requestFor(MvnPublication.class));
+        commandAlias("build", of(AppJarFile.class).usingAll(),
+            of(JavadocDirectoryType).usingAll());
+        commandAlias("test", of(TestResult.class).usingAll());
+        commandAlias("sourcesJar", of(SourcesJarFile.class).usingAll());
+        commandAlias("javadoc", of(JavadocDirectory.class).usingAll());
+        commandAlias("javadocJar", of(JavadocJarFile.class).usingAll());
+        commandAlias("eclipse",
+            of(EclipseConfiguration.class).usingAll());
+        commandAlias("vscode",
+            of(VscodeConfiguration.class).usingAll());
+        commandAlias("pomFile", of(PomFile.class).usingAll());
+        commandAlias("mavenPublication",
+            of(MvnPublication.class).usingAll());
     }
 }

@@ -1,6 +1,6 @@
 package jdbld;
 
-import static org.jdrupes.builder.api.Intend.*;
+import static org.jdrupes.builder.api.Intent.*;
 
 import java.nio.file.Path;
 
@@ -15,10 +15,10 @@ public class SimpleApp extends AbstractProject implements RootProject {
     public SimpleApp() {
         super(name("demo-project-simple-app"));
         generator(JavaCompiler::new).addSources(Path.of("src"), "**/*.java");
-        generator(UberJarGenerator::new).from(providers(Supply))
+        generator(UberJarGenerator::new).from(providers().select(Supply))
             .mainClass("jdbld.demo.simpleapp.App");
 
         // Command arguments
-        commandAlias("build", requestFor(AppJarFile.class));
+        commandAlias("build", of(AppJarFile.class).using(Supply, Expose));
     }
 }

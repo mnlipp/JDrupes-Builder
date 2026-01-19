@@ -68,13 +68,4 @@ interface ClasspathElement
 
 ClasspathElement <|.down. JarFile
 ClasspathElement <|.down. ClassTree
-
-interface Resources<ClasspathElement>
-Resources *-left-> ClasspathElement
-
-interface AllResources<ClasspathElement>
-Resources <|-- AllResources
-
-interface RuntimeResources<ClasspathElement>
-AllResources <|-- RuntimeResources
 @enduml

@@ -29,7 +29,7 @@ import java.util.function.Consumer;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import org.jdrupes.builder.api.BuildException;
-import static org.jdrupes.builder.api.Intend.*;
+import static org.jdrupes.builder.api.Intent.*;
 import org.jdrupes.builder.api.Project;
 import org.jdrupes.builder.api.Resource;
 import org.jdrupes.builder.api.ResourceRequest;
@@ -96,7 +96,7 @@ public class VscodeConfigurator extends AbstractGenerator {
     @Override
     protected <T extends Resource> Stream<T>
             doProvide(ResourceRequest<T> requested) {
-        if (!requested.collects(resourceType(VscodeConfiguration.class))) {
+        if (!requested.accepts(resourceType(VscodeConfiguration.class))) {
             return Stream.empty();
         }
         Path vscodeDir = project().directory().resolve(".vscode");
@@ -126,10 +126,9 @@ public class VscodeConfigurator extends AbstractGenerator {
             "automatic");
 
         // Set java compiler target
-        project().providers(Supply).filter(p -> p instanceof JavaCompiler)
-            .map(p -> (JavaCompiler) p)
-            .findFirst()
-            .flatMap(
+        project().providers().select(Supply)
+            .filter(p -> p instanceof JavaCompiler)
+            .map(p -> (JavaCompiler) p).findFirst().flatMap(
                 jc -> jc.optionArgument("--release", "--target", "-target"))
             .filter(jdkLocations::containsKey)
             .ifPresent(version -> {
@@ -150,8 +149,8 @@ public class VscodeConfigurator extends AbstractGenerator {
             });
 
         // Add JARs to classpath
-        referenced.addAll(project().provided(
-            requestFor(ClasspathType)).filter(p -> p instanceof JarFile)
+        referenced.addAll(project().resources(of(ClasspathElementType)
+            .using(Consume, Reveal, Expose)).filter(p -> p instanceof JarFile)
             .map(jf -> ((JarFile) jf).path().toString())
             .collect(Collectors.toList()));
         if (!referenced.isEmpty()) {
@@ -167,7 +166,7 @@ public class VscodeConfigurator extends AbstractGenerator {
     }
 
     private Stream<Project> collectContributing(Project project) {
-        return project.providers(Consume, Forward, Expose)
+        return project.providers().select(Consume, Reveal, Forward, Expose)
             .filter(p -> p instanceof Project).map(p -> (Project) p)
             .map(p -> Stream.concat(Stream.of(p), collectContributing(p)))
             .flatMap(s -> s);

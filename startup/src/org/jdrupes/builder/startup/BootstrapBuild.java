@@ -23,7 +23,7 @@ import java.util.Optional;
 import java.util.logging.Logger;
 import org.jdrupes.builder.api.FileResource;
 import org.jdrupes.builder.api.FileTree;
-import static org.jdrupes.builder.api.Intend.*;
+import static org.jdrupes.builder.api.Intent.*;
 import org.jdrupes.builder.api.Masked;
 import org.jdrupes.builder.api.ResourceType;
 import org.jdrupes.builder.core.AbstractProject;

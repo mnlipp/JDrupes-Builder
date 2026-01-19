@@ -1,7 +1,6 @@
 package basic;
 
 import static org.junit.jupiter.api.Assertions.*;
-
 import java.io.IOException;
 import java.net.URISyntaxException;
 import java.nio.file.Path;
@@ -11,6 +10,7 @@ import java.util.jar.Attributes;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import org.jdrupes.builder.api.Cleanliness;
+import static org.jdrupes.builder.api.Intent.*;
 import org.jdrupes.builder.api.Launcher;
 import org.jdrupes.builder.java.AppJarFile;
 import org.jdrupes.builder.java.JarFile;
@@ -28,14 +28,14 @@ class BuildTest {
         launcher = new DirectLauncher(
             Thread.currentThread().getContextClassLoader(), buildRoot,
             new String[0]);
-        launcher.provide(launcher.rootProject().projects("**"),
-            launcher.rootProject().requestFor(Cleanliness.class));
+        launcher.resources(launcher.rootProject().projects("**"),
+            launcher.rootProject().of(Cleanliness.class).usingAll());
     }
 
     @Test
     public void testAppJar() throws IOException {
-        var jars = launcher.provide(Stream.of(launcher.rootProject()),
-            launcher.rootProject().requestFor(AppJarFile.class))
+        var jars = launcher.resources(Stream.of(launcher.rootProject()),
+            launcher.rootProject().of(AppJarFile.class).using(Supply, Expose))
             .collect(Collectors.toSet());
         var paths = jars.stream().map(JarFile::path).toList();
         assertEquals(1, paths.stream().filter(p -> p.toString()
