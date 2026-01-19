@@ -20,13 +20,13 @@ in more detail below:
 public class SimpleApp extends AbstractProject implements RootProject {
 
     public SimpleApp() {
-        super(name("simple-app"));
+        super(name("demo-project-simple-app"));
         generator(JavaCompiler::new).addSources(Path.of("src"), "**/*.java");
-        generator(UberJarGenerator::new).from(providers(Supply))
+        generator(UberJarGenerator::new).from(providers().select(Supply))
             .mainClass("jdbld.demo.simpleapp.App");
 
         // Command arguments
-        commandAlias("build", requestFor(AppJarFile.class));
+        commandAlias("build", of(AppJarFile.class).usingAll());
     }
 }
 ```

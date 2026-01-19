@@ -81,11 +81,9 @@ projects into account might look like this:
           project.generator(JavaResourceCollector::new).add(Path.of(
               "test-resources"), "**/*");
           project.dependency(Consume, new MvnRepoLookup()
-              .bom("org.junit:junit-bom:5.12.2")
+              .bom("org.junit:junit-bom:5.14.2")
               .resolve("org.junit.jupiter:junit-jupiter-api")
-              .resolve(Scope.Runtime,
-                  "org.junit.jupiter:junit-jupiter-engine",
-                  "org.junit.vintage:junit-vintage-engine"));
+              .resolve("org.junit.jupiter:junit-jupiter-engine"));
           project.dependency(Supply, JUnitTestRunner::new);
       }
   }
