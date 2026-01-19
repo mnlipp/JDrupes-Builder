@@ -39,11 +39,6 @@ public final class JavaTypes {
             FileTree<JavaSourceFile>> JavaSourceTreeType
                 = new ResourceType<>() {};
 
-    /// The Java source file trees.
-    public static final ResourceType<Resources<
-            FileTree<JavaSourceFile>>> JavaSourceTreesType
-                = new ResourceType<>() {};
-
     /// The class file.
     public static final ResourceType<ClassFile> ClassFileType
         = new ResourceType<>() {};
