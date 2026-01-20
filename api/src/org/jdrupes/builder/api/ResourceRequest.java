@@ -52,8 +52,8 @@ public interface ResourceRequest<T extends Resource> {
     ///
     ResourceRequest<T> using(Set<Intent> intents);
 
-    /// Return a new resource request that uses project providers with
-    /// the given intents.
+    /// Return a new resource request that uses a project's providers
+    /// with the given intents.
     ///
     /// @param intent the intent
     /// @param intents the intents

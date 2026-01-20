@@ -59,23 +59,19 @@ available yet.
 
 ## Projects as resource providers
 
-The resources provided by
-[Project](javadoc/org/jdrupes/builder/api/Project.html)s depend
-not only on the type of resource requested, but also on the 
-providers of the project which are taken into account when the
-project forwards the request.
+The resources provided by a
+[Project](javadoc/org/jdrupes/builder/api/Project.html) do not only
+depend on the type of resource requested, but also on the 
+providers that the project selects when forwarding the request. This
+is controlled by the intents associated with the request through
+[using](javadoc/org/jdrupes/builder/api/ResourceRequest.html#using(java.util.Set)).
 
-The dependencies to be used are specified by invoking the request's method
-[using](javadoc/org/jdrupes/builder/api/ResourceRequest.html#using(java.util.Set))
-with the intents to be applied for dependency selection.
-
-Certain combinations of intents map directly to common concepts in other
-build tools. Take `Supply` and `Expose` as an example. When selecting
-these providers of a project with a request for classpath elements, the
-result includes the classes created by the project together with the
-resources used to create them. For a project serving as a build
-dependency this result constitutes the project's API. 
- 
+Certain combinations of requested type and intents map directly to
+common concepts in other build tools. Take as an example a request for
+classpath elements in combination with using `Supply` and `Expose`.
+The result of such a request includes the classes created by the project
+together with the resources used to create them. For a project serving
+as a build dependency this result constitutes the project's API.
 
 ## Requesting resources from the command line
 
