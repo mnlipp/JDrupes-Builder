@@ -74,7 +74,7 @@ The second generator is an
 [UberJarGenerator](javadoc/org/jdrupes/builder/uberjar/UberJarGenerator.html).
 
 ```java
-        generator(UberJarGenerator::new).from(providers(Supply))
+        generator(UberJarGenerator::new).from(providers().select(Supply))
             .mainClass("jdbld.demo.simpleapp.App");
 ```
 
