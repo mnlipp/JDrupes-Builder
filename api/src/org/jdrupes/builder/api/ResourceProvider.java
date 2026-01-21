@@ -1,6 +1,6 @@
 /*
  * JDrupes Builder
- * Copyright (C) 2025 Michael N. Lipp
+ * Copyright (C) 2025, 2026 Michael N. Lipp
  * 
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as
@@ -20,34 +20,14 @@ package org.jdrupes.builder.api;
 
 import java.util.stream.Stream;
 
-/// A provider of a resource. This interface must be implemented by
-/// providers.
-/// 
-/// The interface also serves as a factory for creating resource
-/// requests to be passed to the providers.
+/// This interface defines the access to a provider's resources.
+/// Resources are provided by calling [resources][#resources] with a
+/// [ResourceRequest]. The interface also serves as a factory for
+/// creating the resource requests for this invocation.
 ///
 public interface ResourceProvider {
 
-    /// Provide the requested resources. This method is not intended
-    /// to be invoked directly. Rather, it must be invoked via
-    /// [BuildContext#resources].
-    /// 
-    /// When properly invoked through [BuildContext#resources], this
-    /// method is never invoked concurrently for the same request.
-    /// It may, however, be invoked concurrently for different requests.
-    /// Providers that evaluate all possibly provided resources anyway
-    /// and return only a subset for some kinds of request should
-    /// therefore invoke themselves (through [BuildContext#resources])
-    /// with a request for all resources and filter the (automatically
-    /// cached) result.
-    ///
-    /// @param <T> the type of the requested (and provided) resource
-    /// @param requested the requested resources
-    /// @return the provided resource(s) as stream
-    ///
-    <T extends Resource> Stream<T> provide(ResourceRequest<T> requested);
-
-    /// Returns resources provided by this provider. Short for
+    /// Returns resources provided by this resource provider. Short for
     /// `context().resources(this, request)`.
     ///
     /// @param <T> the generic type
@@ -59,7 +39,8 @@ public interface ResourceProvider {
         return context().resources(this, requested);
     }
 
-    /// Returns the build context.
+    /// Convenience method to access the build context which is sometimes
+    /// needed in the context of resource requests.
     ///
     /// @return the builder configuration
     ///

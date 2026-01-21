@@ -76,17 +76,16 @@ import java.util.function.Function;
 /// another project) are provided by the project to entities that
 /// depend on the project. They are not intended to be used by a
 /// project's generators, although these cannot be prevented from
-/// accessing them through [Project#provide].
+/// accessing them through [Project#providers()].
 ///
 /// ## Behavior as resource provider
 /// 
-/// In its role as [ResourceProvider], a [Project]
-/// [provides][ResourceProvider#provide] all resources that are
-/// provided to the project by its dependencies with [Intent#Forward],
-/// [Intent#Expose], and [Intent#Supply]. As explained above, resources
-/// from dependencies with [Intent#Consume] are only available to
-/// a project's generators and are therefore usually not provided by
-/// the [Project].
+/// In its role as [ResourceProvider], a [Project] provides all
+/// [resources][ResourceProvider#resources] that are provided to the
+/// project by its dependencies with [Intent#Forward], [Intent#Expose],
+/// and [Intent#Supply]. As explained above, resources from
+/// dependencies with [Intent#Consume] are only available to a project's
+/// generators and are therefore usually not provided by the [Project].
 /// 
 /// However, if the container type of the request implements `AllResources`
 /// the project will also forward the request to dependencies with

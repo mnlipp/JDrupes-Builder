@@ -95,15 +95,15 @@ import static org.jdrupes.builder.mvnrepo.MvnRepoTypes.*;
 ///
 /// This would add the project as provider and thus make the uber jar
 /// generator as supplier to the project its own provider (via
-/// [Project.provide][Project#provide]). Rather, you have to use this
+/// [Project.resources][Project#resources]). Rather, you have to use this
 /// slightly more complicated approach to adding providers to the uber
 /// jar generator:
 /// ```java
 ///     generator(UberJarGenerator::new)
-///         .addAll(providers(EnumSet.of(Forward, Expose, Supply)));
+///         .addAll(providers().select(Forward, Expose, Supply));
 /// ```
 /// This requests the same providers from the project as 
-/// [Project.provide][Project#provide] does, but allows the uber jar
+/// [Project.resources][Project#resources] does, but allows the uber jar
 /// generator's [from] method to filter out the uber jar
 /// generator itself from the providers. The given intents can
 /// vary depending on the requirements.

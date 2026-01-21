@@ -39,7 +39,7 @@ public interface BuildContext {
     ///
     CommandLine commandLine();
 
-    /// Obtains the resource stream for the given resource from the
+    /// Obtains the stream of resources of the given type from the
     /// given provider. The result from invoking the provider is
     /// evaluated asynchronously and cached. Only when the returned
     /// stream is terminated will the invocation block until the

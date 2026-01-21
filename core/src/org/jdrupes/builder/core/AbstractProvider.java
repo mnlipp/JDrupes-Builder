@@ -21,9 +21,9 @@ package org.jdrupes.builder.core;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.stream.Stream;
-import org.jdrupes.builder.api.BuildContext;
 import org.jdrupes.builder.api.Resource;
 import org.jdrupes.builder.api.ResourceProvider;
+import org.jdrupes.builder.api.ResourceProviderSpi;
 import org.jdrupes.builder.api.ResourceRequest;
 import org.jdrupes.builder.api.ResourceType;
 
@@ -45,24 +45,24 @@ public abstract class AbstractProvider implements ResourceProvider {
         // Make javadoc happy.
     }
 
-    /// Checks if the the current thread executes a provider invocation
-    /// from [BuildContext#resources]. Generates a warning if the invocation
-    /// is not allowed. Then invokes [#doProvide].
-    ///
-    /// @return true, if allowed
-    ///
-    @Override
-    @SuppressWarnings("PMD.GuardLogStatement")
-    public final <T extends Resource> Stream<T>
-            provide(ResourceRequest<T> requested) {
-        if (!FutureStream.isProviderInvocationAllowed()) {
-            log.log(Level.WARNING, new IllegalStateException(),
-                () -> "Direct invocation of " + this + " is not allowed");
-        }
-        return doProvide(requested);
+    /* default */ ResourceProviderSpi toSpi() {
+        return new ResourceProviderSpi() {
+            @Override
+            @SuppressWarnings("PMD.GuardLogStatement")
+            public <T extends Resource> Stream<T>
+                    provide(ResourceRequest<T> requested) {
+                if (!FutureStream.isProviderInvocationAllowed()) {
+                    log.log(Level.WARNING, new IllegalStateException(),
+                        () -> "Direct invocation of " + this
+                            + " is not allowed");
+                }
+                return doProvide(requested);
+            }
+        };
     }
 
-    /// Invoked by [#provide] after checking if the invocation is allowed.
+    /// Invoked by [ResourceProviderSpi#provide] after checking if the
+    /// invocation is allowed.
     ///
     /// @param <T> the generic type
     /// @param requested the requested

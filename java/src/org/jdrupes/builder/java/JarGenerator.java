@@ -41,6 +41,7 @@ import org.jdrupes.builder.api.IOResource;
 import org.jdrupes.builder.api.Project;
 import static org.jdrupes.builder.api.Project.Properties.*;
 import org.jdrupes.builder.api.Resource;
+import org.jdrupes.builder.api.ResourceProviderSpi;
 import org.jdrupes.builder.api.ResourceRequest;
 import org.jdrupes.builder.api.ResourceType;
 import static org.jdrupes.builder.api.ResourceType.*;
@@ -120,7 +121,7 @@ public class JarGenerator extends AbstractGenerator {
     }
 
     /// Sets the supplier for obtaining the name of the generated jar file
-    /// in [#provide].
+    /// in [ResourceProviderSpi#provide].
     ///
     /// @param jarName the jar name
     /// @return the jar generator

@@ -72,7 +72,8 @@ public class FutureStream<T extends Resource> {
             return ScopedValue
                 .where(providerInvocationAllowed, new AtomicBoolean(true))
                 .where(caller, this)
-                .call(() -> provider.provide(request).toList());
+                .call(() -> ((AbstractProvider) provider).toSpi()
+                    .provide(request).toList());
         });
     }
 

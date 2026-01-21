@@ -1,0 +1,47 @@
+/*
+ * JDrupes Builder
+ * Copyright (C) 2026 Michael N. Lipp
+ * 
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Affero General Public License as
+ * published by the Free Software Foundation, either version 3 of the
+ * License, or (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ * GNU Affero General Public License for more details.
+ *
+ * You should have received a copy of the GNU Affero General Public License
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
+ */
+
+package org.jdrupes.builder.api;
+
+import java.util.stream.Stream;
+
+/// This interface must be made available to the [BuildContext]
+/// by implementations of resource providers.
+///
+@SuppressWarnings("PMD.ImplicitFunctionalInterface")
+public interface ResourceProviderSpi {
+
+    /// Provide the requested resources. This method is not intended
+    /// to be invoked directly. Rather, it must be invoked via
+    /// [BuildContext#resources].
+    /// 
+    /// When properly invoked through [BuildContext#resources], this
+    /// method is never invoked concurrently for the same request.
+    /// It may, however, be invoked concurrently for different requests.
+    /// Providers that evaluate all possibly provided resources anyway
+    /// and return only a subset for some kinds of request should
+    /// therefore invoke themselves (through [BuildContext#resources])
+    /// with a request for all resources and filter the (automatically
+    /// cached) result.
+    ///
+    /// @param <T> the type of the requested (and provided) resource
+    /// @param requested the requested resources
+    /// @return the provided resource(s) as stream
+    ///
+    <T extends Resource> Stream<T> provide(ResourceRequest<T> requested);
+}
