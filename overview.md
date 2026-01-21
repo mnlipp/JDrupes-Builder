@@ -36,8 +36,8 @@ object "compiler: JavaCompiler" as compiler
 object "appJarGenerator: UberJarGenerator" as appJarGenerator
 project *-right-> compiler : generator
 project *--> appJarGenerator : generator
-appJarGenerator --> project : provider
-compiler --> project : provider
+appJarGenerator --> project : provide to
+compiler --> project : provide to
 @enduml
 
 @startuml build-appjar-project.svg
