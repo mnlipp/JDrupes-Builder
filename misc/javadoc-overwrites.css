@@ -1,11 +1,12 @@
 :root {
-    --body-font-size: 16px;
-    --body-font-family:Monaco, Bitstream Vera Sans Mono, Lucida Console, Terminal, Consolas, Liberation Mono, DejaVu Sans Mono, Courier New, monospace;
+  --body-font-size: 16px;
+  --body-font-family: Verdana, Arial, Helvetica, sans-serif;
 }
 :root {
-    --block-font-size: 16px;
-    --body-font-family:Monaco, Bitstream Vera Sans Mono, Lucida Console, Terminal, Consolas, Liberation Mono, DejaVu Sans Mono, Courier New, monospace;
+  --block-font-size: 16px;
+  --block-font-family: Verdana, Arial, Helvetica, sans-serif;
 }
-:root { --code-font-size: 16px;
-    --body-font-family:Monaco, Bitstream Vera Sans Mono, Lucida Console, Terminal, Consolas, Liberation Mono, DejaVu Sans Mono, Courier New, monospace;
+:root {
+  --code-font-size: 16px;
+  --code-font-family: Monaco, Bitstream Vera Sans Mono, Lucida Console, Terminal, Consolas, Liberation Mono, DejaVu Sans Mono, Courier New, monospace;
 }
