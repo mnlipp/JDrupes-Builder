@@ -20,24 +20,26 @@ package org.jdrupes.builder.api;
 
 import java.util.stream.Stream;
 
-/// A provider of a resource. This interface is intended to be implemented
-/// by providers. It is not intended to be invoked directly. Rather, it 
-/// must be invoked via [BuildContext#resources].
+/// A provider of a resource. This interface must be implemented by
+/// providers.
 /// 
 /// The interface also serves as a factory for creating resource
 /// requests to be passed to the providers.
 ///
 public interface ResourceProvider {
 
-    /// Provide the requested resources.
+    /// Provide the requested resources. This method is not intended
+    /// to be invoked directly. Rather, it must be invoked via
+    /// [BuildContext#resources].
     /// 
-    /// This method is never invoked concurrently for the same request
-    /// when invoked through [BuildContext#resources]. It may, however,
-    /// be invoked concurrently for different requests. Providers that
-    /// evaluate all possibly provided resources anyway and return only
-    /// a subset for some kinds of request should therefore invoke
-    /// themselves (through [BuildContext#resources]) with a request for
-    /// all resources and filter the (automatically cached) result.
+    /// When properly invoked through [BuildContext#resources], this
+    /// method is never invoked concurrently for the same request.
+    /// It may, however, be invoked concurrently for different requests.
+    /// Providers that evaluate all possibly provided resources anyway
+    /// and return only a subset for some kinds of request should
+    /// therefore invoke themselves (through [BuildContext#resources])
+    /// with a request for all resources and filter the (automatically
+    /// cached) result.
     ///
     /// @param <T> the type of the requested (and provided) resource
     /// @param requested the requested resources
