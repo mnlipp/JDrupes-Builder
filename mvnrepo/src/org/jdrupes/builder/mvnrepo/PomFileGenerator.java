@@ -47,19 +47,26 @@ import static org.jdrupes.builder.mvnrepo.MvnRepoTypes.*;
 /// [PomFile] it generates a maven [Model] with basic information.
 /// The group is set to the value of the property [MvnProperties#GroupId]
 /// if it is defined. The artifact id is set to the property
-/// [MvnProperties#ArtifactId] or the name of the project, if
+/// [MvnProperties#ArtifactId] or the name of the project if
 /// [MvnProperties#ArtifactId] is not defined. The version is set to
 /// the value of the property [Project.Properties#Version].
-///
-/// This basic model is passed to [#adaptPom] where it can be adapted.
+/// 
+/// The compilation dependencies of the model are initialized with the
+/// [MvnRepoDependencies][MvnRepoDependency] returned from the project's
+/// dependencies with intent `Supply` or `Expose`. The runtime dependencies
+/// are initialized with the [MvnRepoDependencies][MvnRepoDependency]
+/// return from the project's dependencies with intent `Consume` or `Reveal`.
+/// The resulting model is passed to [#adaptPom] where it can be adapted.
 /// as the project requires. Finally, the model is written to the
 /// POM file.
 ///
-/// In addition to the [PomFile] requests, this generator also handles
-/// requests for [MvnRepoDependency]. This reflects that a project that
-/// has a POM file is obviously intended to be released as a maven
-/// artifact. Other projects in a multi-project build will therefore
-/// eventually depend on the maven artifact "to be released".
+/// In addition to the requests for [PomFile], this generator also handles
+/// requests for [MvnRepoDependency]. It returns the coordinates derived
+/// from the properties [MvnProperties#GroupId], [MvnProperties#ArtifactId]
+/// and [Project.Properties#Version] (see above). This reflects that a
+/// project that has a POM file is obviously intended to be released as a
+/// maven artifact. Other projects in a multi-project build will therefore
+/// eventually depend on the maven artifact to be released.
 ///
 public class PomFileGenerator extends AbstractGenerator {
 
