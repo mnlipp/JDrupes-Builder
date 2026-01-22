@@ -20,7 +20,7 @@ package org.jdrupes.builder.java;
 
 import org.jdrupes.builder.api.FileResource;
 
-/// Defines a Jar file.
+/// A [FileResource] that represents a Java jar file].
 ///
 public interface JarFile extends FileResource {
 

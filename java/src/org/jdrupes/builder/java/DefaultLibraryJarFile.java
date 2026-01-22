@@ -25,7 +25,7 @@ import org.jdrupes.builder.api.Proxyable;
 import org.jdrupes.builder.api.ResourceType;
 import org.jdrupes.builder.core.ForwardingHandler;
 
-/// A [FileResource] that represents a Java jar.
+/// A [FileResource] that represents a Java library jar.
 ///
 public class DefaultLibraryJarFile extends DefaultJarFile
         implements LibraryJarFile {

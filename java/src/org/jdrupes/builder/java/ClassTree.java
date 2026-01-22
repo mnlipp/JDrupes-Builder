@@ -20,7 +20,7 @@ package org.jdrupes.builder.java;
 
 import org.jdrupes.builder.api.FileTree;
 
-/// The Interface ClassTree.
+/// A [FileTree] that consists of [ClassFile]s.
 ///
 public interface ClassTree extends FileTree<ClassFile>, ClasspathElement {
 

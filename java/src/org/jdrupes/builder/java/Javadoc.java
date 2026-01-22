@@ -36,6 +36,7 @@ import org.jdrupes.builder.api.FileTree;
 import static org.jdrupes.builder.api.Intent.*;
 import org.jdrupes.builder.api.Project;
 import org.jdrupes.builder.api.Resource;
+import org.jdrupes.builder.api.ResourceProvider;
 import org.jdrupes.builder.api.ResourceRequest;
 import org.jdrupes.builder.api.ResourceType;
 import static org.jdrupes.builder.api.ResourceType.*;
@@ -46,22 +47,24 @@ import static org.jdrupes.builder.java.JavaTypes.*;
 /// The [Javadoc] generator provides the resource [JavadocDirectory],
 /// a directory that contains generated javadoc files.
 ///
-/// No attempt has been made to define types for the options of
-/// the javadoc tool. Rather, the options are passed as strings
-/// as the [ToolProvider] API suggests. There are some noteworthy
-/// exceptions for options that are directly related to resource
-/// types (files, directory trees, paths) from the builder context.
+/// No attempt is made to define dedicated types for Javadoc tool options.
+/// Instead, options are passed as strings, as suggested by the
+/// [ToolProvider] API. Notable exceptions exist for options that are
+/// directly related to resource types (such as files, directory trees,
+/// and paths) originating from the builder context.
+/// 
+/// By default, the generator builds the Javadoc for the project passed
+/// to the constructor. In some cases – such as generating a shared
+/// Javadoc for multiple projects – this behavior is not desired. In
+/// these cases, the project(s) for which Javadoc is generated can be
+/// configured via [#projects].
 ///
-/// By default, the generator builds the javadoc for the project passed
-/// to the constructor. In some cases, e.g. when building a common javadoc
-/// for multiple projects, this is not the desired behavior. In this case,
-/// the project(s) to generate javadoc can be set with [#projects].
-///
-/// The sources processed default to the project's [JavaSourceFile]s, i.e.
-/// the resources obtained by invoking
-/// `get(new ResourceRequest<FileTree<JavaSourceFile>>(new ResourceType<>() {}))`
-/// on the project(s). This can be overridden by setting the sources with
-/// one or several invocations of the `addSources`-methods.
+/// By default, the processed sources are the project's [JavaSourceFile]s,
+/// i.e. the resources obtained by invoking
+/// [resources][ResourceProvider#resources(ResourceRequest)] for type
+/// [JavaTypes#JavaSourceTreeType] on the configured project(s). This
+/// behavior can be overridden by setting the sources explicitly using
+/// one or more invocations of the `addSources` methods.
 ///
 public class Javadoc extends JavaTool {
 

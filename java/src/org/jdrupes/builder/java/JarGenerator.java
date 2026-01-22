@@ -68,7 +68,7 @@ public class JarGenerator extends AbstractGenerator {
     private final StreamCollector<FileTree<?>> fileTrees
         = StreamCollector.cached();
 
-    /// Instantiates a new library generator.
+    /// Initializes a new library generator.
     ///
     /// @param project the project
     /// @param jarType the type of jar that the generator generates

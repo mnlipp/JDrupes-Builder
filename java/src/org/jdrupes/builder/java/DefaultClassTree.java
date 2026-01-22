@@ -26,12 +26,12 @@ import org.jdrupes.builder.api.ResourceType;
 import org.jdrupes.builder.core.DefaultFileTree;
 import org.jdrupes.builder.core.ForwardingHandler;
 
-/// The type ClassTree.
+/// A default implementation of [ClassTree].
 ///
 public class DefaultClassTree extends DefaultFileTree<ClassFile>
         implements ClasspathElement {
 
-    /// Instantiates a new class tree.
+    /// Initializes a new class tree.
     ///
     /// @param type the type
     /// @param project the project
@@ -42,13 +42,13 @@ public class DefaultClassTree extends DefaultFileTree<ClassFile>
         super(type, project, root, "**/*.class");
     }
 
-    /// Creates the class tree.
+    /// Creates an instance of [ClassTree].
     ///
     /// @param <T> the generic type
     /// @param type the type
     /// @param project the project
     /// @param path the path
-    /// @return the t
+    /// @return the class tree
     ///
     @SuppressWarnings({ "unchecked" })
     public static <T extends ClassTree> T createClassTree(ResourceType<T> type,

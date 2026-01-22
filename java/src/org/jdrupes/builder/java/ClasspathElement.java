@@ -21,7 +21,7 @@ package org.jdrupes.builder.java;
 import java.nio.file.Path;
 import org.jdrupes.builder.api.Resource;
 
-/// The Interface ClasspathElement.
+/// Common base interface for resources that can be used in a classpath.
 ///
 public interface ClasspathElement extends Resource {
 
