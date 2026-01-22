@@ -22,6 +22,7 @@ import java.util.Arrays;
 import java.util.EnumSet;
 import java.util.Objects;
 import java.util.Set;
+import java.util.stream.Collectors;
 import org.jdrupes.builder.api.Intent;
 import org.jdrupes.builder.api.Project;
 import org.jdrupes.builder.api.Resource;
@@ -50,9 +51,10 @@ public class DefaultResourceRequest<T extends Resource>
     @SuppressWarnings("PMD.UseVarargs")
     private DefaultResourceRequest(ResourceType<? extends T> type,
             Set<Intent> using, Project[] queried) {
-        this.type = type;
-        uses = using;
-        this.queried = queried;
+        Objects.requireNonNull(queried);
+        this.type = Objects.requireNonNull(type);
+        uses = Objects.requireNonNull(using);
+        this.queried = Objects.requireNonNull(queried);
     }
 
     @Override
@@ -63,7 +65,7 @@ public class DefaultResourceRequest<T extends Resource>
 
     @Override
     public ResourceRequest<T> using(Set<Intent> intents) {
-        uses = intents;
+        uses = Objects.requireNonNull(intents);
         return this;
     }
 
@@ -94,7 +96,7 @@ public class DefaultResourceRequest<T extends Resource>
 
     /* default */ DefaultResourceRequest<T> queried(Project project) {
         var newQueried = Arrays.copyOf(queried, queried.length + 1);
-        newQueried[newQueried.length - 1] = project;
+        newQueried[newQueried.length - 1] = Objects.requireNonNull(project);
         return new DefaultResourceRequest<>(type(), uses, newQueried);
     }
 
@@ -121,7 +123,8 @@ public class DefaultResourceRequest<T extends Resource>
 
     @Override
     public String toString() {
-        return "ResourceRequest<" + type + ">";
+        return "ResourceRequest<" + type + "> [" + uses.stream()
+            .map(Intent::toString).collect(Collectors.joining(", ")) + "]";
     }
 
 }
