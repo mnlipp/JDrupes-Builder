@@ -24,10 +24,11 @@ public class Root extends AbstractProject implements RootProject {
         set(GroupId, "org.jdrupes.builder.demo.library");
 
         // Commands
-        commandAlias("build", of(JarFile.class).using(Supply, Expose));
-        commandAlias("test", of(TestResult.class));
-        commandAlias("pomFile", of(PomFile.class));
-        commandAlias("eclipse", of(EclipseConfiguration.class));
+        commandAlias("build")
+            .resources(of(JarFile.class).using(Supply, Expose));
+        commandAlias("test").resources(of(TestResult.class));
+        commandAlias("pomFile").resources(of(PomFile.class));
+        commandAlias("eclipse").resources(of(EclipseConfiguration.class));
     }
 
 }

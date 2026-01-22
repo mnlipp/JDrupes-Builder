@@ -32,10 +32,10 @@ public class Root extends AbstractProject implements RootProject {
             .mainClass("jdbld.demo.subprojects.app")
             .destination(buildDirectory().resolve(Path.of("app"))));
 
-        commandAlias("build", of(JarFile.class).usingAll());
-        commandAlias("test", of(TestResult.class).usingAll());
-        commandAlias("eclipse",
-            of(EclipseConfiguration.class).usingAll());
+        // Define commands
+        commandAlias("build").resources(of(JarFile.class));
+        commandAlias("test").resources(of(TestResult.class));
+        commandAlias("eclipse").resources(of(EclipseConfiguration.class));
     }
 
 }

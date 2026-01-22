@@ -16,9 +16,8 @@ public class Root extends AbstractProject implements RootProject {
 
     public Root() {
         super(name("app-project_1"));
-        commandAlias("build", of(JarFile.class).usingAll());
-        commandAlias("eclipse",
-            of(EclipseConfiguration.class).usingAll());
+        commandAlias("build").resources(of(JarFile.class));
+        commandAlias("eclipse").resources(of(EclipseConfiguration.class));
     }
 
 }

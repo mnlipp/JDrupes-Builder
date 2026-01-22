@@ -20,6 +20,7 @@ package org.jdrupes.builder.api;
 
 import java.util.stream.Stream;
 
+// TODO: Auto-generated Javadoc
 /// A marker interface to identify the root project.
 ///
 public interface RootProject extends Project {
@@ -50,14 +51,38 @@ public interface RootProject extends Project {
     ///
     Stream<Project> projects(String pattern);
 
-    /// Define an alias for requesting one more more specific resources.
+    /// Define an alias for requesting one or more specific resources.
     ///
     /// @param name the name
-    /// @param requests the requests
     /// @return the root project
     ///
-    default RootProject commandAlias(String name,
-            ResourceRequest<?>... requests) {
+    default CommandBuilder commandAlias(String name) {
         throw new UnsupportedOperationException();
+    }
+
+    /// A builder for command aliases.
+    interface CommandBuilder {
+
+        /// Apply the request(s) to the projects selected by the given
+        /// pattern instead of the root project.
+        ///
+        /// @param pattern the pattern
+        /// @return the command builder
+        ///
+        CommandBuilder projects(String pattern);
+
+        /// Apply the request(s) to the root project or the selected
+        /// projects. The results from the request are written to the
+        /// standard output.
+        /// 
+        /// To simplify the command alias definition, this method
+        /// replaces a request with no intents (i.e. with
+        /// [ResourceRequest#uses()] being empty) with a request that
+        /// uses all intents.
+        ///
+        /// @param requests the requests
+        /// @return the root project
+        ///
+        RootProject resources(ResourceRequest<?>... requests);
     }
 }

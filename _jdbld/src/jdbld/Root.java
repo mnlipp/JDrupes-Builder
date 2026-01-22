@@ -131,18 +131,15 @@ public class Root extends AbstractProject implements RootProject {
         generator(MvnPublisher::new);
 
         // Commands
-        commandAlias("build", of(AppJarFile.class).usingAll(),
-            of(JavadocDirectoryType).usingAll());
-        commandAlias("test", of(TestResult.class).usingAll());
-        commandAlias("sourcesJar", of(SourcesJarFile.class).usingAll());
-        commandAlias("javadoc", of(JavadocDirectory.class).usingAll());
-        commandAlias("javadocJar", of(JavadocJarFile.class).usingAll());
-        commandAlias("eclipse",
-            of(EclipseConfiguration.class).usingAll());
-        commandAlias("vscode",
-            of(VscodeConfiguration.class).usingAll());
-        commandAlias("pomFile", of(PomFile.class).usingAll());
-        commandAlias("mavenPublication",
-            of(MvnPublication.class).usingAll());
+        commandAlias("build").resources(of(AppJarFile.class),
+            of(JavadocDirectoryType));
+        commandAlias("test").resources(of(TestResult.class));
+        commandAlias("sourcesJar").resources(of(SourcesJarFile.class));
+        commandAlias("javadoc").resources(of(JavadocDirectory.class));
+        commandAlias("javadocJar").resources(of(JavadocJarFile.class));
+        commandAlias("eclipse").resources(of(EclipseConfiguration.class));
+        commandAlias("vscode").resources(of(VscodeConfiguration.class));
+        commandAlias("pomFile").resources(of(PomFile.class));
+        commandAlias("mavenPublication").resources(of(MvnPublication.class));
     }
 }

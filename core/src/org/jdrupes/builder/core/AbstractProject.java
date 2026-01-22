@@ -164,7 +164,7 @@ public abstract class AbstractProject extends AbstractProvider
                 // ConcurrentHashMap does not support null values.
                 projects = Collections.synchronizedMap(new HashMap<>());
                 commands = new HashMap<>();
-                commandAlias("clean", of(Cleanliness.class).usingAll());
+                commandAlias("clean").resources(of(Cleanliness.class));
             }
         } else {
             parent = (AbstractProject) project(parentProject);
@@ -211,6 +211,10 @@ public abstract class AbstractProject extends AbstractProvider
         }
     }
 
+    /// Root project.
+    ///
+    /// @return the root project
+    ///
     @Override
     public final RootProject rootProject() {
         if (this instanceof RootProject root) {
@@ -225,6 +229,11 @@ public abstract class AbstractProject extends AbstractProvider
             .rootProject();
     }
 
+    /// Project.
+    ///
+    /// @param prjCls the prj cls
+    /// @return the project
+    ///
     @Override
     public Project project(Class<? extends Project> prjCls) {
         if (this.getClass().equals(prjCls)) {
@@ -256,23 +265,40 @@ public abstract class AbstractProject extends AbstractProvider
         }
     }
 
+    /// Parent project.
+    ///
+    /// @return the optional
+    ///
     @Override
     public Optional<Project> parentProject() {
         return Optional.ofNullable(parent);
     }
 
+    /// Name.
+    ///
+    /// @return the string
+    ///
     @Override
     @SuppressWarnings("checkstyle:OverloadMethodsDeclarationOrder")
     public String name() {
         return projectName;
     }
 
+    /// Directory.
+    ///
+    /// @return the path
+    ///
     @Override
     @SuppressWarnings("checkstyle:OverloadMethodsDeclarationOrder")
     public Path directory() {
         return projectDirectory;
     }
 
+    /// Generator.
+    ///
+    /// @param provider the provider
+    /// @return the project
+    ///
     @Override
     public Project generator(Generator provider) {
         if (this instanceof MergedTestProject) {
@@ -283,6 +309,12 @@ public abstract class AbstractProject extends AbstractProvider
         return this;
     }
 
+    /// Dependency.
+    ///
+    /// @param intent the intent
+    /// @param provider the provider
+    /// @return the project
+    ///
     @Override
     public Project dependency(Intent intent, ResourceProvider provider) {
         providers.put(provider, intent);
@@ -313,16 +345,31 @@ public abstract class AbstractProject extends AbstractProvider
             .filter(e -> e.getValue() == intent).map(Entry::getKey);
     }
 
+    /// Providers.
+    ///
+    /// @return the default provider selection
+    ///
     @Override
     public DefaultProviderSelection providers() {
         return new DefaultProviderSelection(this);
     }
 
+    /// Providers.
+    ///
+    /// @param intends the intends
+    /// @return the provider selection
+    ///
     @Override
     public ProviderSelection providers(Set<Intent> intends) {
         return new DefaultProviderSelection(this, intends);
     }
 
+    /// Returns the.
+    ///
+    /// @param <T> the generic type
+    /// @param property the property
+    /// @return the t
+    ///
     @Override
     @SuppressWarnings("unchecked")
     public <T> T get(PropertyKey property) {
@@ -335,6 +382,12 @@ public abstract class AbstractProject extends AbstractProvider
             });
     }
 
+    /// Sets the.
+    ///
+    /// @param property the property
+    /// @param value the value
+    /// @return the abstract project
+    ///
     @Override
     public AbstractProject set(PropertyKey property, Object value) {
         if (!property.type().isAssignableFrom(value.getClass())) {
@@ -354,17 +407,59 @@ public abstract class AbstractProject extends AbstractProvider
     /// Define command, see [RootProject#commandAlias].
     ///
     /// @param name the name
-    /// @param requests the requests
     /// @return the root project
     ///
-    public RootProject commandAlias(String name,
-            ResourceRequest<?>... requests) {
-        if (commands == null) {
+    public RootProject.CommandBuilder commandAlias(String name) {
+        if (!(this instanceof RootProject)) {
             throw new BuildException("Commands can only be defined for"
                 + " the root project.");
         }
-        commands.put(name, new CommandData("", requests));
-        return (RootProject) this;
+        return new CommandBuilder((RootProject) this, name);
+    }
+
+    /// The Class CommandBuilder.
+    ///
+    public class CommandBuilder implements RootProject.CommandBuilder {
+        private final RootProject rootProject;
+        private final String name;
+        private String projects = "";
+
+        /// Initializes a new command builder.
+        ///
+        /// @param rootProject the root project
+        /// @param name the name
+        ///
+        public CommandBuilder(RootProject rootProject, String name) {
+            this.rootProject = rootProject;
+            this.name = name;
+        }
+
+        /// Projects.
+        ///
+        /// @param projects the projects
+        /// @return the root project. command builder
+        ///
+        @Override
+        public RootProject.CommandBuilder projects(String projects) {
+            this.projects = projects;
+            return this;
+        }
+
+        /// Resources.
+        ///
+        /// @param requests the requests
+        /// @return the root project
+        ///
+        @Override
+        public RootProject resources(ResourceRequest<?>... requests) {
+            for (int i = 0; i < requests.length; i++) {
+                if (requests[i].uses().isEmpty()) {
+                    requests[i] = requests[i].copyWithType().usingAll();
+                }
+            }
+            commands.put(name, new CommandData(projects, requests));
+            return rootProject;
+        }
     }
 
     /* default */ CommandData lookupCommand(String name) {
