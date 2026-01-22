@@ -45,7 +45,8 @@ import static org.jdrupes.builder.java.JavaTypes.*;
 
 /// The [JavaCompiler] generator provides two types of resources.
 /// 
-/// 1. The [JavaSourceFile]s of the project as configured with [addSources]
+/// 1. The [JavaSourceFile]s of the project as configured with 
+///    [addSources(FileTree<JavaSourceFile>)][addSources]
 ///    in response to a [ResourceRequest] with [ResourceType]
 ///    [JavaTypes#JavaSourceTreeType] (or a more general type).
 ///
@@ -60,10 +61,10 @@ import static org.jdrupes.builder.java.JavaTypes.*;
 /// exceptions for options that are directly related to resource
 /// types (files, directory trees, paths) from the builder context.
 ///
-/// If no "-g..." option is specified, the generator adds "-g" and
+/// If no "`-g...`" option is specified, the generator adds "`-g`" and
 /// thus generates full debug information. If you want to restore the
 /// default behavior of the java compiler, you have to specify
-/// `-g:[lines, source]` explicitly.
+/// "`-g:[lines, source]`" explicitly.
 ///
 public class JavaCompiler extends JavaTool {
 
@@ -71,7 +72,7 @@ public class JavaCompiler extends JavaTool {
         = project().newResource(new ResourceType<>() {});
     private Path destination;
 
-    /// Instantiates a new java compiler.
+    /// Initializes a new java compiler.
     ///
     /// @param project the project
     ///
