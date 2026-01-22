@@ -44,29 +44,57 @@ import static org.jdrupes.builder.mvnrepo.MvnProperties.*;
 import static org.jdrupes.builder.mvnrepo.MvnRepoTypes.*;
 
 /// A [Generator] (mainly) for POM files. In response to requests for
-/// [PomFile] it generates a maven [Model] with basic information.
-/// The group is set to the value of the property [MvnProperties#GroupId]
-/// if it is defined. The artifact id is set to the property
-/// [MvnProperties#ArtifactId] or the name of the project if
-/// [MvnProperties#ArtifactId] is not defined. The version is set to
-/// the value of the property [Project.Properties#Version].
+/// [PomFile] this generator produces a Maven [Model] containing basic
+/// project information. The following properties are used:
 /// 
-/// The compilation dependencies of the model are initialized with the
-/// [MvnRepoDependencies][MvnRepoDependency] returned from the project's
-/// dependencies with intent `Supply` or `Expose`. The runtime dependencies
-/// are initialized with the [MvnRepoDependencies][MvnRepoDependency]
-/// return from the project's dependencies with intent `Consume` or `Reveal`.
-/// The resulting model is passed to [#adaptPom] where it can be adapted.
-/// as the project requires. Finally, the model is written to the
-/// POM file.
+///   * The groupId is set to the value of the property
+///     [MvnProperties#GroupId] if it is defined.
+/// 
+///   * The artifactId is set to the property [MvnProperties#ArtifactId],
+///     or to the name of the project if [MvnProperties#ArtifactId] is
+///     not defined.
+/// 
+///   * The version is set to the value of the property
+///     [Project.Properties#Version].
+/// 
+/// Dependencies in the model are evaluated by querying the project's
+/// providers.
+/// 
+/// Compile dependencies are evaluated as follows:
+/// 
+///   * Resources of type [MvnRepoDependency] are obtained from providers
+///     associated via `Supply` and `Expose` that are not projects. These
+///     resources are Maven repository dependencies declared by the
+///     project itself.
+/// 
+///   * Projects associated via `Supply` and `Expose` dependencies
+///     are then queried for resources of type [MvnRepoDependency]
+///     using their `Supply` dependencies. This yields the Maven
+///     repository coordinates of projects required for compilation.
+/// 
+/// Runtime dependencies are evaluated as follows:
+/// 
+///   * Resources of type [MvnRepoDependency] are obtained from providers
+///     associated via `Reveal` that are not projects. These
+///     resources represent Maven repository dependencies declared by
+///     the project itself.
+/// 
+///   * Projects associated via `Reveal` dependencies are then queried for
+///     resources of type [MvnRepoDependency] using their `Supply`
+///     dependencies. This yields the Maven repository coordinates of 
+///     projects required at runtime.
 ///
-/// In addition to the requests for [PomFile], this generator also handles
-/// requests for [MvnRepoDependency]. It returns the coordinates derived
-/// from the properties [MvnProperties#GroupId], [MvnProperties#ArtifactId]
-/// and [Project.Properties#Version] (see above). This reflects that a
-/// project that has a POM file is obviously intended to be released as a
-/// maven artifact. Other projects in a multi-project build will therefore
-/// eventually depend on the maven artifact to be released.
+/// The resulting model is passed to [#adaptPom] for project specific
+/// customization before it is written to the POM file.
+///
+/// In addition to handling [PomFile] requests, this generator also 
+/// responds to requests for [MvnRepoDependencies][MvnRepoDependency].
+/// In this case, it returns Maven coordinates derived from the
+/// properties [MvnProperties#GroupId], [MvnProperties#ArtifactId]
+/// and [Project.Properties#Version] (see above). This reflects the
+/// assumption that a project with a POM file is intended to be released
+/// as a Maven artifact. Other projects in a multi-project build will
+/// therefore ultimately depend on the Maven artifact to be released.
 ///
 public class PomFileGenerator extends AbstractGenerator {
 

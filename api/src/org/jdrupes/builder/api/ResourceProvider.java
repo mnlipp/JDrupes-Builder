@@ -20,10 +20,14 @@ package org.jdrupes.builder.api;
 
 import java.util.stream.Stream;
 
-/// This interface defines the access to a provider's resources.
-/// Resources are provided by calling [resources][#resources] with a
-/// [ResourceRequest]. The interface also serves as a factory for
-/// creating the resource requests for this invocation.
+/// This interface defines access to a resource provider, in particular,
+/// to the provider's resources. Resources are accessed by invoking
+/// [resources][#resources] with a [ResourceRequest]. In addition, this
+/// interface serves as a factory for creating the [ResourceRequest]
+/// instances used for these invocations.
+/// 
+/// Note that this interface specifies how a provider is invoked. Resource
+/// provider implementations must implement the [ResourceProviderSpi].
 ///
 public interface ResourceProvider {
 
