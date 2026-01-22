@@ -182,14 +182,25 @@ public class PomFileGenerator extends AbstractGenerator {
         model.setVersion(project().get(Version));
         model.setName(project().name());
 
-        // Get dependencies
-        var runtimeDeps = newResource(MvnRepoDependenciesType)
-            .addAll(project().providers(Consume, Reveal).without(this)
-                .resources(of(MvnRepoDependencyType)));
+        // Get declared repository dependencies. These are the
+        // explicitly declared dependencies and the repository
+        // dependencies supplied by the projects on the compile
+        // or runtime classpath.
         var compilationDeps = newResource(MvnRepoDependenciesType)
             .addAll(project().providers(Supply, Expose).without(this)
-                .resources(of(MvnRepoDependencyType)));
+                .without(Project.class).resources(of(MvnRepoDependencyType)))
+            .addAll(project().providers()
+                .filter(p -> p instanceof Project).select(Supply, Expose)
+                .flatMap(p -> p.resources(of(MvnRepoDependencyType)
+                    .using(Supply))));
         addDependencies(model, compilationDeps, "compile");
+        var runtimeDeps = newResource(MvnRepoDependenciesType)
+            .addAll(project().providers(Reveal).without(this)
+                .without(Project.class).resources(of(MvnRepoDependencyType)))
+            .addAll(project().providers()
+                .filter(p -> p instanceof Project).select(Reveal)
+                .flatMap(p -> p.resources(of(MvnRepoDependencyType)
+                    .using(Supply))));
         addDependencies(model, runtimeDeps, "runtime");
 
         // Adapt
