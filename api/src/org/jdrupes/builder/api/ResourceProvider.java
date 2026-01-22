@@ -48,18 +48,16 @@ public interface ResourceProvider {
 
     /// Create a new request for the given resource.
     ///
-    /// @param <T> the generic type
+    /// @param <T> the resource type
     /// @param type the type
     /// @return the resource request
     ///
     @SuppressWarnings("PMD.ShortMethodName")
     <T extends Resource> ResourceRequest<T> of(ResourceType<? extends T> type);
 
-    /// Creates a request for a resource of the given type in a
-    /// container of type [Resources]. The recommended usage pattern
-    /// is to import this method statically.
+    /// Create a new request for the given resource type.
     ///
-    /// @param <T> the generic type
+    /// @param <T> the resource type
     /// @param requested the requested
     /// @return the resource request
     ///
