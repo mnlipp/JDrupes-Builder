@@ -15,7 +15,7 @@ have a dependency on another project (the project under test), add a
 [Generator](javadoc/org/jdrupes/builder/api/Generator.html) that provides
 the code for the tests, and another generator that provides 
 [TestResult](javadoc/org/jdrupes/builder/api/TestResult.html)s.
-The test results are the only resource supplied by the test project, all
+The test results are the only resource supplied by the test project; all
 other resources (test classes etc.) are consumed only.
 
 However, it has become a common practice to combine the sources for
@@ -43,15 +43,15 @@ As the name suggests, such a project is conceptually merged with the project
 under test. The project under test must be the test project's
 [parent project](javadoc/org/jdrupes/builder/api/Project.html#parentProject())
 and both projects share the same directory, i.e. the test project must not
-specify a directory of its own.
+specify its own directory.
 
 The test project specifies generators for artifacts just like any other
 project. As mentioned in the first section, test projects usually do not
 supply (or expose) any resources. Therefore adding a
 [Generator](javadoc/org/jdrupes/builder/api/Generator.html) to a project with
 [generator](javadoc/org/jdrupes/builder/api/Project.html#generator(org.jdrupes.builder.api.Generator))
-adds a dependency with intend
-[Consume](javadoc/org/jdrupes/builder/api/Intend.html#Consume)
+adds a dependency with intent
+[Consume](javadoc/org/jdrupes/builder/api/Intent.html#Consume)
 (instead of `Supply` as it is the case for regular projects).
 
 This special handling of `generate` corresponds to the behavior of IDEs,
@@ -61,7 +61,7 @@ classes from being unintentionally provided by the test project. The
 drawback is that the provider for the
 [TestResult](javadoc/org/jdrupes/builder/api/TestResult.html)s cannot be
 added with method `generator`, but instead must be added as a dependency with
-intend [Supply](javadoc/org/jdrupes/builder/api/Intend.html#Supply).
+intent [Supply](javadoc/org/jdrupes/builder/api/Intent.html#Supply).
 
 A typical configuration for the Java compiler that takes merged test
 projects into account might look like this:
@@ -102,5 +102,5 @@ the project is marked as a merged test project.
 The default class path used by the
 [JUnitTestRunner](javadoc/org/jdrupes/builder/junit/JUnitTestRunner.html) is
 also affected by the test project being marked as a merged test project.
-The test runner automatically includes resources used by the project under
-test as if they were resources of the test project.
+The test runner automatically includes the project under test's resources
+as if they were resources of the test project.
