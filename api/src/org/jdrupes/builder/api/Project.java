@@ -26,8 +26,6 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.function.Function;
 
-import javax.naming.NameClassPair;
-
 /// [Project]s are used to structure the build configuration. Every build
 /// configuration has a single root project and may contain sub-projects.
 /// The root project serves as the entry point for the build. Resources
