@@ -30,7 +30,7 @@ package org.jdrupes.builder.api;
 ///  2. They generate resources from explicitly specified resources.
 ///     In this case, methods for adding inputs should be named
 ///     `add(Type... values)` for enumerated values and
-///     `addXxx(Stream<Type> values)` for streams. (We cannot defines
+///     `addXxx(Stream<Type> values)` for streams. (We cannot define
 ///     a generic `add(Stream<T>)` method due to type erasure.)
 ///
 ///  3. They generate resources from resources actively obtained from
@@ -44,7 +44,7 @@ public interface Generator extends ResourceProvider {
 
     /// Returns the generator's name.
     ///
-    /// @return the string
+    /// @return the name
     ///
     String name();
 

@@ -29,7 +29,6 @@ import org.jdrupes.builder.api.ResourceRequest;
 import org.jdrupes.builder.api.ResourceType;
 import static org.jdrupes.builder.api.ResourceType.CleanlinessType;
 
-// TODO: Auto-generated Javadoc
 /// A base implementation of a [Generator].
 ///
 public abstract class AbstractGenerator extends AbstractProvider

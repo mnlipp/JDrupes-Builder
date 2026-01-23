@@ -24,7 +24,7 @@ import java.util.function.Consumer;
 import java.util.function.Predicate;
 import java.util.stream.Stream;
 
-/// The interface BoundResourceQuery.
+/// The interface ProviderSelection.
 ///
 public interface ProviderSelection {
 

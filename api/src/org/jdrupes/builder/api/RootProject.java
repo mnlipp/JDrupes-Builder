@@ -20,7 +20,6 @@ package org.jdrupes.builder.api;
 
 import java.util.stream.Stream;
 
-// TODO: Auto-generated Javadoc
 /// A marker interface to identify the root project.
 ///
 public interface RootProject extends Project {
