@@ -61,7 +61,8 @@ public interface BuildContext {
     ///   3. the file `.jdbld/jdbld.properties` in the user's home directory
     ///
     /// @param name the name
+    /// @param defaultValue the default value
     /// @return the string
     ///
-    String property(String name);
+    String property(String name, String defaultValue);
 }

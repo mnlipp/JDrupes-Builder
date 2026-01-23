@@ -98,8 +98,9 @@ public class DefaultBuildContext implements BuildContext {
     }
 
     @Override
-    public String property(String name) {
-        return LauncherSupport.jdbldProperties().getProperty(name);
+    public String property(String name, String defaultValue) {
+        return LauncherSupport.jdbldProperties().getProperty(name,
+            defaultValue);
     }
 
 }

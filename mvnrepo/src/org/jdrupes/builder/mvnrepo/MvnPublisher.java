@@ -488,12 +488,12 @@ public class MvnPublisher extends AbstractGenerator {
         if (signerBuilder != null) {
             return;
         }
-        var keyRingFileName = Optional.ofNullable(signingKeyRing)
-            .orElse(project().context().property("signing.secretKeyRingFile"));
+        var keyRingFileName = Optional.ofNullable(signingKeyRing).orElse(
+            project().context().property("signing.secretKeyRingFile", null));
         var keyId = Optional.ofNullable(signingKeyId)
-            .orElse(project().context().property("signing.keyId"));
+            .orElse(project().context().property("signing.keyId", null));
         var passphrase = Optional.ofNullable(signingPassword)
-            .orElse(project().context().property("signing.password"))
+            .orElse(project().context().property("signing.password", null))
             .toCharArray();
         if (keyRingFileName == null || keyId == null || passphrase == null) {
             log.warning(() -> "Cannot sign artifacts: properties not set.");
@@ -571,9 +571,9 @@ public class MvnPublisher extends AbstractGenerator {
 
         });
         var user = Optional.ofNullable(repoUser)
-            .orElse(project().context().property("mvnrepo.user"));
+            .orElse(project().context().property("mvnrepo.user", ""));
         var password = Optional.ofNullable(repoPass)
-            .orElse(project().context().property("mvnrepo.password"));
+            .orElse(project().context().property("mvnrepo.password", ""));
         var repo = new RemoteRepository.Builder("mine", "default",
             snapshotUri.toString())
                 .setAuthentication(new AuthenticationBuilder()
@@ -625,9 +625,9 @@ public class MvnPublisher extends AbstractGenerator {
         try (var client = HttpClient.newHttpClient()) {
             var boundary = "===" + System.currentTimeMillis() + "===";
             var user = Optional.ofNullable(repoUser)
-                .orElse(project().context().property("mvnrepo.user"));
+                .orElse(project().context().property("mvnrepo.user", ""));
             var password = Optional.ofNullable(repoPass)
-                .orElse(project().context().property("mvnrepo.password"));
+                .orElse(project().context().property("mvnrepo.password", ""));
             var token = new String(Base64.encode((user + ":" + password)
                 .getBytes(StandardCharsets.UTF_8)), StandardCharsets.UTF_8);
             var effectiveUri = uploadUri;
