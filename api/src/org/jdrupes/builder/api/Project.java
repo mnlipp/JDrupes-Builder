@@ -26,18 +26,21 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.function.Function;
 
-/// [Project]s are used to structure the build configuration. Every
-/// build configuration has a single root project and can have
-/// sub-projects. The root project is the entry point for the build.
-/// The resources provided by the builder are usually provided by the
-/// root project that serves as an entry point for the build configuration.
+import javax.naming.NameClassPair;
+
+/// [Project]s are used to structure the build configuration. Every build
+/// configuration has a single root project and may contain sub-projects.
+/// The root project serves as the entry point for the build. Resources
+/// provided by the builder are typically provided by the root project,
+/// which acts as the central access point of the build configuration.
 ///
 /// Projects are [ResourceProvider]s that obtain resources from related
-/// [ResourceProvider]s. Projects can be thought of as routers for
-/// resources with their behavior depending on the intended usage of the
-/// resources from the related providers. The intended usage is specified
-/// by the [Intent] that attributes the relationship between a project
-/// and its related resource providers.
+/// [ResourceProvider]s. Conceptually, a project acts as a router for
+/// requests and resources, with its behavior depending on the intended
+/// usage of the resources obtained from the providers registered as
+/// dependencies. The intended usage is indicated by the [Intent] that
+/// attributes the relationship between a project and its related
+/// resource providers.
 ///
 /// ## Attributing relationships to providers
 ///
@@ -45,62 +48,84 @@ import java.util.function.Function;
 ///
 /// ![Intent Supply](supply-demo.svg)
 ///
-/// Resources from a provider added with [Intent#Supply] are provided
-/// by the project to entities that depend on the project. [Intent#Supply]
-/// implies that the resources are genuinely generated for the project
-/// (typically by a [Generator] that belongs to the project).
+/// Resources from a provider added with [Intent#Supply] are provided by
+/// the project to entities that depend on it. [Intent#Supply] implies
+/// that the resources are generated specifically for the project,
+/// typically by a [Generator] that belongs to the project.
 ///
 /// ### Intent Consume and Reveal
 ///
 /// ![Intent Consume](consume-demo.svg)
 ///
 /// Resources from a provider added with [Intent#Consume] or
-/// [Intent#Reveal] are usually only used by a project's generators.
-/// However, if a provider has been added with [Intent#Reveal], its
-/// resources are provided by the project if explicitly included in
-/// the request. 
-/// 
+/// [Intent#Reveal] are typically used only by a project's generators.
+/// If a provider is added with [Intent#Reveal], its resources are also
+/// provided by the project when they are explicitly included in a
+/// request.
+///
 /// ### Intent Expose
 ///
 /// ![Intent Expose](expose-demo.svg)
 ///
 /// Resources from a provider added with [Intent#Expose] (typically
-/// another project) are used by a project's generators and provided
-/// by the project to entities that depend on the project.
+/// another project) are used by a project's generators and are also
+/// provided by the project to entities that depend on it.
 ///
 /// ### Intent Forward
 ///
 /// ![Intent Forward](forward-demo.svg)
 ///
 /// Resources from a provider added with [Intent#Forward] (typically
-/// another project) are provided by the project to entities that
-/// depend on the project. They are not intended to be used by a
-/// project's generators, although these cannot be prevented from
-/// accessing them through [Project#providers()].
+/// another project) are provided by the project to entities that depend
+/// on it. These resources are not intended to be used by the project's
+/// generators. This cannot be enforced, however, as generators may still
+/// access them via [Project#providers()].
 ///
 /// ## Behavior as resource provider
-/// 
-/// In its role as [ResourceProvider], a [Project] provides all
-/// [resources][ResourceProvider#resources] that are provided to the
-/// project by its dependencies with [Intent#Forward], [Intent#Expose],
-/// and [Intent#Supply]. As explained above, resources from
-/// dependencies with [Intent#Consume] are only available to a project's
-/// generators and are therefore usually not provided by the [Project].
-/// 
-/// However, if the container type of the request implements `AllResources`
-/// the project will also forward the request to dependencies with
-/// [Intent#Consume].
-/// 
-/// For example, such a request is needed to clean the build properly
-/// with a request for [Cleanliness]. A "normal" request for
-/// `Resources<Cleanliness>` is not forwarded to providers with
-/// [Intent#Consume]. Only a request for `AllResources<Cleanliness>`
-/// will therefore clean everything.
-/// 
-/// ## Factory methods
 ///
-/// As a convenience, the interface also defines factory methods
-/// for objects used for defining the project.
+/// In its role as a [ResourceProvider], a [Project]
+/// [provides resources][ResourceProvider#resources] obtained from its
+/// dependencies. A [ResourceRequest] controls to which dependencies a
+/// request is forwarded by including the respective [Intent]s in the
+/// set returned by [ResourceRequest#uses].
+///
+/// Concepts from other build tools, such as Gradle’s dependency
+/// configurations, can be mapped to resource requests for classpath
+/// elements using sets of [Intent]s as follows:
+///
+/// <table class="simple-table">
+///   <thead>
+///     <tr>
+///       <th style="white-space: nowrap;">Intent \ Config.</th>
+///       <th>Api</th>
+///       <th>Implementation</th>
+///       <th>Compile only</th>
+///       <th>Runtime only</th>
+///     </tr>
+///   </thead>
+///   <tbody>
+///     <tr><td>Supply</td><td>X</td><td>X</td><td></td><td></td></tr>
+///     <tr><td>Consume</td><td></td><td></td><td>X</td><td></td></tr>
+///     <tr><td>Reveal</td><td></td><td>X</td><td></td><td></td></tr>
+///     <tr><td>Expose</td><td>X</td><td>X</td><td></td><td></td></tr>
+///     <tr><td>Forward</td><td></td><td></td><td></td><td>X</td></tr>
+///   </tbody>
+/// </table>
+///
+/// To ensure consistent results, a project adjusts a request before
+/// forwarding it to a dependency of type [Project] (typically a
+/// sub-project). If the request uses `Consume` or `Expose`, `Consume`
+/// is removed and `Expose` and `Supply` are added. The reason is that,
+/// regardless of how a sub-project contributes to another project, the
+/// resources it contributes are always those that are part of its API.
+///
+/// To avoid misuse of [Intent]s, all intents are removed from a request
+/// before it is forwarded to a dependency that is not a project.
+///
+/// ## Factory method for resources
+///
+/// As a convenience, this interface also defines a shortcut for creating
+/// [Resource]s.
 ///
 /// @startuml supply-demo.svg
 /// object "project: Project" as project

@@ -73,6 +73,9 @@ The result of such a request includes the classes created by the project
 together with the resources used to create them. For a project serving
 as a build dependency this result constitutes the project's API.
 
+More about using intents together with requests can be found in the class
+documentation of [Project](javadoc/org/jdrupes/builder/api/Project.html).
+
 ## Requesting resources from the command line
 
 Specifying resource types as Java types works well within the build
