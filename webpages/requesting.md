@@ -88,7 +88,7 @@ when invoking the builder. This is shown in the sample project:
 
 ```java
         // Command arguments
-        commandAlias("build", requestFor(AppJarFile.class));
+        commandAlias("build", of(AppJarFile.class).usingAll());
 ```
  
 Note that the command argument "`clean`" is predefined and can always
