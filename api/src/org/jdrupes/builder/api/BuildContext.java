@@ -26,8 +26,8 @@ import org.apache.commons.cli.CommandLine;
 ///
 public interface BuildContext {
 
-    /// The relative path to the JDrupes Builder directory from a 
-    /// project directory.
+    /// Returns the relative path from a project directory to
+    /// the JDrupes Builder directory.
     ///
     /// @return the path
     ///
@@ -35,7 +35,7 @@ public interface BuildContext {
 
     /// The command line as processed by Apache Commons CLI.
     ///
-    /// @return the string[]
+    /// @return the parsed command line
     ///
     CommandLine commandLine();
 
@@ -53,7 +53,7 @@ public interface BuildContext {
     <T extends Resource> Stream<T> resources(ResourceProvider provider,
             ResourceRequest<T> request);
 
-    /// Return the value of the given property. Properties are defined by
+    /// Returns the value of the given property. Properties are defined by
     /// (in order of precedence):
     ///   1. command line options
     ///   2. the file `.jdbld.properties` in the directory of the

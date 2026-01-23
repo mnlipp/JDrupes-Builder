@@ -48,8 +48,8 @@ import javax.naming.NameClassPair;
 ///
 /// ![Intent Supply](supply-demo.svg)
 ///
-/// Resources from a provider added with [Intent#Supply] are provided by
-/// the project to entities that depend on it. [Intent#Supply] implies
+/// Resources from a provider added with [Intent#Supply] are made available
+/// by the project to entities that depend on it. [Intent#Supply] implies
 /// that the resources are generated specifically for the project,
 /// typically by a [Generator] that belongs to the project.
 ///
@@ -247,7 +247,7 @@ public interface Project extends ResourceProvider {
     /// Adds a provider to the project that generates resources which
     /// are then provided by the project. For "normal" projects, the
     /// generated resources are assumed to be provided to dependents of
-    /// the project, so the invocation is short for  
+    /// the project, so the invocation is shorthand for  
     /// `dependency(Intent.Supply, generator)`.
     ///
     /// For projects that implement [MergedTestProject], generated resources
@@ -330,14 +330,14 @@ public interface Project extends ResourceProvider {
     ///
     ProviderSelection providers();
     
-    /// Return a provider selection that is restricted to the given intends.
+    /// Return a provider selection that is restricted to the given intents.
     ///
-    /// @param intends the intends
+    /// @param intents the intents
     /// @return the provider selection
     ///
-    ProviderSelection providers(Set<Intent> intends);
+    ProviderSelection providers(Set<Intent> intents);
     
-    /// Return a provider selection that is restricted to the given intends.
+    /// Return a provider selection that is restricted to the given intents.
     ///
     /// @param intent the intent
     /// @param intents the intents
@@ -373,9 +373,9 @@ public interface Project extends ResourceProvider {
     /// property is not set, the parent project's value is returned.
     /// If neither is set, the property's default value is returned.
     ///
-    /// @param <T> the generic type
+    /// @param <T> the property type
     /// @param property the property
-    /// @return the t
+    /// @return the property
     ///
     <T> T get(PropertyKey property);
    
@@ -383,10 +383,10 @@ public interface Project extends ResourceProvider {
     /// [ResourceFactory#create] with the current project as first argument
     /// and the given arguments appended.
     ///
-    /// @param <T> the generic type
+    /// @param <T> the resource type
     /// @param type the type
     /// @param args the args
-    /// @return the t
+    /// @return the resource
     ///
     default <T extends Resource> T newResource(ResourceType<T> type,
             Object... args) {
@@ -394,7 +394,7 @@ public interface Project extends ResourceProvider {
     }
 
     /// Convenience method for reading the content of a file into a
-    /// String. The path is resolved against the project's directory.
+    /// [String]. The path is resolved against the project's directory.
     ///
     /// @param path the path
     /// @return the string
