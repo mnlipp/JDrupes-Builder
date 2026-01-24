@@ -69,7 +69,7 @@ public class ProjectPreparation {
             });
 
             project.generator(LibraryGenerator::new)
-                .from(project.providers().select(Supply))
+                .addFrom(project.providers().select(Supply))
                 .attributes(Map.of(
                     IMPLEMENTATION_TITLE, project.name(),
                     IMPLEMENTATION_VERSION, project.get(Version),

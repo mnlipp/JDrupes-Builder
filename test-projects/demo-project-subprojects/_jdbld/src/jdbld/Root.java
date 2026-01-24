@@ -28,7 +28,7 @@ public class Root extends AbstractProject implements RootProject {
 
         // Provide app jar
         generator(new UberJarGenerator(this)
-            .from(providers().select(Expose))
+            .addFrom(providers().select(Expose))
             .mainClass("jdbld.demo.subprojects.app")
             .destination(buildDirectory().resolve(Path.of("app"))));
 

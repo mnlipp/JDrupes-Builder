@@ -100,8 +100,8 @@ public class LibraryGenerator extends JarGenerator
     /// @return the jar generator
     ///
     @Override
-    public LibraryGenerator from(ResourceProvider... providers) {
-        from(Stream.of(providers));
+    public LibraryGenerator addFrom(ResourceProvider... providers) {
+        addFrom(Stream.of(providers));
         return this;
     }
 
@@ -112,7 +112,7 @@ public class LibraryGenerator extends JarGenerator
     /// @return the jar generator
     ///
     @Override
-    public LibraryGenerator from(Stream<ResourceProvider> providers) {
+    public LibraryGenerator addFrom(Stream<ResourceProvider> providers) {
         this.providers.add(providers.filter(p -> !p.equals(this)));
         return this;
     }

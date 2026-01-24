@@ -43,7 +43,7 @@ public class ProjectPreparation {
             project.dependency(Consume, JavaResourceCollector::new)
                 .add(Path.of("resources"), "**/*");
             project.generator(LibraryGenerator::new)
-                .from(project.providers().select(Consume));
+                .addFrom(project.providers().select(Consume));
         }
     }
 

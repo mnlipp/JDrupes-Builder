@@ -66,8 +66,8 @@ public class JavaExecutor extends AbstractProvider
     /// @return the jar generator
     ///
     @Override
-    public JavaExecutor from(ResourceProvider... providers) {
-        from(Stream.of(providers));
+    public JavaExecutor addFrom(ResourceProvider... providers) {
+        addFrom(Stream.of(providers));
         return this;
     }
 
@@ -78,7 +78,7 @@ public class JavaExecutor extends AbstractProvider
     /// @return the jar generator
     ///
     @Override
-    public JavaExecutor from(Stream<ResourceProvider> providers) {
+    public JavaExecutor addFrom(Stream<ResourceProvider> providers) {
         this.providers.add(providers.filter(p -> !p.equals(this)));
         return this;
     }
@@ -104,7 +104,8 @@ public class JavaExecutor extends AbstractProvider
     @Override
     protected <T extends Resource> Stream<T>
             doProvide(ResourceRequest<T> requested) {
-        if (!requested.accepts(ExecResultType)) {
+        if (!requested.accepts(ExecResultType)
+            || requested.name().map(n -> !n.equals(name())).orElse(false)) {
             return Stream.empty();
         }
 

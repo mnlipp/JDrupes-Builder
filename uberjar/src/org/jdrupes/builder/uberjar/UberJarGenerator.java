@@ -104,7 +104,7 @@ import static org.jdrupes.builder.mvnrepo.MvnRepoTypes.*;
 /// ```
 /// This requests the same providers from the project as 
 /// [Project.resources][Project#resources] does, but allows the uber jar
-/// generator's [from] method to filter out the uber jar
+/// generator's [addFrom] method to filter out the uber jar
 /// generator itself from the providers. The given intents can
 /// vary depending on the requirements.
 ///

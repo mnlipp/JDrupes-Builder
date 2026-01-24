@@ -1,6 +1,6 @@
 /*
  * JDrupes Builder
- * Copyright (C) 2025 Michael N. Lipp
+ * Copyright (C) 2025, 2026 Michael N. Lipp
  * 
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as
@@ -29,7 +29,7 @@ public interface ResourceRetriever {
     /// @param providers the provider to add
     /// @return the resource retriever
     ///
-    ResourceRetriever from(ResourceProvider... providers);
+    ResourceRetriever addFrom(ResourceProvider... providers);
 
     /// Adds the given providers as sources for resources. The stream
     /// must not be terminated before the generators' provide method
@@ -38,6 +38,6 @@ public interface ResourceRetriever {
     /// @param providers the providers to retrieve resources from
     /// @return the resource retriever
     ///
-    ResourceRetriever from(Stream<ResourceProvider> providers);
+    ResourceRetriever addFrom(Stream<ResourceProvider> providers);
 
 }

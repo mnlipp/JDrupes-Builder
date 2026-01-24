@@ -35,8 +35,8 @@ package org.jdrupes.builder.api;
 ///
 ///  3. They generate resources from resources actively obtained from
 ///     [ResourceProvider]s. In this case, methods for adding providers
-///     should be named `from(...)`. This can be enforced by implementing
-///     [ResourceRetriever].
+///     should be named `addFrom(...)`. This can be enforced by
+///     implementing [ResourceRetriever].
 ///
 /// All generators must handle requests for [Cleanliness].
 ///
