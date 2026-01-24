@@ -49,6 +49,8 @@ public class DefaultFileResource extends ResourceObject
         if (!path.isAbsolute()) {
             throw new BuildException("Path must be absolute, is " + path);
         }
+        var relPath = Path.of("").toAbsolutePath().relativize(path);
+        name(relPath.equals(Path.of("")) ? "." : relPath.toString());
         this.path = path;
     }
 
@@ -112,12 +114,5 @@ public class DefaultFileResource extends ResourceObject
         }
         return (obj instanceof FileResource other)
             && Objects.equals(path, other.path());
-    }
-
-    @Override
-    public String toString() {
-        var relPath = Path.of("").toAbsolutePath().relativize(path);
-        return type() + ": " + (relPath.equals(Path.of("")) ? "."
-            : relPath.toString()) + " (" + asOfLocalized() + ")";
     }
 }

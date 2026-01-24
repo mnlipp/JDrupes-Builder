@@ -18,6 +18,8 @@
 
 package org.jdrupes.builder.api;
 
+import java.util.Optional;
+
 /// Provides the results from running tests.
 ///
 public interface TestResult extends Resource {
@@ -32,7 +34,8 @@ public interface TestResult extends Resource {
     ///
     /// @return the name
     ///
-    String name();
+    @Override
+    Optional<String> name();
 
     /// Returns the number of executed tests.
     ///

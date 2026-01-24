@@ -32,7 +32,6 @@ public class DefaultTestResult extends ResourceObject implements TestResult {
 
     private final Project project;
     private final ResourceProvider provider;
-    private final String name;
     private final long executed;
     private final long failed;
 
@@ -47,9 +46,9 @@ public class DefaultTestResult extends ResourceObject implements TestResult {
     ///
     protected DefaultTestResult(Project project, ResourceProvider provider,
             String name, long executed, long failed) {
+        name(name);
         this.project = project;
         this.provider = provider;
-        this.name = name;
         this.executed = executed;
         this.failed = failed;
     }
@@ -81,11 +80,6 @@ public class DefaultTestResult extends ResourceObject implements TestResult {
     }
 
     @Override
-    public String name() {
-        return name;
-    }
-
-    @Override
     public long executed() {
         return executed;
     }
@@ -99,7 +93,7 @@ public class DefaultTestResult extends ResourceObject implements TestResult {
     public int hashCode() {
         final int prime = 31;
         int result = super.hashCode();
-        result = prime * result + Objects.hash(name, provider);
+        result = prime * result + Objects.hash(provider);
         return result;
     }
 
@@ -115,8 +109,7 @@ public class DefaultTestResult extends ResourceObject implements TestResult {
             return false;
         }
         DefaultTestResult other = (DefaultTestResult) obj;
-        return Objects.equals(name, other.name)
-            && Objects.equals(provider, other.provider);
+        return Objects.equals(provider, other.provider);
     }
 
     /// To string.
@@ -132,6 +125,6 @@ public class DefaultTestResult extends ResourceObject implements TestResult {
             details = executed() + " passed";
         }
         return TestResult.class.getSimpleName() + " from " + project().name()
-            + " (" + name() + "): " + details;
+            + " (" + name().get() + "): " + details;
     }
 }

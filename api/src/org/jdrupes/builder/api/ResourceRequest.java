@@ -19,6 +19,7 @@
 package org.jdrupes.builder.api;
 
 import java.util.EnumSet;
+import java.util.Optional;
 import java.util.Set;
 
 /// Represents a request for [Resource]s of a specified type, to be
@@ -30,19 +31,30 @@ import java.util.Set;
 ///
 /// @param <T> the requested type
 ///
-public interface ResourceRequest<T extends Resource> {
-
-    /// Create a copy with the same type but without intents.
-    ///
-    /// @return the resource request
-    ///
-    ResourceRequest<T> copyWithType();
+public interface ResourceRequest<T extends Resource> extends Cloneable {
 
     /// Return the requested type.
     ///
     /// @return the resource type
     ///
     ResourceType<? extends T> type();
+
+    /// Return a new resource request for a resource with the given name.
+    /// 
+    /// Support for resource names is optional and provider-specific.
+    /// Expect the name to be ignored if not explicitly supported for
+    /// a given resource type and provider.
+    ///
+    /// @param name the name
+    /// @return the resource request
+    ///
+    ResourceRequest<T> withName(String name);
+
+    /// Returns the name that the requested resource should have.
+    ///
+    /// @return the name if set
+    ///
+    Optional<String> name();
 
     /// Return a new resource request that uses project providers with
     /// the given intents.

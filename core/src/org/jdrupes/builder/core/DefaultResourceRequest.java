@@ -21,6 +21,7 @@ package org.jdrupes.builder.core;
 import java.util.Arrays;
 import java.util.EnumSet;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 import org.jdrupes.builder.api.Intent;
@@ -31,52 +32,64 @@ import org.jdrupes.builder.api.ResourceType;
 
 /// An implementation of [ResourceRequest]. 
 ///
-/// @param <T> the generic type
+/// @param <T> the resource type
 ///
 public class DefaultResourceRequest<T extends Resource>
         implements ResourceRequest<T> {
 
     private final ResourceType<? extends T> type;
-    private final Project[] queried;
+    private Project[] queried;
     private Set<Intent> uses;
+    private String name;
 
     /// Instantiates a new resource request without any intents.
     ///
     /// @param type the requested type
     ///
     /* default */ DefaultResourceRequest(ResourceType<? extends T> type) {
-        this(type, EnumSet.noneOf(Intent.class), new Project[0]);
-    }
-
-    @SuppressWarnings("PMD.UseVarargs")
-    private DefaultResourceRequest(ResourceType<? extends T> type,
-            Set<Intent> using, Project[] queried) {
-        Objects.requireNonNull(queried);
         this.type = Objects.requireNonNull(type);
-        uses = Objects.requireNonNull(using);
-        this.queried = Objects.requireNonNull(queried);
+        uses = EnumSet.noneOf(Intent.class);
+        queried = new Project[0];
     }
 
     @Override
-    public ResourceRequest<T> copyWithType() {
-        return new DefaultResourceRequest<>(type(),
-            EnumSet.noneOf(Intent.class), queried);
-    }
-
-    @Override
-    public ResourceRequest<T> using(Set<Intent> intents) {
-        uses = Objects.requireNonNull(intents);
-        return this;
-    }
-
-    @Override
-    public Set<Intent> uses() {
-        return EnumSet.copyOf(uses);
+    @SuppressWarnings("unchecked")
+    public DefaultResourceRequest<T> clone() {
+        try {
+            // This class is immutable
+            return (DefaultResourceRequest<T>) super.clone();
+        } catch (CloneNotSupportedException e) {
+            throw new IllegalStateException(e);
+        }
     }
 
     @Override
     public ResourceType<? extends T> type() {
         return type;
+    }
+
+    @Override
+    public ResourceRequest<T> withName(String name) {
+        var result = clone();
+        result.name = name;
+        return result;
+    }
+
+    @Override
+    public Optional<String> name() {
+        return Optional.ofNullable(name);
+    }
+
+    @Override
+    public ResourceRequest<T> using(Set<Intent> intents) {
+        var result = clone();
+        result.uses = Objects.requireNonNull(intents);
+        return result;
+    }
+
+    @Override
+    public Set<Intent> uses() {
+        return EnumSet.copyOf(uses);
     }
 
     @Override
@@ -97,12 +110,14 @@ public class DefaultResourceRequest<T extends Resource>
     /* default */ DefaultResourceRequest<T> queried(Project project) {
         var newQueried = Arrays.copyOf(queried, queried.length + 1);
         newQueried[newQueried.length - 1] = Objects.requireNonNull(project);
-        return new DefaultResourceRequest<>(type(), uses, newQueried);
+        var result = clone();
+        result.queried = newQueried;
+        return result;
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(type, uses);
+        return Objects.hash(type, name, uses);
     }
 
     @Override
@@ -118,13 +133,16 @@ public class DefaultResourceRequest<T extends Resource>
         }
         DefaultResourceRequest<?> other = (DefaultResourceRequest<?>) obj;
         return Objects.equals(type, other.type)
+            && Objects.equals(name, other.name)
             && Objects.equals(uses, other.uses);
     }
 
     @Override
     public String toString() {
-        return "ResourceRequest<" + type + "> [" + uses.stream()
-            .map(Intent::toString).collect(Collectors.joining(", ")) + "]";
+        return "ResourceRequest<" + type + ">"
+            + name().map(n -> ":" + n).orElse("") + " [" + uses.stream()
+                .map(Intent::toString).collect(Collectors.joining(", "))
+            + "]";
     }
 
 }

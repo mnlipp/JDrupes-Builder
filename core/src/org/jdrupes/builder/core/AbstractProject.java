@@ -454,7 +454,7 @@ public abstract class AbstractProject extends AbstractProvider
         public RootProject resources(ResourceRequest<?>... requests) {
             for (int i = 0; i < requests.length; i++) {
                 if (requests[i].uses().isEmpty()) {
-                    requests[i] = requests[i].copyWithType().usingAll();
+                    requests[i] = requests[i].usingAll();
                 }
             }
             commands.put(name, new CommandData(projects, requests));

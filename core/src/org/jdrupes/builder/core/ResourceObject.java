@@ -1,6 +1,6 @@
 /*
  * JDrupes Builder
- * Copyright (C) 2025 Michael N. Lipp
+ * Copyright (C) 2025, 2026 Michael N. Lipp
  * 
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as
@@ -20,6 +20,7 @@ package org.jdrupes.builder.core;
 
 import java.lang.reflect.Proxy;
 import java.util.Objects;
+import java.util.Optional;
 import org.jdrupes.builder.api.Proxyable;
 import org.jdrupes.builder.api.Resource;
 import org.jdrupes.builder.api.ResourceType;
@@ -29,6 +30,8 @@ import org.jdrupes.builder.api.ResourceType;
 public abstract class ResourceObject implements Resource, Proxyable {
 
     private final ResourceType<?> type;
+    private String name;
+    private boolean isLocked;
 
     /// Create a new instance.
     ///
@@ -57,12 +60,34 @@ public abstract class ResourceObject implements Resource, Proxyable {
     }
 
     @Override
+    public Optional<String> name() {
+        return Optional.ofNullable(name);
+    }
+
+    /// Sets the name of the resource.
+    ///
+    /// @param name the name
+    /// @return the resource object
+    ///
+    public final ResourceObject name(String name) {
+        if (isLocked) {
+            throw new IllegalStateException(
+                "Name may only be set once immediately after creation.");
+        }
+        isLocked = true;
+        this.name = name;
+        return this;
+    }
+
+    @Override
     public int hashCode() {
-        return Objects.hash(type());
+        isLocked = true;
+        return Objects.hash(type(), name());
     }
 
     @Override
     public boolean equals(Object obj) {
+        isLocked = true;
         if (this == obj) {
             return true;
         }
@@ -70,11 +95,13 @@ public abstract class ResourceObject implements Resource, Proxyable {
             return false;
         }
         return (obj instanceof ResourceObject other)
-            && Objects.equals(type(), other.type());
+            && Objects.equals(type(), other.type())
+            && Objects.equals(name(), other.name());
     }
 
     @Override
     public String toString() {
-        return type().toString() + " (" + asOfLocalized() + ")";
+        return type() + name().map(n -> ":" + n).orElse("")
+            + " (" + asOfLocalized() + ")";
     }
 }

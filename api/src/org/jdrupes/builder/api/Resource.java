@@ -21,10 +21,11 @@ package org.jdrupes.builder.api;
 import java.time.Instant;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
+import java.util.Optional;
 
-/// Represents a resource handled by the builder.
+/// Represents a resource handled by the builder. Resources can have names
+/// that may be referenced in [ResourceRequest]s.
 ///
-@SuppressWarnings("PMD.ImplicitFunctionalInterface")
 public interface Resource {
 
     /// The instant at which this resource was created or last modified.
@@ -40,6 +41,12 @@ public interface Resource {
     /// @return the type
     ///
     ResourceType<?> type();
+
+    /// Returns the name of this resource if set.
+    ///
+    /// @return the optional
+    ///
+    Optional<String> name();
 
     /// Returns a localized string representation of the instant
     /// at which this resource was created or last modified.
