@@ -57,7 +57,8 @@ public abstract class AbstractProvider implements ResourceProvider {
     /// @param name the name
     /// @return the abstract provider
     ///
-    protected final AbstractProvider withName(String name) {
+    @Override
+    public final AbstractProvider withName(String name) {
         this.name = name;
         return this;
     }

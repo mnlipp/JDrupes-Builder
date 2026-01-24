@@ -37,6 +37,16 @@ public interface ResourceProvider {
     ///
     String name();
 
+    /// Sets the name of the provider. Following the usual pattern, the
+    /// method should be called `name`. However, this would conflict with
+    /// [Project#name()], and to maintain a fluent API, the latter takes
+    /// precedence.
+    ///
+    /// @param name the name
+    /// @return the abstract provider
+    ///
+    ResourceProvider withName(String name);
+
     /// Returns resources provided by this resource provider. Short for
     /// `context().resources(this, request)`.
     ///
@@ -45,6 +55,7 @@ public interface ResourceProvider {
     /// @return the stream
     ///
     default <T extends Resource> Stream<T>
+
             resources(ResourceRequest<T> requested) {
         return context().resources(this, requested);
     }
