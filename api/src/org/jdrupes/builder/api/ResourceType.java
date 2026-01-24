@@ -73,6 +73,11 @@ public class ResourceType<T extends Resource> {
     public static final ResourceType<TestResult> TestResultType
         = new ResourceType<>() {};
 
+    /// The resource type for [ExecResult].
+    @SuppressWarnings("PMD.FieldNamingConventions")
+    public static final ResourceType<ExecResult> ExecResultType
+        = new ResourceType<>() {};
+
     private final Class<T> type;
     private final ResourceType<?> containedType;
 

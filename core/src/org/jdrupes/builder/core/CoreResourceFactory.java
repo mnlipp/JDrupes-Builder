@@ -24,6 +24,7 @@ import java.util.Arrays;
 import java.util.Optional;
 import static java.util.function.Predicate.not;
 import java.util.stream.Collectors;
+import org.jdrupes.builder.api.ExecResult;
 import org.jdrupes.builder.api.FileResource;
 import org.jdrupes.builder.api.FileTree;
 import org.jdrupes.builder.api.Project;
@@ -83,6 +84,14 @@ public class CoreResourceFactory implements ResourceFactory {
                 (ResourceType<? extends TestResult>) type, project,
                 (ResourceProvider) args[0], (String) args[1], (long) args[2],
                 (long) args[3]));
+        }
+        if (ResourceType.ExecResultType.isAssignableFrom(type)
+            && type.rawType().getSuperclass() == null
+            && !addsMethod(ExecResult.class,
+                (Class<? extends ExecResult>) type.rawType())) {
+            return Optional.of((T) DefaultExecResult.createExecResult(
+                (ResourceType<? extends ExecResult>) type,
+                (ResourceProvider) args[0], (String) args[1], (int) args[2]));
         }
         if (Resources.class.isAssignableFrom(type.rawType())
             && type.rawType().getSuperclass() == null
