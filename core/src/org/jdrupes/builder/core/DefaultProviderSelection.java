@@ -99,20 +99,13 @@ public class DefaultProviderSelection implements ProviderSelection {
             resources(ResourceRequest<T> requested) {
         AtomicReference<ResourceRequest<T>> projectRequest
             = new AtomicReference<>();
-        AtomicReference<ResourceRequest<T>> othersRequest
-            = new AtomicReference<>();
         return select(requested.uses()).map(p -> {
             if (p instanceof Project) {
                 return project.context().resources(p,
                     projectRequest.updateAndGet(
                         r -> r != null ? r : forwardedRequest(requested)));
-            } else {
-                return project.context().resources(p,
-                    othersRequest.updateAndGet(
-                        // Clean using, ordinary providers don't care
-                        r -> r != null ? r
-                            : requested.using(EnumSet.noneOf(Intent.class))));
             }
+            return project.context().resources(p, requested);
         }).flatMap(s -> s);
     }
 

@@ -44,6 +44,10 @@ public interface BuildContext {
     /// evaluated asynchronously and cached. Only when the returned
     /// stream is terminated will the invocation block until the
     /// result from the provider becomes available.
+    /// 
+    /// To avoid duplicate invocations of a non-project provider,
+    /// any intends are removed from the request before such a
+    /// provider is invoked.
     ///
     /// @param <T> the resource type
     /// @param provider the provider

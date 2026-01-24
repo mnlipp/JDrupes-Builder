@@ -20,11 +20,13 @@ package org.jdrupes.builder.core;
 
 import java.nio.file.Path;
 import java.util.Arrays;
+import java.util.EnumSet;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.stream.Stream;
 import org.apache.commons.cli.CommandLine;
 import org.jdrupes.builder.api.BuildContext;
+import org.jdrupes.builder.api.Intent;
 import org.jdrupes.builder.api.Project;
 import org.jdrupes.builder.api.Resource;
 import org.jdrupes.builder.api.ResourceProvider;
@@ -81,7 +83,11 @@ public class DefaultBuildContext implements BuildContext {
             // there really being a loop.
             return ((AbstractProvider) provider).doProvide(requested);
         }
-        return cache.computeIfAbsent(new Key<>(provider, requested),
+        var req = requested;
+        if (!req.uses().isEmpty()) {
+            req = requested.using(EnumSet.noneOf(Intent.class));
+        }
+        return cache.computeIfAbsent(new Key<>(provider, req),
             k -> new FutureStream<T>(executor, k.provider(), k.request()))
             .stream();
     }
