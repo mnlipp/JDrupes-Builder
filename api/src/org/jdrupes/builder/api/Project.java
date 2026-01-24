@@ -377,19 +377,18 @@ public interface Project extends ResourceProvider {
     ///
     <T> T get(PropertyKey property);
    
-    /// Returns a new resource with the given type. Short for invoking
-    /// [ResourceFactory#create] with the current project as first argument
-    /// and the given arguments appended.
+    /// Convenience method to create a new resource. Short for invoking
+    /// [ResourceFactory#create] with the given type as first argument,
+    /// the current project as second argument and the remaining given
+    /// arguments appended.
     ///
     /// @param <T> the resource type
     /// @param type the type
-    /// @param args the args
+    /// @param args the arguments
     /// @return the resource
     ///
-    default <T extends Resource> T newResource(ResourceType<T> type,
-            Object... args) {
-        return ResourceFactory.create(type, this, args);
-    }
+    <T extends Resource> T newResource(ResourceType<T> type,
+            Object... args);
 
     /// Convenience method for reading the content of a file into a
     /// [String]. The path is resolved against the project's directory.

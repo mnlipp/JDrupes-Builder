@@ -201,12 +201,11 @@ public class MvnRepoLookup extends AbstractProvider
 
     private <T extends Resource> Stream<T> provideMvnDeps() {
         @SuppressWarnings("unchecked")
-        var boms = (Stream<T>) this.boms.stream().map(c -> ResourceFactory
-            .create(MvnRepoBomType, null, c));
+        var boms = (Stream<T>) this.boms.stream()
+            .map(c -> newResource(MvnRepoBomType, c));
         @SuppressWarnings("unchecked")
         var deps = (Stream<T>) coordinates.stream()
-            .map(c -> ResourceFactory.create(MvnRepoDependencyType, null,
-                c));
+            .map(c -> newResource(MvnRepoDependencyType, c));
         return Stream.concat(boms, deps);
     }
 
@@ -275,15 +274,13 @@ public class MvnRepoLookup extends AbstractProvider
         var depMgmt = new DependencyManagement();
         model.setDependencyManagement(depMgmt);
         boms.stream().forEach(c -> {
-            var mvnResource
-                = ResourceFactory.create(MvnRepoDependencyType, null, c);
+            var mvnResource = newResource(MvnRepoDependencyType, c);
             var dep = DependencyConverter.convert(mvnResource, "import");
             dep.setType("pom");
             depMgmt.addDependency(dep);
         });
         coordinates.forEach(c -> {
-            var mvnResource
-                = ResourceFactory.create(MvnRepoDependencyType, null, c);
+            var mvnResource = newResource(MvnRepoDependencyType, c);
             model.addDependency(
                 DependencyConverter.convert(mvnResource, "compile"));
         });

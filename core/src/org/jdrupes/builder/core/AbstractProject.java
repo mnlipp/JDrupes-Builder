@@ -52,8 +52,10 @@ import org.jdrupes.builder.api.Project;
 import org.jdrupes.builder.api.PropertyKey;
 import org.jdrupes.builder.api.ProviderSelection;
 import org.jdrupes.builder.api.Resource;
+import org.jdrupes.builder.api.ResourceFactory;
 import org.jdrupes.builder.api.ResourceProvider;
 import org.jdrupes.builder.api.ResourceRequest;
+import org.jdrupes.builder.api.ResourceType;
 import org.jdrupes.builder.api.RootProject;
 import org.jdrupes.builder.core.LauncherSupport.CommandData;
 
@@ -402,6 +404,12 @@ public abstract class AbstractProject extends AbstractProvider
     protected <T extends Resource> Stream<T>
             doProvide(ResourceRequest<T> request) {
         return providers().resources(request);
+    }
+
+    @Override
+    public <T extends Resource> T newResource(ResourceType<T> type,
+            Object... args) {
+        return ResourceFactory.create(type, this, args);
     }
 
     /// Define command, see [RootProject#commandAlias].
