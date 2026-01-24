@@ -350,6 +350,11 @@ public class JarGenerator extends AbstractGenerator {
             return Stream.empty();
         }
 
+        // Upgrade to most specific type to avoid duplicate generation
+        if (!requested.type().equals(jarType)) {
+            return (Stream<T>) context().resources(this, project().of(jarType));
+        }
+
         buildJar(jarResource);
         return Stream.of((T) jarResource);
     }

@@ -248,7 +248,8 @@ public class UberJarGenerator extends LibraryGenerator {
 
     @Override
     @SuppressWarnings({ "PMD.CollapsibleIfStatements", "unchecked",
-        "PMD.CloseResource", "PMD.UseTryWithResources" })
+        "PMD.CloseResource", "PMD.UseTryWithResources",
+        "PMD.CognitiveComplexity", "PMD.CyclomaticComplexity" })
     protected <T extends Resource> Stream<T>
             doProvide(ResourceRequest<T> requested) {
         if (!requested.accepts(AppJarFileType)
@@ -256,10 +257,26 @@ public class UberJarGenerator extends LibraryGenerator {
             return Stream.empty();
         }
 
+        // Maybe only delete
+        if (requested.accepts(CleanlinessType)) {
+            destination().resolve(jarName()).toFile().delete();
+            return Stream.empty();
+        }
+
         // Make sure mainClass is set for app jar
         if (requested.requires(AppJarFileType) && mainClass() == null) {
             throw new BuildException("Main class must be set for "
                 + name() + " in " + project());
+        }
+
+        // Upgrade to most specific type to avoid duplicate generation
+        if (mainClass() != null && !requested.type().equals(AppJarFileType)) {
+            return (Stream<T>) context()
+                .resources(this, project().of(AppJarFileType));
+        }
+        if (mainClass() == null && !requested.type().equals(JarFileType)) {
+            return (Stream<T>) context()
+                .resources(this, project().of(JarFileType));
         }
 
         // Prepare jar file
@@ -274,13 +291,6 @@ public class UberJarGenerator extends LibraryGenerator {
                 destDir.resolve(jarName()))
             : project().newResource(LibraryJarFileType,
                 destDir.resolve(jarName()));
-
-        // Maybe only delete
-        if (requested.accepts(CleanlinessType)) {
-            jarResource.delete();
-            return Stream.empty();
-        }
-
         try {
             buildJar(jarResource);
         } finally {
@@ -293,7 +303,6 @@ public class UberJarGenerator extends LibraryGenerator {
                     // Ignore, just trying to be nice.
                 }
             }
-
         }
         return Stream.of((T) jarResource);
     }

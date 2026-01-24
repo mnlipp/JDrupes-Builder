@@ -151,12 +151,29 @@ public class LibraryGenerator extends JarGenerator
     }
 
     @Override
-    @SuppressWarnings({ "PMD.CollapsibleIfStatements", "unchecked" })
+    @SuppressWarnings({ "PMD.CollapsibleIfStatements", "unchecked",
+        "PMD.CyclomaticComplexity" })
     protected <T extends Resource> Stream<T>
             doProvide(ResourceRequest<T> requested) {
         if (!requested.accepts(LibraryJarFileType)
             && !requested.accepts(CleanlinessType)) {
             return Stream.empty();
+        }
+
+        // Maybe only delete
+        if (requested.accepts(CleanlinessType)) {
+            destination().resolve(jarName()).toFile().delete();
+            return Stream.empty();
+        }
+
+        // Upgrade to most specific type to avoid duplicate generation
+        if (mainClass() != null && !requested.type().equals(AppJarFileType)) {
+            return (Stream<T>) context()
+                .resources(this, project().of(AppJarFileType));
+        }
+        if (mainClass() == null && !requested.type().equals(JarFileType)) {
+            return (Stream<T>) context()
+                .resources(this, project().of(JarFileType));
         }
 
         // Make sure mainClass is set for app jar
@@ -177,12 +194,6 @@ public class LibraryGenerator extends JarGenerator
                 destDir.resolve(jarName()))
             : project().newResource(LibraryJarFileType,
                 destDir.resolve(jarName()));
-
-        // Maybe only delete
-        if (requested.accepts(CleanlinessType)) {
-            jarResource.delete();
-            return Stream.empty();
-        }
 
         buildJar(jarResource);
         return Stream.of((T) jarResource);
