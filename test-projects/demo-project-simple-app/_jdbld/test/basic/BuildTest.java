@@ -10,6 +10,8 @@ import java.util.jar.Attributes;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import org.jdrupes.builder.api.Cleanliness;
+import org.jdrupes.builder.api.ExecResult;
+
 import static org.jdrupes.builder.api.Intent.*;
 import org.jdrupes.builder.api.Launcher;
 import org.jdrupes.builder.java.AppJarFile;
@@ -52,5 +54,14 @@ class BuildTest {
             assertEquals("jdbld.demo.simpleapp.App", jarFile.getManifest()
                 .getMainAttributes().get(Attributes.Name.MAIN_CLASS));
         }
+    }
+
+    @Test
+    public void testExec() {
+        var execResults = launcher.resources(Stream.of(launcher.rootProject()),
+            launcher.rootProject().of(ExecResult.class).usingAll()).toList();
+        assertEquals(1, execResults.size());
+        var execResult = execResults.get(0);
+        assertEquals(0, execResult.exitValue());
     }
 }
