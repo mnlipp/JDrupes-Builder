@@ -20,6 +20,7 @@ package org.jdrupes.builder.java;
 
 import java.nio.file.Path;
 import java.util.Map;
+import java.util.Objects;
 import java.util.jar.Attributes;
 import java.util.stream.Stream;
 import org.jdrupes.builder.api.BuildException;
@@ -88,7 +89,7 @@ public class LibraryGenerator extends JarGenerator
     /// @return the jar generator for method chaining
     ///
     public LibraryGenerator mainClass(String mainClass) {
-        this.mainClass = mainClass;
+        this.mainClass = Objects.requireNonNull(mainClass);
         return this;
     }
 
