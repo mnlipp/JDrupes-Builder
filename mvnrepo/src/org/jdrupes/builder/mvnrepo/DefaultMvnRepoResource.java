@@ -40,6 +40,7 @@ public class DefaultMvnRepoResource extends ResourceObject
     /// @param type the type
     /// @param coordinate the coordinate
     ///
+    @SuppressWarnings("PMD.ConstructorCallsOverridableMethod")
     public DefaultMvnRepoResource(ResourceType<? extends MvnRepoResource> type,
             String coordinate) {
         super(type);
@@ -61,8 +62,8 @@ public class DefaultMvnRepoResource extends ResourceObject
         default:
             throw new IllegalArgumentException(
                 "Invalid maven coordinate: " + coordinate);
-
         }
+        name(coordinates());
     }
 
     /// Group id.
