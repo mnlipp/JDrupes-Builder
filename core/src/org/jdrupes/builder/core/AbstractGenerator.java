@@ -35,7 +35,6 @@ public abstract class AbstractGenerator extends AbstractProvider
         implements Generator {
 
     private final Project project;
-    private String name;
 
     /// Instantiates a new abstract generator.
     ///
@@ -43,29 +42,6 @@ public abstract class AbstractGenerator extends AbstractProvider
     ///
     public AbstractGenerator(Project project) {
         this.project = project;
-        name = getClass().getSimpleName();
-        if (name.isBlank()) {
-            name = "Adapted " + getClass().getSuperclass().getSimpleName();
-        }
-    }
-
-    /// Sets the name of the generator.
-    ///
-    /// @param name the name
-    /// @return the generator
-    ///
-    public AbstractGenerator name(String name) {
-        this.name = name;
-        return this;
-    }
-
-    /// Name.
-    ///
-    /// @return the string
-    ///
-    @Override
-    public String name() {
-        return name;
     }
 
     /// Project.
@@ -84,6 +60,7 @@ public abstract class AbstractGenerator extends AbstractProvider
     /// @param args the args
     /// @return the t
     ///
+    @Override
     protected <T extends Resource> T newResource(ResourceType<T> type,
             Object... args) {
         return project.newResource(type, args);
@@ -116,7 +93,7 @@ public abstract class AbstractGenerator extends AbstractProvider
     ///
     @Override
     public String toString() {
-        return name + " in project " + project().name();
+        return name() + " in project " + project().name();
     }
 
 }

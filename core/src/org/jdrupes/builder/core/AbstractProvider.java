@@ -32,6 +32,8 @@ import org.jdrupes.builder.api.ResourceType;
 ///
 public abstract class AbstractProvider implements ResourceProvider {
 
+    private String name;
+
     /// The log.
     // Use first non-anomymous class for logger.
     protected final Logger log = Logger.getLogger(
@@ -43,7 +45,26 @@ public abstract class AbstractProvider implements ResourceProvider {
     /// Initializes a new abstract provider.
     ///
     public AbstractProvider() {
-        // Make javadoc happy.
+        // Default name
+        name = getClass().getSimpleName();
+        if (name.isBlank()) {
+            name = "Adapted " + getClass().getSuperclass().getSimpleName();
+        }
+    }
+
+    /// Sets the name of the provider.
+    ///
+    /// @param name the name
+    /// @return the abstract provider
+    ///
+    protected final AbstractProvider withName(String name) {
+        this.name = name;
+        return this;
+    }
+
+    @Override
+    public String name() {
+        return name;
     }
 
     /* default */ ResourceProviderSpi toSpi() {

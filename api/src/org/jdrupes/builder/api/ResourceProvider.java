@@ -31,6 +31,12 @@ import java.util.stream.Stream;
 ///
 public interface ResourceProvider {
 
+    /// Returns the name of this resource provider.
+    ///
+    /// @return the string
+    ///
+    String name();
+
     /// Returns resources provided by this resource provider. Short for
     /// `context().resources(this, request)`.
     ///

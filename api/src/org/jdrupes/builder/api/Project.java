@@ -220,12 +220,6 @@ public interface Project extends ResourceProvider {
     ///
     Optional<Project> parentProject();
     
-    /// Returns the project's name. 
-    ///
-    /// @return the string
-    ///
-    String name();
-
     /// Returns the project's directory.
     ///
     /// @return the path

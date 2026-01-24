@@ -42,12 +42,6 @@ package org.jdrupes.builder.api;
 ///
 public interface Generator extends ResourceProvider {
 
-    /// Returns the generator's name.
-    ///
-    /// @return the name
-    ///
-    String name();
-
     /// Returns the project that this generator belongs to.
     ///
     /// @return the project
