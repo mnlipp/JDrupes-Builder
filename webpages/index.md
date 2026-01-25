@@ -22,7 +22,7 @@ public class SimpleApp extends AbstractProject implements RootProject {
     public SimpleApp() {
         super(name("demo-project-simple-app"));
         generator(JavaCompiler::new).addSources(Path.of("src"), "**/*.java");
-        generator(UberJarGenerator::new).from(providers().select(Supply))
+        generator(UberJarGenerator::new).addFrom(providers().select(Supply))
             .mainClass("jdbld.demo.simpleapp.App");
 
         // Command arguments
@@ -74,7 +74,7 @@ The second generator is an
 [UberJarGenerator](javadoc/org/jdrupes/builder/uberjar/UberJarGenerator.html).
 
 ```java
-        generator(UberJarGenerator::new).from(providers().select(Supply))
+        generator(UberJarGenerator::new).addFrom(providers().select(Supply))
             .mainClass("jdbld.demo.simpleapp.App");
 ```
 
