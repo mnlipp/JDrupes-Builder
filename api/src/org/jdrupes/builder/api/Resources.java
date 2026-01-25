@@ -77,6 +77,14 @@ public interface Resources<T extends Resource> extends Resource {
     ///
     Stream<T> stream();
 
+    /// Retrieves the resources as a Vavr stream.
+    ///
+    /// @return the stream
+    ///
+    default io.vavr.collection.Stream<T> vavr() {
+        return io.vavr.collection.Stream.ofAll(stream());
+    }
+
     /// Clears the contained resources.
     ///
     /// @return the resources

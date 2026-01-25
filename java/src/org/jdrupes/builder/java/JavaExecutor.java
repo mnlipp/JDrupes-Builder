@@ -20,12 +20,12 @@ package org.jdrupes.builder.java;
 
 import com.google.common.flogger.FluentLogger;
 import static com.google.common.flogger.LazyArgs.*;
+import io.vavr.control.Option;
+import io.vavr.control.Try;
 import java.io.File;
 import java.io.IOException;
 import java.util.List;
 import java.util.Objects;
-import java.util.Optional;
-import java.util.function.Consumer;
 import java.util.jar.Attributes;
 import java.util.jar.Manifest;
 import java.util.stream.Collectors;
@@ -154,25 +154,17 @@ public class JavaExecutor extends AbstractProvider
     }
 
     private void findMainClass(Resources<ClasspathElement> cpResources) {
-        cpResources.stream().filter(cpe -> cpe instanceof JarFile)
-            .map(JarFile.class::cast)
-            .mapMulti((JarFile cpe, Consumer<String> consumer) -> {
-                try (var jar
-                    = new java.util.jar.JarFile(cpe.path().toFile())) {
-                    Optional.of(jar).map(t -> {
-                        try {
-                            return t.getManifest();
-                        } catch (IOException e) {
-                            return null;
-                        }
-                    }).map(Manifest::getMainAttributes)
-                        .map(a -> a.getValue(Attributes.Name.MAIN_CLASS))
-                        .ifPresent(consumer::accept);
-                } catch (IOException e) {
-                    logger.atWarning().withCause(e).log("Problem reading %s",
-                        cpe);
-                }
-            }).findFirst().ifPresent(mc -> mainClass = mc);
+        cpResources.vavr().filter(cpe -> cpe instanceof JarFile)
+            .map(JarFile.class::cast).map(cpe -> Try.withResources(
+                () -> new java.util.jar.JarFile(cpe.path().toFile()))
+                .of(jar -> Try.of(jar::getManifest).toOption()
+                    .map(Manifest::getMainAttributes)
+                    .flatMap(a -> Option
+                        .of(a.getValue(Attributes.Name.MAIN_CLASS))))
+                .onFailure(e -> logger.atWarning().withCause(e).log(
+                    "Problem reading %s", cpe))
+                .toOption().flatMap(s -> s))
+            .flatMap(Option::toStream).headOption().peek(mc -> mainClass = mc);
     }
 
 }
