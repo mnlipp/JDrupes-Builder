@@ -75,6 +75,12 @@ public class LibraryGenerator extends JarGenerator
         super(project, LibraryJarFileType);
     }
 
+    @Override
+    public LibraryGenerator name(String name) {
+        rename(name);
+        return this;
+    }
+
     /// Returns the main class.
     ///
     /// @return the main class

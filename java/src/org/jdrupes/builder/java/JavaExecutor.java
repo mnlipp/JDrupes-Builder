@@ -32,6 +32,7 @@ import java.util.stream.Stream;
 import org.jdrupes.builder.api.BuildException;
 import org.jdrupes.builder.api.ExecResult;
 import org.jdrupes.builder.api.Project;
+import org.jdrupes.builder.api.Renamable;
 import org.jdrupes.builder.api.Resource;
 import org.jdrupes.builder.api.ResourceProvider;
 import org.jdrupes.builder.api.ResourceRequest;
@@ -45,7 +46,7 @@ import static org.jdrupes.builder.java.JavaTypes.*;
 /// A provider for [execution results][ExecResult]s from invoking a JVM.
 ///
 public class JavaExecutor extends AbstractProvider
-        implements ResourceRetriever {
+        implements ResourceRetriever, Renamable {
 
     private final StreamCollector<ResourceProvider> providers
         = StreamCollector.cached();
@@ -56,7 +57,13 @@ public class JavaExecutor extends AbstractProvider
     /// @param project the project
     ///
     public JavaExecutor(Project project) {
-        withName(JavaExecutor.class.getSimpleName() + " in " + project);
+        rename(JavaExecutor.class.getSimpleName() + " in " + project);
+    }
+
+    @Override
+    public JavaExecutor name(String name) {
+        rename(name);
+        return this;
     }
 
     /// Additionally uses the given providers for obtaining contents for the

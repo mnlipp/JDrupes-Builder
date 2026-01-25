@@ -134,6 +134,12 @@ public class UberJarGenerator extends LibraryGenerator {
     }
 
     @Override
+    public UberJarGenerator name(String name) {
+        rename(name);
+        return this;
+    }
+
+    @Override
     protected void
             collectFromProviders(Map<Path, Resources<IOResource>> contents) {
         openJars = new ConcurrentHashMap<>();

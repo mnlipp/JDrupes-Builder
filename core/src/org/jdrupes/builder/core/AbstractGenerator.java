@@ -24,6 +24,7 @@ import java.nio.file.Path;
 import org.jdrupes.builder.api.Cleanliness;
 import org.jdrupes.builder.api.Generator;
 import org.jdrupes.builder.api.Project;
+import org.jdrupes.builder.api.Renamable;
 import org.jdrupes.builder.api.Resource;
 import org.jdrupes.builder.api.ResourceRequest;
 import org.jdrupes.builder.api.ResourceType;
@@ -32,7 +33,7 @@ import static org.jdrupes.builder.api.ResourceType.CleanlinessType;
 /// A base implementation of a [Generator].
 ///
 public abstract class AbstractGenerator extends AbstractProvider
-        implements Generator {
+        implements Generator, Renamable {
 
     private final Project project;
 
@@ -51,6 +52,12 @@ public abstract class AbstractGenerator extends AbstractProvider
     @Override
     public final Project project() {
         return project;
+    }
+
+    @Override
+    public AbstractGenerator name(String name) {
+        rename(name);
+        return this;
     }
 
     /// Short for `project().newResource(type, args)`.

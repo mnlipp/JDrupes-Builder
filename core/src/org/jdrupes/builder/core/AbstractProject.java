@@ -71,6 +71,7 @@ public abstract class AbstractProject extends AbstractProvider
         = new ThreadLocal<>();
     private static Path jdbldDirectory = Path.of("marker:jdbldDirectory");
     private final AbstractProject parent;
+    private final String projectName;
     private final Path projectDirectory;
     private final Map<ResourceProvider, Intent> providers
         = new ConcurrentHashMap<>();
@@ -172,8 +173,8 @@ public abstract class AbstractProject extends AbstractProvider
         }
 
         // Set name and directory, add fallback dependency
-        withName(NamedParameter.<String> get(params, "name",
-            () -> getClass().getSimpleName()));
+        projectName = NamedParameter.<String> get(params, "name",
+            () -> getClass().getSimpleName());
         var directory = NamedParameter.<Path> get(params, "directory", null);
         if (directory == jdbldDirectory) { // NOPMD
             directory = context().jdbldDirectory();
@@ -197,7 +198,7 @@ public abstract class AbstractProject extends AbstractProvider
             projectDirectory = LauncherSupport.buildRoot();
         } else {
             if (directory == null) {
-                directory = Path.of(name().toLowerCase());
+                directory = Path.of(projectName.toLowerCase());
             }
             projectDirectory = parent.directory().resolve(directory);
             // Fallback, will be replaced when the parent explicitly adds a
@@ -272,6 +273,12 @@ public abstract class AbstractProject extends AbstractProvider
     @Override
     public Optional<Project> parentProject() {
         return Optional.ofNullable(parent);
+    }
+
+    @Override
+    @SuppressWarnings("checkstyle:OverloadMethodsDeclarationOrder")
+    public String name() {
+        return projectName;
     }
 
     /// Directory.
@@ -527,20 +534,11 @@ public abstract class AbstractProject extends AbstractProvider
                 .matches(rootProject().directory().relativize(p.directory())));
     }
 
-    /// Hash code.
-    ///
-    /// @return the int
-    ///
     @Override
     public int hashCode() {
-        return Objects.hash(projectDirectory, name());
+        return Objects.hash(projectDirectory, projectName);
     }
 
-    /// Equals.
-    ///
-    /// @param obj the obj
-    /// @return true, if successful
-    ///
     @Override
     public boolean equals(Object obj) {
         if (this == obj) {
@@ -554,13 +552,9 @@ public abstract class AbstractProject extends AbstractProvider
         }
         AbstractProject other = (AbstractProject) obj;
         return Objects.equals(projectDirectory, other.projectDirectory)
-            && Objects.equals(name(), other.name());
+            && Objects.equals(projectName, other.projectName);
     }
 
-    /// To string.
-    ///
-    /// @return the string
-    ///
     @Override
     public String toString() {
         var relDir = rootProject().directory().relativize(directory());

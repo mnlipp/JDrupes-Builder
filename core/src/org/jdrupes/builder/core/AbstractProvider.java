@@ -21,6 +21,7 @@ package org.jdrupes.builder.core;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.stream.Stream;
+import org.jdrupes.builder.api.Renamable;
 import org.jdrupes.builder.api.Resource;
 import org.jdrupes.builder.api.ResourceFactory;
 import org.jdrupes.builder.api.ResourceProvider;
@@ -52,20 +53,26 @@ public abstract class AbstractProvider implements ResourceProvider {
         }
     }
 
-    /// Sets the name of the provider.
+    @Override
+    public String name() {
+        return name;
+    }
+
+    /// Allows derived classes to change the provider's name in their
+    /// implementation of [Renamable#name]. Throws an
+    /// [UnsupportedOperationException] if the derived class does not
+    /// implement [Renamable].
     ///
     /// @param name the name
     /// @return the abstract provider
     ///
-    @Override
-    public final AbstractProvider withName(String name) {
+    protected final AbstractProvider rename(String name) {
+        if (!(this instanceof Renamable)) {
+            throw new UnsupportedOperationException(getClass().getName()
+                + " does not implement " + Renamable.class.getName());
+        }
         this.name = name;
         return this;
-    }
-
-    @Override
-    public String name() {
-        return name;
     }
 
     /* default */ ResourceProviderSpi toSpi() {

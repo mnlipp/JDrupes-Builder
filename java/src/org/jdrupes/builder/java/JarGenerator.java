@@ -79,6 +79,12 @@ public class JarGenerator extends AbstractGenerator {
         this.jarType = jarType;
     }
 
+    @Override
+    public JarGenerator name(String name) {
+        rename(name);
+        return this;
+    }
+
     /// Returns the destination directory. Defaults to sub directory
     /// `libs` in the project's build directory
     /// (see [Project#buildDirectory]).
