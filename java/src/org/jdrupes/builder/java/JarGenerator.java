@@ -1,6 +1,6 @@
 /*
  * JDrupes Builder
- * Copyright (C) 2025 Michael N. Lipp
+ * Copyright (C) 2025, 2026 Michael N. Lipp
  * 
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as
@@ -18,6 +18,7 @@
 
 package org.jdrupes.builder.java;
 
+import com.google.common.flogger.FluentLogger;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -55,6 +56,7 @@ import org.jdrupes.builder.core.StreamCollector;
 @SuppressWarnings("PMD.CouplingBetweenObjects")
 public class JarGenerator extends AbstractGenerator {
 
+    private static final FluentLogger logger = FluentLogger.forEnclosingClass();
     private final ResourceType<? extends JarFile> jarType;
     private Supplier<Path> destination
         = () -> project().buildDirectory().resolve("libs");
@@ -230,14 +232,14 @@ public class JarGenerator extends AbstractGenerator {
             .map(r -> r.stream().findFirst().stream()).flatMap(s -> s)
             .filter(r -> r.asOf().isAfter(jarResource.asOf())).findAny();
         if (newer.isEmpty()) {
-            log.fine(() -> "Existing " + jarName() + " is up to date.");
+            logger.atFine().log("Existing %s is up to date.", jarName());
             return;
         }
-        log.fine(
-            () -> "Rebuilding " + jarName() + ", is older than " + newer.get());
+        logger.atFine().log(
+            "Rebuilding %s, is older than %s", jarName(), newer.get());
 
         // Write jar file
-        log.info(() -> "Building " + jarName() + " in " + project().name());
+        logger.atInfo().log("Building %s in %s", jarName(), project().name());
         Manifest manifest = new Manifest();
         @SuppressWarnings("PMD.LooseCoupling")
         Attributes attributes = manifest.getMainAttributes();
@@ -324,8 +326,9 @@ public class JarGenerator extends AbstractGenerator {
             }
             var entryName = item.getKey();
             resources.stream().reduce((a, b) -> {
-                log.warning(() -> "Entry " + entryName + " from " + a
-                    + " duplicates entry from " + b + " and is skipped.");
+                logger.atWarning().log(
+                    "Entry %s from %s duplicates entry from %s and is skipped.",
+                    entryName, a, b);
                 return a;
             });
         });

@@ -23,7 +23,6 @@ import java.util.Collections;
 import java.util.LinkedHashSet;
 import java.util.Objects;
 import java.util.Set;
-import java.util.logging.Logger;
 import java.util.stream.Stream;
 import org.jdrupes.builder.api.Proxyable;
 import org.jdrupes.builder.api.Resource;
@@ -40,8 +39,6 @@ import org.jdrupes.builder.api.Resources;
 public class DefaultResources<T extends Resource> extends ResourceObject
         implements Resources<T> {
 
-    /// The log.
-    protected final Logger log = Logger.getLogger(getClass().getName());
     private final Set<T> content;
 
     /// Instantiates a new resource set.

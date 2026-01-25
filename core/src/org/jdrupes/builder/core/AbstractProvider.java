@@ -18,8 +18,8 @@
 
 package org.jdrupes.builder.core;
 
-import java.util.logging.Level;
-import java.util.logging.Logger;
+import com.google.common.flogger.FluentLogger;
+import static com.google.common.flogger.StackSize.*;
 import java.util.stream.Stream;
 import org.jdrupes.builder.api.Renamable;
 import org.jdrupes.builder.api.Resource;
@@ -33,15 +33,8 @@ import org.jdrupes.builder.api.ResourceType;
 ///
 public abstract class AbstractProvider implements ResourceProvider {
 
+    private static final FluentLogger logger = FluentLogger.forEnclosingClass();
     private String name;
-
-    /// The log.
-    // Use first non-anomymous class for logger.
-    protected final Logger log = Logger.getLogger(
-        Stream.iterate((Class<?>) getClass(),
-            c -> c != null, (Class<?> c) -> c.getSuperclass())
-            .filter(c -> !c.isAnonymousClass())
-            .findFirst().get().getName());
 
     /// Initializes a new abstract provider.
     ///
@@ -78,13 +71,11 @@ public abstract class AbstractProvider implements ResourceProvider {
     /* default */ ResourceProviderSpi toSpi() {
         return new ResourceProviderSpi() {
             @Override
-            @SuppressWarnings("PMD.GuardLogStatement")
             public <T extends Resource> Stream<T>
                     provide(ResourceRequest<T> requested) {
                 if (!FutureStream.isProviderInvocationAllowed()) {
-                    log.log(Level.WARNING, new IllegalStateException(),
-                        () -> "Direct invocation of " + this
-                            + " is not allowed");
+                    logger.atWarning().withStackTrace(MEDIUM)
+                        .log("Direct invocation of %s is not allowed", this);
                 }
                 return doProvide(requested);
             }

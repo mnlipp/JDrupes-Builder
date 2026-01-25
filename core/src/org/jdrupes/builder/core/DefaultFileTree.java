@@ -18,6 +18,7 @@
 
 package org.jdrupes.builder.core;
 
+import com.google.common.flogger.FluentLogger;
 import java.io.IOException;
 import java.lang.reflect.Proxy;
 import java.nio.file.AccessDeniedException;
@@ -51,6 +52,7 @@ import org.jdrupes.builder.api.ResourceType;
 ///
 public class DefaultFileTree<T extends FileResource> extends DefaultResources<T>
         implements FileTree<T> {
+    private static final FluentLogger logger = FluentLogger.forEnclosingClass();
     private Instant latestChange = Instant.MIN;
     private final Project project;
     private final Path root;
@@ -136,8 +138,7 @@ public class DefaultFileTree<T extends FileResource> extends DefaultResources<T>
         try {
             find(root(), pattern);
         } catch (IOException e) {
-            log.log(java.util.logging.Level.SEVERE, e,
-                () -> "Problem scanning files: " + e.getMessage());
+            logger.atSevere().withCause(e).log("Problem scanning files");
             throw new BuildException(e);
         }
         filled = true;
@@ -295,8 +296,7 @@ public class DefaultFileTree<T extends FileResource> extends DefaultResources<T>
                 }
             });
         } catch (IOException e) {
-            log.log(java.util.logging.Level.SEVERE, e,
-                () -> "Problem scanning files: " + e.getMessage());
+            logger.atSevere().withCause(e).log("Problem scanning files");
             throw new BuildException(e);
         }
         filled = false;

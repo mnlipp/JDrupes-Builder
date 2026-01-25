@@ -18,6 +18,7 @@
 
 package org.jdrupes.builder.mvnrepo;
 
+import com.google.common.flogger.FluentLogger;
 import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
 import java.io.FileNotFoundException;
@@ -114,6 +115,7 @@ import static org.jdrupes.builder.mvnrepo.MvnRepoTypes.*;
     "PMD.GodClass", "PMD.TooManyMethods" })
 public class MvnPublisher extends AbstractGenerator {
 
+    private static final FluentLogger logger = FluentLogger.forEnclosingClass();
     private URI uploadUri;
     private URI snapshotUri;
     private String repoUser;
@@ -296,7 +298,8 @@ public class MvnPublisher extends AbstractGenerator {
         if (srcsIter.hasNext()) {
             srcsFile = srcsIter.next();
             if (srcsIter.hasNext()) {
-                log.severe(() -> "More than one sources jar resources found.");
+                logger.atSevere()
+                    .log("More than one sources jar resources found.");
                 return Stream.empty();
             }
         }
@@ -306,7 +309,8 @@ public class MvnPublisher extends AbstractGenerator {
         if (jdIter.hasNext()) {
             jdFile = jdIter.next();
             if (jdIter.hasNext()) {
-                log.severe(() -> "More than one javadoc jar resources found.");
+                logger.atSevere()
+                    .log("More than one javadoc jar resources found.");
                 return Stream.empty();
             }
         }
@@ -322,12 +326,12 @@ public class MvnPublisher extends AbstractGenerator {
             String name) {
         var iter = resources.iterator();
         if (!iter.hasNext()) {
-            log.severe(() -> "No " + name + " resource available.");
+            logger.atSevere().log("No %s resource available", name);
             return null;
         }
         var result = iter.next();
         if (iter.hasNext()) {
-            log.severe(() -> "More than one " + name + " resource found.");
+            logger.atSevere().log("More than one %s resource found.", name);
             return null;
         }
         return result;
@@ -496,7 +500,8 @@ public class MvnPublisher extends AbstractGenerator {
             .orElse(project().context().property("signing.password", null))
             .toCharArray();
         if (keyRingFileName == null || keyId == null || passphrase == null) {
-            log.warning(() -> "Cannot sign artifacts: properties not set.");
+            logger.atWarning()
+                .log("Cannot sign artifacts: properties not set.");
             return;
         }
         Security.addProvider(new BouncyCastleProvider());
@@ -552,7 +557,7 @@ public class MvnPublisher extends AbstractGenerator {
             @Override
             public void artifactDeploying(RepositoryEvent event) {
                 if (!startMsgLogged.getAndSet(true)) {
-                    log.info(() -> "Start deploying artifacts...");
+                    logger.atInfo().log("Start deploying artifacts...");
                 }
             }
 
@@ -561,12 +566,12 @@ public class MvnPublisher extends AbstractGenerator {
                 if (!"jar".equals(event.getArtifact().getExtension())) {
                     return;
                 }
-                log.info(() -> "Deployed: " + event.getArtifact());
+                logger.atInfo().log("Deployed: %s", event.getArtifact());
             }
 
             @Override
             public void metadataDeployed(RepositoryEvent event) {
-                log.info(() -> "Deployed: " + event.getMetadata());
+                logger.atInfo().log("Deployed: %s", event.getMetadata());
             }
 
         });
@@ -642,10 +647,10 @@ public class MvnPublisher extends AbstractGenerator {
                 .POST(HttpRequest.BodyPublishers
                     .ofInputStream(() -> getAsMultipart(zipPath, boundary)))
                 .build();
-            log.info(() -> "Uploading release bundle...");
+            logger.atInfo().log("Uploading release bundle...");
             HttpResponse<String> response = client.send(request,
                 HttpResponse.BodyHandlers.ofString());
-            log.finest(() -> "Upload response: " + response.body());
+            logger.atFinest().log("Upload response: %s", response.body());
             if (response.statusCode() / 100 != 2) {
                 throw new BuildException(
                     "Failed to upload release bundle: " + response.body());

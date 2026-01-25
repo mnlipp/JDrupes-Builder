@@ -18,6 +18,7 @@
 
 package org.jdrupes.builder.uberjar;
 
+import com.google.common.flogger.FluentLogger;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.util.Map;
@@ -122,6 +123,7 @@ import static org.jdrupes.builder.mvnrepo.MvnRepoTypes.*;
 ///
 public class UberJarGenerator extends LibraryGenerator {
 
+    private static final FluentLogger logger = FluentLogger.forEnclosingClass();
     private Map<Path, java.util.jar.JarFile> openJars = Map.of();
     private Predicate<Resource> resourceFilter = _ -> true;
 
@@ -245,8 +247,8 @@ public class UberJarGenerator extends LibraryGenerator {
                 candidates.clear();
             }
             candidates.stream().reduce((a, b) -> {
-                log.warning(() -> "Entry " + entryName + " from " + a
-                    + " duplicates entry from " + b + " and is skipped.");
+                logger.atWarning().log("Entry %s from %s duplicates"
+                    + " entry from %s and is skipped.", entryName, a, b);
                 return a;
             });
         });

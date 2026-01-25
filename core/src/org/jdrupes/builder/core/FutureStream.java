@@ -18,6 +18,8 @@
 
 package org.jdrupes.builder.core;
 
+import com.google.common.flogger.FluentLogger;
+import static com.google.common.flogger.LazyArgs.*;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
@@ -27,7 +29,6 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Consumer;
-import java.util.logging.Logger;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 import org.jdrupes.builder.api.BuildException;
@@ -41,8 +42,7 @@ import org.jdrupes.builder.api.ResourceRequest;
 ///
 public class FutureStream<T extends Resource> {
 
-    /// The logger.
-    protected final Logger log = Logger.getLogger(FutureStream.class.getName());
+    private static final FluentLogger logger = FluentLogger.forEnclosingClass();
     @SuppressWarnings("PMD.FieldNamingConventions")
     private static final ScopedValue<AtomicBoolean> providerInvocationAllowed
         = ScopedValue.newInstance();
@@ -63,11 +63,11 @@ public class FutureStream<T extends Resource> {
             ResourceRequest<T> request) {
         initiallyCalledBy = caller.isBound() ? caller.get() : null;
         holding = new FutureStreamCache.Key<>(provider, request);
-        log.finer(() -> "Evaluating " + holding.request() + " → "
-            + holding.provider()
-            + (initiallyCalledBy != null ? " requested by " + initiallyCalledBy
-                : ""));
-        log.finest(() -> "Call chain: " + callChain());
+        logger.atFiner().log("Evaluating %s → %s", holding.request(),
+            lazy(() -> holding.provider() + (initiallyCalledBy != null
+                ? " requested by " + initiallyCalledBy
+                : "")));
+        logger.atFinest().log("Call chain: %s", lazy(this::callChain));
         values = executor.submit(() -> {
             return ScopedValue
                 .where(providerInvocationAllowed, new AtomicBoolean(true))

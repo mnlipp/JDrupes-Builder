@@ -18,6 +18,7 @@
 
 package org.jdrupes.builder.core;
 
+import com.google.common.flogger.FluentLogger;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -35,6 +36,7 @@ import static org.jdrupes.builder.api.ResourceType.CleanlinessType;
 public abstract class AbstractGenerator extends AbstractProvider
         implements Generator, Renamable {
 
+    private static final FluentLogger logger = FluentLogger.forEnclosingClass();
     private final Project project;
 
     /// Instantiates a new abstract generator.
@@ -88,7 +90,7 @@ public abstract class AbstractGenerator extends AbstractProvider
             try {
                 Files.deleteIfExists(file);
             } catch (IOException e) {
-                log.warning(() -> file + " cannot be deleted.");
+                logger.atWarning().log("%s cannot be deleted.", file);
             }
         }
         return true;

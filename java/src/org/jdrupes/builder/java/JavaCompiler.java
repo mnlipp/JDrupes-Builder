@@ -18,6 +18,8 @@
 
 package org.jdrupes.builder.java;
 
+import com.google.common.flogger.FluentLogger;
+import static com.google.common.flogger.LazyArgs.*;
 import java.io.File;
 import java.nio.file.Path;
 import java.util.ArrayList;
@@ -66,8 +68,10 @@ import static org.jdrupes.builder.java.JavaTypes.*;
 /// default behavior of the java compiler, you have to specify
 /// "`-g:[lines, source]`" explicitly.
 ///
+@SuppressWarnings("PMD.TooManyStaticImports")
 public class JavaCompiler extends JavaTool {
 
+    private static final FluentLogger logger = FluentLogger.forEnclosingClass();
     private final Resources<FileTree<JavaSourceFile>> sources
         = project().newResource(new ResourceType<>() {});
     private Path destination;
@@ -187,9 +191,9 @@ public class JavaCompiler extends JavaTool {
         var cpResources = newResource(ClasspathType).addAll(
             project().providers(Consume, Reveal, Expose).without(this)
                 .resources(of(ClasspathElementType)));
-        log.finer(() -> "Compiling in " + project() + " with classpath "
-            + cpResources.stream().map(e -> e.toPath().toString())
-                .collect(Collectors.joining(File.pathSeparator)));
+        logger.atFiner().log("Compiling in %s with classpath %s", project(),
+            lazy(() -> cpResources.stream().map(e -> e.toPath().toString())
+                .collect(Collectors.joining(File.pathSeparator))));
 
         // (Re-)compile only if necessary
         var classesAsOf = classSet.asOf();
@@ -204,7 +208,7 @@ public class JavaCompiler extends JavaTool {
             classSet.delete();
             compile(cpResources, destDir);
         } else {
-            log.fine(() -> "Classes in " + project() + " are up to date.");
+            logger.atFiner().log("Classes in %s are up to date", project());
         }
         classSet.clear();
         @SuppressWarnings("unchecked")
@@ -216,7 +220,7 @@ public class JavaCompiler extends JavaTool {
         "PMD.ExceptionAsFlowControl" })
     private void compile(Resources<ClasspathElement> cpResources,
             Path destDir) {
-        log.info(() -> "Compiling Java in project " + project().name());
+        logger.atInfo().log("Compiling Java in %s", project().name());
         var classpath = cpResources.stream().map(e -> e.toPath().toString())
             .collect(Collectors.joining(File.pathSeparator));
         var javac = ToolProvider.getSystemJavaCompiler();
@@ -243,9 +247,9 @@ public class JavaCompiler extends JavaTool {
                 throw new BuildException("Compilation failed");
             }
         } catch (Exception e) {
-            log.log(java.util.logging.Level.SEVERE, () -> "Project "
-                + project().name() + ": " + "Problem compiling Java: "
-                + e.getMessage());
+            logger.atSevere().withCause(e)
+                .log("Project %s: Problem compiling Java: %s", project().name(),
+                    e.getMessage());
             throw new BuildException(e);
         } finally {
             logDiagnostics(diagnostics);

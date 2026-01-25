@@ -18,6 +18,8 @@
 
 package org.jdrupes.builder.junit;
 
+import com.google.common.flogger.FluentLogger;
+import static com.google.common.flogger.LazyArgs.*;
 import java.io.File;
 import java.io.IOException;
 import java.net.MalformedURLException;
@@ -27,7 +29,6 @@ import java.nio.file.Path;
 import java.util.HashSet;
 import java.util.Objects;
 import java.util.Set;
-import java.util.logging.Level;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import org.jdrupes.builder.api.Generator;
@@ -98,10 +99,12 @@ import org.junit.platform.launcher.listeners.SummaryGeneratingListener;
 /// ```
 ///
 /// In order to track the execution of the each test, you can enable
-/// [Level#FINE] logging for this class. [Level#FINER] will also
+/// level fine logging for this class. Level finer will also
 /// provide information about the class paths.
 /// 
 public class JUnitTestRunner extends AbstractGenerator {
+
+    private static final FluentLogger logger = FluentLogger.forEnclosingClass();
 
     /// Initializes a new test runner.
     ///
@@ -127,9 +130,9 @@ public class JUnitTestRunner extends AbstractGenerator {
                 .resources(of(ClasspathElement.class).using(Consume,
                     Reveal, Expose, Supply)));
         }
-        log.finer(() -> "Testing in " + project() + " with classpath "
-            + cpResources.stream().map(e -> e.toPath().toString())
-                .collect(Collectors.joining(File.pathSeparator)));
+        logger.atFiner().log("Testing in %s with classpath %s", project(),
+            lazy(() -> cpResources.stream().map(e -> e.toPath().toString())
+                .collect(Collectors.joining(File.pathSeparator))));
 
         // Run the tests
         ClassLoader oldLoader = Thread.currentThread().getContextClassLoader();
@@ -163,7 +166,8 @@ public class JUnitTestRunner extends AbstractGenerator {
             launcher.registerTestExecutionListeners(
                 LoggingListener.forJavaUtilLogging(), summaryListener,
                 testListener);
-            log.info(() -> "Running tests in project " + project().name());
+            logger.atInfo().log("Running tests in project %s",
+                project().name());
             launcher.execute(request);
 
             // Evaluate results
@@ -174,7 +178,7 @@ public class JUnitTestRunner extends AbstractGenerator {
                 summary.getTestsFailedCount()));
             return result;
         } catch (IOException e) {
-            log.log(Level.WARNING, e, () -> "Failed to close classloader");
+            logger.atWarning().withCause(e).log("Failed to close classloader");
         } finally {
             Thread.currentThread().setContextClassLoader(oldLoader);
         }
@@ -258,24 +262,24 @@ public class JUnitTestRunner extends AbstractGenerator {
         }
 
         @Override
-        @SuppressWarnings("PMD.GuardLogStatement")
         public void executionFinished(TestIdentifier testIdentifier,
                 TestExecutionResult testExecutionResult) {
             if (testExecutionResult.getStatus() == Status.SUCCESSFUL) {
                 if (testIdentifier.getType() != Type.TEST) {
                     return;
                 }
-                log.log(Level.FINE,
-                    () -> "Succeeded: " + prettyTestName(testIdentifier));
+                logger.atFine().log("Succeeded: %s",
+                    lazy(() -> prettyTestName(testIdentifier)));
                 return;
             }
             if (testExecutionResult.getThrowable().isEmpty()) {
-                log.log(Level.WARNING,
-                    () -> "Failed: " + prettyTestName(testIdentifier));
+                logger.atWarning().log("Failed: %s",
+                    lazy(() -> prettyTestName(testIdentifier)));
                 return;
             }
-            log.log(Level.WARNING, testExecutionResult.getThrowable().get(),
-                () -> "Failed: " + prettyTestName(testIdentifier));
+            logger.atWarning()
+                .withCause(testExecutionResult.getThrowable().get())
+                .log("Failed: %s", lazy(() -> prettyTestName(testIdentifier)));
         }
 
         @Override

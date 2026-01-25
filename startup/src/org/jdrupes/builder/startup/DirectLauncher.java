@@ -18,6 +18,7 @@
 
 package org.jdrupes.builder.startup;
 
+import com.google.common.flogger.FluentLogger;
 import eu.maveniverse.maven.mima.context.Context;
 import eu.maveniverse.maven.mima.context.ContextOverrides;
 import eu.maveniverse.maven.mima.context.Runtime;
@@ -30,7 +31,6 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Properties;
-import java.util.logging.Level;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import org.apache.commons.cli.CommandLine;
@@ -59,6 +59,7 @@ import static org.jdrupes.builder.java.JavaTypes.*;
 ///
 public class DirectLauncher extends AbstractLauncher {
 
+    private static final FluentLogger logger = FluentLogger.forEnclosingClass();
     /// The JDrupes Builder properties read from the file
     /// `.jdbld.properties` in the root project.
     protected Properties jdbldProps;
@@ -115,8 +116,8 @@ public class DirectLauncher extends AbstractLauncher {
             try {
                 consumer.accept(jf.path().toFile().toURI().toURL());
             } catch (MalformedURLException e) {
-                log.log(Level.WARNING, e, () -> "Cannot convert " + jf
-                    + " to URL: " + e.getMessage());
+                logger.atWarning().withCause(e).log("Cannot convert %s to URL",
+                    jf);
             }
         }).toArray(URL[]::new);
 

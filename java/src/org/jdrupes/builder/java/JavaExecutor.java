@@ -18,6 +18,8 @@
 
 package org.jdrupes.builder.java;
 
+import com.google.common.flogger.FluentLogger;
+import static com.google.common.flogger.LazyArgs.*;
 import java.io.File;
 import java.io.IOException;
 import java.util.List;
@@ -26,7 +28,6 @@ import java.util.Optional;
 import java.util.function.Consumer;
 import java.util.jar.Attributes;
 import java.util.jar.Manifest;
-import java.util.logging.Level;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import org.jdrupes.builder.api.BuildException;
@@ -48,6 +49,7 @@ import static org.jdrupes.builder.java.JavaTypes.*;
 public class JavaExecutor extends AbstractProvider
         implements ResourceRetriever, Renamable {
 
+    private static final FluentLogger logger = FluentLogger.forEnclosingClass();
     private final StreamCollector<ResourceProvider> providers
         = StreamCollector.cached();
     private String mainClass;
@@ -121,9 +123,9 @@ public class JavaExecutor extends AbstractProvider
             .addAll(providers.stream()
                 .map(p -> p.resources(of(ClasspathElementType).usingAll()))
                 .flatMap(s -> s));
-        log.finer(() -> "Executing with classpath "
-            + cpResources.stream().map(e -> e.toPath().toString())
-                .collect(Collectors.joining(File.pathSeparator)));
+        logger.atFiner().log("Executing with classpath %s",
+            lazy(() -> cpResources.stream().map(e -> e.toPath().toString())
+                .collect(Collectors.joining(File.pathSeparator))));
         if (mainClass == null) {
             findMainClass(cpResources);
         }
@@ -167,7 +169,8 @@ public class JavaExecutor extends AbstractProvider
                         .map(a -> a.getValue(Attributes.Name.MAIN_CLASS))
                         .ifPresent(consumer::accept);
                 } catch (IOException e) {
-                    log.log(Level.WARNING, e, () -> "Problem reading " + cpe);
+                    logger.atWarning().withCause(e).log("Problem reading %s",
+                        cpe);
                 }
             }).findFirst().ifPresent(mc -> mainClass = mc);
     }

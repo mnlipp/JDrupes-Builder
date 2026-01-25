@@ -18,13 +18,13 @@
 
 package org.jdrupes.builder.java;
 
+import com.google.common.flogger.FluentLogger;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Locale;
 import java.util.Optional;
-import java.util.logging.Level;
 import java.util.stream.Stream;
 import javax.tools.Diagnostic;
 import javax.tools.DiagnosticCollector;
@@ -36,6 +36,7 @@ import org.jdrupes.builder.core.AbstractGenerator;
 ///
 public abstract class JavaTool extends AbstractGenerator {
 
+    private static final FluentLogger logger = FluentLogger.forEnclosingClass();
     private final List<String> options = new ArrayList<>();
 
     /// Instantiates a new java tool.
@@ -107,13 +108,12 @@ public abstract class JavaTool extends AbstractGenerator {
                 diagnostic.getLineNumber(),
                 diagnostic.getMessage(null));
         }
-        Level level = switch (diagnostic.getKind()) {
-        case ERROR -> Level.SEVERE;
-        case WARNING -> Level.WARNING;
-        case MANDATORY_WARNING -> Level.WARNING;
-        default -> Level.INFO;
-        };
-        log.log(level, () -> msg);
+        switch (diagnostic.getKind()) {
+        case ERROR -> logger.atSevere().log(msg);
+        case WARNING -> logger.atWarning().log(msg);
+        case MANDATORY_WARNING -> logger.atWarning().log(msg);
+        default -> logger.atInfo().log(msg);
+        }
     }
 
     /// Log diagnostics.

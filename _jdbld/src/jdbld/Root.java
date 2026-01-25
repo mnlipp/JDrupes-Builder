@@ -80,6 +80,7 @@ public class Root extends AbstractProject implements RootProject {
         generator(new UberJarGenerator(this).addFrom(providers().select(Expose))
             // Runtime (only) dependencies of executable jar
             .addFrom(new MvnRepoLookup().resolve(
+                "com.google.flogger:flogger-system-backend:0.9",
                 "eu.maveniverse.maven.mima.runtime:standalone-static:2.4.34",
                 "org.slf4j:slf4j-api:2.0.17",
                 "org.slf4j:slf4j-jdk14:2.0.17"))

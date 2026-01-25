@@ -18,6 +18,8 @@
 
 package org.jdrupes.builder.java;
 
+import com.google.common.flogger.FluentLogger;
+import static com.google.common.flogger.LazyArgs.*;
 import java.io.File;
 import java.nio.file.Path;
 import java.util.ArrayList;
@@ -68,6 +70,7 @@ import static org.jdrupes.builder.java.JavaTypes.*;
 ///
 public class Javadoc extends JavaTool {
 
+    private static final FluentLogger logger = FluentLogger.forEnclosingClass();
     private final StreamCollector<FileTree<JavaSourceFile>> sources
         = StreamCollector.cached();
     private StreamCollector<Project> projects = StreamCollector.cached();
@@ -206,14 +209,14 @@ public class Javadoc extends JavaTool {
         try (var fileManager
             = javadoc.getStandardFileManager(diagnostics, null, null)) {
             List<String> allOptions = evaluateOptions(destDir);
-            log.finest(() -> "Javadoc options: " + allOptions);
+            logger.atFinest().log("Javadoc options: %s", allOptions);
             var sourcePaths = sourcePaths(sources.stream());
             if (sourcePaths.isEmpty()) {
                 sourcePaths = sourcePaths(projects.stream().flatMap(p -> p
                     .resources(of(JavaSourceTreeType).using(Supply, Expose))));
             }
             var finalSourcePaths = sourcePaths;
-            log.finest(() -> "Javadoc sources: " + finalSourcePaths);
+            logger.atFinest().log("Javadoc sources: %s", finalSourcePaths);
             var sourceFiles
                 = fileManager.getJavaFileObjectsFromPaths(sourcePaths);
             if (!javadoc.getTask(null, fileManager, diagnostics, null,
@@ -221,9 +224,9 @@ public class Javadoc extends JavaTool {
                 throw new BuildException("Documentation generation failed");
             }
         } catch (Exception e) {
-            log.log(java.util.logging.Level.SEVERE, () -> "Project "
-                + project().name() + ": " + "Problem generating Javadoc: "
-                + e.getMessage());
+            logger.atSevere().withCause(e).log(
+                "Project %s: Problem generating Javadoc: %s",
+                project().name(), e.getMessage());
             throw new BuildException(e);
         } finally {
             logDiagnostics(diagnostics);
@@ -247,8 +250,8 @@ public class Javadoc extends JavaTool {
         var cpResources = newResource(ClasspathType).addAll(projects.stream()
             .flatMap(p -> p.resources(of(ClasspathElement.class)
                 .using(Consume, Reveal, Expose))));
-        log.finest(() -> "Generating in " + project() + " with classpath "
-            + cpResources.stream().map(Resource::toString).toList());
+        logger.atFinest().log("Generating in %s with classpath %s", project(),
+            lazy(() -> cpResources.stream().map(Resource::toString).toList()));
         if (!cpResources.isEmpty()) {
             var classpath = cpResources.stream().map(e -> e.toPath().toString())
                 .collect(Collectors.joining(File.pathSeparator));

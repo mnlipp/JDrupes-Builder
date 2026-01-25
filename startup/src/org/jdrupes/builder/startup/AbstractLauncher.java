@@ -265,7 +265,8 @@ public abstract class AbstractLauncher implements Launcher {
         return unwrapBuildException(() -> {
             // Provide requested resource, handling all exceptions here
             var result
-                = projects.map(p -> p.resources(request)).flatMap(r -> r).toList();
+                = projects.map(p -> p.resources(request)).flatMap(r -> r)
+                    .toList();
             return result.stream();
         });
     }

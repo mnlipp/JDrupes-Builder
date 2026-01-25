@@ -18,9 +18,9 @@
 
 package org.jdrupes.builder.startup;
 
+import com.google.common.flogger.FluentLogger;
 import java.nio.file.Path;
 import java.util.Optional;
-import java.util.logging.Logger;
 import org.jdrupes.builder.api.FileResource;
 import org.jdrupes.builder.api.FileTree;
 import static org.jdrupes.builder.api.Intent.*;
@@ -41,8 +41,7 @@ public class BootstrapBuild extends AbstractProject implements Masked {
     /* default */ static final String EXTENSIONS_SNAPSHOT_REPO
         = "extensionsSnapshotRepository";
 
-    /// The log.
-    protected final Logger log = Logger.getLogger(getClass().getName());
+    private static final FluentLogger logger = FluentLogger.forEnclosingClass();
 
     /// Instantiates a new bootstrap project.
     ///
@@ -55,8 +54,8 @@ public class BootstrapBuild extends AbstractProject implements Masked {
         // access to the properties file here.)
         var jcp = Path.of(System.getProperty("java.class.path"))
             .toAbsolutePath().toString();
-        log.fine(() -> "Using java.class.path " + jcp
-            + " as base for builder project compilation");
+        logger.atFine().log("Using java.class.path %s as base for"
+            + " builder project compilation", jcp);
         dependency(Consume, new ClasspathScanner(this, jcp));
 
         // Collect directories with "build configuration", derive source

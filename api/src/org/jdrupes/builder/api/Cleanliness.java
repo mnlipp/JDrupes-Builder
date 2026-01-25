@@ -21,6 +21,5 @@ package org.jdrupes.builder.api;
 /// A phony resource that (when requested) causes a generator to remove
 /// its generated outputs.
 ///
-@SuppressWarnings("PMD.ImplicitFunctionalInterface")
 public interface Cleanliness extends Resource {
 }
