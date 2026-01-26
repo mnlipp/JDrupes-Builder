@@ -121,6 +121,8 @@ public abstract class AbstractProvider implements ResourceProvider {
 
     /// Retrieves the resources as a Vavr stream.
     ///
+    /// @param <T> the resource type
+    /// @param resources the resources
     /// @return the stream
     ///
     public <T extends Resource> io.vavr.collection.Stream<T>
