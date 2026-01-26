@@ -44,7 +44,9 @@ import java.util.stream.Stream;
 ///
 public interface FileTree<T extends FileResource> extends Resources<T> {
 
-    /// Includes directories in the file tree.
+    /// Includes directories in the file tree if they match the pattern
+    /// used when creating the file tree, and are not excluded (i.e. don't 
+    /// match the exclude pattern).
     ///
     /// @return the file tree
     ///
