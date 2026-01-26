@@ -158,7 +158,7 @@ public class JavaExecutor extends AbstractProvider
             .map(JarFile.class::cast).map(cpe -> Try.withResources(
                 () -> new java.util.jar.JarFile(cpe.path().toFile()))
                 .of(jar -> Try.of(jar::getManifest).toOption()
-                    .map(Manifest::getMainAttributes)
+                    .flatMap(Option::of).map(Manifest::getMainAttributes)
                     .flatMap(a -> Option
                         .of(a.getValue(Attributes.Name.MAIN_CLASS))))
                 .onFailure(e -> logger.atWarning().withCause(e).log(
