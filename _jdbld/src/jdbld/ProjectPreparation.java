@@ -27,6 +27,8 @@ import java.util.List;
 import java.util.Map;
 import org.eclipse.jgit.api.Git;
 import org.jdrupes.builder.api.BuildException;
+import static org.jdrupes.builder.api.Intent.*;
+import org.jdrupes.builder.api.MergedTestProject;
 import org.jdrupes.builder.api.Project;
 import static org.jdrupes.builder.api.Project.Properties.*;
 import org.jdrupes.builder.api.RootProject;
@@ -34,6 +36,8 @@ import org.jdrupes.builder.eclipse.EclipseConfigurator;
 import org.jdrupes.builder.java.JavaCompiler;
 import org.jdrupes.builder.java.JavaProject;
 import org.jdrupes.builder.java.JavaResourceCollector;
+import org.jdrupes.builder.junit.JUnitTestRunner;
+import org.jdrupes.builder.mvnrepo.MvnRepoLookup;
 import org.jdrupes.builder.vscode.VscodeConfigurator;
 import org.jdrupes.gitversioning.api.VersionEvaluator;
 import org.jdrupes.gitversioning.core.DefaultTagFilter;
@@ -64,11 +68,27 @@ public class ProjectPreparation {
 
     public static void setupCommonGenerators(Project project) {
         if (project instanceof JavaProject) {
-            project.generator(JavaCompiler::new)
-                .addSources(Path.of("src"), "**/*.java")
-                .options("--release", "25");
-            project.generator(JavaResourceCollector::new)
-                .add(Path.of("resources"), "**/*");
+            if (!(project instanceof MergedTestProject)) {
+                project.generator(JavaCompiler::new)
+                    .addSources(Path.of("src"), "**/*.java")
+                    .options("--release", "25");
+                project.generator(JavaResourceCollector::new)
+                    .add(Path.of("resources"), "**/*");
+            } else {
+                project.generator(JavaCompiler::new).addSources(Path.of("test"),
+                    "**/*.java").options("--release", "25");
+                project.generator(JavaResourceCollector::new).add(Path.of(
+                    "test-resources"), "**/*");
+                project.dependency(Consume, new MvnRepoLookup()
+                    .resolve("junit:junit:4.13.2")
+                    .bom("org.junit:junit-bom:5.14.2")
+                    .resolve("org.junit.jupiter:junit-jupiter-api")
+                    .resolve("org.junit.jupiter:junit-jupiter-params")
+                    .resolve("org.junit.jupiter:junit-jupiter-engine",
+                        "org.junit.vintage:junit-vintage-engine",
+                        "net.jodah:concurrentunit:0.4.2"));
+                project.dependency(Supply, JUnitTestRunner::new);
+            }
         }
     }
 
