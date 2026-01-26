@@ -13,7 +13,8 @@ public class Core extends AbstractProject implements JavaProject {
         super(name("core"));
         dependency(Expose, project(Api.class));
         dependency(Expose, new MvnRepoLookup().resolve(
-            "com.google.flogger:flogger:0.9"));
+            "com.google.flogger:flogger:0.9",
+            "io.vavr:vavr:0.11.0"));
     }
 
     public static class CoreTest extends AbstractProject

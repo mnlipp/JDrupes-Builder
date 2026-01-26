@@ -154,7 +154,7 @@ public class JavaExecutor extends AbstractProvider
     }
 
     private void findMainClass(Resources<ClasspathElement> cpResources) {
-        cpResources.vavr().filter(cpe -> cpe instanceof JarFile)
+        vavrStream(cpResources).filter(cpe -> cpe instanceof JarFile)
             .map(JarFile.class::cast).map(cpe -> Try.withResources(
                 () -> new java.util.jar.JarFile(cpe.path().toFile()))
                 .of(jar -> Try.of(jar::getManifest).toOption()

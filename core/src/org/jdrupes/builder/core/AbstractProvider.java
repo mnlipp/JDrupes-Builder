@@ -28,6 +28,7 @@ import org.jdrupes.builder.api.ResourceProvider;
 import org.jdrupes.builder.api.ResourceProviderSpi;
 import org.jdrupes.builder.api.ResourceRequest;
 import org.jdrupes.builder.api.ResourceType;
+import org.jdrupes.builder.api.Resources;
 
 /// A base implementation for[ResourceProvider]s.
 ///
@@ -116,6 +117,15 @@ public abstract class AbstractProvider implements ResourceProvider {
     protected <T extends Resource> T newResource(ResourceType<T> type,
             Object... args) {
         return ResourceFactory.create(type, null, args);
+    }
+
+    /// Retrieves the resources as a Vavr stream.
+    ///
+    /// @return the stream
+    ///
+    public <T extends Resource> io.vavr.collection.Stream<T>
+            vavrStream(Resources<T> resources) {
+        return io.vavr.collection.Stream.ofAll(resources.stream());
     }
 
     @Override
