@@ -19,11 +19,14 @@
 package org.jdrupes.builder.java;
 
 import com.google.common.flogger.FluentLogger;
+import io.vavr.control.Option;
+import io.vavr.control.Try;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import static java.nio.file.StandardOpenOption.*;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.concurrent.ConcurrentHashMap;
@@ -53,7 +56,7 @@ import org.jdrupes.builder.core.StreamCollector;
 /// A general purpose generator for jars. All contents must be added
 /// explicitly using [#add(Entry...)] or [#add(FileTree...)].
 ///
-@SuppressWarnings("PMD.CouplingBetweenObjects")
+@SuppressWarnings({ "PMD.CouplingBetweenObjects", "PMD.TooManyMethods" })
 public class JarGenerator extends AbstractGenerator {
 
     private static final FluentLogger logger = FluentLogger.forEnclosingClass();
@@ -221,31 +224,55 @@ public class JarGenerator extends AbstractGenerator {
     ///
     /// @param jarResource the jar resource
     ///
+    @SuppressWarnings("PMD.ConfusingTernary")
     protected void buildJar(JarFile jarResource) {
         // Collect entries for jar from all sources
         var contents = new ConcurrentHashMap<Path, Resources<IOResource>>();
         collectContents(contents);
         resolveDuplicates(contents);
 
-        // Check if rebuild needed.
-        var newer = contents.values().stream()
-            .map(r -> r.stream().findFirst().stream()).flatMap(s -> s)
-            .filter(r -> r.asOf().isAfter(jarResource.asOf())).findAny();
-        if (newer.isEmpty()) {
-            logger.atFine().log("Existing %s is up to date.", jarName());
-            return;
+        // Check if rebuild needed (requires manifest check).
+        var oldManifest = Option.of(jarResource)
+            .filter(jar -> jar.path().toFile().canRead())
+            .flatMap(jr -> Try.withResources(
+                () -> new java.util.jar.JarFile(jr.path().toFile()))
+                .of(jar -> Try.of(jar::getManifest).toOption()
+                    .flatMap(Option::of))
+                .toOption().flatMap(m -> m))
+            .getOrElse(Manifest::new);
+        Manifest manifest = createManifest(contents.values());
+        if (!manifest.equals(oldManifest)) {
+            logger.atFine().log("Rebuilding %s, manifest changed", jarName());
+        } else {
+            // manifest unchanged, check timestamps
+            var newer = contents.values().stream()
+                .map(r -> r.stream().findFirst().stream()).flatMap(s -> s)
+                .filter(r -> r.asOf().isAfter(jarResource.asOf())).findAny();
+            if (newer.isEmpty()) {
+                logger.atFine().log("Existing %s is up to date.", jarName());
+                return;
+            }
+            logger.atFine().log(
+                "Rebuilding %s, is older than %s", jarName(), newer.get());
         }
-        logger.atFine().log(
-            "Rebuilding %s, is older than %s", jarName(), newer.get());
+        writeJar(jarResource, contents, manifest);
+    }
 
-        // Write jar file
-        logger.atInfo().log("Building %s in %s", jarName(), project().name());
+    private Manifest
+            createManifest(Collection<Resources<IOResource>> collection) {
         Manifest manifest = new Manifest();
         @SuppressWarnings("PMD.LooseCoupling")
         Attributes attributes = manifest.getMainAttributes();
         attributes.put(Attributes.Name.MANIFEST_VERSION, "1.0");
         this.attributes.stream()
             .forEach(e -> attributes.put(e.getKey(), e.getValue()));
+        return manifest;
+    }
+
+    private void writeJar(JarFile jarResource,
+            Map<Path, Resources<IOResource>> contents, Manifest manifest) {
+        // Write jar file
+        logger.atInfo().log("Building %s in %s", jarName(), project().name());
         try {
             // Allow continued use of existing jar if open (POSIX only)
             Files.deleteIfExists(jarResource.path());
