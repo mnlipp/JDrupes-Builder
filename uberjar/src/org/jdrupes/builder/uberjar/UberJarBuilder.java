@@ -20,8 +20,14 @@ package org.jdrupes.builder.uberjar;
 
 import com.google.common.flogger.FluentLogger;
 import java.io.IOException;
+import java.nio.file.FileSystems;
 import java.nio.file.Path;
+import java.nio.file.PathMatcher;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Predicate;
 import java.util.jar.JarEntry;
@@ -126,24 +132,37 @@ public class UberJarBuilder extends LibraryBuilder {
     private static final FluentLogger logger = FluentLogger.forEnclosingClass();
     private Map<Path, java.util.jar.JarFile> openJars = Map.of();
     private Predicate<Resource> resourceFilter = _ -> true;
+    private final List<PathMatcher> ignoredDuplicates = new ArrayList<>();
 
     /// Instantiates a new uber jar generator.
     ///
     /// @param project the project
     ///
     public UberJarBuilder(Project project) {
-        super(project);
+        super(Objects.requireNonNull(project));
     }
 
     @Override
     public UberJarBuilder name(String name) {
-        rename(name);
+        rename(Objects.requireNonNull(name));
+        return this;
+    }
+
+    /// Ignore duplicates matching the given glob patterns when merging.
+    ///
+    /// @param patterns the patterns
+    /// @return the uber jar builder
+    ///
+    public UberJarBuilder ignoreDuplicates(String... patterns) {
+        Arrays.asList(patterns).forEach(
+            p -> ignoredDuplicates.add(FileSystems.getDefault()
+                .getPathMatcher("glob:" + p)));
         return this;
     }
 
     @Override
-    protected void
-            collectFromProviders(Map<Path, Resources<IOResource>> contents) {
+    protected void collectFromProviders(
+            Map<Path, Resources<IOResource>> contents) {
         openJars = new ConcurrentHashMap<>();
         providers().stream().map(p -> p.resources(
             of(ClasspathElementType).using(Supply, Expose)))
@@ -185,7 +204,7 @@ public class UberJarBuilder extends LibraryBuilder {
     /// @return the uber jar generator
     ///
     public UberJarBuilder resourceFilter(Predicate<Resource> filter) {
-        resourceFilter = filter;
+        resourceFilter = Objects.requireNonNull(filter);
         return this;
     }
 
@@ -220,16 +239,16 @@ public class UberJarBuilder extends LibraryBuilder {
             });
     }
 
-    @SuppressWarnings({ "PMD.AvoidLiteralsInIfCondition",
-        "PMD.PreserveStackTrace", "PMD.UselessPureMethodCall" })
+    @SuppressWarnings({ "PMD.PreserveStackTrace", "PMD.UselessPureMethodCall",
+        "PMD.AvoidLiteralsInIfCondition" })
     @Override
     protected void resolveDuplicates(Map<Path, Resources<IOResource>> entries) {
         entries.entrySet().parallelStream().forEach(item -> {
+            var entryName = item.getKey();
             var candidates = item.getValue();
             if (candidates.stream().count() == 1) {
                 return;
             }
-            var entryName = item.getKey();
             if (entryName.startsWith("META-INF/services")) {
                 var combined = new ServicesEntryResource();
                 candidates.stream().forEach(service -> {
@@ -245,6 +264,10 @@ public class UberJarBuilder extends LibraryBuilder {
             }
             if (entryName.startsWith("META-INF")) {
                 candidates.clear();
+            }
+            if (ignoredDuplicates.stream().map(m -> m.matches(entryName))
+                .filter(Boolean::booleanValue).findFirst().isPresent()) {
+                return;
             }
             candidates.stream().reduce((a, b) -> {
                 logger.atWarning().log("Entry %s from %s duplicates"
