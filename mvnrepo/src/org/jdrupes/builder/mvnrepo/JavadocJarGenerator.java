@@ -25,12 +25,12 @@ import static org.jdrupes.builder.api.Intent.Supply;
 import org.jdrupes.builder.api.Project;
 import static org.jdrupes.builder.api.Project.Properties.Version;
 import org.jdrupes.builder.api.ResourceType;
-import org.jdrupes.builder.java.JarGenerator;
+import org.jdrupes.builder.java.JarBuilder;
 import static org.jdrupes.builder.java.JavaTypes.*;
 import org.jdrupes.builder.java.JavadocDirectory;
 import static org.jdrupes.builder.mvnrepo.MvnProperties.*;
 
-/// A special [JarGenerator] that generates a jar with javadoc.
+/// A special [JarBuilder] that generates a jar with javadoc.
 ///
 ///   * The content of the jar is obtained by requesting resources of
 ///     type [JavadocDirectory] from the project's suppliers and using
@@ -42,7 +42,7 @@ import static org.jdrupes.builder.mvnrepo.MvnProperties.*;
 ///     `<version>` is the value of the project's property
 ///     [Project.Properties#Version].
 ///
-public class JavadocJarGenerator extends JarGenerator {
+public class JavadocJarGenerator extends JarBuilder {
 
     /// Initializes a new sources jar generator.
     ///

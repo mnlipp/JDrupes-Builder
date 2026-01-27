@@ -60,7 +60,7 @@ import static org.jdrupes.builder.java.JavaTypes.*;
 /// generator(LibraryGenerator::new).from(this);
 /// ```
 ///
-public class LibraryGenerator extends JarGenerator
+public class LibraryBuilder extends JarBuilder
         implements ResourceRetriever {
 
     private final StreamCollector<ResourceProvider> providers
@@ -71,12 +71,12 @@ public class LibraryGenerator extends JarGenerator
     ///
     /// @param project the project
     ///
-    public LibraryGenerator(Project project) {
+    public LibraryBuilder(Project project) {
         super(project, LibraryJarFileType);
     }
 
     @Override
-    public LibraryGenerator name(String name) {
+    public LibraryBuilder name(String name) {
         rename(name);
         return this;
     }
@@ -94,7 +94,7 @@ public class LibraryGenerator extends JarGenerator
     /// @param mainClass the new main class
     /// @return the jar generator for method chaining
     ///
-    public LibraryGenerator mainClass(String mainClass) {
+    public LibraryBuilder mainClass(String mainClass) {
         this.mainClass = Objects.requireNonNull(mainClass);
         return this;
     }
@@ -106,7 +106,7 @@ public class LibraryGenerator extends JarGenerator
     /// @return the jar generator
     ///
     @Override
-    public LibraryGenerator addFrom(ResourceProvider... providers) {
+    public LibraryBuilder addFrom(ResourceProvider... providers) {
         addFrom(Stream.of(providers));
         return this;
     }
@@ -118,7 +118,7 @@ public class LibraryGenerator extends JarGenerator
     /// @return the jar generator
     ///
     @Override
-    public LibraryGenerator addFrom(Stream<ResourceProvider> providers) {
+    public LibraryBuilder addFrom(Stream<ResourceProvider> providers) {
         this.providers.add(providers.filter(p -> !p.equals(this)));
         return this;
     }

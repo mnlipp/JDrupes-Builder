@@ -8,7 +8,7 @@ import org.jdrupes.builder.api.TestResult;
 import org.jdrupes.builder.core.AbstractProject;
 import org.jdrupes.builder.eclipse.EclipseConfiguration;
 import org.jdrupes.builder.java.JarFile;
-import org.jdrupes.builder.uberjar.UberJarGenerator;
+import org.jdrupes.builder.uberjar.UberJarBuilder;
 
 public class Root extends AbstractProject implements RootProject {
 
@@ -27,7 +27,7 @@ public class Root extends AbstractProject implements RootProject {
         dependency(Expose, project(Base2.class));
 
         // Provide app jar
-        generator(new UberJarGenerator(this)
+        generator(new UberJarBuilder(this)
             .addFrom(providers().select(Expose))
             .mainClass("jdbld.demo.subprojects.app")
             .destination(buildDirectory().resolve(Path.of("app"))));

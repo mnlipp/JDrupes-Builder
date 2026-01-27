@@ -45,7 +45,7 @@ import org.jdrupes.builder.java.JarFile;
 import org.jdrupes.builder.java.JarFileEntry;
 import org.jdrupes.builder.java.JavaResourceTree;
 import static org.jdrupes.builder.java.JavaTypes.*;
-import org.jdrupes.builder.java.LibraryGenerator;
+import org.jdrupes.builder.java.LibraryBuilder;
 import org.jdrupes.builder.java.LibraryJarFile;
 import org.jdrupes.builder.java.ServicesEntryResource;
 import org.jdrupes.builder.mvnrepo.MvnRepoJarFile;
@@ -79,7 +79,7 @@ import static org.jdrupes.builder.mvnrepo.MvnRepoTypes.*;
 ///     that is not applicable to the uber jar.
 ///   * Filter out any module-info.class entries.
 ///
-/// Note that the [UberJarGenerator] does deliberately not request the
+/// Note that the [UberJarBuilder] does deliberately not request the
 /// [ClasspathElement]s as `RuntimeResources` because this may return
 /// resources twice if a project uses another project as runtime
 /// dependency (i.e. with [Intent#Consume]. If this rule causes entries
@@ -121,7 +121,7 @@ import static org.jdrupes.builder.mvnrepo.MvnRepoTypes.*;
 /// generating the uber jar in a project of its own. Often the root
 /// project can be used for this purpose.  
 ///
-public class UberJarGenerator extends LibraryGenerator {
+public class UberJarBuilder extends LibraryBuilder {
 
     private static final FluentLogger logger = FluentLogger.forEnclosingClass();
     private Map<Path, java.util.jar.JarFile> openJars = Map.of();
@@ -131,12 +131,12 @@ public class UberJarGenerator extends LibraryGenerator {
     ///
     /// @param project the project
     ///
-    public UberJarGenerator(Project project) {
+    public UberJarBuilder(Project project) {
         super(project);
     }
 
     @Override
-    public UberJarGenerator name(String name) {
+    public UberJarBuilder name(String name) {
         rename(name);
         return this;
     }
@@ -184,7 +184,7 @@ public class UberJarGenerator extends LibraryGenerator {
     /// included.
     /// @return the uber jar generator
     ///
-    public UberJarGenerator resourceFilter(Predicate<Resource> filter) {
+    public UberJarBuilder resourceFilter(Predicate<Resource> filter) {
         resourceFilter = filter;
         return this;
     }

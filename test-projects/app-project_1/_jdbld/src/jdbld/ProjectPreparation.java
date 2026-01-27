@@ -30,7 +30,7 @@ import org.jdrupes.builder.eclipse.EclipseConfigurator;
 import org.jdrupes.builder.java.JavaCompiler;
 import org.jdrupes.builder.java.JavaProject;
 import org.jdrupes.builder.java.JavaResourceCollector;
-import org.jdrupes.builder.java.LibraryGenerator;
+import org.jdrupes.builder.java.LibraryBuilder;
 
 /// The Class ProjectPreparation.
 ///
@@ -42,7 +42,7 @@ public class ProjectPreparation {
                 .addSources(Path.of("src"), "**/*.java");
             project.dependency(Consume, JavaResourceCollector::new)
                 .add(Path.of("resources"), "**/*");
-            project.generator(LibraryGenerator::new)
+            project.generator(LibraryBuilder::new)
                 .addFrom(project.providers().select(Consume));
         }
     }

@@ -24,12 +24,12 @@ import static org.jdrupes.builder.api.Intent.Supply;
 import org.jdrupes.builder.api.Project;
 import static org.jdrupes.builder.api.Project.Properties.Version;
 import org.jdrupes.builder.api.ResourceType;
-import org.jdrupes.builder.java.JarGenerator;
+import org.jdrupes.builder.java.JarBuilder;
 import org.jdrupes.builder.java.JavaSourceFile;
 import static org.jdrupes.builder.java.JavaTypes.SourcesJarFileType;
 import static org.jdrupes.builder.mvnrepo.MvnProperties.*;
 
-/// A special [JarGenerator] that generates a sources jar following
+/// A special [JarBuilder] that generates a sources jar following
 /// the maven convention.
 ///
 ///   * The content of the jar is obtained by requesting [FileTree]s
@@ -41,7 +41,7 @@ import static org.jdrupes.builder.mvnrepo.MvnProperties.*;
 ///     `<version>` is the value of the project's property
 ///     [Project.Properties#Version].
 ///
-public class SourcesJarGenerator extends JarGenerator {
+public class SourcesJarGenerator extends JarBuilder {
 
     /// Initializes a new sources jar generator.
     ///

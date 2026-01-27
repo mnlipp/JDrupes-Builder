@@ -21,7 +21,7 @@ import org.jdrupes.builder.mvnrepo.MvnRepoLookup;
 import org.jdrupes.builder.mvnrepo.PomFile;
 import org.jdrupes.builder.mvnrepo.PomFileGenerator;
 import org.jdrupes.builder.mvnrepo.SourcesJarGenerator;
-import org.jdrupes.builder.uberjar.UberJarGenerator;
+import org.jdrupes.builder.uberjar.UberJarBuilder;
 import org.jdrupes.builder.vscode.VscodeConfiguration;
 import static org.jdrupes.builder.mvnrepo.MvnProperties.*;
 import org.jdrupes.builder.java.Javadoc;
@@ -77,7 +77,7 @@ public class Root extends AbstractProject implements RootProject {
         });
 
         // Provide app jar
-        generator(new UberJarGenerator(this).addFrom(providers().select(Expose))
+        generator(new UberJarBuilder(this).addFrom(providers().select(Expose))
             // Runtime (only) dependencies of executable jar
             .addFrom(new MvnRepoLookup().resolve(
                 "com.google.flogger:flogger-system-backend:0.9",

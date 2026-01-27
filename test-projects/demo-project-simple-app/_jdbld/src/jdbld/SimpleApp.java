@@ -11,17 +11,17 @@ import org.jdrupes.builder.eclipse.EclipseConfiguration;
 import org.jdrupes.builder.java.AppJarFile;
 import org.jdrupes.builder.java.JavaCompiler;
 import org.jdrupes.builder.java.JavaExecutor;
-import org.jdrupes.builder.uberjar.UberJarGenerator;
+import org.jdrupes.builder.uberjar.UberJarBuilder;
 
 public class SimpleApp extends AbstractProject implements RootProject {
 
     public SimpleApp() {
         super(name("demo-project-simple-app"));
         generator(JavaCompiler::new).addSources(Path.of("src"), "**/*.java");
-        generator(UberJarGenerator::new).addFrom(providers()
+        generator(UberJarBuilder::new).addFrom(providers()
             .select(Supply)).mainClass("jdbld.demo.simpleapp.App");
         dependency(Supply, JavaExecutor::new)
-            .addFrom(providers().filter(p -> p instanceof UberJarGenerator)
+            .addFrom(providers().filter(p -> p instanceof UberJarBuilder)
                 .select(Supply));
 
         // Command arguments

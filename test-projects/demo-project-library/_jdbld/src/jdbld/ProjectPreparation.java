@@ -68,7 +68,7 @@ public class ProjectPreparation {
                 model.setDevelopers(List.of(developer));
             });
 
-            project.generator(LibraryGenerator::new)
+            project.generator(LibraryBuilder::new)
                 .addFrom(project.providers().select(Supply))
                 .attributes(Map.of(
                     IMPLEMENTATION_TITLE, project.name(),

@@ -57,7 +57,7 @@ import org.jdrupes.builder.core.StreamCollector;
 /// explicitly using [#add(Entry...)] or [#add(FileTree...)].
 ///
 @SuppressWarnings({ "PMD.CouplingBetweenObjects", "PMD.TooManyMethods" })
-public class JarGenerator extends AbstractGenerator {
+public class JarBuilder extends AbstractGenerator {
 
     private static final FluentLogger logger = FluentLogger.forEnclosingClass();
     private final ResourceType<? extends JarFile> jarType;
@@ -78,14 +78,14 @@ public class JarGenerator extends AbstractGenerator {
     /// @param project the project
     /// @param jarType the type of jar that the generator generates
     ///
-    public JarGenerator(Project project,
+    public JarBuilder(Project project,
             ResourceType<? extends JarFile> jarType) {
         super(project);
         this.jarType = jarType;
     }
 
     @Override
-    public JarGenerator name(String name) {
+    public JarBuilder name(String name) {
         rename(name);
         return this;
     }
@@ -106,7 +106,7 @@ public class JarGenerator extends AbstractGenerator {
     /// @param destination the new destination
     /// @return the jar generator
     ///
-    public JarGenerator destination(Path destination) {
+    public JarBuilder destination(Path destination) {
         this.destination
             = () -> project().buildDirectory().resolve(destination);
         return this;
@@ -117,7 +117,7 @@ public class JarGenerator extends AbstractGenerator {
     /// @param destination the new destination
     /// @return the jar generator
     ///
-    public JarGenerator destination(Supplier<Path> destination) {
+    public JarBuilder destination(Supplier<Path> destination) {
         this.destination = destination;
         return this;
     }
@@ -137,7 +137,7 @@ public class JarGenerator extends AbstractGenerator {
     /// @param jarName the jar name
     /// @return the jar generator
     ///
-    public JarGenerator jarName(Supplier<String> jarName) {
+    public JarBuilder jarName(Supplier<String> jarName) {
         this.jarName = jarName;
         return this;
     }
@@ -147,7 +147,7 @@ public class JarGenerator extends AbstractGenerator {
     /// @param jarName the jar name
     /// @return the jar generator
     ///
-    public JarGenerator jarName(String jarName) {
+    public JarBuilder jarName(String jarName) {
         return jarName(() -> jarName);
     }
 
@@ -156,7 +156,7 @@ public class JarGenerator extends AbstractGenerator {
     /// @param attributes the attributes
     /// @return the library generator
     ///
-    public JarGenerator
+    public JarBuilder
             attributes(Stream<Map.Entry<Attributes.Name, String>> attributes) {
         this.attributes.add(attributes);
         return this;
@@ -168,7 +168,7 @@ public class JarGenerator extends AbstractGenerator {
     /// @return the library generator
     ///
     @SafeVarargs
-    public final JarGenerator
+    public final JarBuilder
             attributes(Map.Entry<Attributes.Name, String>... attributes) {
         this.attributes.add(Arrays.stream(attributes));
         return this;
@@ -182,7 +182,7 @@ public class JarGenerator extends AbstractGenerator {
     /// @param entries the entries
     /// @return the jar generator
     ///
-    public JarGenerator addEntries(
+    public JarBuilder addEntries(
             Stream<? extends Map.Entry<Path, ? extends IOResource>> entries) {
         entryStreams.add(entries);
         return this;
@@ -194,7 +194,7 @@ public class JarGenerator extends AbstractGenerator {
     /// @param trees the trees
     /// @return the jar generator
     ///
-    public JarGenerator addTrees(Stream<? extends FileTree<?>> trees) {
+    public JarBuilder addTrees(Stream<? extends FileTree<?>> trees) {
         fileTrees.add(trees);
         return this;
     }
@@ -204,7 +204,7 @@ public class JarGenerator extends AbstractGenerator {
     /// @param trees the trees
     /// @return the jar generator
     ///
-    public JarGenerator add(FileTree<?>... trees) {
+    public JarBuilder add(FileTree<?>... trees) {
         addTrees(Arrays.stream(trees));
         return this;
     }
@@ -214,7 +214,7 @@ public class JarGenerator extends AbstractGenerator {
     /// @param entries the entry
     /// @return the jar generator
     ///
-    public JarGenerator add(@SuppressWarnings("unchecked") Map.Entry<Path,
+    public JarBuilder add(@SuppressWarnings("unchecked") Map.Entry<Path,
             ? extends IOResource>... entries) {
         addEntries(Arrays.stream(entries));
         return this;
