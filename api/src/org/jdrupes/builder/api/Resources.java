@@ -45,7 +45,8 @@ public interface Resources<T extends Resource> extends Resource {
         return addAll(resources.stream());
     }
 
-    /// Adds all resources from the given stream.
+    /// Adds all resources from the given stream. This terminates the given
+    /// stream.
     ///
     /// @param resources the resources to add
     /// @return the resources
