@@ -37,7 +37,7 @@ public class JavaResourceFactory implements ResourceFactory {
         // Make javadoc happy
     }
 
-    @SuppressWarnings("unchecked")
+    @SuppressWarnings({ "unchecked" })
     @Override
     public <T extends Resource> Optional<T> newResource(ResourceType<T> type,
             Project project, Object... args) {
@@ -63,6 +63,9 @@ public class JavaResourceFactory implements ResourceFactory {
                 (Class<? extends JarFile>) type.rawType())) {
             return Optional.of((T) DefaultJarFile.createJarFile(
                 (ResourceType<? extends JarFile>) type, (Path) args[0]));
+        }
+        if (ManifestAttributes.class.equals(type.rawType())) {
+            return Optional.of((T) new ManifestAttributes());
         }
         if (JavaResourceTree.class.equals(type.rawType())) {
             return Optional.of((T) new JavaResourceTree(project,

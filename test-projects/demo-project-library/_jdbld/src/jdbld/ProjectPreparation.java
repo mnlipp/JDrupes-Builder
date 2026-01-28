@@ -70,11 +70,13 @@ public class ProjectPreparation {
 
             project.generator(LibraryBuilder::new)
                 .addFrom(project.providers().select(Supply))
-                .attributes(Map.of(
+                .addAttributeValues(Map.of(
                     IMPLEMENTATION_TITLE, project.name(),
                     IMPLEMENTATION_VERSION, project.get(Version),
                     IMPLEMENTATION_VENDOR, "Michael N. Lipp (mnl@mnl.de)")
                     .entrySet().stream())
+                .addManifestAttributes(project.resources(
+                    project.of(ManifestAttributes.class).using(Consume)))
                 .addEntries(project.resources(project
                     .of(PomFile.class).using(Supply))
                     .map(pomFile -> Map.entry(Path.of("META-INF/maven")

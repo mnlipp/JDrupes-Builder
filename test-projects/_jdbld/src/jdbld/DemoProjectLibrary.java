@@ -33,6 +33,7 @@ public class DemoProjectLibrary extends AbstractProject
 
         dependency(Consume, project(Core.class));
         dependency(Consume, project(Java.class));
+        dependency(Consume, project(Bnd.class));
         dependency(Consume, project(Uberjar.class));
         dependency(Consume, project(Startup.class));
         dependency(Consume, project(Eclipse.class));

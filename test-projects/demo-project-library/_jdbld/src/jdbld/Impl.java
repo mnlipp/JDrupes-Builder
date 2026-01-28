@@ -19,6 +19,11 @@
 package jdbld;
 
 import static org.jdrupes.builder.api.Intent.*;
+
+import java.util.Map;
+
+import org.jdrupes.builder.bnd.BndAnalyzer;
+import org.jdrupes.builder.bnd.BndProperties;
 import org.jdrupes.builder.core.AbstractProject;
 import org.jdrupes.builder.java.JavaLibraryProject;
 import org.jdrupes.builder.mvnrepo.MvnRepoLookup;
@@ -32,6 +37,9 @@ public class Impl extends AbstractProject implements JavaLibraryProject {
             "com.electronwill.night-config:yaml:[3.6.7,3.7.0)",
             // https://security.snyk.io/package/maven/org.yaml:snakeyaml
             "org.yaml:snakeyaml:[1.33,2)"));
+        dependency(Consume, BndAnalyzer::new).instructions(
+            this.<Map<String, String>> get(BndProperties.BndInstructions))
+            .instruction("Export-Package", "*");
     }
 
 }

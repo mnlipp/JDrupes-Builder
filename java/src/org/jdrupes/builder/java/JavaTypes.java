@@ -43,8 +43,12 @@ public final class JavaTypes {
     public static final ResourceType<ClassFile> ClassFileType
         = new ResourceType<>() {};
 
-    /// The Java class files.
+    /// A Java class tree (Java class files).
     public static final ResourceType<ClassTree> ClassTreeType
+        = new ResourceType<>() {};
+
+    /// Many Java class trees.
+    public static final ResourceType<Resources<ClassTree>> ClassTreesType
         = new ResourceType<>() {};
 
     /// Resource files.
@@ -70,6 +74,11 @@ public final class JavaTypes {
 
     /// The Java library jar file.
     public static final ResourceType<LibraryJarFile> LibraryJarFileType
+        = new ResourceType<>() {};
+
+    /// Jar manifest attributes.
+    @SuppressWarnings("PMD.LooseCoupling")
+    public static final ResourceType<ManifestAttributes> ManifestAttributesType
         = new ResourceType<>() {};
 
     /// The Java application jar file.

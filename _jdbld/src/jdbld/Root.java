@@ -47,6 +47,7 @@ public class Root extends AbstractProject implements RootProject {
         dependency(Expose, project(Api.class));
         dependency(Expose, project(Core.class));
         dependency(Expose, project(Java.class));
+        dependency(Expose, project(Bnd.class));
         dependency(Expose, project(MvnRepo.class));
         dependency(Expose, project(Uberjar.class));
         dependency(Expose, project(Startup.class));
@@ -77,7 +78,11 @@ public class Root extends AbstractProject implements RootProject {
         });
 
         // Provide app jar
-        generator(new UberJarBuilder(this).addFrom(providers().select(Expose))
+        generator(new UberJarBuilder(this)
+            // bndlib and its dependencies are a mess
+            .ignoreDuplicates(
+                "about.html", "OSGI-OPT/src/**", "LICENSE", "aQute/**")
+            .addFrom(providers().select(Expose))
             // Runtime (only) dependencies of executable jar
             .addFrom(new MvnRepoLookup().resolve(
                 "com.google.flogger:flogger-system-backend:0.9",

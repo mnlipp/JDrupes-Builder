@@ -26,7 +26,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import static java.nio.file.StandardOpenOption.*;
 import java.util.Arrays;
-import java.util.Collection;
+import java.util.Comparator;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.concurrent.ConcurrentHashMap;
@@ -156,9 +156,24 @@ public class JarBuilder extends AbstractGenerator {
     /// @param attributes the attributes
     /// @return the library generator
     ///
-    public JarBuilder
-            attributes(Stream<Map.Entry<Attributes.Name, String>> attributes) {
+    public JarBuilder addAttributeValues(
+            Stream<Map.Entry<Attributes.Name, String>> attributes) {
         this.attributes.add(attributes);
+        return this;
+    }
+
+    /// Add the given attributes to the manifest.
+    ///
+    /// @param attributes the attributes
+    /// @return the library generator
+    ///
+    @SuppressWarnings("PMD.LooseCoupling")
+    public JarBuilder
+            addManifestAttributes(Stream<ManifestAttributes> attributes) {
+        addAttributeValues(
+            attributes.map(a -> a.entrySet().stream()).flatMap(s -> s)
+                .map(e -> Map.entry((Attributes.Name) e.getKey(),
+                    (String) e.getValue())));
         return this;
     }
 
@@ -240,7 +255,7 @@ public class JarBuilder extends AbstractGenerator {
                     .flatMap(Option::of))
                 .toOption().flatMap(m -> m))
             .getOrElse(Manifest::new);
-        Manifest manifest = createManifest(contents.values());
+        Manifest manifest = createManifest();
         if (!manifest.equals(oldManifest)) {
             logger.atFine().log("Rebuilding %s, manifest changed", jarName());
         } else {
@@ -258,13 +273,13 @@ public class JarBuilder extends AbstractGenerator {
         writeJar(jarResource, contents, manifest);
     }
 
-    private Manifest
-            createManifest(Collection<Resources<IOResource>> collection) {
+    private Manifest createManifest() {
         Manifest manifest = new Manifest();
         @SuppressWarnings("PMD.LooseCoupling")
         Attributes attributes = manifest.getMainAttributes();
         attributes.put(Attributes.Name.MANIFEST_VERSION, "1.0");
-        this.attributes.stream()
+        this.attributes.stream().sorted(Map.Entry.comparingByKey(
+            Comparator.comparing(Attributes.Name::toString)))
             .forEach(e -> attributes.put(e.getKey(), e.getValue()));
         return manifest;
     }
