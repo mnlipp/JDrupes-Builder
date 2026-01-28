@@ -53,33 +53,35 @@ import static org.jdrupes.builder.java.JavaTypes.*;
 import org.jdrupes.builder.java.LibraryJarFile;
 import org.jdrupes.builder.java.ManifestAttributes;
 
-/// A provider that computes OSGi attributes in response to
-/// requests for [ManifestAttributes]. It uses the `bndlib`
-/// from the [bnd](https://github.com/bndtools/bnd) project
-/// for its implementation.
-/// 
-/// The analyzer first requests the resources of type [ClassTree] supplied
-/// to the project (typically by its [JavaCompiler]). The classes obtained
-/// are assumed to be the content of the bundle.
-/// 
-/// It then requests the resources of type [LibraryJarFile] from the
-/// project's dependencies with intent `Consume` and `Expose` (same
+/// A provider that computes OSGi metadata in response to requests for
+/// [ManifestAttributes].
+///
+/// This implementation uses the `bndlib` library from the
+/// [bnd](https://github.com/bndtools/bnd) project to analyze bundle
+/// contents and compute manifest attributes.
+///
+/// When invoked, the analyzer first obtains resources of type [ClassTree]
+/// supplied to the project (typically by a [JavaCompiler]). These class
+/// trees are treated as the content of the bundle.
+///
+/// It then obtains resources of type [LibraryJarFile] from the project's
+/// dependencies with intents `Consume`, `Reveal` and `Expose` (the same
 /// intents as used by the [JavaCompiler] when assembling the compilation
-/// classpath). These libraries are registered as the dependencies of the
-/// bundle.
-/// 
-/// The collected is analyzed and used to provide the requested attributes.
-/// 
-/// The [BndAnalyzer] can be configured for a [Project] in various ways.
-/// Contrary to most [ResourceProvider]s, it needs a lot of sub project
-/// specific information (supplied as instructions). One way to handle
-/// this is to add the [BndAnalyzer] to the project in the project's
-/// constructor instead of in [RootProject#prepareProject].
-/// 
-/// Another way is to put the project specific instructions in a file
-/// `bnd.bnd` (common name) in the project's directory. Then add the
-/// [BndAnalyzer] in [RootProject#prepareProject] with an invocation of
-/// [#instructions(Path)], where path refers the project's `bnd.bnd`.
+/// classpath). These library resources are registered as bundle
+/// dependencies.
+///
+/// The collected class tree and library resources are analyzed by `bndlib`
+/// to produce the manifest attributes requested.
+///
+/// Contrary to most [ResourceProvider]s, the [BndAnalyzer] needs project
+/// specific informations (supplied as instructions). This can be handled
+/// in multiple ways. One approach is to add the [BndAnalyzer] with the
+/// instructions in the project’s constructor rather than in 
+/// [RootProject#prepareProject]. Alternatively, put project-specific
+/// instructions in a `bnd.bnd` file in the project's directory, then
+/// register the analyzer in [RootProject#prepareProject] and add the
+/// instructions via [#instructions(Path)], where `Path` refers to the
+/// `bnd.bnd` file.
 ///
 @SuppressWarnings("PMD.TooManyStaticImports")
 public class BndAnalyzer extends AbstractGenerator {

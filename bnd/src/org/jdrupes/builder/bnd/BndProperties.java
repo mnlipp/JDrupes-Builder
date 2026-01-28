@@ -22,15 +22,17 @@ import java.util.Collections;
 import java.util.Map;
 import org.jdrupes.builder.api.PropertyKey;
 
-/// Bnd specific property keys.
+/// This enum defines bnd specific property keys.
 ///
 public enum BndProperties implements PropertyKey {
 
     /// Supports the definition of Bnd instructions as project properties.
-    /// Typically, this property is set for the root project. Note that
-    /// the [BndAnalyzer] does not pick up these instructions automatically.
-    /// Rather, they have to be added with [BndAnalyzer#instructions(Map)]
-    /// explicitly.
+    /// Typically, this property is set for the root project to define
+    /// default values.
+    /// 
+    /// Note that the [BndAnalyzer] does not pick up these instructions
+    /// automatically. Rather, they have to be added explicitly with
+    /// [BndAnalyzer#instructions(Map)].
     ///  
     @SuppressWarnings("PMD.FieldNamingConventions")
     BndInstructions;
