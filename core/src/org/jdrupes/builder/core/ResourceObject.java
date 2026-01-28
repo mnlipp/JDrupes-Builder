@@ -79,6 +79,15 @@ public abstract class ResourceObject implements Resource, Proxyable {
         return this;
     }
 
+    /// Checks if the instance has been used in a comparison (`hashCode`
+    /// or `equals`) and is therefore locked for further modifications.
+    ///
+    /// @return true, if is locked
+    ///
+    public boolean isLocked() {
+        return isLocked;
+    }
+
     @Override
     public int hashCode() {
         isLocked = true;
