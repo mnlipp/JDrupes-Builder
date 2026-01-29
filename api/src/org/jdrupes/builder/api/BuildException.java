@@ -75,6 +75,7 @@ public class BuildException extends RuntimeException {
 
     /// Convenience method for creating a new build exception.
     ///
+    /// @param cause the cause
     /// @param format the format
     /// @param args the args
     /// @return the builds the exception
