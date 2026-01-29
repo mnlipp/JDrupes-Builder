@@ -19,6 +19,7 @@
 package org.jdrupes.builder.bnd;
 
 import aQute.bnd.osgi.Analyzer;
+import aQute.bnd.version.Version;
 import com.google.common.flogger.FluentLogger;
 import static com.google.common.flogger.LazyArgs.lazy;
 import io.vavr.Tuple;
@@ -31,7 +32,10 @@ import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Properties;
+import java.util.jar.Attributes;
+import java.util.jar.Manifest;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import org.jdrupes.builder.api.BuildException;
@@ -159,7 +163,8 @@ public class BndAnalyzer extends AbstractGenerator {
                 new ResourceType<Resources<LibraryJarFile>>() {}).addAll(
                     project().providers(Consume, Reveal, Expose)
                         .resources(project().of(LibraryJarFileType)));
-            logger.atFiner().log("Bnd in %s uses dependencies %s", project(),
+            logger.atFiner().log("BndAnalyzer in"
+                + " %s uses dependencies %s", project(),
                 lazy(() -> bundleDeps.stream().map(e -> e.path().toString())
                     .collect(Collectors.joining(File.pathSeparator))));
             // IOException will be throw (.get()) and handled in the outer try
@@ -168,13 +173,27 @@ public class BndAnalyzer extends AbstractGenerator {
 
             // Evaluate and convert to result type
             var manifest = analyzer.calcManifest();
+            verifyManifest(manifest);
             var asResource = newResource(ManifestAttributesType);
             asResource.putAll(manifest.getMainAttributes());
             @SuppressWarnings("unchecked")
             var result = (T) asResource;
             return Stream.of(result);
         } catch (Exception e) {
-            throw new BuildException("Failed to generate OSGi metadata", e);
+            throw BuildException.of(e, "Failed to generate OSGi metadata");
         }
+    }
+
+    private void verifyManifest(Manifest manifest) {
+        Optional.ofNullable((String) manifest.getMainAttributes()
+            .get(new Attributes.Name("Bundle-Version"))).ifPresent(v -> {
+                try {
+                    new Version(v);
+                } catch (IllegalArgumentException e) {
+                    throw BuildException.of(e, "Attempt to specify invalid"
+                        + " OSGi version %s in %s", v, project());
+                }
+            });
+
     }
 }
