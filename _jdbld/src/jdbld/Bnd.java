@@ -11,7 +11,7 @@ public class Bnd extends AbstractProject implements JavaProject {
         super(name("bnd"));
         dependency(Expose, project(Core.class));
         dependency(Reveal, project(Java.class));
-        dependency(Reveal, new MvnRepoLookup()
+        dependency(Expose, new MvnRepoLookup()
             .resolve("biz.aQute.bnd:biz.aQute.bndlib:7.2.1"));
     }
 }
