@@ -61,4 +61,28 @@ public class BuildException extends RuntimeException {
         super(cause);
     }
 
+    /// Convenience method for creating a new build exception.
+    ///
+    /// @param format the format
+    /// @param args the args
+    /// @return the builds the exception
+    ///
+    @SuppressWarnings("PMD.ShortMethodName")
+    public static BuildException of(String format, Object... args) {
+        var message = String.format(format, args);
+        return new BuildException(message);
+    }
+
+    /// Convenience method for creating a new build exception.
+    ///
+    /// @param format the format
+    /// @param args the args
+    /// @return the builds the exception
+    ///
+    @SuppressWarnings("PMD.ShortMethodName")
+    public static BuildException of(Throwable cause, String format,
+            Object... args) {
+        var message = String.format(format, args);
+        return new BuildException(message, cause);
+    }
 }
