@@ -52,7 +52,6 @@ import org.jdrupes.builder.api.ResourceFactory;
 import org.jdrupes.builder.api.ResourceProvider;
 import org.jdrupes.builder.api.ResourceRequest;
 import org.jdrupes.builder.core.AbstractProvider;
-import static org.jdrupes.builder.java.JavaTypes.*;
 import static org.jdrupes.builder.mvnrepo.MvnRepoTypes.*;
 
 /// Depending on the request, this provider provides two types of resources.
@@ -188,15 +187,21 @@ public class MvnRepoLookup extends AbstractProvider
         if (requested.accepts(MvnRepoDependencyType)) {
             return provideMvnDeps();
         }
-        if (requested.accepts(LibraryJarFileType)) {
-            try {
-                return provideJars();
-            } catch (DependencyResolutionException | ModelBuildingException e) {
-                throw new BuildException(
-                    "Cannot resolve: " + e.getMessage(), e);
-            }
+        if (!requested.accepts(MvnRepoLibraryJarFileType)) {
+            return Stream.empty();
         }
-        return Stream.empty();
+        if (!requested.requires(MvnRepoLibraryJarFileType)) {
+            @SuppressWarnings({ "unchecked", "PMD.AvoidDuplicateLiterals" })
+            var result = (Stream<T>) context()
+                .resources(this, of(MvnRepoLibraryJarFileType));
+            return result;
+        }
+        try {
+            return provideJars();
+        } catch (DependencyResolutionException | ModelBuildingException e) {
+            throw new BuildException(
+                "Cannot resolve: " + e.getMessage(), e);
+        }
     }
 
     private <T extends Resource> Stream<T> provideMvnDeps() {
