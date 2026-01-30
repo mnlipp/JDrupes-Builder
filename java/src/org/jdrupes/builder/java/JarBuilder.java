@@ -54,7 +54,7 @@ import org.jdrupes.builder.core.AbstractGenerator;
 import org.jdrupes.builder.core.StreamCollector;
 
 /// A general purpose generator for jars. All contents must be added
-/// explicitly using [#add(Entry...)] or [#add(FileTree...)].
+/// explicitly using one of the `add*` methods.
 ///
 @SuppressWarnings({ "PMD.CouplingBetweenObjects", "PMD.TooManyMethods" })
 public class JarBuilder extends AbstractGenerator {
@@ -224,14 +224,40 @@ public class JarBuilder extends AbstractGenerator {
         return this;
     }
 
+    /// Adds the file tree with the given prefix for each entry.
+    ///
+    /// @param prefix the prefix
+    /// @param tree the tree
+    /// @return the jar builder
+    ///
+    public JarBuilder add(Path prefix, FileTree<?> tree) {
+        entryStreams.add(tree.entries().map(e -> Map.entry(prefix.resolve(e),
+            (IOResource) newResource(FileResourceType,
+                tree.root().resolve(e)))));
+        return this;
+    }
+
+    /// For each file tree, add its entries with the given prefix.
+    ///
+    /// @param prefix the prefix
+    /// @param trees the trees
+    /// @return the jar builder
+    ///
+    public JarBuilder add(Path prefix, Stream<? extends FileTree<?>> trees) {
+        entryStreams.add(
+            trees.flatMap(t -> t.entries().map(e -> Map.entry(prefix.resolve(e),
+                newResource(FileResourceType, t.root().resolve(e))))));
+        return this;
+    }
+
     /// Convenience method for adding a single entry, see [#addEntries(Stream)].
     ///
-    /// @param entries the entry
+    /// @param path the path
+    /// @param resource the resource
     /// @return the jar generator
     ///
-    public JarBuilder add(@SuppressWarnings("unchecked") Map.Entry<Path,
-            ? extends IOResource>... entries) {
-        addEntries(Arrays.stream(entries));
+    public JarBuilder add(Path path, IOResource resource) {
+        addEntries(Map.of(path, resource).entrySet().stream());
         return this;
     }
 
