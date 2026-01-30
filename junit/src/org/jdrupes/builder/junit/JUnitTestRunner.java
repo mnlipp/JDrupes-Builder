@@ -105,6 +105,7 @@ import org.junit.platform.launcher.listeners.SummaryGeneratingListener;
 public class JUnitTestRunner extends AbstractGenerator {
 
     private static final FluentLogger logger = FluentLogger.forEnclosingClass();
+    private boolean ignoreFailed;
 
     /// Initializes a new test runner.
     ///
@@ -112,6 +113,16 @@ public class JUnitTestRunner extends AbstractGenerator {
     ///
     public JUnitTestRunner(Project project) {
         super(project);
+    }
+
+    /// Ignore failed tests. If invoked, the test runner does not set the
+    /// faulty flag of the test results if a test has failed.
+    ///
+    /// @return the junit test runner
+    ///
+    public JUnitTestRunner ignoreFailed() {
+        this.ignoreFailed = true;
+        return this;
     }
 
     @Override
@@ -172,11 +183,15 @@ public class JUnitTestRunner extends AbstractGenerator {
 
             // Evaluate results
             var summary = summaryListener.getSummary();
-            @SuppressWarnings("unchecked")
-            var result = Stream.of((T) project().newResource(TestResultType,
+            var result = project().newResource(TestResultType,
                 this, buildName(testListener), summary.getTestsStartedCount(),
-                summary.getTestsFailedCount()));
-            return result;
+                summary.getTestsFailedCount());
+            if (summary.getTestsFailedCount() > 0 && !ignoreFailed) {
+                result.setFaulty();
+            }
+            @SuppressWarnings("unchecked")
+            var asStream = Stream.of((T) result);
+            return asStream;
         } catch (IOException e) {
             logger.atWarning().withCause(e).log("Failed to close classloader");
         } finally {

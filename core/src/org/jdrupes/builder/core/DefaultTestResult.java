@@ -20,6 +20,7 @@ package org.jdrupes.builder.core;
 
 import java.lang.reflect.Proxy;
 import java.util.Objects;
+import org.jdrupes.builder.api.FaultAware;
 import org.jdrupes.builder.api.Project;
 import org.jdrupes.builder.api.Proxyable;
 import org.jdrupes.builder.api.ResourceProvider;
@@ -32,6 +33,7 @@ public class DefaultTestResult extends ResourceObject implements TestResult {
 
     private final Project project;
     private final ResourceProvider provider;
+    private boolean isFaulty;
     private final long executed;
     private final long failed;
 
@@ -44,6 +46,7 @@ public class DefaultTestResult extends ResourceObject implements TestResult {
     /// @param executed the executed
     /// @param failed the failed
     ///
+    @SuppressWarnings("PMD.ConstructorCallsOverridableMethod")
     protected DefaultTestResult(Project project, ResourceProvider provider,
             String name, long executed, long failed) {
         name(name);
@@ -72,6 +75,17 @@ public class DefaultTestResult extends ResourceObject implements TestResult {
             new Class<?>[] { type.rawType(), Proxyable.class },
             new ForwardingHandler(new DefaultTestResult(project, provider,
                 name, executed, failed)));
+    }
+
+    @Override
+    public boolean isFaulty() {
+        return isFaulty;
+    }
+
+    @Override
+    public FaultAware setFaulty() {
+        isFaulty = true;
+        return null;
     }
 
     @Override

@@ -22,7 +22,7 @@ import java.util.Optional;
 
 /// Provides the results from running tests.
 ///
-public interface TestResult extends Resource {
+public interface TestResult extends Resource, FaultAware {
 
     /// The test project.
     ///
