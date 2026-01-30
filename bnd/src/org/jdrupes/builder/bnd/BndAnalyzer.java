@@ -22,23 +22,17 @@ import aQute.bnd.osgi.Analyzer;
 import aQute.bnd.version.Version;
 import com.google.common.flogger.FluentLogger;
 import static com.google.common.flogger.LazyArgs.lazy;
-import io.vavr.Tuple;
-import io.vavr.Tuple2;
 import io.vavr.control.Try;
 import java.io.File;
-import java.io.IOException;
-import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.ArrayList;
-import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import java.util.Properties;
 import java.util.jar.Attributes;
 import java.util.jar.Manifest;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import org.jdrupes.builder.api.BuildException;
+import org.jdrupes.builder.api.Generator;
 import static org.jdrupes.builder.api.Intent.Consume;
 import static org.jdrupes.builder.api.Intent.Expose;
 import static org.jdrupes.builder.api.Intent.Reveal;
@@ -50,14 +44,13 @@ import org.jdrupes.builder.api.ResourceRequest;
 import org.jdrupes.builder.api.ResourceType;
 import org.jdrupes.builder.api.Resources;
 import org.jdrupes.builder.api.RootProject;
-import org.jdrupes.builder.core.AbstractGenerator;
 import org.jdrupes.builder.java.ClassTree;
 import org.jdrupes.builder.java.JavaCompiler;
 import static org.jdrupes.builder.java.JavaTypes.*;
 import org.jdrupes.builder.java.LibraryJarFile;
 import org.jdrupes.builder.java.ManifestAttributes;
 
-/// A provider that computes OSGi metadata in response to requests for
+/// A [Generator] that computes OSGi metadata in response to requests for
 /// [ManifestAttributes].
 ///
 /// This implementation uses the `bndlib` library from the
@@ -88,10 +81,9 @@ import org.jdrupes.builder.java.ManifestAttributes;
 /// `bnd.bnd` file.
 ///
 @SuppressWarnings("PMD.TooManyStaticImports")
-public class BndAnalyzer extends AbstractGenerator {
+public class BndAnalyzer extends AbstractBndGenerator {
 
     private static final FluentLogger logger = FluentLogger.forEnclosingClass();
-    private final List<Tuple2<String, String>> instructions = new ArrayList<>();
 
     /// Initializes a new osgi analyzer.
     ///
@@ -107,8 +99,9 @@ public class BndAnalyzer extends AbstractGenerator {
     /// @param value the value
     /// @return the bnd analyzer
     ///
+    @Override
     public BndAnalyzer instruction(String key, String value) {
-        instructions.add(Tuple.of(key, value));
+        super.instruction(key, value);
         return this;
     }
 
@@ -117,8 +110,9 @@ public class BndAnalyzer extends AbstractGenerator {
     /// @param instructions the instructions
     /// @return the bnd analyzer
     ///
+    @Override
     public BndAnalyzer instructions(Map<String, String> instructions) {
-        instructions.forEach(this::instruction);
+        super.instructions(instructions);
         return this;
     }
 
@@ -127,14 +121,9 @@ public class BndAnalyzer extends AbstractGenerator {
     /// @param bndFile the bnd file
     /// @return the bnd analyzer
     ///
+    @Override
     public BndAnalyzer instructions(Path bndFile) {
-        var props = new Properties();
-        try {
-            props.load(Files.newInputStream(bndFile));
-            props.forEach((k, v) -> instruction(k.toString(), v.toString()));
-        } catch (IOException e) {
-            throw new BuildException("Cannot read bnd file " + bndFile, e);
-        }
+        super.instructions(bndFile);
         return this;
     }
 
@@ -156,7 +145,7 @@ public class BndAnalyzer extends AbstractGenerator {
             vavrStream(content).find(_ -> true).peek(t -> Try.of(() -> jar
                 .addAll(new aQute.bnd.osgi.Jar(t.root().toFile()))).get());
             analyzer.setJar(jar);
-            instructions.forEach(t -> analyzer.setProperty(t._1, t._2));
+            applyInstructions(analyzer);
 
             // Add classpath dependencies
             var bundleDeps = newResource(

@@ -16,24 +16,24 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package jdbld;
+package org.jdrupes.builder.api;
 
-import static org.jdrupes.builder.api.Intent.*;
-import java.util.Map;
-import org.jdrupes.builder.bnd.BndAnalyzer;
-import org.jdrupes.builder.bnd.BndBaseliner;
-import org.jdrupes.builder.bnd.BndProperties;
-import org.jdrupes.builder.core.AbstractProject;
-import org.jdrupes.builder.java.JavaLibraryProject;
+/// Implemented by resources that can be evaluated, but want to indicate
+/// that something went wrong. A typical example is a [TestResult].
+/// As a resource it can be evaluated even if tests failed. Nevertheless,
+/// it should be easily visible that something went wrong.
+///
+public interface FaultAware {
 
-public class Api extends AbstractProject implements JavaLibraryProject {
+    /// Checks if the resource is faulty.
+    ///
+    /// @return true, if is faulty
+    ///
+    boolean isFaulty();
 
-    public Api() {
-        super(name("api"));
-        dependency(Consume, BndAnalyzer::new).instructions(
-            this.<Map<String, String>> get(BndProperties.BndInstructions))
-            .instruction("Export-Package", "*");
-        dependency(Supply, BndBaseliner::new);
-    }
-
+    /// Sets the faulty state.
+    ///
+    /// @return the fault aware
+    ///
+    FaultAware setFaulty();
 }

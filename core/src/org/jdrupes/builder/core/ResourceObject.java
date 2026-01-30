@@ -69,7 +69,7 @@ public abstract class ResourceObject implements Resource, Proxyable {
     /// @param name the name
     /// @return the resource object
     ///
-    public final ResourceObject name(String name) {
+    public ResourceObject name(String name) {
         if (isLocked) {
             throw new IllegalStateException(
                 "Name may only be set once immediately after creation.");

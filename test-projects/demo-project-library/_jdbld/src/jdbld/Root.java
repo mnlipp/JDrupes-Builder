@@ -4,6 +4,8 @@ import static org.jdrupes.builder.api.Intent.*;
 import org.jdrupes.builder.api.Project;
 import org.jdrupes.builder.api.RootProject;
 import org.jdrupes.builder.api.TestResult;
+import org.jdrupes.builder.bnd.BndBaselineEvaluation;
+
 import static org.jdrupes.builder.bnd.BndProperties.*;
 import org.jdrupes.builder.core.AbstractProject;
 import org.jdrupes.builder.eclipse.EclipseConfiguration;
@@ -34,6 +36,7 @@ public class Root extends AbstractProject implements RootProject {
         commandAlias("test").resources(of(TestResult.class));
         commandAlias("pomFile").resources(of(PomFile.class));
         commandAlias("eclipse").resources(of(EclipseConfiguration.class));
+        commandAlias("baseline").resources(of(BndBaselineEvaluation.class));
     }
 
 }

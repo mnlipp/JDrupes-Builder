@@ -16,24 +16,21 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package jdbld;
+package org.jdrupes.builder.bnd;
 
-import static org.jdrupes.builder.api.Intent.*;
-import java.util.Map;
-import org.jdrupes.builder.bnd.BndAnalyzer;
-import org.jdrupes.builder.bnd.BndBaseliner;
-import org.jdrupes.builder.bnd.BndProperties;
-import org.jdrupes.builder.core.AbstractProject;
-import org.jdrupes.builder.java.JavaLibraryProject;
+import org.jdrupes.builder.api.ResourceType;
 
-public class Api extends AbstractProject implements JavaLibraryProject {
+/// A collection of bnd specific [ResourceType]s.
+///
+public final class BndTypes {
 
-    public Api() {
-        super(name("api"));
-        dependency(Consume, BndAnalyzer::new).instructions(
-            this.<Map<String, String>> get(BndProperties.BndInstructions))
-            .instruction("Export-Package", "*");
-        dependency(Supply, BndBaseliner::new);
+    private BndTypes() {
     }
+
+    /// The resource type for [BndBaselineEvaluation].
+    @SuppressWarnings("PMD.FieldNamingConventions")
+    public static final ResourceType<
+            BndBaselineEvaluation> BndBaselineEvaluationType
+                = new ResourceType<>() {};
 
 }

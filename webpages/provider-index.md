@@ -8,6 +8,7 @@ layout: jdbld
 # Provider Index
 
   * [BndAnalyzer](javadoc/org/jdrupes/builder/bnd/BndAnalyzer.html)
+  * [BndBaseliner](javadoc/org/jdrupes/builder/bnd/BndBaseliner.html)
   * [ClasspathScanner](javadoc/org/jdrupes/builder/java/ClasspathScanner.html)
   * [EclipseConfigurator](javadoc/org/jdrupes/builder/eclipse/EclipseConfigurator.html)
   * [JarGenerator](javadoc/org/jdrupes/builder/java/JarGenerator.html)

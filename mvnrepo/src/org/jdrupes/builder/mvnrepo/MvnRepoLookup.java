@@ -70,12 +70,13 @@ import static org.jdrupes.builder.mvnrepo.MvnRepoTypes.*;
 public class MvnRepoLookup extends AbstractProvider
         implements ResourceProvider {
 
+    private static Context rootContextInstance;
     private final List<String> coordinates = new ArrayList<>();
     private final List<String> boms = new ArrayList<>();
     private boolean downloadSources = true;
     private boolean downloadJavadoc = true;
     private URI snapshotUri;
-    private static Context rootContextInstance;
+    private boolean probeMode;
 
     /// Instantiates a new mvn repo lookup.
     ///
@@ -155,6 +156,21 @@ public class MvnRepoLookup extends AbstractProvider
         return this;
     }
 
+    /// Failing to resolve the dependencies normally results in a
+    /// [BuildException], because the requested artifacts are assumed
+    /// to be required for the built.
+    /// 
+    /// By invoking this method the provider enters probe mode
+    /// and returns an empty result stream instead of throwing an
+    /// exception if the resolution fails.
+    ///
+    /// @return the mvn repo lookup
+    ///
+    public MvnRepoLookup probe() {
+        probeMode = true;
+        return this;
+    }
+
     /// Whether to also download the sources. Defaults to `true`.
     ///
     /// @param enable the enable
@@ -198,9 +214,15 @@ public class MvnRepoLookup extends AbstractProvider
         }
         try {
             return provideJars();
-        } catch (DependencyResolutionException | ModelBuildingException e) {
-            throw new BuildException(
-                "Cannot resolve: " + e.getMessage(), e);
+        } catch (ModelBuildingException e) {
+            throw BuildException.of(e, "Cannot build model for resolving: %s",
+                e.getMessage());
+        } catch (DependencyResolutionException e) {
+            if (probeMode) {
+                return Stream.empty();
+            }
+            throw BuildException.of(e, "Unable to resolve dependencies: %s",
+                e.getMessage());
         }
     }
 
