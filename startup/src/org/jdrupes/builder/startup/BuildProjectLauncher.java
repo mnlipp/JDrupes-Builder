@@ -54,9 +54,9 @@ import org.jdrupes.builder.core.LauncherSupport;
 import org.jdrupes.builder.java.JarFile;
 import static org.jdrupes.builder.java.JavaTypes.*;
 
-/// An implementation of a [Launcher] that launches the build. It expects
-/// that the JDrupes Builder project already been compiled and its classes
-/// are available on the classpath.
+/// An implementation of a [Launcher] that launches the build configuration.
+/// It expects that the JDrupes Builder project has already been compiled
+/// and its classes are available on the classpath.
 ///
 public class BuildProjectLauncher extends AbstractLauncher {
 
