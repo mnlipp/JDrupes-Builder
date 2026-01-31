@@ -18,14 +18,12 @@
 
 package org.jdrupes.builder.eclipse;
 
-import java.lang.reflect.Proxy;
 import java.util.Optional;
 import org.jdrupes.builder.api.Project;
-import org.jdrupes.builder.api.Proxyable;
 import org.jdrupes.builder.api.Resource;
 import org.jdrupes.builder.api.ResourceFactory;
 import org.jdrupes.builder.api.ResourceType;
-import org.jdrupes.builder.core.ForwardingHandler;
+import org.jdrupes.builder.core.CoreResourceFactory;
 
 /// A factory for creating Java related resource objects.
 ///
@@ -41,17 +39,11 @@ public class EclipseResourceFactory implements ResourceFactory {
     @Override
     public <T extends Resource> Optional<T> newResource(ResourceType<T> type,
             Project project, Object... args) {
-        if (new ResourceType<EclipseConfiguration>() {}
-            .isAssignableFrom(type)) {
-            return Optional
-                .of((T) Proxy.newProxyInstance(type.rawType().getClassLoader(),
-                    new Class<?>[] { type.rawType(), Proxyable.class },
-                    new ForwardingHandler(
-                        new DefaultEclipseConfiguration(
-                            (ResourceType<? extends EclipseConfiguration>) type,
-                            (String) args[0], (String) args[1]))));
-        }
-        return Optional.empty();
+        return CoreResourceFactory.createNarrowed(type,
+            EclipseConfiguration.class,
+            () -> new DefaultEclipseConfiguration(
+                (ResourceType<? extends EclipseConfiguration>) type,
+                (String) args[0], (String) args[1]));
     }
 
 }

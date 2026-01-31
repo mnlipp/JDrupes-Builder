@@ -8,6 +8,7 @@ import java.util.List;
 import java.util.stream.Collectors;
 import org.jdrupes.builder.api.FileResource;
 import org.jdrupes.builder.api.FileTree;
+import org.jdrupes.builder.api.ResourceFactory;
 import org.jdrupes.builder.api.ResourceType;
 import org.junit.jupiter.api.AfterEach;
 import static org.junit.jupiter.api.Assertions.*;
@@ -48,7 +49,7 @@ class DefaultFileTreeTest {
         Files.writeString(f2, "two");
 
         // use pattern to match all files under tmpDir
-        FileTree<FileResource> ft = DefaultFileTree.createFileTree(
+        FileTree<FileResource> ft = ResourceFactory.create(
             new ResourceType<FileTree<FileResource>>() {},
             null, tmpDir, "**/*.txt");
 
@@ -82,7 +83,7 @@ class DefaultFileTreeTest {
         Files.writeString(f2, "b");
         Files.writeString(f3, "c");
 
-        FileTree<FileResource> ft = DefaultFileTree.createFileTree(
+        FileTree<FileResource> ft = ResourceFactory.create(
             new ResourceType<FileTree<FileResource>>() {},
             null, tmpDir, "**/*.txt");
 
@@ -100,7 +101,7 @@ class DefaultFileTreeTest {
         // now verify directory reporting when directories are explicitly
         // matched create a file tree that matches directories as well
         // (pattern "**/*")
-        FileTree<FileResource> ftDirs = DefaultFileTree.createFileTree(
+        FileTree<FileResource> ftDirs = ResourceFactory.create(
             new ResourceType<FileTree<FileResource>>() {},
             null, tmpDir, "**/*");
         ftDirs.exclude("subdir/**");
@@ -125,7 +126,7 @@ class DefaultFileTreeTest {
         Files.writeString(f1, "a");
         Files.writeString(f2, "b");
 
-        FileTree<FileResource> ft = DefaultFileTree.createFileTree(
+        FileTree<FileResource> ft = ResourceFactory.create(
             new ResourceType<FileTree<FileResource>>() {},
             null, tmpDir, "**/*.txt");
 
@@ -147,7 +148,7 @@ class DefaultFileTreeTest {
         Path f1 = tmpDir.resolve("x.txt");
         Files.writeString(f1, "x");
 
-        FileTree<FileResource> ft = DefaultFileTree.createFileTree(
+        FileTree<FileResource> ft = ResourceFactory.create(
             new ResourceType<FileTree<FileResource>>() {},
             null, tmpDir, "**/*.txt");
 

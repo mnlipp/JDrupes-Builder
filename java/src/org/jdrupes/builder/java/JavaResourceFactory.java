@@ -25,7 +25,6 @@ import org.jdrupes.builder.api.Resource;
 import org.jdrupes.builder.api.ResourceFactory;
 import org.jdrupes.builder.api.ResourceType;
 import static org.jdrupes.builder.core.CoreResourceFactory.*;
-import static org.jdrupes.builder.java.JavaTypes.*;
 
 /// A factory for creating Java related resource objects.
 ///
@@ -41,35 +40,42 @@ public class JavaResourceFactory implements ResourceFactory {
     @Override
     public <T extends Resource> Optional<T> newResource(ResourceType<T> type,
             Project project, Object... args) {
-        if (ClassTreeType.isAssignableFrom(type)
-            && type.rawType().getSuperclass() == null
-            && !addsMethod(ClassTree.class,
-                (Class<? extends ClassTree>) type.rawType())) {
-            return Optional
-                .of((T) DefaultClassTree.createClassTree(
-                    (ResourceType<? extends ClassTree>) type, project,
-                    (Path) args[0]));
+        // ? extends ClassTree
+        var candidate = createNarrowed(type, ClassTree.class,
+            () -> new DefaultClassTree((ResourceType<? extends ClassTree>) type,
+                project, (Path) args[0]));
+        if (candidate.isPresent()) {
+            return candidate;
         }
-        if (LibraryJarFileType.isAssignableFrom(type)
-            && type.rawType().getSuperclass() == null
-            && !addsMethod(LibraryJarFile.class,
-                (Class<? extends LibraryJarFile>) type.rawType())) {
-            return Optional.of((T) DefaultLibraryJarFile.createLibraryJarFile(
-                (ResourceType<? extends JarFile>) type, (Path) args[0]));
+
+        // ? extends LibraryJarFile
+        candidate = createNarrowed(type, LibraryJarFile.class,
+            () -> new DefaultLibraryJarFile(
+                (ResourceType<? extends LibraryJarFile>) type, (Path) args[0]));
+        if (candidate.isPresent()) {
+            return candidate;
         }
-        if (JarFileType.isAssignableFrom(type)
-            && type.rawType().getSuperclass() == null
-            && !addsMethod(JarFile.class,
-                (Class<? extends JarFile>) type.rawType())) {
-            return Optional.of((T) DefaultJarFile.createJarFile(
-                (ResourceType<? extends JarFile>) type, (Path) args[0]));
+
+        // ? extends JarFile
+        candidate = createNarrowed(type, JarFile.class,
+            () -> new DefaultJarFile((ResourceType<? extends JarFile>) type,
+                (Path) args[0]));
+        if (candidate.isPresent()) {
+            return candidate;
         }
+
+        // ? extends JavaResourceTree
+        candidate = createNarrowed(type, JavaResourceTree.class,
+            () -> new DefaultJavaResourceTree(
+                (ResourceType<? extends JavaResourceTree>) type,
+                project, (Path) args[0], (String) args[1]));
+        if (candidate.isPresent()) {
+            return candidate;
+        }
+
+        // ManifestAttributes
         if (ManifestAttributes.class.equals(type.rawType())) {
             return Optional.of((T) new ManifestAttributes());
-        }
-        if (JavaResourceTree.class.equals(type.rawType())) {
-            return Optional.of((T) new JavaResourceTree(project,
-                (Path) args[0], (String) args[1]));
         }
         return Optional.empty();
     }

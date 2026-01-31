@@ -1,6 +1,6 @@
 /*
  * JDrupes Builder
- * Copyright (C) 2025 Michael N. Lipp
+ * Copyright (C) 2025, 2026 Michael N. Lipp
  * 
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as
@@ -18,31 +18,12 @@
 
 package org.jdrupes.builder.java;
 
-import java.nio.file.Path;
-import org.jdrupes.builder.api.Project;
+import org.jdrupes.builder.api.FileTree;
 import org.jdrupes.builder.api.ResourceFile;
-import org.jdrupes.builder.core.DefaultFileTree;
-import static org.jdrupes.builder.java.JavaTypes.JavaResourceTreeType;
 
-/// The Class JavaResourceTree.
+/// A [FileTree] that consists of [ResourceFile]s and can be used in
+/// a Java classpath.
 ///
-public class JavaResourceTree
-        extends DefaultFileTree<ResourceFile> implements ClasspathElement {
-
-    /// Instantiates a new java resource tree.
-    ///
-    /// @param project the project
-    /// @param root the root
-    /// @param pattern the pattern
-    ///
-    public JavaResourceTree(Project project, Path root,
-            String pattern) {
-        super(JavaResourceTreeType, project, root, pattern);
-    }
-
-    @Override
-    public Path toPath() {
-        return root();
-    }
-
+public interface JavaResourceTree
+        extends FileTree<ResourceFile>, ClasspathElement {
 }

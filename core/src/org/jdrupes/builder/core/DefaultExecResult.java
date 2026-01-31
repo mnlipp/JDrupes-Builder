@@ -18,12 +18,9 @@
 
 package org.jdrupes.builder.core;
 
-import java.lang.reflect.Proxy;
 import java.util.Objects;
 import org.jdrupes.builder.api.ExecResult;
-import org.jdrupes.builder.api.Proxyable;
 import org.jdrupes.builder.api.ResourceProvider;
-import org.jdrupes.builder.api.ResourceType;
 
 /// Default implementation of a test result.
 ///
@@ -38,30 +35,12 @@ public class DefaultExecResult extends ResourceObject implements ExecResult {
     /// @param name the name
     /// @param exitValue the exit value
     ///
+    @SuppressWarnings("PMD.ConstructorCallsOverridableMethod")
     protected DefaultExecResult(ResourceProvider provider,
             String name, int exitValue) {
         name(name);
         this.provider = provider;
         this.exitValue = exitValue;
-    }
-
-    /// Creates the exec result.
-    ///
-    /// @param <T> the generic type
-    /// @param type the type
-    /// @param provider the provider
-    /// @param name the name
-    /// @param exitValue the exit value
-    /// @return the t
-    ///
-    @SuppressWarnings({ "unchecked" })
-    public static <T extends ExecResult> T createExecResult(
-            ResourceType<T> type, ResourceProvider provider, String name,
-            int exitValue) {
-        return (T) Proxy.newProxyInstance(type.rawType().getClassLoader(),
-            new Class<?>[] { type.rawType(), Proxyable.class },
-            new ForwardingHandler(new DefaultExecResult(provider,
-                name, exitValue)));
     }
 
     @Override

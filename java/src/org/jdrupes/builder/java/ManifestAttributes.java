@@ -26,7 +26,9 @@ import org.jdrupes.builder.api.ResourceType;
 import org.jdrupes.builder.core.ResourceObject;
 import static org.jdrupes.builder.java.JavaTypes.ManifestAttributesType;
 
-/// A wrapper around [Attributes] to allow their usage as [Resource]. 
+/// A wrapper around [Attributes] to allow their usage as [Resource].
+/// Because [Attributes] is a class and not an interface, this resource
+/// type cannot be specialized without an actual implementation.
 ///
 public class ManifestAttributes extends Attributes implements Resource {
 

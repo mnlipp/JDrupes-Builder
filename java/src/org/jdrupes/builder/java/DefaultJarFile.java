@@ -18,13 +18,10 @@
 
 package org.jdrupes.builder.java;
 
-import java.lang.reflect.Proxy;
 import java.nio.file.Path;
 import org.jdrupes.builder.api.FileResource;
-import org.jdrupes.builder.api.Proxyable;
 import org.jdrupes.builder.api.ResourceType;
 import org.jdrupes.builder.core.DefaultFileResource;
-import org.jdrupes.builder.core.ForwardingHandler;
 
 /// A [FileResource] that represents a Java jar.
 ///
@@ -37,20 +34,5 @@ public class DefaultJarFile extends DefaultFileResource implements JarFile {
     ///
     protected DefaultJarFile(ResourceType<? extends JarFile> type, Path path) {
         super(type, path);
-    }
-
-    /// Creates a jar file.
-    ///
-    /// @param <T> the generic type
-    /// @param type the type
-    /// @param path the path
-    /// @return the jar file
-    ///
-    @SuppressWarnings({ "unchecked" })
-    public static <T extends JarFile> T createJarFile(ResourceType<T> type,
-            Path path) {
-        return (T) Proxy.newProxyInstance(type.rawType().getClassLoader(),
-            new Class<?>[] { type.rawType(), Proxyable.class },
-            new ForwardingHandler(new DefaultJarFile(type, path)));
     }
 }

@@ -21,14 +21,12 @@ package org.jdrupes.builder.core;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.lang.reflect.Proxy;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.Instant;
 import java.util.Objects;
 import org.jdrupes.builder.api.BuildException;
 import org.jdrupes.builder.api.FileResource;
-import org.jdrupes.builder.api.Proxyable;
 import org.jdrupes.builder.api.ResourceType;
 
 /// A resource that represents a file.
@@ -43,6 +41,7 @@ public class DefaultFileResource extends ResourceObject
     /// @param type the type
     /// @param path the path
     ///
+    @SuppressWarnings("PMD.ConstructorCallsOverridableMethod")
     protected DefaultFileResource(ResourceType<? extends FileResource> type,
             Path path) {
         super(type);
@@ -52,21 +51,6 @@ public class DefaultFileResource extends ResourceObject
         var relPath = Path.of("").toAbsolutePath().relativize(path);
         name(relPath.equals(Path.of("")) ? "." : relPath.toString());
         this.path = path;
-    }
-
-    /// Creates a new file resource.
-    ///
-    /// @param <T> the resource type
-    /// @param type the type
-    /// @param path the path
-    /// @return the t
-    ///
-    @SuppressWarnings({ "unchecked" })
-    public static <T extends FileResource> T createFileResource(
-            ResourceType<T> type, Path path) {
-        return (T) Proxy.newProxyInstance(type.rawType().getClassLoader(),
-            new Class<?>[] { type.rawType(), Proxyable.class },
-            new ForwardingHandler(new DefaultFileResource(type, path)));
     }
 
     /// Path.

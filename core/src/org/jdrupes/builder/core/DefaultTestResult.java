@@ -18,13 +18,10 @@
 
 package org.jdrupes.builder.core;
 
-import java.lang.reflect.Proxy;
 import java.util.Objects;
 import org.jdrupes.builder.api.FaultAware;
 import org.jdrupes.builder.api.Project;
-import org.jdrupes.builder.api.Proxyable;
 import org.jdrupes.builder.api.ResourceProvider;
-import org.jdrupes.builder.api.ResourceType;
 import org.jdrupes.builder.api.TestResult;
 
 /// Default implementation of a test result.
@@ -54,27 +51,6 @@ public class DefaultTestResult extends ResourceObject implements TestResult {
         this.provider = provider;
         this.executed = executed;
         this.failed = failed;
-    }
-
-    /// Creates a new test result.
-    ///
-    /// @param <T> the resource type
-    /// @param type the type
-    /// @param project the project
-    /// @param provider the provider
-    /// @param name the name
-    /// @param executed the number of tests executed
-    /// @param failed the number of tests failed
-    /// @return the object
-    ///
-    @SuppressWarnings({ "unchecked" })
-    public static <T extends TestResult> T createTestResult(
-            ResourceType<T> type, Project project, ResourceProvider provider,
-            String name, long executed, long failed) {
-        return (T) Proxy.newProxyInstance(type.rawType().getClassLoader(),
-            new Class<?>[] { type.rawType(), Proxyable.class },
-            new ForwardingHandler(new DefaultTestResult(project, provider,
-                name, executed, failed)));
     }
 
     @Override

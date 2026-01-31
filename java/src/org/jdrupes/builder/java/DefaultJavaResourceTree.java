@@ -1,6 +1,6 @@
 /*
  * JDrupes Builder
- * Copyright (C) 2025 Michael N. Lipp
+ * Copyright (C) 2026 Michael N. Lipp
  * 
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as
@@ -19,21 +19,32 @@
 package org.jdrupes.builder.java;
 
 import java.nio.file.Path;
-import org.jdrupes.builder.api.FileResource;
+import org.jdrupes.builder.api.Project;
+import org.jdrupes.builder.api.ResourceFile;
 import org.jdrupes.builder.api.ResourceType;
+import org.jdrupes.builder.core.DefaultFileTree;
 
-/// A [FileResource] that represents a Java library jar.
+/// The Class JavaResourceTree.
 ///
-public class DefaultLibraryJarFile extends DefaultJarFile
-        implements LibraryJarFile {
+public class DefaultJavaResourceTree
+        extends DefaultFileTree<ResourceFile> implements JavaResourceTree {
 
-    /// Instantiates a new library jar file.
+    /// Instantiates a new java resource tree.
     ///
-    /// @param type the resource type
-    /// @param path the path
+    /// @param type the type
+    /// @param project the project
+    /// @param root the root
+    /// @param pattern the pattern
     ///
-    protected DefaultLibraryJarFile(ResourceType<? extends JarFile> type,
-            Path path) {
-        super(type, path);
+    public DefaultJavaResourceTree(
+            ResourceType<? extends JavaResourceTree> type, Project project,
+            Path root, String pattern) {
+        super(type, project, root, pattern);
     }
+
+    @Override
+    public Path toPath() {
+        return root();
+    }
+
 }

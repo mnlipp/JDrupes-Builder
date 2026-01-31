@@ -18,13 +18,11 @@
 
 package org.jdrupes.builder.core;
 
-import java.lang.reflect.Proxy;
 import java.util.Collections;
 import java.util.LinkedHashSet;
 import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Stream;
-import org.jdrupes.builder.api.Proxyable;
 import org.jdrupes.builder.api.Resource;
 import org.jdrupes.builder.api.ResourceType;
 import org.jdrupes.builder.api.Resources;
@@ -48,13 +46,6 @@ public class DefaultResources<T extends Resource> extends ResourceObject
     protected DefaultResources(ResourceType<?> type) {
         super(type);
         content = Collections.synchronizedSet(new LinkedHashSet<>());
-    }
-
-    /* default */ @SuppressWarnings("unchecked")
-    static <T extends Resources<?>> T createResources(ResourceType<T> type) {
-        return (T) Proxy.newProxyInstance(type.rawType().getClassLoader(),
-            new Class<?>[] { type.rawType(), Proxyable.class },
-            new ForwardingHandler(new DefaultResources<>(type)));
     }
 
     @Override

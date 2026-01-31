@@ -18,7 +18,6 @@
 
 package org.jdrupes.builder.core;
 
-import java.lang.reflect.Proxy;
 import java.util.Objects;
 import java.util.Optional;
 import org.jdrupes.builder.api.Proxyable;
@@ -45,13 +44,6 @@ public abstract class ResourceObject implements Resource, Proxyable {
     ///
     protected ResourceObject(ResourceType<?> type) {
         this.type = Objects.requireNonNull(type);
-    }
-
-    /* default */ @SuppressWarnings("unchecked")
-    static <T extends Resource> T createResource(ResourceType<T> type) {
-        return (T) Proxy.newProxyInstance(type.rawType().getClassLoader(),
-            new Class<?>[] { type.rawType(), Proxyable.class },
-            new ForwardingHandler(new ResourceObject(type) {}));
     }
 
     @Override

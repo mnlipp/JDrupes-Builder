@@ -46,7 +46,6 @@ import org.jdrupes.builder.api.Resource;
 import org.jdrupes.builder.api.ResourceRequest;
 import org.jdrupes.builder.api.ResourceType;
 import org.jdrupes.builder.core.AbstractGenerator;
-import org.jdrupes.builder.core.DefaultFileTree;
 import org.jdrupes.builder.java.ClasspathElement;
 import org.jdrupes.builder.java.JavaCompiler;
 import org.jdrupes.builder.java.JavaProject;
@@ -376,7 +375,7 @@ public class EclipseConfigurator extends AbstractGenerator {
         // Add resources
         project.providers().without(Project.class).resources(
             of(JavaResourceTree.class).using(Consume, Reveal, Supply))
-            .map(DefaultFileTree::root).filter(p -> p.toFile().canRead())
+            .map(FileTree::root).filter(p -> p.toFile().canRead())
             .map(project::relativize).forEach(p -> {
                 var entry = (Element) classpath
                     .appendChild(doc.createElement("classpathentry"));

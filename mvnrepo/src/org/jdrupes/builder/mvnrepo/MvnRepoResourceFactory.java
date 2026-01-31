@@ -18,15 +18,12 @@
 
 package org.jdrupes.builder.mvnrepo;
 
-import java.lang.reflect.Proxy;
 import java.util.Optional;
 import org.jdrupes.builder.api.Project;
-import org.jdrupes.builder.api.Proxyable;
 import org.jdrupes.builder.api.Resource;
 import org.jdrupes.builder.api.ResourceFactory;
 import org.jdrupes.builder.api.ResourceType;
-import org.jdrupes.builder.core.ForwardingHandler;
-import static org.jdrupes.builder.mvnrepo.MvnRepoTypes.*;
+import static org.jdrupes.builder.core.CoreResourceFactory.createNarrowed;
 
 /// A factory for creating Java related resource objects.
 ///
@@ -42,16 +39,24 @@ public class MvnRepoResourceFactory implements ResourceFactory {
     @Override
     public <T extends Resource> Optional<T> newResource(ResourceType<T> type,
             Project project, Object... args) {
-        if (MvnRepoResourceType.isAssignableFrom(type)) {
-            return Optional
-                .of((T) Proxy.newProxyInstance(type.rawType().getClassLoader(),
-                    new Class<?>[] { type.rawType(), Proxyable.class },
-                    new ForwardingHandler(
-                        new DefaultMvnRepoResource(
-                            (ResourceType<? extends MvnRepoResource>) type,
-                            (String) args[0]))));
-        }
-        return Optional.empty();
+        // ? extends MvnRepoResource
+        return createNarrowed(type, MvnRepoResource.class,
+            () -> new DefaultMvnRepoResource(
+                (ResourceType<? extends MvnRepoResource>) type,
+                (String) args[0]));
+//        if (candidate.isPresent()) {
+//            return candidate;
+//        }
+//        if (MvnRepoResourceType.isAssignableFrom(type)) {
+//            return Optional
+//                .of((T) Proxy.newProxyInstance(type.rawType().getClassLoader(),
+//                    new Class<?>[] { type.rawType(), Proxyable.class },
+//                    new ForwardingHandler(
+//                        new DefaultMvnRepoResource(
+//                            (ResourceType<? extends MvnRepoResource>) type,
+//                            (String) args[0]))));
+//        }
+//        return Optional.empty();
     }
 
 }

@@ -18,18 +18,15 @@
 
 package org.jdrupes.builder.java;
 
-import java.lang.reflect.Proxy;
 import java.nio.file.Path;
 import org.jdrupes.builder.api.Project;
-import org.jdrupes.builder.api.Proxyable;
 import org.jdrupes.builder.api.ResourceType;
 import org.jdrupes.builder.core.DefaultFileTree;
-import org.jdrupes.builder.core.ForwardingHandler;
 
 /// A default implementation of [ClassTree].
 ///
 public class DefaultClassTree extends DefaultFileTree<ClassFile>
-        implements ClasspathElement {
+        implements ClassTree {
 
     /// Initializes a new class tree.
     ///
@@ -40,22 +37,6 @@ public class DefaultClassTree extends DefaultFileTree<ClassFile>
     protected DefaultClassTree(ResourceType<? extends ClassTree> type,
             Project project, Path root) {
         super(type, project, root, "**/*.class");
-    }
-
-    /// Creates an instance of [ClassTree].
-    ///
-    /// @param <T> the generic type
-    /// @param type the type
-    /// @param project the project
-    /// @param path the path
-    /// @return the class tree
-    ///
-    @SuppressWarnings({ "unchecked" })
-    public static <T extends ClassTree> T createClassTree(ResourceType<T> type,
-            Project project, Path path) {
-        return (T) Proxy.newProxyInstance(type.rawType().getClassLoader(),
-            new Class<?>[] { type.rawType(), Proxyable.class },
-            new ForwardingHandler(new DefaultClassTree(type, project, path)));
     }
 
     @Override

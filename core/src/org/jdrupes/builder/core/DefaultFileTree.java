@@ -20,7 +20,6 @@ package org.jdrupes.builder.core;
 
 import com.google.common.flogger.FluentLogger;
 import java.io.IOException;
-import java.lang.reflect.Proxy;
 import java.nio.file.AccessDeniedException;
 import java.nio.file.FileSystems;
 import java.nio.file.FileVisitResult;
@@ -42,7 +41,6 @@ import org.jdrupes.builder.api.BuildException;
 import org.jdrupes.builder.api.FileResource;
 import org.jdrupes.builder.api.FileTree;
 import org.jdrupes.builder.api.Project;
-import org.jdrupes.builder.api.Proxyable;
 import org.jdrupes.builder.api.ResourceFactory;
 import org.jdrupes.builder.api.ResourceType;
 
@@ -81,25 +79,6 @@ public class DefaultFileTree<T extends FileResource> extends DefaultResources<T>
         this.project = project;
         this.root = root;
         this.pattern = pattern;
-    }
-
-    /// Creates the a new [FileTree].
-    ///
-    /// @param <T> the tree's type
-    /// @param type the type
-    /// @param project the project
-    /// @param root the root
-    /// @param pattern the pattern
-    /// @return the file tree
-    ///
-    @SuppressWarnings("unchecked")
-    public static <T extends FileTree<?>>
-            T createFileTree(ResourceType<T> type, Project project, Path root,
-                    String pattern) {
-        return (T) Proxy.newProxyInstance(type.rawType().getClassLoader(),
-            new Class<?>[] { type.rawType(), Proxyable.class },
-            new ForwardingHandler(
-                new DefaultFileTree<>(type, project, root, pattern)));
     }
 
     @Override
