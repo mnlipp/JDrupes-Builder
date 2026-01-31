@@ -1,6 +1,6 @@
 /*
  * JDrupes Builder
- * Copyright (C) 2025 Michael N. Lipp
+ * Copyright (C) 2025, 2026 Michael N. Lipp
  * 
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as
@@ -44,6 +44,7 @@ import org.eclipse.aether.resolution.DependencyRequest;
 import org.eclipse.aether.resolution.DependencyResolutionException;
 import org.eclipse.aether.util.graph.visitor.PreorderNodeListGenerator;
 import org.jdrupes.builder.api.BuildException;
+import org.jdrupes.builder.api.FaultAware;
 import org.jdrupes.builder.api.Launcher;
 import org.jdrupes.builder.api.Masked;
 import org.jdrupes.builder.api.Project;
@@ -53,11 +54,11 @@ import org.jdrupes.builder.core.LauncherSupport;
 import org.jdrupes.builder.java.JarFile;
 import static org.jdrupes.builder.java.JavaTypes.*;
 
-/// An implementation of a [Launcher] that expects that the JDrupes
-/// Builder project already been compiled and its classes are available
-/// on the classpath.
+/// An implementation of a [Launcher] that launches the build. It expects
+/// that the JDrupes Builder project already been compiled and its classes
+/// are available on the classpath.
 ///
-public class DirectLauncher extends AbstractLauncher {
+public class BuildProjectLauncher extends AbstractLauncher {
 
     private static final FluentLogger logger = FluentLogger.forEnclosingClass();
     /// The JDrupes Builder properties read from the file
@@ -80,7 +81,7 @@ public class DirectLauncher extends AbstractLauncher {
     /// command line arguments are processed in [runCommands].
     ///
     @SuppressWarnings({ "PMD.UseVarargs" })
-    public DirectLauncher(ClassLoader classloader, Path buildRoot,
+    public BuildProjectLauncher(ClassLoader classloader, Path buildRoot,
             String[] args) {
         unwrapBuildException(() -> {
             jdbldProps = propertiesFromFiles(buildRoot);
@@ -169,8 +170,10 @@ public class DirectLauncher extends AbstractLauncher {
 
     /// Execute the commands from the command line.
     ///
+    /// @return true, if successful
+    ///
     @SuppressWarnings({ "PMD.SystemPrintln", "PMD.AvoidLiteralsInIfCondition" })
-    public void runCommands() {
+    public boolean runCommands() {
         for (var arg : commandLine.getArgs()) {
             var parts = arg.split(":");
             String resource = parts[parts.length - 1];
@@ -183,11 +186,18 @@ public class DirectLauncher extends AbstractLauncher {
                 pattern = parts[0];
             }
             for (var req : cmdData.requests()) {
-                resources(rootProject().projects(pattern), req)
-                    .collect(Collectors.toSet())
-                    .forEach(r -> System.out.println(r.toString()));
+                if (!resources(rootProject().projects(pattern), req)
+                    // eliminate duplicates
+                    .collect(Collectors.toSet()).stream()
+                    .peek(r -> System.out.println(r.toString()))
+                    .map(r -> !(r instanceof FaultAware)
+                        || !((FaultAware) r).isFaulty())
+                    .reduce((r1, r2) -> r1 && r2).orElse(true)) {
+                    return false;
+                }
             }
         }
+        return true;
     }
 
     /// This main can be used to start the user's JDrupes Builder
@@ -198,7 +208,7 @@ public class DirectLauncher extends AbstractLauncher {
     /// @param args the arguments
     ///
     public static void main(String[] args) {
-        new DirectLauncher(Thread.currentThread().getContextClassLoader(),
+        new BuildProjectLauncher(Thread.currentThread().getContextClassLoader(),
             Path.of("").toAbsolutePath(), args).runCommands();
     }
 }

@@ -12,7 +12,7 @@ import java.util.stream.Stream;
 import org.jdrupes.builder.api.Cleanliness;
 import org.jdrupes.builder.api.Launcher;
 import org.jdrupes.builder.java.JarFile;
-import org.jdrupes.builder.startup.DirectLauncher;
+import org.jdrupes.builder.startup.BuildProjectLauncher;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 
@@ -23,7 +23,7 @@ class BuildTest {
     public static void initProject() throws URISyntaxException {
         var buildRoot = Path.of(BuildTest.class.getProtectionDomain()
             .getCodeSource().getLocation().toURI()).getParent().getParent();
-        launcher = new DirectLauncher(
+        launcher = new BuildProjectLauncher(
             Thread.currentThread().getContextClassLoader(), buildRoot,
             new String[0]);
         launcher.resources(launcher.rootProject().projects("**"),

@@ -14,7 +14,7 @@ import static org.jdrupes.builder.api.Intent.*;
 import org.jdrupes.builder.api.Launcher;
 import org.jdrupes.builder.api.Project;
 import org.jdrupes.builder.java.JarFile;
-import org.jdrupes.builder.startup.DirectLauncher;
+import org.jdrupes.builder.startup.BuildProjectLauncher;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 
@@ -25,7 +25,7 @@ class SubprojectsTests {
     public static void initProject() throws URISyntaxException {
         var buildRoot = Path.of(SubprojectsTests.class.getProtectionDomain()
             .getCodeSource().getLocation().toURI()).getParent().getParent();
-        launcher = new DirectLauncher(
+        launcher = new BuildProjectLauncher(
             Thread.currentThread().getContextClassLoader(), buildRoot,
             new String[0]);
         launcher.resources(launcher.rootProject().projects("**"),

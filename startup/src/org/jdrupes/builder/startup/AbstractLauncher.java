@@ -1,6 +1,6 @@
 /*
  * JDrupes Builder
- * Copyright (C) 2025 Michael N. Lipp
+ * Copyright (C) 2025, 2026 Michael N. Lipp
  * 
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as
@@ -18,6 +18,7 @@
 
 package org.jdrupes.builder.startup;
 
+import com.google.common.flogger.FluentLogger;
 import java.io.IOException;
 import java.io.InputStream;
 import java.lang.reflect.Modifier;
@@ -29,12 +30,11 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Properties;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.logging.Level;
 import java.util.logging.LogManager;
-import java.util.logging.Logger;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import org.apache.commons.cli.CommandLine;
@@ -58,7 +58,7 @@ import static org.jdrupes.builder.java.JavaTypes.*;
 public abstract class AbstractLauncher implements Launcher {
 
     /// The log.
-    protected final Logger log = Logger.getLogger(getClass().getName());
+    private static final FluentLogger logger = FluentLogger.forEnclosingClass();
 
     /// Initializes a new abstract launcher.
     ///
@@ -118,7 +118,7 @@ public abstract class AbstractLauncher implements Launcher {
                 jdbldProps.getProperty(DefaultBuildContext.JDBLD_DIRECTORY),
                 "logging.properties"));
         } catch (IOException e) {
-            props = BootstrapLauncher.class
+            props = BootstrapProjectLauncher.class
                 .getResourceAsStream("logging.properties");
         }
         // Get logging properties from file and put them in effect
@@ -205,14 +205,14 @@ public abstract class AbstractLauncher implements Launcher {
                     && !cls.isInterface()
                     && !Modifier.isAbstract(cls.getModifiers())) {
                     if (RootProject.class.isAssignableFrom(cls)) {
-                        log.finer(() -> "Found root project: " + cls + " in "
-                            + tree.root());
+                        logger.atFine().log("Found root project: %s in %s",
+                            cls, tree.root());
                         rootProjects.computeIfAbsent(tree.root(),
                             _ -> new ArrayList<>())
                             .add((Class<? extends RootProject>) cls);
                     } else if (Project.class.isAssignableFrom(cls)) {
-                        log.finer(() -> "Found sub project: " + cls + " in "
-                            + tree.root());
+                        logger.atFiner().log("Found sub project: %s in %s",
+                            cls, tree.root());
                         subprojects.add((Class<? extends Project>) cls);
                     }
                 }
@@ -235,28 +235,55 @@ public abstract class AbstractLauncher implements Launcher {
             return todo.call();
         } catch (Exception e) {
             Throwable checking = e;
-            Throwable cause = e;
             BuildException bldEx = null;
             while (checking != null) {
                 if (checking instanceof BuildException exc) {
                     bldEx = exc;
-                    cause = exc.getCause();
                 }
                 checking = checking.getCause();
             }
             final var finalBldEx = bldEx;
             if (bldEx == null) {
-                log.log(Level.SEVERE, e,
-                    () -> "Starting builder failed: " + e.getMessage());
-            } else if (cause == null) {
-                log.severe(() -> "Build failed: " + finalBldEx.getMessage());
+                logger.atSevere().log("Starting builder failed: %s",
+                    e.getMessage());
+            } else if (bldEx.getCause() == null) {
+                logger.atSevere().log("Build failed: %s",
+                    finalBldEx.getMessage());
             } else {
-                log.log(Level.SEVERE, cause,
-                    () -> "Build failed: " + finalBldEx.getMessage());
+                logger.atSevere().withCause(finalBldEx).log("Build failed: %s",
+                    finalBldEx.getMessage());
             }
             System.exit(1);
             return null;
         }
+    }
+
+    /// Run a build and return the most deeply nested [BuildException] found,
+    /// if any.
+    ///
+    /// @param todo the todo
+    /// @return the optional
+    ///
+    @SuppressWarnings("PMD.AvoidCatchingGenericException")
+    protected Optional<BuildException> runBuild(Runnable todo) {
+        try {
+            todo.run();
+        } catch (Exception e) {
+            Throwable checking = e;
+            BuildException bldEx = null;
+            while (checking != null) {
+                if (checking instanceof BuildException exc) {
+                    bldEx = exc;
+                }
+                checking = checking.getCause();
+            }
+            if (bldEx == null) {
+                return Optional.of(new BuildException(e));
+            } else {
+                return Optional.of(bldEx);
+            }
+        }
+        return Optional.empty();
     }
 
     @Override

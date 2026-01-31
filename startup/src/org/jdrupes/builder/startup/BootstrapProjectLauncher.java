@@ -1,6 +1,6 @@
 /*
  * JDrupes Builder
- * Copyright (C) 2025 Michael N. Lipp
+ * Copyright (C) 2025, 2026 Michael N. Lipp
  * 
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as
@@ -18,6 +18,7 @@
 
 package org.jdrupes.builder.startup;
 
+import com.google.common.flogger.FluentLogger;
 import java.net.MalformedURLException;
 import java.net.URI;
 import java.net.URL;
@@ -35,19 +36,27 @@ import org.jdrupes.builder.api.FileResource;
 import org.jdrupes.builder.api.FileTree;
 import static org.jdrupes.builder.api.Intent.*;
 import org.jdrupes.builder.api.Launcher;
+import org.jdrupes.builder.api.Project;
 import org.jdrupes.builder.api.RootProject;
 import org.jdrupes.builder.core.LauncherSupport;
 import org.jdrupes.builder.java.ClasspathElement;
+import org.jdrupes.builder.java.JavaCompiler;
 import org.jdrupes.builder.mvnrepo.MvnRepoLookup;
 
-/// A default implementation of a [Launcher]. The launcher first builds
-/// the user's JDrupes Builder project, using the JDrupes Builder project
-/// defined by [BootstrapRoot] and [BootstrapBuild]. The default action
-/// of [BootstrapRoot] adds the results from the bootstrap build 
-/// to the classpath and launches the actual JDrupes Builder project.
+/// An implementation of a [Launcher] that bootstraps the build.
+/// The [BootstrapProjectLauncher] uses the built-in [BootstrapRoot] and
+/// [BootstrapBuild] to assemble a JDrupes Builder [Project] (the
+/// bootstrap project) that includes the [JavaCompiler] for compiling
+/// the JDrupes Builder configuration provided by the user. 
+/// 
+/// The launcher then requests the *supplied* and *exposed* classes from
+/// the bootstrap project, including in particular the [RootProject] of
+/// the user's build configuration. The launcher uses these classes as
+/// classpath for creating the [BuildProjectLauncher]
 ///
-public class BootstrapLauncher extends AbstractLauncher {
+public class BootstrapProjectLauncher extends AbstractLauncher {
 
+    private static final FluentLogger logger = FluentLogger.forEnclosingClass();
     /// The JDrupes Builder properties read from the file
     /// `.jdbld.properties` in the root project.
     protected Properties jdbldProps;
@@ -55,9 +64,14 @@ public class BootstrapLauncher extends AbstractLauncher {
     protected CommandLine commandLine;
     private RootProject rootProject;
 
-    /// Instantiates a new bootstrap launcher. An instance of the class
-    /// passed as argument is created and used as root project for the
-    /// build.
+    /// Initializes a new bootstrap launcher.
+    ///
+    public BootstrapProjectLauncher() {
+        // Make javadoc happy.
+    }
+
+    /// Executes a build. An instance of the class passed as argument is
+    /// created and used as root project for the build.
     /// 
     /// Unless the root project is the only project, the root project
     /// must declare dependencies, else the subprojects won't be
@@ -65,22 +79,23 @@ public class BootstrapLauncher extends AbstractLauncher {
     ///
     /// @param rootPrjCls the root project
     /// @param args the args
+    /// @return the builds the project launcher
     ///
     @SuppressWarnings("PMD.UseVarargs")
-    public BootstrapLauncher(
+    public BuildProjectLauncher buildBuildProjectLauncher(
             Class<? extends RootProject> rootPrjCls, String[] args) {
-        unwrapBuildException(() -> {
-            Path buildRoot = Path.of("").toAbsolutePath();
-            jdbldProps = propertiesFromFiles(buildRoot);
+        return unwrapBuildException(() -> {
+            Path buildRootDirectory = Path.of("").toAbsolutePath();
+            jdbldProps = propertiesFromFiles(buildRootDirectory);
             try {
                 commandLine = new DefaultParser().parse(baseOptions(), args);
             } catch (ParseException e) {
                 throw new BuildException(e);
             }
             addCliProperties(jdbldProps, commandLine);
-            configureLogging(buildRoot, jdbldProps);
+            configureLogging(buildRootDirectory, jdbldProps);
 
-            rootProject = LauncherSupport.createProjects(buildRoot,
+            rootProject = LauncherSupport.createProjects(buildRootDirectory,
                 rootPrjCls, Collections.emptyList(), jdbldProps, commandLine);
 
             // Add build extensions to the build project.
@@ -91,8 +106,8 @@ public class BootstrapLauncher extends AbstractLauncher {
             var buildCoords = Arrays.asList(jdbldProps
                 .getProperty(BootstrapBuild.BUILD_EXTENSIONS, "").split(","))
                 .stream().map(String::trim).filter(c -> !c.isBlank()).toList();
-            log.fine(() -> "Adding libraries from " + buildCoords
-                + " to classpath for builder project compilation");
+            logger.atFine().log("Adding build extensions: %s"
+                + " to classpath for builder project compilation", buildCoords);
             buildCoords.forEach(mvnLookup::resolve);
             rootProject.project(BootstrapBuild.class).dependency(Expose,
                 mvnLookup);
@@ -109,15 +124,18 @@ public class BootstrapLauncher extends AbstractLauncher {
                         throw new BuildException(e);
                     }
                 }).toArray(URL[]::new);
-            log.fine(() -> "Launching build project with classpath: "
-                + Arrays.toString(cpUrls));
-            new DirectLauncher(
+            logger.atFine().log("Launching build project with classpath: %s",
+                Arrays.toString(cpUrls));
+            return new BuildProjectLauncher(
                 new URLClassLoader(cpUrls, getClass().getClassLoader()),
-                buildRoot, args).runCommands();
-            return null;
+                buildRootDirectory, args);
         });
     }
 
+    /// Root project.
+    ///
+    /// @return the root project
+    ///
     @Override
     public RootProject rootProject() {
         return rootProject;
@@ -128,6 +146,7 @@ public class BootstrapLauncher extends AbstractLauncher {
     /// @param args the arguments
     ///
     public static void main(String[] args) {
-        new BootstrapLauncher(BootstrapRoot.class, args);
+        new BootstrapProjectLauncher().buildBuildProjectLauncher(
+            BootstrapRoot.class, args).runCommands();
     }
 }
