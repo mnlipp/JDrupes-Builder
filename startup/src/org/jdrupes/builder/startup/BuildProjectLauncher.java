@@ -67,7 +67,7 @@ public class BuildProjectLauncher extends AbstractLauncher {
     /// The command line.
     protected CommandLine commandLine;
     private static final String RUNTIME_EXTENSIONS = "runtimeExtensions";
-    private RootProject rootProject;
+    private final RootProject rootProject;
 
     /// Instantiates a new direct launcher. The classpath is scanned for
     /// classes that implement [Project] but do not implement [Masked].
@@ -80,27 +80,25 @@ public class BuildProjectLauncher extends AbstractLauncher {
     /// @param args the arguments. Flags are processed in the constructor,
     /// command line arguments are processed in [runCommands].
     ///
-    @SuppressWarnings({ "PMD.UseVarargs" })
+    @SuppressWarnings({ "PMD.UseVarargs",
+        "PMD.ConstructorCallsOverridableMethod" })
     public BuildProjectLauncher(ClassLoader classloader, Path buildRoot,
             String[] args) {
-        unwrapBuildException(() -> {
-            jdbldProps = propertiesFromFiles(buildRoot);
-            try {
-                commandLine = new DefaultParser().parse(baseOptions(), args);
-            } catch (ParseException e) {
-                throw new BuildException(e);
-            }
-            addCliProperties(jdbldProps, commandLine);
-            configureLogging(buildRoot, jdbldProps);
+        jdbldProps = propertiesFromFiles(buildRoot);
+        try {
+            commandLine = new DefaultParser().parse(baseOptions(), args);
+        } catch (ParseException e) {
+            throw new BuildException(e);
+        }
+        addCliProperties(jdbldProps, commandLine);
+        configureLogging(buildRoot, jdbldProps);
 
-            final var extClsLdr = addRuntimeExts(classloader);
-            var rootProjects = new ArrayList<Class<? extends RootProject>>();
-            var subprojects = new ArrayList<Class<? extends Project>>();
-            findProjects(extClsLdr, rootProjects, subprojects);
-            rootProject = LauncherSupport.createProjects(buildRoot,
-                rootProjects.get(0), subprojects, jdbldProps, commandLine);
-            return null;
-        });
+        final var extClsLdr = addRuntimeExts(classloader);
+        var rootProjects = new ArrayList<Class<? extends RootProject>>();
+        var subprojects = new ArrayList<Class<? extends Project>>();
+        findProjects(extClsLdr, rootProjects, subprojects);
+        rootProject = LauncherSupport.createProjects(buildRoot,
+            rootProjects.get(0), subprojects, jdbldProps, commandLine);
     }
 
     private ClassLoader addRuntimeExts(ClassLoader classloader) {
@@ -208,7 +206,21 @@ public class BuildProjectLauncher extends AbstractLauncher {
     /// @param args the arguments
     ///
     public static void main(String[] args) {
-        new BuildProjectLauncher(Thread.currentThread().getContextClassLoader(),
-            Path.of("").toAbsolutePath(), args).runCommands();
+        try {
+            if (!reportBuildException(() -> new BuildProjectLauncher(
+                Thread.currentThread().getContextClassLoader(),
+                Path.of("").toAbsolutePath(), args).runCommands())) {
+                java.lang.Runtime.getRuntime().exit(1);
+            }
+        } catch (BuildException e) {
+            if (e.getCause() == null) {
+                logger.atSevere().log("Build failed: %s",
+                    e.getMessage());
+            } else {
+                logger.atSevere().withCause(e).log("Build failed: %s",
+                    e.getMessage());
+            }
+            java.lang.Runtime.getRuntime().exit(2);
+        }
     }
 }

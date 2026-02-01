@@ -84,52 +84,50 @@ public class BootstrapProjectLauncher extends AbstractLauncher {
     @SuppressWarnings("PMD.UseVarargs")
     public BuildProjectLauncher buildBuildProjectLauncher(
             Class<? extends RootProject> rootPrjCls, String[] args) {
-        return unwrapBuildException(() -> {
-            Path buildRootDirectory = Path.of("").toAbsolutePath();
-            jdbldProps = propertiesFromFiles(buildRootDirectory);
-            try {
-                commandLine = new DefaultParser().parse(baseOptions(), args);
-            } catch (ParseException e) {
-                throw new BuildException(e);
-            }
-            addCliProperties(jdbldProps, commandLine);
-            configureLogging(buildRootDirectory, jdbldProps);
+        Path buildRootDirectory = Path.of("").toAbsolutePath();
+        jdbldProps = propertiesFromFiles(buildRootDirectory);
+        try {
+            commandLine = new DefaultParser().parse(baseOptions(), args);
+        } catch (ParseException e) {
+            throw new BuildException(e);
+        }
+        addCliProperties(jdbldProps, commandLine);
+        configureLogging(buildRootDirectory, jdbldProps);
 
-            rootProject = LauncherSupport.createProjects(buildRootDirectory,
-                rootPrjCls, Collections.emptyList(), jdbldProps, commandLine);
+        rootProject = LauncherSupport.createProjects(buildRootDirectory,
+            rootPrjCls, Collections.emptyList(), jdbldProps, commandLine);
 
-            // Add build extensions to the build project.
-            var mvnLookup = new MvnRepoLookup();
-            Optional.ofNullable(jdbldProps
-                .getProperty(BootstrapBuild.EXTENSIONS_SNAPSHOT_REPO, null))
-                .map(URI::create).ifPresent(mvnLookup::snapshotRepository);
-            var buildCoords = Arrays.asList(jdbldProps
-                .getProperty(BootstrapBuild.BUILD_EXTENSIONS, "").split(","))
-                .stream().map(String::trim).filter(c -> !c.isBlank()).toList();
-            logger.atFine().log("Adding build extensions: %s"
-                + " to classpath for builder project compilation", buildCoords);
-            buildCoords.forEach(mvnLookup::resolve);
-            rootProject.project(BootstrapBuild.class).dependency(Expose,
-                mvnLookup);
-            var cpUrls = rootProject.resources(rootProject
-                .of(ClasspathElement.class).using(Supply, Expose)).map(cpe -> {
-                    try {
-                        if (cpe instanceof FileTree tree) {
-                            return tree.root().toFile().toURI().toURL();
-                        }
-                        return ((FileResource) cpe).path().toFile().toURI()
-                            .toURL();
-                    } catch (MalformedURLException e) {
-                        // Cannot happen
-                        throw new BuildException(e);
+        // Add build extensions to the build project.
+        var mvnLookup = new MvnRepoLookup();
+        Optional.ofNullable(jdbldProps
+            .getProperty(BootstrapBuild.EXTENSIONS_SNAPSHOT_REPO, null))
+            .map(URI::create).ifPresent(mvnLookup::snapshotRepository);
+        var buildCoords = Arrays.asList(jdbldProps
+            .getProperty(BootstrapBuild.BUILD_EXTENSIONS, "").split(","))
+            .stream().map(String::trim).filter(c -> !c.isBlank()).toList();
+        logger.atFine().log("Adding build extensions: %s"
+            + " to classpath for builder project compilation", buildCoords);
+        buildCoords.forEach(mvnLookup::resolve);
+        rootProject.project(BootstrapBuild.class).dependency(Expose,
+            mvnLookup);
+        var cpUrls = rootProject.resources(rootProject
+            .of(ClasspathElement.class).using(Supply, Expose)).map(cpe -> {
+                try {
+                    if (cpe instanceof FileTree tree) {
+                        return tree.root().toFile().toURI().toURL();
                     }
-                }).toArray(URL[]::new);
-            logger.atFine().log("Launching build project with classpath: %s",
-                Arrays.toString(cpUrls));
-            return new BuildProjectLauncher(
-                new URLClassLoader(cpUrls, getClass().getClassLoader()),
-                buildRootDirectory, args);
-        });
+                    return ((FileResource) cpe).path().toFile().toURI()
+                        .toURL();
+                } catch (MalformedURLException e) {
+                    // Cannot happen
+                    throw new BuildException(e);
+                }
+            }).toArray(URL[]::new);
+        logger.atFine().log("Launching build project with classpath: %s",
+            Arrays.toString(cpUrls));
+        return new BuildProjectLauncher(
+            new URLClassLoader(cpUrls, getClass().getClassLoader()),
+            buildRootDirectory, args);
     }
 
     /// Root project.
@@ -146,7 +144,21 @@ public class BootstrapProjectLauncher extends AbstractLauncher {
     /// @param args the arguments
     ///
     public static void main(String[] args) {
-        new BootstrapProjectLauncher().buildBuildProjectLauncher(
-            BootstrapRoot.class, args).runCommands();
+        try {
+            if (!reportBuildException(
+                () -> new BootstrapProjectLauncher().buildBuildProjectLauncher(
+                    BootstrapRoot.class, args).runCommands())) {
+                Runtime.getRuntime().exit(1);
+            }
+        } catch (BuildException e) {
+            if (e.getCause() == null) {
+                logger.atSevere().log("Build failed: %s",
+                    e.getMessage());
+            } else {
+                logger.atSevere().withCause(e).log("Build failed: %s",
+                    e.getMessage());
+            }
+            Runtime.getRuntime().exit(2);
+        }
     }
 }

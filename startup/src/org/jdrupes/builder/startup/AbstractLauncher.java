@@ -30,7 +30,6 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 import java.util.Properties;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ConcurrentHashMap;
@@ -219,82 +218,43 @@ public abstract class AbstractLauncher implements Launcher {
             });
     }
 
-    /// A utility method that invokes the callable. If an exception
-    /// occurs during the invocation, it unwraps the causes until it
-    /// finds the root [BuildException], prints the message from this
-    /// exception and exits.
+    /// A utility method for reliably reporting problems as [BuildException]s.
+    /// It invokes the callable. If a Throwable occurs, it unwraps the causes
+    /// until it finds the root [BuildException] and rethrows it. Any other
+    /// [Throwable] is wrapped in a new [BuildException] which is then thrown.
+    /// 
+    /// Effectively, the method thus either returns the requested result
+    /// or a [BuildException]. 
     ///
     /// @param <T> the generic type
     /// @param todo the todo
-    /// @return the t
+    /// @return the result
     ///
-    @SuppressWarnings({ "PMD.DoNotTerminateVM",
-        "PMD.AvoidCatchingGenericException" })
-    protected final <T> T unwrapBuildException(Callable<T> todo) {
+    @SuppressWarnings({ "PMD.AvoidCatchingGenericException",
+        "PMD.PreserveStackTrace" })
+    public static final <T> T reportBuildException(Callable<T> todo) {
         try {
             return todo.call();
-        } catch (Exception e) {
-            Throwable checking = e;
-            BuildException bldEx = null;
+        } catch (Throwable thrown) {
+            Throwable checking = thrown;
+            BuildException foundBldEx = null;
             while (checking != null) {
                 if (checking instanceof BuildException exc) {
-                    bldEx = exc;
+                    foundBldEx = exc;
                 }
                 checking = checking.getCause();
             }
-            final var finalBldEx = bldEx;
-            if (bldEx == null) {
-                logger.atSevere().log("Starting builder failed: %s",
-                    e.getMessage());
-            } else if (bldEx.getCause() == null) {
-                logger.atSevere().log("Build failed: %s",
-                    finalBldEx.getMessage());
-            } else {
-                logger.atSevere().withCause(finalBldEx).log("Build failed: %s",
-                    finalBldEx.getMessage());
+            if (foundBldEx != null) {
+                throw foundBldEx;
             }
-            System.exit(1);
-            return null;
+            throw new BuildException(thrown);
         }
-    }
-
-    /// Run a build and return the most deeply nested [BuildException] found,
-    /// if any.
-    ///
-    /// @param todo the todo
-    /// @return the optional
-    ///
-    @SuppressWarnings("PMD.AvoidCatchingGenericException")
-    protected Optional<BuildException> runBuild(Runnable todo) {
-        try {
-            todo.run();
-        } catch (Exception e) {
-            Throwable checking = e;
-            BuildException bldEx = null;
-            while (checking != null) {
-                if (checking instanceof BuildException exc) {
-                    bldEx = exc;
-                }
-                checking = checking.getCause();
-            }
-            if (bldEx == null) {
-                return Optional.of(new BuildException(e));
-            } else {
-                return Optional.of(bldEx);
-            }
-        }
-        return Optional.empty();
     }
 
     @Override
     public <T extends Resource> Stream<T> resources(Stream<Project> projects,
             ResourceRequest<T> request) {
-        return unwrapBuildException(() -> {
-            // Provide requested resource, handling all exceptions here
-            var result
-                = projects.map(p -> p.resources(request)).flatMap(r -> r)
-                    .toList();
-            return result.stream();
-        });
+        return projects.map(p -> p.resources(request)).flatMap(r -> r)
+            .toList().stream();
     }
 }
