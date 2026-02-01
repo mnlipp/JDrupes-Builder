@@ -194,7 +194,7 @@ public class PomFileGenerator extends AbstractGenerator {
                 Files.write(pomPath, newPom.toByteArray());
             }
         } catch (IOException e) {
-            throw new BuildException(e);
+            throw new BuildException().from(this).cause(e);
         }
 
         @SuppressWarnings("unchecked")

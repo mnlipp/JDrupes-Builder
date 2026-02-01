@@ -1,6 +1,6 @@
 /*
  * JDrupes Builder
- * Copyright (C) 2025 Michael N. Lipp
+ * Copyright (C) 2025, 2026 Michael N. Lipp
  * 
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as
@@ -18,72 +18,64 @@
 
 package org.jdrupes.builder.api;
 
+import java.util.Optional;
+
 /// Represents an exception that occurs during the build. Terminates the
 /// current build when thrown.
 ///
 @SuppressWarnings("serial")
 public class BuildException extends RuntimeException {
 
-    /// Instantiates a new build exception.
+    private ResourceProvider resourceProvider;
+
+    /// Initializes a new builds the exception.
     ///
-    /// @param message the message
-    /// @param cause the cause
-    /// @param enableSuppression the enable suppression
-    /// @param writableStackTrace the writable stack trace
-    ///
-    public BuildException(String message, Throwable cause,
-            boolean enableSuppression, boolean writableStackTrace) {
-        super(message, cause, enableSuppression, writableStackTrace);
+    public BuildException() {
+        super();
     }
 
-    /// Instantiates a new build exception.
+    /// Instantiates a new build exception. As a convenience, any
+    /// Throwable arguments will be replaced by their message.
     ///
-    /// @param message the message
-    /// @param cause the cause
+    /// @param format the format
+    /// @param args the args
     ///
-    public BuildException(String message, Throwable cause) {
-        super(message, cause);
-    }
-
-    /// Instantiates a new build exception.
-    ///
-    /// @param message the message
-    ///
-    public BuildException(String message) {
+    public BuildException(String format, Object... args) {
+        for (int i = 0; i < args.length; i++) {
+            if (args[i] instanceof Throwable) {
+                args[i] = ((Throwable) args[i]).getMessage();
+            }
+        }
+        var message = String.format(format, args);
         super(message);
     }
 
-    /// Instantiates a new build exception.
+    /// Sets the cause.
     ///
     /// @param cause the cause
-    ///
-    public BuildException(Throwable cause) {
-        super(cause);
-    }
-
-    /// Convenience method for creating a new build exception.
-    ///
-    /// @param format the format
-    /// @param args the args
     /// @return the builds the exception
     ///
-    @SuppressWarnings("PMD.ShortMethodName")
-    public static BuildException of(String format, Object... args) {
-        var message = String.format(format, args);
-        return new BuildException(message);
+    public BuildException cause(Throwable cause) {
+        initCause(cause);
+        return this;
     }
 
-    /// Convenience method for creating a new build exception.
+    /// From.
     ///
-    /// @param cause the cause
-    /// @param format the format
-    /// @param args the args
+    /// @param resourceProvider the resource provider
     /// @return the builds the exception
     ///
-    @SuppressWarnings("PMD.ShortMethodName")
-    public static BuildException of(Throwable cause, String format,
-            Object... args) {
-        var message = String.format(format, args);
-        return new BuildException(message, cause);
+    public BuildException from(ResourceProvider resourceProvider) {
+        this.resourceProvider = resourceProvider;
+        return this;
+    }
+
+    /// Returns the origin of this exception. This is the resource
+    /// provider set with [#from].
+    ///
+    /// @return the resource provider
+    ///
+    public Optional<ResourceProvider> origin() {
+        return Optional.ofNullable(resourceProvider);
     }
 }

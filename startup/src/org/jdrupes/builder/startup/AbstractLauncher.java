@@ -47,7 +47,9 @@ import org.jdrupes.builder.api.Resource;
 import org.jdrupes.builder.api.ResourceFactory;
 import org.jdrupes.builder.api.ResourceRequest;
 import org.jdrupes.builder.api.RootProject;
+import org.jdrupes.builder.core.BuildExceptionFormatter;
 import org.jdrupes.builder.core.DefaultBuildContext;
+import org.jdrupes.builder.core.DefaultBuildExceptionFormatter;
 import org.jdrupes.builder.java.ClassTree;
 import static org.jdrupes.builder.java.JavaTypes.*;
 
@@ -58,6 +60,9 @@ public abstract class AbstractLauncher implements Launcher {
 
     /// The log.
     private static final FluentLogger logger = FluentLogger.forEnclosingClass();
+    @SuppressWarnings("PMD.FieldNamingConventions")
+    private static final BuildExceptionFormatter defaultFormatter
+        = new DefaultBuildExceptionFormatter();
 
     /// Initializes a new abstract launcher.
     ///
@@ -84,8 +89,8 @@ public abstract class AbstractLauncher implements Launcher {
                     fallbacks.load(Files.newBufferedReader(propsPath));
                 }
             } catch (IOException e) {
-                throw new BuildException(
-                    "Cannot read properties from " + propsPath, e);
+                throw new BuildException("Cannot read properties from %s: %s",
+                    propsPath, e).cause(e);
             }
         }
         return new Properties(fallbacks);
@@ -156,7 +161,8 @@ public abstract class AbstractLauncher implements Launcher {
         try {
             classDirUrls = Collections.list(clsLoader.getResources(""));
         } catch (IOException e) {
-            throw new BuildException("Problem scanning classpath", e);
+            throw new BuildException("Problem scanning classpath: %s", e)
+                .cause(e);
         }
         Map<Path, List<Class<? extends RootProject>>> rootProjectMap
             = new ConcurrentHashMap<>();
@@ -165,7 +171,8 @@ public abstract class AbstractLauncher implements Launcher {
                 try {
                     return Path.of(uri.toURI());
                 } catch (URISyntaxException e) {
-                    throw new BuildException("Problem scanning classpath", e);
+                    throw new BuildException("Problem scanning classpath: %s",
+                        e).cause(e);
                 }
             }).map(p -> ResourceFactory.create(ClassTreeType, p, "**/*.class",
                 false))
@@ -218,6 +225,14 @@ public abstract class AbstractLauncher implements Launcher {
             });
     }
 
+    @Override
+    public <T extends Resource> Stream<T> resources(Stream<Project> projects,
+            ResourceRequest<T> request) {
+        return reportBuildException(
+            () -> projects.map(p -> p.resources(request)).flatMap(r -> r)
+                .toList().stream());
+    }
+
     /// A utility method for reliably reporting problems as [BuildException]s.
     /// It invokes the callable. If a Throwable occurs, it unwraps the causes
     /// until it finds the root [BuildException] and rethrows it. Any other
@@ -247,14 +262,15 @@ public abstract class AbstractLauncher implements Launcher {
             if (foundBldEx != null) {
                 throw foundBldEx;
             }
-            throw new BuildException(thrown);
+            throw new BuildException().cause(thrown);
         }
     }
 
-    @Override
-    public <T extends Resource> Stream<T> resources(Stream<Project> projects,
-            ResourceRequest<T> request) {
-        return projects.map(p -> p.resources(request)).flatMap(r -> r)
-            .toList().stream();
+    /// Return the default formatter for build exceptions.
+    ///
+    /// @return the builds the exception formatter
+    ///
+    public static BuildExceptionFormatter formatter() {
+        return defaultFormatter;
     }
 }

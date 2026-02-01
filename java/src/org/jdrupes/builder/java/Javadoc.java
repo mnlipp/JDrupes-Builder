@@ -221,13 +221,14 @@ public class Javadoc extends JavaTool {
                 = fileManager.getJavaFileObjectsFromPaths(sourcePaths);
             if (!javadoc.getTask(null, fileManager, diagnostics, null,
                 allOptions, sourceFiles).call()) {
-                throw new BuildException("Documentation generation failed");
+                throw new BuildException("Documentation generation failed")
+                    .from(this);
             }
         } catch (Exception e) {
             logger.atSevere().withCause(e).log(
-                "Project %s: Problem generating Javadoc: %s",
+                "Project %s: Cannot generate Javadoc: %s",
                 project().name(), e.getMessage());
-            throw new BuildException(e);
+            throw new BuildException().from(this).cause(e);
         } finally {
             logDiagnostics(diagnostics);
         }
@@ -239,9 +240,8 @@ public class Javadoc extends JavaTool {
 
     private List<String> evaluateOptions(Path destDir) {
         if (options().contains("-d")) {
-            new BuildException(project()
-                + ": Specifying the destination directory with "
-                + "options() is not allowed.");
+            new BuildException("Specifying the destination directory with "
+                + "options() is not allowed.").from(this);
         }
         List<String> allOptions = new ArrayList<>(options());
         allOptions.addAll(List.of("-d", destDir.toString()));

@@ -215,14 +215,14 @@ public class MvnRepoLookup extends AbstractProvider
         try {
             return provideJars();
         } catch (ModelBuildingException e) {
-            throw BuildException.of(e, "Cannot build model for resolving: %s",
-                e.getMessage());
+            throw new BuildException("Cannot build model for resolving: %s", e)
+                .from(this).cause(e);
         } catch (DependencyResolutionException e) {
             if (probeMode) {
                 return Stream.empty();
             }
-            throw BuildException.of(e, "Unable to resolve dependencies: %s",
-                e.getMessage());
+            throw new BuildException("Unable to resolve dependencies: %s", e)
+                .from(this).cause(e);
         }
     }
 

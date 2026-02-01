@@ -110,7 +110,7 @@ public class ProjectPreparation {
                         project.directory().resolve(".eclipse-pmd"),
                         StandardCopyOption.REPLACE_EXISTING);
                 } catch (IOException e) {
-                    throw new BuildException(e);
+                    throw new BuildException().from(project).cause(e);
                 }
             }));
     }

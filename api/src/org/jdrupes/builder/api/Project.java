@@ -390,12 +390,12 @@ public interface Project extends ResourceProvider {
     /// @param path the path
     /// @return the string
     ///
-    @SuppressWarnings("PMD.PreserveStackTrace")
     default String readString(Path path) {
         try {
             return Files.readString(directory().resolve(path));
         } catch (IOException e) {
-            throw new BuildException("Cannot read file: " + e.getMessage());
+            throw new BuildException("Cannot read file: %s", e)
+                .from(this).cause(e);
         }
     }
 

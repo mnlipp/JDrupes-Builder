@@ -184,8 +184,8 @@ public class LibraryBuilder extends JarBuilder
 
         // Make sure mainClass is set for app jar
         if (requested.requires(AppJarFileType) && mainClass() == null) {
-            throw new BuildException("Main class must be set for "
-                + name() + " in " + project());
+            throw new BuildException("Main class must be set for %s",
+                name()).from(this);
         }
 
         // Prepare jar file

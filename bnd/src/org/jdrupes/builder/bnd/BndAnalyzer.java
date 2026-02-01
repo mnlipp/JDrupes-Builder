@@ -169,7 +169,8 @@ public class BndAnalyzer extends AbstractBndGenerator {
             var result = (T) asResource;
             return Stream.of(result);
         } catch (Exception e) {
-            throw BuildException.of(e, "Failed to generate OSGi metadata");
+            throw new BuildException("Failed to generate OSGi metadata: %s", e)
+                .from(this).cause(e);
         }
     }
 
@@ -179,8 +180,8 @@ public class BndAnalyzer extends AbstractBndGenerator {
                 try {
                     new Version(v);
                 } catch (IllegalArgumentException e) {
-                    throw BuildException.of(e, "Attempt to specify invalid"
-                        + " OSGi version %s in %s", v, project());
+                    throw new BuildException("Attempt to specify invalid"
+                        + " OSGi version %s", v).from(this).cause(e);
                 }
             });
 

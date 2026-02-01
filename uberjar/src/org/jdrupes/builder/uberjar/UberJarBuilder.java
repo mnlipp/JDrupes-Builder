@@ -210,14 +210,14 @@ public class UberJarBuilder extends LibraryBuilder {
 
     private void addJarFile(Map<Path, Resources<IOResource>> entries,
             JarFile jarFile, Map<Path, java.util.jar.JarFile> openJars) {
-        @SuppressWarnings({ "PMD.PreserveStackTrace", "PMD.CloseResource" })
+        @SuppressWarnings({ "PMD.CloseResource" })
         java.util.jar.JarFile jar
             = openJars.computeIfAbsent(jarFile.path(), _ -> {
                 try {
                     return new java.util.jar.JarFile(jarFile.path().toFile());
                 } catch (IOException e) {
-                    throw new BuildException("Cannot open resource " + jarFile
-                        + ": " + e.getMessage());
+                    throw new BuildException("Cannot open resource %s: %s",
+                        jarFile, e).from(this).cause(e);
                 }
             });
         jar.stream().filter(Predicate.not(JarEntry::isDirectory))
@@ -239,7 +239,7 @@ public class UberJarBuilder extends LibraryBuilder {
             });
     }
 
-    @SuppressWarnings({ "PMD.PreserveStackTrace", "PMD.UselessPureMethodCall",
+    @SuppressWarnings({ "PMD.UselessPureMethodCall",
         "PMD.AvoidLiteralsInIfCondition" })
     @Override
     protected void resolveDuplicates(Map<Path, Resources<IOResource>> entries) {
@@ -255,7 +255,8 @@ public class UberJarBuilder extends LibraryBuilder {
                     try {
                         combined.add(service);
                     } catch (IOException e) {
-                        throw new BuildException("Cannot read " + service);
+                        throw new BuildException("Cannot read %s: %s",
+                            service, e).from(this).cause(e);
                     }
                 });
                 candidates.clear();
@@ -296,8 +297,8 @@ public class UberJarBuilder extends LibraryBuilder {
 
         // Make sure mainClass is set for app jar
         if (requested.requires(AppJarFileType) && mainClass() == null) {
-            throw new BuildException("Main class must be set for "
-                + name() + " in " + project());
+            throw new BuildException("Main class must be set for %s", name())
+                .from(this);
         }
 
         // Upgrade to most specific type to avoid duplicate generation

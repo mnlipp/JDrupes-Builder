@@ -89,7 +89,8 @@ public class BootstrapProjectLauncher extends AbstractLauncher {
         try {
             commandLine = new DefaultParser().parse(baseOptions(), args);
         } catch (ParseException e) {
-            throw new BuildException(e);
+            configureLogging(buildRootDirectory, jdbldProps);
+            throw new BuildException().cause(e);
         }
         addCliProperties(jdbldProps, commandLine);
         configureLogging(buildRootDirectory, jdbldProps);
@@ -120,7 +121,7 @@ public class BootstrapProjectLauncher extends AbstractLauncher {
                         .toURL();
                 } catch (MalformedURLException e) {
                     // Cannot happen
-                    throw new BuildException(e);
+                    throw new BuildException().from(rootProject).cause(e);
                 }
             }).toArray(URL[]::new);
         logger.atFine().log("Launching build project with classpath: %s",
@@ -143,6 +144,7 @@ public class BootstrapProjectLauncher extends AbstractLauncher {
     ///
     /// @param args the arguments
     ///
+    @SuppressWarnings("PMD.SystemPrintln")
     public static void main(String[] args) {
         try {
             if (!reportBuildException(
@@ -153,11 +155,12 @@ public class BootstrapProjectLauncher extends AbstractLauncher {
         } catch (BuildException e) {
             if (e.getCause() == null) {
                 logger.atSevere().log("Build failed: %s",
-                    e.getMessage());
+                    formatter().summary(e));
             } else {
                 logger.atSevere().withCause(e).log("Build failed: %s",
-                    e.getMessage());
+                    formatter().summary(e));
             }
+            System.out.println(formatter().summary(e));
             Runtime.getRuntime().exit(2);
         }
     }

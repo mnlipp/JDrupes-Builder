@@ -250,7 +250,7 @@ public class JavaCompiler extends JavaTool {
             logger.atSevere().withCause(e)
                 .log("Project %s: Problem compiling Java: %s", project().name(),
                     e.getMessage());
-            throw new BuildException(e);
+            throw new BuildException().from(this).cause(e);
         } finally {
             logDiagnostics(diagnostics);
         }

@@ -204,7 +204,7 @@ public class EclipseConfigurator extends AbstractGenerator {
             }
         } catch (ParserConfigurationException | TransformerException
                 | TransformerFactoryConfigurationError | IOException e) {
-            throw new BuildException(e);
+            throw new BuildException().from(this).cause(e);
         }
     }
 
@@ -499,7 +499,6 @@ public class EclipseConfigurator extends AbstractGenerator {
     /// Generate the properties for the
     /// `.settings/org.eclipse.core.resources.prefs` file.
     ///
-    @SuppressWarnings("PMD.PreserveStackTrace")
     protected void generateResourcesPrefs() {
         var props = new Properties();
         props.setProperty("eclipse.preferences.version", "1");
@@ -511,8 +510,8 @@ public class EclipseConfigurator extends AbstractGenerator {
             GENERATED_BY)) {
             props.store(out, "");
         } catch (IOException e) {
-            throw new BuildException(
-                "Cannot write eclipse settings: " + e.getMessage());
+            throw new BuildException("Cannot write eclipse settings: %s", e)
+                .from(this).cause(e);
         }
     }
 
@@ -531,7 +530,6 @@ public class EclipseConfigurator extends AbstractGenerator {
     /// Generate the properties for the
     /// `.settings/org.eclipse.core.runtime.prefs` file.
     ///
-    @SuppressWarnings("PMD.PreserveStackTrace")
     protected void generateRuntimePrefs() {
         var props = new Properties();
         props.setProperty("eclipse.preferences.version", "1");
@@ -543,8 +541,8 @@ public class EclipseConfigurator extends AbstractGenerator {
             GENERATED_BY)) {
             props.store(out, "");
         } catch (IOException e) {
-            throw new BuildException(
-                "Cannot write eclipse settings: " + e.getMessage());
+            throw new BuildException("Cannot write eclipse settings: %s", e)
+                .from(this).cause(e);
         }
     }
 
@@ -562,7 +560,6 @@ public class EclipseConfigurator extends AbstractGenerator {
     /// Generate the properties for the
     /// `.settings/org.eclipse.jdt.core.prefs` file.
     ///
-    @SuppressWarnings("PMD.PreserveStackTrace")
     protected void generateJdtCorePrefs() {
         var props = new Properties();
         props.setProperty("eclipse.preferences.version", "1");
@@ -589,8 +586,8 @@ public class EclipseConfigurator extends AbstractGenerator {
             GENERATED_BY)) {
             props.store(out, "");
         } catch (IOException e) {
-            throw new BuildException(
-                "Cannot write eclipse settings: " + e.getMessage());
+            throw new BuildException("Cannot write eclipse settings: %s", e)
+                .from(this).cause(e);
         }
     }
 

@@ -112,7 +112,8 @@ public class FutureStream<T extends Resource> {
                         try {
                             theIterator = values.get().iterator();
                         } catch (InterruptedException | ExecutionException e) {
-                            throw new BuildException(e);
+                            throw new BuildException().from(holding.provider())
+                                .cause(e);
                         }
                     }
                     return theIterator;

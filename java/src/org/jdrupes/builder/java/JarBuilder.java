@@ -340,7 +340,7 @@ public class JarBuilder extends AbstractGenerator {
             }
 
         } catch (IOException e) {
-            throw new BuildException(e);
+            throw new BuildException().from(this).cause(e);
         }
     }
 
@@ -415,7 +415,8 @@ public class JarBuilder extends AbstractGenerator {
         var destDir = destination();
         if (!destDir.toFile().exists()) {
             if (!destDir.toFile().mkdirs()) {
-                throw new BuildException("Cannot create directory " + destDir);
+                throw new BuildException("Cannot create directory: %s", destDir)
+                    .from(this);
             }
         }
         var jarResource = project().newResource(jarType,

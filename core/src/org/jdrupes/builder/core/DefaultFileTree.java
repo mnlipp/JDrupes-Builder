@@ -118,7 +118,7 @@ public class DefaultFileTree<T extends FileResource> extends DefaultResources<T>
             find(root(), pattern);
         } catch (IOException e) {
             logger.atSevere().withCause(e).log("Problem scanning files");
-            throw new BuildException(e);
+            throw new BuildException().from(project).cause(e);
         }
         filled = true;
     }
@@ -276,7 +276,7 @@ public class DefaultFileTree<T extends FileResource> extends DefaultResources<T>
             });
         } catch (IOException e) {
             logger.atSevere().withCause(e).log("Problem scanning files");
-            throw new BuildException(e);
+            throw new BuildException().from(project).cause(e);
         }
         filled = false;
         return this;

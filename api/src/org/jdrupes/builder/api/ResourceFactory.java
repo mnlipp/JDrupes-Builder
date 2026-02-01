@@ -47,7 +47,7 @@ public interface ResourceFactory {
             .map(f -> f.newResource(type, project, args))
             .filter(Optional::isPresent).map(Optional::get).findFirst()
             .orElseThrow(
-                () -> new BuildException("No resource factory for " + type));
+                () -> new BuildException("No resource factory for %s", type));
     }
 
     /// Short for `create(type, null, args)`.

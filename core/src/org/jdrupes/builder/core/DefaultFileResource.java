@@ -46,7 +46,7 @@ public class DefaultFileResource extends ResourceObject
             Path path) {
         super(type);
         if (!path.isAbsolute()) {
-            throw new BuildException("Path must be absolute, is " + path);
+            throw new BuildException("Path must be absolute, is %s", path);
         }
         var relPath = Path.of("").toAbsolutePath().relativize(path);
         name(relPath.equals(Path.of("")) ? "." : relPath.toString());

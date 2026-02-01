@@ -88,7 +88,8 @@ public class BuildProjectLauncher extends AbstractLauncher {
         try {
             commandLine = new DefaultParser().parse(baseOptions(), args);
         } catch (ParseException e) {
-            throw new BuildException(e);
+            configureLogging(buildRoot, jdbldProps);
+            throw new BuildException().cause(e);
         }
         addCliProperties(jdbldProps, commandLine);
         configureLogging(buildRoot, jdbldProps);
@@ -155,8 +156,8 @@ public class BuildProjectLauncher extends AbstractLauncher {
                     .map(p -> ResourceFactory
                         .create(JarFileType, p));
             } catch (DependencyResolutionException e) {
-                throw new BuildException(
-                    "Cannot resolve: " + e.getMessage(), e);
+                throw new BuildException("Cannot resolve: %s", e.getMessage())
+                    .cause(e);
             }
         }
     }
@@ -170,14 +171,16 @@ public class BuildProjectLauncher extends AbstractLauncher {
     ///
     /// @return true, if successful
     ///
-    @SuppressWarnings({ "PMD.SystemPrintln", "PMD.AvoidLiteralsInIfCondition" })
+    @SuppressWarnings({ "PMD.SystemPrintln", "PMD.AvoidLiteralsInIfCondition",
+        "PMD.AvoidInstantiatingObjectsInLoops" })
     public boolean runCommands() {
         for (var arg : commandLine.getArgs()) {
             var parts = arg.split(":");
             String resource = parts[parts.length - 1];
             var cmdData = LauncherSupport.lookupCommand(rootProject, resource);
             if (cmdData.requests().length == 0) {
-                throw new BuildException("Unknown command: " + arg);
+                throw new BuildException("Unknown command: %s", arg)
+                    .from(rootProject());
             }
             String pattern = cmdData.pattern();
             if (parts.length > 1) {
@@ -205,6 +208,7 @@ public class BuildProjectLauncher extends AbstractLauncher {
     ///
     /// @param args the arguments
     ///
+    @SuppressWarnings("PMD.SystemPrintln")
     public static void main(String[] args) {
         try {
             if (!reportBuildException(() -> new BuildProjectLauncher(
@@ -215,11 +219,12 @@ public class BuildProjectLauncher extends AbstractLauncher {
         } catch (BuildException e) {
             if (e.getCause() == null) {
                 logger.atSevere().log("Build failed: %s",
-                    e.getMessage());
+                    formatter().summary(e));
             } else {
                 logger.atSevere().withCause(e).log("Build failed: %s",
-                    e.getMessage());
+                    formatter().summary(e));
             }
+            System.out.println(formatter().summary(e));
             java.lang.Runtime.getRuntime().exit(2);
         }
     }

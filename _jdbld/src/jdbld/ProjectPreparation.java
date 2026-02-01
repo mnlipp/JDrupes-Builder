@@ -55,7 +55,7 @@ public class ProjectPreparation {
                 project.set(GitApi, Git.open(project.directory().toFile()));
             }
         } catch (IOException e) {
-            throw new BuildException(e);
+            throw new BuildException().from(project).cause(e);
         }
 
         var evaluator = VersionEvaluator
@@ -135,7 +135,7 @@ public class ProjectPreparation {
                         project.directory().resolve(".eclipse-pmd"),
                         StandardCopyOption.REPLACE_EXISTING);
                 } catch (IOException e) {
-                    throw new BuildException(e);
+                    throw new BuildException().from(project).cause(e);
                 }
             }));
     }

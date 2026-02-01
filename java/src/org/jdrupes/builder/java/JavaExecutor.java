@@ -130,7 +130,8 @@ public class JavaExecutor extends AbstractProvider
             findMainClass(cpResources);
         }
         if (mainClass == null) {
-            throw new BuildException("No main class defined for " + name());
+            throw new BuildException("No main class defined for %s", name())
+                .from(this);
         }
 
         // Build command
@@ -149,7 +150,7 @@ public class JavaExecutor extends AbstractProvider
                 mainClass, process.waitFor()));
             return result;
         } catch (IOException | InterruptedException e) {
-            throw new BuildException(e);
+            throw new BuildException().from(this).cause(e);
         }
     }
 

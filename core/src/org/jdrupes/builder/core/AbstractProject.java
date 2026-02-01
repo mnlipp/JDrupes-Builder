@@ -159,9 +159,9 @@ public abstract class AbstractProject extends AbstractProvider
             parent = fallbackParent.get();
             if (this instanceof RootProject) {
                 if (parent != null) {
-                    throw new BuildException("Root project of type "
-                        + getClass().getSimpleName()
-                        + " cannot be a sub project.");
+                    throw new BuildException("Root project of type %s cannot"
+                        + " be a sub project", getClass().getSimpleName())
+                            .from(this);
                 }
                 // ConcurrentHashMap does not support null values.
                 projects = Collections.synchronizedMap(new HashMap<>());
@@ -208,7 +208,7 @@ public abstract class AbstractProject extends AbstractProvider
         try {
             rootProject().prepareProject(this);
         } catch (Exception e) {
-            throw new BuildException(e);
+            throw new BuildException().from(this).cause(e);
         }
     }
 
@@ -262,7 +262,7 @@ public abstract class AbstractProject extends AbstractProvider
                 });
             }).get();
         } catch (InterruptedException | ExecutionException e) {
-            throw new BuildException(e);
+            throw new BuildException().from(this).cause(e);
         }
     }
 

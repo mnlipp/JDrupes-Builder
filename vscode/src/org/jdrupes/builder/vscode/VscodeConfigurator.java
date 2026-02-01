@@ -106,7 +106,7 @@ public class VscodeConfigurator extends AbstractGenerator {
             generateLaunchJson(vscodeDir.resolve("launch.json"));
             generateTasksJson(vscodeDir.resolve("tasks.json"));
         } catch (IOException e) {
-            throw new BuildException(e);
+            throw new BuildException().from(this).cause(e);
         }
 
         // General overrides

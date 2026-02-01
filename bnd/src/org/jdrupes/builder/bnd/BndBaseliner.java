@@ -208,7 +208,7 @@ public class BndBaseliner extends AbstractBndGenerator {
             return result;
 
         } catch (Exception e) {
-            throw BuildException.of(e, e.getMessage());
+            throw new BuildException().from(this).cause(e);
         }
     }
 
@@ -271,7 +271,7 @@ public class BndBaseliner extends AbstractBndGenerator {
             }
             fmt.flush();
         } catch (Exception e) {
-            throw BuildException.of(e, e.getMessage());
+            throw new BuildException().from(this).cause(e);
         }
         return reportLocation;
     }
