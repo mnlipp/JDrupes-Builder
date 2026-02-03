@@ -11,14 +11,16 @@ layout: jdbld
 
 Resources are obtained by sending a
 [ResourceRequest](javadoc/org/jdrupes/builder/api/ResourceRequest.html)
-to a provider. The request usually specifies a type rather than a name.
-Therefore, we need a consistent way to define resource types for
-queries. Let's use the Java classpath as an example. A Java classpath
-consists of elements. These elements can be JAR files or trees
-of class files (which are denoted in the classpath by their root
-directory).
+to a provider. A request usually specifies a resource *type* rather than
+a concrete name. This requires a consistent way to define resource types
+for queries.
 
-Using [ClasspathElement](javadoc/org/jdrupes/builder/java/ClasspathElement.html)
+Consider the Java classpath as an example. A Java classpath consists of
+elements that may either be JAR files or directory trees containing
+class files (denoted on the classpath by their root directory).
+
+By using
+[ClasspathElement](javadoc/org/jdrupes/builder/java/ClasspathElement.html)
 as common supertype for JAR files and class trees, we can ask for 
 resource type
 [ClasspathElement](javadoc/org/jdrupes/builder/java/ClasspathElement.html).
@@ -32,32 +34,40 @@ A commonly available resource that all generators must support is
 Requesting this resource type from a generator makes it remove all
 resources that it has created.
 
-Admittedly, this pushes the concept of everything being a resource
+Admittedly, this pushes the concept of "everything being a resource"
 to its limits. It solves the problem of cleaning up after a build.
-Depending on your point of view, "cleanliness" may be the absence of
-something, but you could also argue that "cleanliness" is something
-that can be provided.
+Depending on one's point of view, "cleanliness" may represent the absence
+of something, but it can also be regarded as a resource that can be
+provided.
 
 ## Resource providers
 
-Resources may never be directly requested from a
-[ResourceProvider](javadoc/org/jdrupes/builder/api/ResourceProvider.html).
-Instead, requests must be passed through the 
-[BuildContext](javadoc/org/jdrupes/builder/api/BuildContext.html)'s
+Resources are provided by
+[ResourceProvider](javadoc/org/jdrupes/builder/api/ResourceProvider.html)s via
+their [SPI](javadoc/org/jdrupes/builder/api/ResourceProviderSpi.html).
+The SPI's
+[provide](javadoc/org/jdrupes/builder/api/ResourceProviderSpi.html#provide(org.jdrupes.builder.api.ResourceRequest))
+method must never be invoked directly. Instead, requests must be passed through
+the [BuildContext](javadoc/org/jdrupes/builder/api/BuildContext.html)'s
 [resources](javadoc/org/jdrupes/builder/api/BuildContext.html#resources(org.jdrupes.builder.api.ResourceProvider,org.jdrupes.builder.api.ResourceRequest))
-method. This allows the `BuildContext` to synchronize the requests and 
-cache the results. To simplify the invocation,
+method. This allows the `BuildContext` to synchronize requests and 
+cache results. To simplify the invocation,
 [ResourceProvider](javadoc/org/jdrupes/builder/api/ResourceProvider.html)
-has a method 
-[resources](javadoc/org/jdrupes/builder/api/BuildContext.html#resources(org.jdrupes.builder.api.ResourceProvider,org.jdrupes.builder.api.ResourceRequest))
-that implements the invocation via the build context.
+defines a method 
+[resources](javadoc/org/jdrupes/builder/api/ResourceProvider.html#resources(org.jdrupes.builder.api.ResourceRequest))
+that performs the invocation via the build context and makes this mechanism
+transparent to the user.
 
-Resources are returned as a lazily evaluated Java `Stream` of resources of
-the requested type. This delays the evaluation of the request until the
-`Stream` is terminated. The `Stream`s must never be terminated in a
+The `BuildContext` invokes the
+[provide](javadoc/org/jdrupes/builder/api/ResourceProviderSpi.html#provide(org.jdrupes.builder.api.ResourceRequest))
+method asynchronously and wraps the resulting `Future` in a `Stream` that
+calls the `Future`'s `get` method only when this "wrapper `Stream`" is
+terminated. This makes the invocation of `BuildContext.resources` non-blocking.
+The "wrapper `Stream`s" can be freely passed around in a
 [Project](javadoc/org/jdrupes/builder/api/Project.html)'s constructor,
-as the evaluation may require resources from other projects that are not
-available yet.
+but they must never be terminated in this context. Effectively, the
+first termination of a such a "wrapper `Stream`" ends the configuration
+phase and starts the build phase.
 
 ## Projects as resource providers
 
@@ -69,25 +79,26 @@ is controlled by the intents associated with the request via
 [using](javadoc/org/jdrupes/builder/api/ResourceRequest.html#using(java.util.Set)).
 
 Certain combinations of requested type and intents map directly to
-common concepts in other build tools. Consider, for example, a request
-for classpath elements that uses `Supply` and `Expose`.
-The result of such a request includes the classes created by the project
-together with the resources used to create them. For a project serving
-as a build dependency, this result constitutes the project's API.
+concepts commonly used in other build tools. For example, a request
+for classpath elements using `Supply` and `Expose` yields the classes
+produced by the project together with the resources used to create them.
+When a project serves as a build dependency, this result constitutes
+the project's API.
 
-More about using intents together with requests can be found in the class
-documentation of [Project](javadoc/org/jdrupes/builder/api/Project.html).
+More details on combining intents with resource requests can be found
+in the class documentation of
+[Project](javadoc/org/jdrupes/builder/api/Project.html).
 
 ## Requesting resources from the command line
 
-Specifying resource types as Java types works well within the build
-configuration. However, specifying them in this way on the command
-line when invoking the JDrupes Builder would be rather tedious.
+Specifying resource types as Java types works well within a build
+configuration. On the command line, however, this approach would be
+rather cumbersome.
 
-The root project's constructor can therefore be used to define
-aliases for the resources that can be used as command arguments
-when invoking the JDrupes Builder. This is shown in the sample project:
-
+For this reason, the root project's constructor can define
+aliases for resources that may be used as command arguments
+when invoking the JDrupes Builder. This is illustrated by the following sample project
+code:
 ```java
         // Command arguments
         commandAlias("build", of(AppJarFile.class).usingAll());
