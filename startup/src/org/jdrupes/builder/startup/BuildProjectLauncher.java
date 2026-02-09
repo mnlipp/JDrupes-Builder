@@ -174,7 +174,7 @@ public class BuildProjectLauncher extends AbstractLauncher {
     /// @return true, if successful
     ///
     @SuppressWarnings({ "PMD.AvoidLiteralsInIfCondition",
-        "PMD.AvoidInstantiatingObjectsInLoops" })
+        "PMD.AvoidInstantiatingObjectsInLoops", "PMD.SystemPrintln" })
     public boolean runCommands() {
         for (var arg : commandLine.getArgs()) {
             var parts = arg.split(":");
