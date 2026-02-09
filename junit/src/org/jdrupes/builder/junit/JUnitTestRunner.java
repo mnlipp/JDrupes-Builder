@@ -232,8 +232,7 @@ public class JUnitTestRunner extends AbstractGenerator {
         ///
         /// @return the sets the
         ///
-        @SuppressWarnings("PMD.UnitTestShouldUseTestAnnotation")
-        public Set<TestIdentifier> testIds() {
+        private Set<TestIdentifier> testIds() {
             return tests;
         }
 
