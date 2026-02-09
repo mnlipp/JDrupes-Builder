@@ -33,6 +33,7 @@ import javax.tools.DiagnosticCollector;
 import javax.tools.JavaFileObject;
 import javax.tools.ToolProvider;
 import org.jdrupes.builder.api.BuildException;
+import org.jdrupes.builder.api.ConfigurationException;
 import org.jdrupes.builder.api.FileResource;
 import org.jdrupes.builder.api.FileTree;
 import static org.jdrupes.builder.api.Intent.*;
@@ -43,6 +44,7 @@ import org.jdrupes.builder.api.ResourceRequest;
 import org.jdrupes.builder.api.ResourceType;
 import static org.jdrupes.builder.api.ResourceType.*;
 import org.jdrupes.builder.api.Resources;
+import org.jdrupes.builder.api.UnavailableException;
 import org.jdrupes.builder.core.StreamCollector;
 import static org.jdrupes.builder.java.JavaTypes.*;
 
@@ -221,8 +223,7 @@ public class Javadoc extends JavaTool {
                 = fileManager.getJavaFileObjectsFromPaths(sourcePaths);
             if (!javadoc.getTask(null, fileManager, diagnostics, null,
                 allOptions, sourceFiles).call()) {
-                throw new BuildException("Documentation generation failed")
-                    .from(this);
+                throw new UnavailableException().from(this);
             }
         } catch (Exception e) {
             logger.atSevere().withCause(e).log(
@@ -240,8 +241,8 @@ public class Javadoc extends JavaTool {
 
     private List<String> evaluateOptions(Path destDir) {
         if (options().contains("-d")) {
-            new BuildException("Specifying the destination directory with "
-                + "options() is not allowed.").from(this);
+            new ConfigurationException().from(this).message("Specifying the"
+                + " destination directory with options() is not allowed.");
         }
         List<String> allOptions = new ArrayList<>(options());
         allOptions.addAll(List.of("-d", destDir.toString()));

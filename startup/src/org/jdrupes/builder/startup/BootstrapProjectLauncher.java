@@ -32,6 +32,7 @@ import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.DefaultParser;
 import org.apache.commons.cli.ParseException;
 import org.jdrupes.builder.api.BuildException;
+import org.jdrupes.builder.api.ConfigurationException;
 import org.jdrupes.builder.api.FileResource;
 import org.jdrupes.builder.api.FileTree;
 import static org.jdrupes.builder.api.Intent.*;
@@ -90,7 +91,7 @@ public class BootstrapProjectLauncher extends AbstractLauncher {
             commandLine = new DefaultParser().parse(baseOptions(), args);
         } catch (ParseException e) {
             configureLogging(buildRootDirectory, jdbldProps);
-            throw new BuildException().cause(e);
+            throw new ConfigurationException().cause(e);
         }
         addCliProperties(jdbldProps, commandLine);
         configureLogging(buildRootDirectory, jdbldProps);
@@ -161,6 +162,7 @@ public class BootstrapProjectLauncher extends AbstractLauncher {
                     formatter().summary(e));
             }
             System.out.println(formatter().summary(e));
+            System.out.println(e.details());
             Runtime.getRuntime().exit(2);
         }
     }

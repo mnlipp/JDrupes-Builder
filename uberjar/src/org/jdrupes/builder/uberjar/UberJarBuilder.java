@@ -33,6 +33,7 @@ import java.util.function.Predicate;
 import java.util.jar.JarEntry;
 import java.util.stream.Stream;
 import org.jdrupes.builder.api.BuildException;
+import org.jdrupes.builder.api.ConfigurationException;
 import org.jdrupes.builder.api.FileTree;
 import org.jdrupes.builder.api.Generator;
 import org.jdrupes.builder.api.IOResource;
@@ -216,8 +217,7 @@ public class UberJarBuilder extends LibraryBuilder {
                 try {
                     return new java.util.jar.JarFile(jarFile.path().toFile());
                 } catch (IOException e) {
-                    throw new BuildException("Cannot open resource %s: %s",
-                        jarFile, e).from(this).cause(e);
+                    throw new BuildException().from(this).cause(e);
                 }
             });
         jar.stream().filter(Predicate.not(JarEntry::isDirectory))
@@ -255,8 +255,7 @@ public class UberJarBuilder extends LibraryBuilder {
                     try {
                         combined.add(service);
                     } catch (IOException e) {
-                        throw new BuildException("Cannot read %s: %s",
-                            service, e).from(this).cause(e);
+                        throw new BuildException().from(this).cause(e);
                     }
                 });
                 candidates.clear();
@@ -297,8 +296,8 @@ public class UberJarBuilder extends LibraryBuilder {
 
         // Make sure mainClass is set for app jar
         if (requested.requires(AppJarFileType) && mainClass() == null) {
-            throw new BuildException("Main class must be set for %s", name())
-                .from(this);
+            throw new ConfigurationException().from(this)
+                .message("Main class must be set for %s", name());
         }
 
         // Upgrade to most specific type to avoid duplicate generation
@@ -315,7 +314,8 @@ public class UberJarBuilder extends LibraryBuilder {
         var destDir = destination();
         if (!destDir.toFile().exists()) {
             if (!destDir.toFile().mkdirs()) {
-                throw new BuildException("Cannot create directory " + destDir);
+                throw new ConfigurationException().from(this)
+                    .message("Cannot create directory " + destDir);
             }
         }
         var jarResource = requested.requires(AppJarFileType)

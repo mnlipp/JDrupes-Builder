@@ -81,6 +81,7 @@ import org.eclipse.aether.util.artifact.SubArtifact;
 import org.eclipse.aether.util.repository.AuthenticationBuilder;
 import org.jdrupes.builder.api.BuildContext;
 import org.jdrupes.builder.api.BuildException;
+import org.jdrupes.builder.api.ConfigurationException;
 import org.jdrupes.builder.api.Generator;
 import static org.jdrupes.builder.api.Intent.*;
 import org.jdrupes.builder.api.Project;
@@ -347,8 +348,7 @@ public class MvnPublisher extends AbstractGenerator {
         try {
             mainArtifact = mainArtifact(pomResource);
         } catch (ModelBuildingException e) {
-            throw new BuildException("Cannot build model from POM: %s",
-                e).from(this).cause(e);
+            throw new BuildException().from(this).cause(e);
         }
         if (artifactDirectory() != null) {
             artifactDirectory().toFile().mkdirs();
@@ -374,8 +374,7 @@ public class MvnPublisher extends AbstractGenerator {
                 deployRelease(mainArtifact, toDeploy);
             }
         } catch (DeploymentException e) {
-            throw new BuildException("Deployment failed for %s: %s",
-                mainArtifact, e.getMessage()).from(this).cause(e);
+            throw new BuildException().from(this).cause(e);
         } finally {
             if (!keepSubArtifacts) {
                 toDeploy.stream().filter(Deployable::temporary).forEach(d -> {
@@ -623,8 +622,7 @@ public class MvnPublisher extends AbstractGenerator {
                 }
             }
         } catch (IOException e) {
-            throw new BuildException("Failed to create release zip: %s",
-                e).from(this).cause(e);
+            throw new BuildException().from(this).cause(e);
         }
 
         try (var client = HttpClient.newHttpClient()) {
@@ -652,12 +650,11 @@ public class MvnPublisher extends AbstractGenerator {
                 HttpResponse.BodyHandlers.ofString());
             logger.atFinest().log("Upload response: %s", response.body());
             if (response.statusCode() / 100 != 2) {
-                throw new BuildException(
+                throw new ConfigurationException().from(this).message(
                     "Failed to upload release bundle: " + response.body());
             }
         } catch (IOException | InterruptedException e) {
-            throw new BuildException("Failed to upload release bundle: %s",
-                e.getMessage()).from(this).cause(e);
+            throw new BuildException().from(this).cause(e);
         } finally {
             if (!keepSubArtifacts) {
                 zipPath.toFile().delete();

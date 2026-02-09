@@ -31,6 +31,7 @@ import java.util.jar.Manifest;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import org.jdrupes.builder.api.BuildException;
+import org.jdrupes.builder.api.ConfigurationException;
 import org.jdrupes.builder.api.ExecResult;
 import org.jdrupes.builder.api.Project;
 import org.jdrupes.builder.api.Renamable;
@@ -130,8 +131,8 @@ public class JavaExecutor extends AbstractProvider
             findMainClass(cpResources);
         }
         if (mainClass == null) {
-            throw new BuildException("No main class defined for %s", name())
-                .from(this);
+            throw new ConfigurationException().from(this).message(
+                "No main class defined for %s", name());
         }
 
         // Build command

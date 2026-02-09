@@ -96,17 +96,24 @@ public abstract class JavaTool extends AbstractGenerator {
     ///
     /// @param diagnostic the diagnostic
     ///
+    @SuppressWarnings("PMD.SystemPrintln")
     protected void logDiagnostic(
             Diagnostic<? extends JavaFileObject> diagnostic) {
+        String level = switch (diagnostic.getKind()) {
+        case ERROR -> "error";
+        case WARNING -> "warning";
+        case MANDATORY_WARNING -> "warning";
+        default -> "info";
+        };
         String msg;
         if (diagnostic.getSource() == null) {
-            msg = diagnostic.getMessage(Locale.ENGLISH);
+            msg = level + ": " + diagnostic.getMessage(Locale.ENGLISH);
         } else {
-            msg = String.format("%s:%d: %s",
+            msg = String.format("%s:%d:%d: %s: %s",
                 project().rootProject().directory().relativize(
                     Path.of(diagnostic.getSource().toUri().getPath())),
-                diagnostic.getLineNumber(),
-                diagnostic.getMessage(null));
+                diagnostic.getLineNumber(), diagnostic.getColumnNumber(),
+                level, diagnostic.getMessage(null));
         }
         switch (diagnostic.getKind()) {
         case ERROR -> logger.atSevere().log(msg);
@@ -114,14 +121,20 @@ public abstract class JavaTool extends AbstractGenerator {
         case MANDATORY_WARNING -> logger.atWarning().log(msg);
         default -> logger.atInfo().log(msg);
         }
+        System.out.println(msg);
     }
 
     /// Log diagnostics.
     ///
     /// @param diagnostics the diagnostics
     ///
+    @SuppressWarnings("PMD.SystemPrintln")
     protected void
             logDiagnostics(DiagnosticCollector<JavaFileObject> diagnostics) {
+        if (diagnostics.getDiagnostics().isEmpty()) {
+            return;
+        }
+        System.out.println("Problems found by " + this + ":");
         for (var diagnostic : diagnostics.getDiagnostics()) {
             logDiagnostic(diagnostic);
         }

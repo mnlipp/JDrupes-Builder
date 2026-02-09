@@ -40,6 +40,7 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 import org.jdrupes.builder.api.BuildException;
+import org.jdrupes.builder.api.ConfigurationException;
 import org.jdrupes.builder.api.FileTree;
 import org.jdrupes.builder.api.IOResource;
 import org.jdrupes.builder.api.Project;
@@ -415,8 +416,8 @@ public class JarBuilder extends AbstractGenerator {
         var destDir = destination();
         if (!destDir.toFile().exists()) {
             if (!destDir.toFile().mkdirs()) {
-                throw new BuildException("Cannot create directory: %s", destDir)
-                    .from(this);
+                throw new ConfigurationException().from(this)
+                    .message("Cannot create directory: %s", destDir);
             }
         }
         var jarResource = project().newResource(jarType,

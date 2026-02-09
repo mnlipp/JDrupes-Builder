@@ -32,6 +32,7 @@ import java.util.jar.Manifest;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import org.jdrupes.builder.api.BuildException;
+import org.jdrupes.builder.api.ConfigurationException;
 import org.jdrupes.builder.api.Generator;
 import static org.jdrupes.builder.api.Intent.Consume;
 import static org.jdrupes.builder.api.Intent.Expose;
@@ -169,8 +170,7 @@ public class BndAnalyzer extends AbstractBndGenerator {
             var result = (T) asResource;
             return Stream.of(result);
         } catch (Exception e) {
-            throw new BuildException("Failed to generate OSGi metadata: %s", e)
-                .from(this).cause(e);
+            throw new BuildException().from(this).cause(e);
         }
     }
 
@@ -180,8 +180,9 @@ public class BndAnalyzer extends AbstractBndGenerator {
                 try {
                     new Version(v);
                 } catch (IllegalArgumentException e) {
-                    throw new BuildException("Attempt to specify invalid"
-                        + " OSGi version %s", v).from(this).cause(e);
+                    throw new ConfigurationException().message(
+                        "Attempt to specify invalid OSGi version %s", v)
+                        .from(this).cause(e);
                 }
             });
 

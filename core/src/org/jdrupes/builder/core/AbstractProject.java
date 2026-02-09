@@ -43,6 +43,7 @@ import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 import org.jdrupes.builder.api.BuildException;
 import org.jdrupes.builder.api.Cleanliness;
+import org.jdrupes.builder.api.ConfigurationException;
 import org.jdrupes.builder.api.Generator;
 import org.jdrupes.builder.api.Intent;
 import static org.jdrupes.builder.api.Intent.*;
@@ -159,9 +160,9 @@ public abstract class AbstractProject extends AbstractProvider
             parent = fallbackParent.get();
             if (this instanceof RootProject) {
                 if (parent != null) {
-                    throw new BuildException("Root project of type %s cannot"
-                        + " be a sub project", getClass().getSimpleName())
-                            .from(this);
+                    throw new ConfigurationException().from(this).message(
+                        "Root project of type %s cannot be a sub project",
+                        getClass().getSimpleName());
                 }
                 // ConcurrentHashMap does not support null values.
                 projects = Collections.synchronizedMap(new HashMap<>());
@@ -184,16 +185,17 @@ public abstract class AbstractProject extends AbstractProvider
         if (this instanceof MergedTestProject) {
             // Special handling
             if (directory != null || parentProject == null) {
-                throw new BuildException("Merged test projects must specify"
-                    + " a parent project and must not specify a directory.");
+                throw new ConfigurationException().from(this).message(
+                    "Merged test projects must specify a parent project"
+                        + " and must not specify a directory.");
             }
             projectDirectory = parent.directory();
             parent.dependency(Forward, this);
         } else if (parent == null) {
             if (directory != null) {
-                throw new BuildException("Root project of type "
-                    + getClass().getSimpleName()
-                    + " cannot specify a directory.");
+                throw new ConfigurationException().from(this).message(
+                    "Root project of type %s cannot specify a directory.",
+                    getClass().getSimpleName());
             }
             projectDirectory = LauncherSupport.buildRoot();
         } else {
@@ -414,8 +416,8 @@ public abstract class AbstractProject extends AbstractProvider
     ///
     public RootProject.CommandBuilder commandAlias(String name) {
         if (!(this instanceof RootProject)) {
-            throw new BuildException("Commands can only be defined for"
-                + " the root project.");
+            throw new ConfigurationException().from(this).message(
+                "Commands can only be defined for the root project.");
         }
         return new CommandBuilder((RootProject) this, name);
     }
@@ -471,7 +473,7 @@ public abstract class AbstractProject extends AbstractProvider
     }
 
     @SuppressWarnings("PMD.CommentRequired")
-    private static class ProjectTreeSpliterator
+    private static final class ProjectTreeSpliterator
             extends AbstractSpliterator<Project> {
 
         private Project next;
@@ -483,7 +485,7 @@ public abstract class AbstractProject extends AbstractProvider
         ///
         /// @param root the root
         ///
-        public ProjectTreeSpliterator(Project root) {
+        private ProjectTreeSpliterator(Project root) {
             super(Long.MAX_VALUE, ORDERED | DISTINCT | IMMUTABLE | NONNULL);
             this.next = root;
         }

@@ -46,8 +46,8 @@ public interface ResourceFactory {
             ServiceLoader.load(ResourceFactory.class).spliterator(), true)
             .map(f -> f.newResource(type, project, args))
             .filter(Optional::isPresent).map(Optional::get).findFirst()
-            .orElseThrow(
-                () -> new BuildException("No resource factory for %s", type));
+            .orElseThrow(() -> new ConfigurationException()
+                .message("No resource factory for %s", type));
     }
 
     /// Short for `create(type, null, args)`.

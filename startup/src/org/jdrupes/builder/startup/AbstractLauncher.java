@@ -40,6 +40,7 @@ import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.Option;
 import org.apache.commons.cli.Options;
 import org.jdrupes.builder.api.BuildException;
+import org.jdrupes.builder.api.ConfigurationException;
 import org.jdrupes.builder.api.Launcher;
 import org.jdrupes.builder.api.Masked;
 import org.jdrupes.builder.api.Project;
@@ -89,8 +90,7 @@ public abstract class AbstractLauncher implements Launcher {
                     fallbacks.load(Files.newBufferedReader(propsPath));
                 }
             } catch (IOException e) {
-                throw new BuildException("Cannot read properties from %s: %s",
-                    propsPath, e).cause(e);
+                throw new BuildException().cause(e);
             }
         }
         return new Properties(fallbacks);
@@ -161,8 +161,7 @@ public abstract class AbstractLauncher implements Launcher {
         try {
             classDirUrls = Collections.list(clsLoader.getResources(""));
         } catch (IOException e) {
-            throw new BuildException("Problem scanning classpath: %s", e)
-                .cause(e);
+            throw new BuildException().cause(e);
         }
         Map<Path, List<Class<? extends RootProject>>> rootProjectMap
             = new ConcurrentHashMap<>();
@@ -171,15 +170,15 @@ public abstract class AbstractLauncher implements Launcher {
                 try {
                     return Path.of(uri.toURI());
                 } catch (URISyntaxException e) {
-                    throw new BuildException("Problem scanning classpath: %s",
-                        e).cause(e);
+                    throw new BuildException().cause(e);
                 }
             }).map(p -> ResourceFactory.create(ClassTreeType, p, "**/*.class",
                 false))
             .forEach(tree -> searchTree(clsLoader, rootProjectMap, subprojects,
                 tree));
         if (rootProjectMap.isEmpty()) {
-            throw new BuildException("No project implements RootProject");
+            throw new ConfigurationException()
+                .message("No project implements RootProject");
         }
         if (rootProjectMap.size() > 1) {
             StringBuilder msg = new StringBuilder(50);
@@ -188,7 +187,7 @@ public abstract class AbstractLauncher implements Launcher {
                     .map(e -> e.getValue().get(0).getName() + " (in "
                         + e.getKey() + ")")
                     .collect(Collectors.joining(", ")));
-            throw new BuildException(msg.toString());
+            throw new ConfigurationException().message(msg.toString());
         }
         rootProjects.addAll(rootProjectMap.values().iterator().next());
     }

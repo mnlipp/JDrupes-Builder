@@ -44,12 +44,14 @@ import org.eclipse.aether.resolution.DependencyRequest;
 import org.eclipse.aether.resolution.DependencyResolutionException;
 import org.eclipse.aether.util.graph.visitor.PreorderNodeListGenerator;
 import org.jdrupes.builder.api.BuildException;
+import org.jdrupes.builder.api.ConfigurationException;
 import org.jdrupes.builder.api.FaultAware;
 import org.jdrupes.builder.api.Launcher;
 import org.jdrupes.builder.api.Masked;
 import org.jdrupes.builder.api.Project;
 import org.jdrupes.builder.api.ResourceFactory;
 import org.jdrupes.builder.api.RootProject;
+import org.jdrupes.builder.api.UnavailableException;
 import org.jdrupes.builder.core.LauncherSupport;
 import org.jdrupes.builder.java.JarFile;
 import static org.jdrupes.builder.java.JavaTypes.*;
@@ -89,7 +91,7 @@ public class BuildProjectLauncher extends AbstractLauncher {
             commandLine = new DefaultParser().parse(baseOptions(), args);
         } catch (ParseException e) {
             configureLogging(buildRoot, jdbldProps);
-            throw new BuildException().cause(e);
+            throw new ConfigurationException().cause(e);
         }
         addCliProperties(jdbldProps, commandLine);
         configureLogging(buildRoot, jdbldProps);
@@ -156,8 +158,8 @@ public class BuildProjectLauncher extends AbstractLauncher {
                     .map(p -> ResourceFactory
                         .create(JarFileType, p));
             } catch (DependencyResolutionException e) {
-                throw new BuildException("Cannot resolve: %s", e.getMessage())
-                    .cause(e);
+                throw new ConfigurationException()
+                    .message("Cannot resolve: %s", e).cause(e);
             }
         }
     }
@@ -179,8 +181,8 @@ public class BuildProjectLauncher extends AbstractLauncher {
             String resource = parts[parts.length - 1];
             var cmdData = LauncherSupport.lookupCommand(rootProject, resource);
             if (cmdData.requests().length == 0) {
-                throw new BuildException("Unknown command: %s", arg)
-                    .from(rootProject());
+                throw new UnavailableException().from(rootProject()).message(
+                    "Unknown command: %s", arg);
             }
             String pattern = cmdData.pattern();
             if (parts.length > 1) {
@@ -190,7 +192,6 @@ public class BuildProjectLauncher extends AbstractLauncher {
                 if (!resources(rootProject().projects(pattern), req)
                     // eliminate duplicates
                     .collect(Collectors.toSet()).stream()
-                    .peek(r -> System.out.println(r.toString()))
                     .map(r -> !(r instanceof FaultAware)
                         || !((FaultAware) r).isFaulty())
                     .reduce((r1, r2) -> r1 && r2).orElse(true)) {
@@ -225,6 +226,7 @@ public class BuildProjectLauncher extends AbstractLauncher {
                     formatter().summary(e));
             }
             System.out.println(formatter().summary(e));
+            System.out.println(e.details());
             java.lang.Runtime.getRuntime().exit(2);
         }
     }

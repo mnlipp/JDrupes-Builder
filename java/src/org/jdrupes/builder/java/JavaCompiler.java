@@ -43,6 +43,7 @@ import org.jdrupes.builder.api.ResourceRequest;
 import org.jdrupes.builder.api.ResourceType;
 import static org.jdrupes.builder.api.ResourceType.*;
 import org.jdrupes.builder.api.Resources;
+import org.jdrupes.builder.api.UnavailableException;
 import static org.jdrupes.builder.java.JavaTypes.*;
 
 /// The [JavaCompiler] generator provides two types of resources.
@@ -242,9 +243,9 @@ public class JavaCompiler extends JavaTool {
                 "-d", destDir.toString(),
                 "-cp", classpath,
                 "-encoding", project().get(Encoding).toString()));
-            if (!javac.getTask(null, fileManager, null, allOptions, null,
-                compilationUnits).call()) {
-                throw new BuildException("Compilation failed");
+            if (!javac.getTask(null, fileManager, diagnostics, allOptions,
+                null, compilationUnits).call()) {
+                throw new UnavailableException().from(this);
             }
         } catch (Exception e) {
             logger.atSevere().withCause(e)

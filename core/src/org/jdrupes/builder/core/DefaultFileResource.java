@@ -25,7 +25,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.Instant;
 import java.util.Objects;
-import org.jdrupes.builder.api.BuildException;
+import org.jdrupes.builder.api.ConfigurationException;
 import org.jdrupes.builder.api.FileResource;
 import org.jdrupes.builder.api.ResourceType;
 
@@ -46,7 +46,8 @@ public class DefaultFileResource extends ResourceObject
             Path path) {
         super(type);
         if (!path.isAbsolute()) {
-            throw new BuildException("Path must be absolute, is %s", path);
+            throw new ConfigurationException().message(
+                "Path must be absolute, is %s", path);
         }
         var relPath = Path.of("").toAbsolutePath().relativize(path);
         name(relPath.equals(Path.of("")) ? "." : relPath.toString());

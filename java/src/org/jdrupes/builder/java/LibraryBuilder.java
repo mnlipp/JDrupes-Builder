@@ -24,6 +24,7 @@ import java.util.Objects;
 import java.util.jar.Attributes;
 import java.util.stream.Stream;
 import org.jdrupes.builder.api.BuildException;
+import org.jdrupes.builder.api.ConfigurationException;
 import org.jdrupes.builder.api.Generator;
 import org.jdrupes.builder.api.IOResource;
 import static org.jdrupes.builder.api.Intent.*;
@@ -184,15 +185,16 @@ public class LibraryBuilder extends JarBuilder
 
         // Make sure mainClass is set for app jar
         if (requested.requires(AppJarFileType) && mainClass() == null) {
-            throw new BuildException("Main class must be set for %s",
-                name()).from(this);
+            throw new ConfigurationException().from(this).message(
+                "Main class must be set for %s", name());
         }
 
         // Prepare jar file
         var destDir = destination();
         if (!destDir.toFile().exists()) {
             if (!destDir.toFile().mkdirs()) {
-                throw new BuildException("Cannot create directory " + destDir);
+                throw new BuildException().from(this)
+                    .message("Cannot create directory " + destDir);
             }
         }
         var jarResource = requested.requires(AppJarFileType)

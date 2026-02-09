@@ -510,8 +510,7 @@ public class EclipseConfigurator extends AbstractGenerator {
             GENERATED_BY)) {
             props.store(out, "");
         } catch (IOException e) {
-            throw new BuildException("Cannot write eclipse settings: %s", e)
-                .from(this).cause(e);
+            throw new BuildException().from(this).cause(e);
         }
     }
 
@@ -541,8 +540,7 @@ public class EclipseConfigurator extends AbstractGenerator {
             GENERATED_BY)) {
             props.store(out, "");
         } catch (IOException e) {
-            throw new BuildException("Cannot write eclipse settings: %s", e)
-                .from(this).cause(e);
+            throw new BuildException().from(this).cause(e);
         }
     }
 
@@ -586,8 +584,7 @@ public class EclipseConfigurator extends AbstractGenerator {
             GENERATED_BY)) {
             props.store(out, "");
         } catch (IOException e) {
-            throw new BuildException("Cannot write eclipse settings: %s", e)
-                .from(this).cause(e);
+            throw new BuildException().from(this).cause(e);
         }
     }
 

@@ -394,8 +394,7 @@ public interface Project extends ResourceProvider {
         try {
             return Files.readString(directory().resolve(path));
         } catch (IOException e) {
-            throw new BuildException("Cannot read file: %s", e)
-                .from(this).cause(e);
+            throw new BuildException().from(this).cause(e);
         }
     }
 

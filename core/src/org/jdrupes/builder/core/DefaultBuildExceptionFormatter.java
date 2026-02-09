@@ -19,19 +19,47 @@
 package org.jdrupes.builder.core;
 
 import org.jdrupes.builder.api.BuildException;
+import org.jdrupes.builder.api.BuildException.Reason;
 
 /// The Class BuildExceptionFormatter.
 ///
 public class DefaultBuildExceptionFormatter implements BuildExceptionFormatter {
 
+    /// Initializes a new default build exception formatter.
+    ///
+    public DefaultBuildExceptionFormatter() {
+        // Make javadoc happy
+    }
+
     @Override
     public String summary(BuildException exc) {
+        if (exc.reason() == Reason.Unavailable) {
+            return "Build failed";
+        }
+        StringBuilder text = new StringBuilder(100);
+        exc.origin().ifPresent(p -> {
+            text.append(p.toString());
+        });
+        if (text.length() > 0) {
+            text.append(": ");
+        }
         if (exc.getMessage() != null) {
-            return exc.getMessage();
+            text.append(exc.getMessage());
+        } else if (exc.getCause() != null
+            && exc.getCause().getMessage() != null) {
+            text.append(exc.getCause().getMessage());
+        } else {
+            switch (exc.reason()) {
+            case Unavailable:
+                text.append("failed");
+                break;
+            case Configuration:
+                text.append("problem with build configuration");
+                break;
+            default:
+                text.append("unspecified problem");
+            }
         }
-        if (exc.getCause() != null && exc.getCause().getMessage() != null) {
-            return exc.getCause().getMessage();
-        }
-        return "";
+        return text.toString();
     }
 }

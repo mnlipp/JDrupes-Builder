@@ -28,7 +28,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
-import org.jdrupes.builder.api.BuildException;
+import org.jdrupes.builder.api.ConfigurationException;
 import org.jdrupes.builder.api.Project;
 import org.jdrupes.builder.core.AbstractGenerator;
 
@@ -79,8 +79,8 @@ public abstract class AbstractBndGenerator extends AbstractGenerator {
             props.load(Files.newInputStream(bndFile));
             props.forEach((k, v) -> instruction(k.toString(), v.toString()));
         } catch (IOException e) {
-            throw new BuildException("Cannot read bnd file %s: %s", bndFile,
-                e).from(this).cause(e);
+            throw new ConfigurationException().message(
+                "Cannot read bnd file %s: %s", bndFile, e).from(this).cause(e);
         }
         return this;
     }
