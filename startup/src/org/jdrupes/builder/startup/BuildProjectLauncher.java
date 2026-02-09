@@ -173,7 +173,7 @@ public class BuildProjectLauncher extends AbstractLauncher {
     ///
     /// @return true, if successful
     ///
-    @SuppressWarnings({ "PMD.SystemPrintln", "PMD.AvoidLiteralsInIfCondition",
+    @SuppressWarnings({ "PMD.AvoidLiteralsInIfCondition",
         "PMD.AvoidInstantiatingObjectsInLoops" })
     public boolean runCommands() {
         for (var arg : commandLine.getArgs()) {
@@ -192,6 +192,8 @@ public class BuildProjectLauncher extends AbstractLauncher {
                 if (!resources(rootProject().projects(pattern), req)
                     // eliminate duplicates
                     .collect(Collectors.toSet()).stream()
+                    // output generated resources
+                    .peek(r -> System.out.println(r.toString()))
                     .map(r -> !(r instanceof FaultAware)
                         || !((FaultAware) r).isFaulty())
                     .reduce((r1, r2) -> r1 && r2).orElse(true)) {
