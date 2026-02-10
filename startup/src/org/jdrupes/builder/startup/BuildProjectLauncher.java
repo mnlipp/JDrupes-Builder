@@ -181,8 +181,8 @@ public class BuildProjectLauncher extends AbstractLauncher {
             String resource = parts[parts.length - 1];
             var cmdData = LauncherSupport.lookupCommand(rootProject, resource);
             if (cmdData.requests().length == 0) {
-                throw new UnavailableException().from(rootProject()).message(
-                    "Unknown command: %s", arg);
+                System.out.println("Unknown command: " + resource);
+                throw new UnavailableException().from(rootProject());
             }
             String pattern = cmdData.pattern();
             if (parts.length > 1) {
@@ -194,9 +194,9 @@ public class BuildProjectLauncher extends AbstractLauncher {
                     .collect(Collectors.toSet()).stream()
                     // output generated resources
                     .peek(r -> System.out.println(r.toString()))
-                    .map(r -> !(r instanceof FaultAware)
-                        || !((FaultAware) r).isFaulty())
-                    .reduce((r1, r2) -> r1 && r2).orElse(true)) {
+                    .map(r -> !(r instanceof FaultAware far)
+                        || !far.isFaulty())
+                    .reduce(true, (r1, r2) -> r1 && r2)) {
                     return false;
                 }
             }

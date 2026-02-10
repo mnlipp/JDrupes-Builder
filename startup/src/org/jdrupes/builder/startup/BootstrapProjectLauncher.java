@@ -162,7 +162,9 @@ public class BootstrapProjectLauncher extends AbstractLauncher {
                     formatter().summary(e));
             }
             System.out.println(formatter().summary(e));
-            System.out.println(e.details());
+            if (!e.details().isBlank()) {
+                System.out.println(e.details());
+            }
             Runtime.getRuntime().exit(2);
         }
     }
