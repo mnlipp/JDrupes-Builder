@@ -557,6 +557,8 @@ public class MvnPublisher extends AbstractGenerator {
             public void artifactDeploying(RepositoryEvent event) {
                 if (!startMsgLogged.getAndSet(true)) {
                     logger.atInfo().log("Start deploying artifacts...");
+                    context().statusLine().ifPresent(l -> l.update(
+                        MvnPublisher.this + " starts deploying artifacts"));
                 }
             }
 
@@ -566,11 +568,15 @@ public class MvnPublisher extends AbstractGenerator {
                     return;
                 }
                 logger.atInfo().log("Deployed: %s", event.getArtifact());
+                context().statusLine().ifPresent(l -> l.update(
+                    MvnPublisher.this + " deployed " + event.getArtifact()));
             }
 
             @Override
             public void metadataDeployed(RepositoryEvent event) {
                 logger.atInfo().log("Deployed: %s", event.getMetadata());
+                context().statusLine().ifPresent(l -> l.update(
+                    MvnPublisher.this + " deployed " + event.getMetadata()));
             }
 
         });
