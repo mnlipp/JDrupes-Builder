@@ -96,7 +96,6 @@ public abstract class JavaTool extends AbstractGenerator {
     ///
     /// @param diagnostic the diagnostic
     ///
-    @SuppressWarnings("PMD.SystemPrintln")
     protected void logDiagnostic(
             Diagnostic<? extends JavaFileObject> diagnostic) {
         String level = switch (diagnostic.getKind()) {
@@ -121,20 +120,23 @@ public abstract class JavaTool extends AbstractGenerator {
         case MANDATORY_WARNING -> logger.atWarning().log(msg);
         default -> logger.atInfo().log(msg);
         }
-        System.out.println(msg);
+        if (diagnostic.getKind() == Diagnostic.Kind.ERROR) {
+            context().error().println(msg);
+        } else {
+            context().out().println(msg);
+        }
     }
 
     /// Log diagnostics.
     ///
     /// @param diagnostics the diagnostics
     ///
-    @SuppressWarnings("PMD.SystemPrintln")
     protected void
             logDiagnostics(DiagnosticCollector<JavaFileObject> diagnostics) {
         if (diagnostics.getDiagnostics().isEmpty()) {
             return;
         }
-        System.out.println("Problems found by " + this + ":");
+        context().out().println("Problems found by " + this + ":");
         for (var diagnostic : diagnostics.getDiagnostics()) {
             logDiagnostic(diagnostic);
         }

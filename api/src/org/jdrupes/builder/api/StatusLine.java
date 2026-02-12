@@ -1,6 +1,6 @@
 /*
  * JDrupes Builder
- * Copyright (C) 2025 Michael N. Lipp
+ * Copyright (C) 2026 Michael N. Lipp
  * 
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as
@@ -18,25 +18,34 @@
 
 package org.jdrupes.builder.api;
 
-import java.util.stream.Stream;
-
-/// Defines the methods provided by a launcher.
+/// An interface to a status line that can be used by [ResourceProvider]s
+/// to indicate progress during the execution of
+/// [ResourceProviderSpi#provide(ResourceRequest)].
 ///
-public interface Launcher extends AutoCloseable {
+public interface StatusLine extends AutoCloseable {
 
-    /// Provide the requested resources from the given projects.
-    ///
-    /// @param <T> the requested type
-    /// @param projects the projects
-    /// @param requested the request
-    /// @return the results
-    ///
-    <T extends Resource> Stream<T> resources(Stream<Project> projects,
-            ResourceRequest<T> requested);
+    /// An implementation that does nothing.
+    StatusLine NOOP_STATUS_LINE = new StatusLine() {
+        @Override
+        public void update(String text) {
+            // Does nothing
+        }
 
-    /// Return the root project.
+        @Override
+        public void close() {
+            // Does nothing
+        }
+    };
+
+    /// Update the text in the status line.
     ///
-    /// @return the root project
+    /// @param text the text
     ///
-    RootProject rootProject();
+    void update(String text);
+
+    /// Deallocate the line for outputs from the current thread.
+    ///
+    @Override
+    void close();
+
 }

@@ -174,14 +174,15 @@ public class BuildProjectLauncher extends AbstractLauncher {
     /// @return true, if successful
     ///
     @SuppressWarnings({ "PMD.AvoidLiteralsInIfCondition",
-        "PMD.AvoidInstantiatingObjectsInLoops", "PMD.SystemPrintln" })
+        "PMD.AvoidInstantiatingObjectsInLoops" })
     public boolean runCommands() {
         for (var arg : commandLine.getArgs()) {
             var parts = arg.split(":");
             String resource = parts[parts.length - 1];
             var cmdData = LauncherSupport.lookupCommand(rootProject, resource);
             if (cmdData.requests().length == 0) {
-                System.out.println("Unknown command: " + resource);
+                rootProject().context().out()
+                    .println("Unknown command: " + resource);
                 throw new UnavailableException().from(rootProject());
             }
             String pattern = cmdData.pattern();
@@ -193,7 +194,8 @@ public class BuildProjectLauncher extends AbstractLauncher {
                     // eliminate duplicates
                     .collect(Collectors.toSet()).stream()
                     // output generated resources
-                    .peek(r -> System.out.println(r.toString()))
+                    .peek(r -> rootProject().context().out()
+                        .println(r.toString()))
                     .map(r -> !(r instanceof FaultAware far)
                         || !far.isFaulty())
                     .reduce(true, (r1, r2) -> r1 && r2)) {
@@ -202,6 +204,13 @@ public class BuildProjectLauncher extends AbstractLauncher {
             }
         }
         return true;
+    }
+
+    @Override
+    public void close() throws Exception {
+        if (rootProject != null) {
+            rootProject.context().close();
+        }
     }
 
     /// This main can be used to start the user's JDrupes Builder
@@ -214,9 +223,13 @@ public class BuildProjectLauncher extends AbstractLauncher {
     @SuppressWarnings("PMD.SystemPrintln")
     public static void main(String[] args) {
         try {
-            if (!reportBuildException(() -> new BuildProjectLauncher(
-                Thread.currentThread().getContextClassLoader(),
-                Path.of("").toAbsolutePath(), args).runCommands())) {
+            if (!reportBuildException(() -> {
+                try (var bpl = new BuildProjectLauncher(
+                    Thread.currentThread().getContextClassLoader(),
+                    Path.of("").toAbsolutePath(), args)) {
+                    return bpl.runCommands();
+                }
+            })) {
                 java.lang.Runtime.getRuntime().exit(1);
             }
         } catch (BuildException e) {

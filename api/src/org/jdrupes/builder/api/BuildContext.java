@@ -18,13 +18,15 @@
 
 package org.jdrupes.builder.api;
 
+import java.io.PrintStream;
 import java.nio.file.Path;
+import java.util.Optional;
 import java.util.stream.Stream;
 import org.apache.commons.cli.CommandLine;
 
 /// The context of a build.
 ///
-public interface BuildContext {
+public interface BuildContext extends AutoCloseable {
 
     /// Returns the relative path from a project directory to
     /// the JDrupes Builder directory.
@@ -69,4 +71,32 @@ public interface BuildContext {
     /// @return the string
     ///
     String property(String name, String defaultValue);
+
+    /// Returns the status line. The status line may be used by
+    /// [ResourceProvider]s to indicate progress during the execution of
+    /// [ResourceProviderSpi#provide(ResourceRequest)]. A [StatusLine] is
+    /// automatically allocated by the context when [#resources] is invoked.
+    ///
+    /// @return the status line
+    ///
+    Optional<StatusLine> statusLine();
+
+    /// Returns the [PrintStream] for the standard output.
+    ///
+    /// @return the prints the stream
+    ///
+    PrintStream out();
+
+    /// Returns a [PrintStream] for errors. The data is sent to the
+    /// standard output stream as with [#out], but it is marked,
+    /// typically in red, to indicate an error.
+    ///
+    /// @return the prints the stream
+    ///
+    PrintStream error();
+
+    /// Closes the context.
+    ///
+    @Override
+    void close();
 }

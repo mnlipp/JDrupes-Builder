@@ -25,7 +25,6 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Spliterators;
 import java.util.concurrent.ExecutionException;
-import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Consumer;
@@ -35,6 +34,7 @@ import org.jdrupes.builder.api.BuildException;
 import org.jdrupes.builder.api.Resource;
 import org.jdrupes.builder.api.ResourceProvider;
 import org.jdrupes.builder.api.ResourceRequest;
+import org.jdrupes.builder.api.StatusLine;
 
 /// Evaluate the stream from a provider asynchronously.
 ///
@@ -49,17 +49,20 @@ public class FutureStream<T extends Resource> {
     @SuppressWarnings("PMD.FieldNamingConventions")
     private static final ScopedValue<FutureStream<?>> caller
         = ScopedValue.newInstance();
+    /* default */@SuppressWarnings("PMD.FieldNamingConventions")
+    static final ScopedValue<StatusLine> statusLine
+        = ScopedValue.newInstance(); // <T>
     private final FutureStream<?> initiallyCalledBy;
     private final FutureStreamCache.Key<?> holding;
     private final Future<List<T>> values;
 
     /// Instantiates a new future resources.
     ///
-    /// @param executor the executor
+    /// @param context the context
     /// @param provider the provider
     /// @param request the requested
     ///
-    public FutureStream(ExecutorService executor, ResourceProvider provider,
+    public FutureStream(DefaultBuildContext context, ResourceProvider provider,
             ResourceRequest<T> request) {
         initiallyCalledBy = caller.isBound() ? caller.get() : null;
         holding = new FutureStreamCache.Key<>(provider, request);
@@ -68,13 +71,18 @@ public class FutureStream<T extends Resource> {
                 ? " requested by " + initiallyCalledBy
                 : "")));
         logger.atFinest().log("Call chain: %s", lazy(this::callChain));
-        values = executor.submit(() -> {
-            return ScopedValue
-                .where(providerInvocationAllowed, new AtomicBoolean(true))
-                .where(caller, this)
-                .call(() -> ((AbstractProvider) provider).toSpi()
-                    .provide(request).toList());
+        values = context.executor().submit(() -> {
+            try (var statusLine = context.console().statusLine()) {
+                statusLine.update(provider + " evaluating " + request);
+                return ScopedValue
+                    .where(providerInvocationAllowed, new AtomicBoolean(true))
+                    .where(caller, this)
+                    .where(FutureStream.statusLine, statusLine)
+                    .call(() -> ((AbstractProvider) provider).toSpi()
+                        .provide(request).toList());
+            }
         });
+
     }
 
     private List<FutureStream<?>> callChain() {

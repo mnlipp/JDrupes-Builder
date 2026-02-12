@@ -18,9 +18,11 @@
 
 package org.jdrupes.builder.core;
 
+import java.io.PrintStream;
 import java.nio.file.Path;
 import java.util.Arrays;
 import java.util.EnumSet;
+import java.util.Optional;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.stream.Stream;
@@ -31,7 +33,9 @@ import org.jdrupes.builder.api.Project;
 import org.jdrupes.builder.api.Resource;
 import org.jdrupes.builder.api.ResourceProvider;
 import org.jdrupes.builder.api.ResourceRequest;
+import org.jdrupes.builder.api.StatusLine;
 import org.jdrupes.builder.core.FutureStreamCache.Key;
+import org.jdrupes.builder.core.console.SplitConsole;
 
 /// A context for building.
 ///
@@ -42,12 +46,14 @@ public class DefaultBuildContext implements BuildContext {
     private final FutureStreamCache cache;
     private ExecutorService executor
         = Executors.newVirtualThreadPerTaskExecutor();
+    private final SplitConsole console;
 
     /// Instantiates a new default build. By default, the build uses
     /// a virtual thread per task executor.
     ///
     /* default */ DefaultBuildContext() {
         cache = new FutureStreamCache();
+        console = SplitConsole.open();
     }
 
     /// Returns the executor service used by this build to create futures.
@@ -64,6 +70,28 @@ public class DefaultBuildContext implements BuildContext {
     ///
     public void executor(ExecutorService executor) {
         this.executor = executor;
+    }
+
+    /* default */ SplitConsole console() {
+        return console;
+    }
+
+    @Override
+    public Optional<StatusLine> statusLine() {
+        if (!FutureStream.statusLine.isBound()) {
+            return Optional.empty();
+        }
+        return Optional.of(FutureStream.statusLine.get());
+    }
+
+    @Override
+    public PrintStream out() {
+        return console().out();
+    }
+
+    @Override
+    public PrintStream error() {
+        return console().err();
     }
 
     @Override
@@ -88,7 +116,7 @@ public class DefaultBuildContext implements BuildContext {
             req = requested.using(EnumSet.noneOf(Intent.class));
         }
         return cache.computeIfAbsent(new Key<>(provider, req),
-            k -> new FutureStream<T>(executor, k.provider(), k.request()))
+            k -> new FutureStream<T>(this, k.provider(), k.request()))
             .stream();
     }
 
@@ -109,4 +137,9 @@ public class DefaultBuildContext implements BuildContext {
             defaultValue);
     }
 
+    @Override
+    public void close() {
+        executor.shutdownNow();
+        console.close();
+    }
 }

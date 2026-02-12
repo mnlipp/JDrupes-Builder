@@ -139,10 +139,13 @@ public class DefaultResourceRequest<T extends Resource>
 
     @Override
     public String toString() {
-        return "ResourceRequest<" + type + ">"
-            + name().map(n -> ":" + n).orElse("") + " [" + uses.stream()
-                .map(Intent::toString).collect(Collectors.joining(", "))
-            + "]";
+        StringBuilder result = new StringBuilder(20);
+        result.append("ResourceRequest<").append(type).append('>')
+            .append(name().map(n -> ":" + n).orElse(""));
+        if (!uses().isEmpty()) {
+            result.append(" [").append(uses().stream().map(Intent::toString)
+                .collect(Collectors.joining(", "))).append(']');
+        }
+        return result.toString();
     }
-
 }

@@ -141,6 +141,13 @@ public class BootstrapProjectLauncher extends AbstractLauncher {
         return rootProject;
     }
 
+    @Override
+    public void close() throws Exception {
+        if (rootProject != null) {
+            rootProject.context().close();
+        }
+    }
+
     /// The main method.
     ///
     /// @param args the arguments
@@ -149,8 +156,13 @@ public class BootstrapProjectLauncher extends AbstractLauncher {
     public static void main(String[] args) {
         try {
             if (!reportBuildException(
-                () -> new BootstrapProjectLauncher().buildBuildProjectLauncher(
-                    BootstrapRoot.class, args).runCommands())) {
+                () -> {
+                    try (var bootPl = new BootstrapProjectLauncher();
+                            var buildPl = bootPl.buildBuildProjectLauncher(
+                                BootstrapRoot.class, args)) {
+                        return buildPl.runCommands();
+                    }
+                })) {
                 Runtime.getRuntime().exit(1);
             }
         } catch (BuildException e) {

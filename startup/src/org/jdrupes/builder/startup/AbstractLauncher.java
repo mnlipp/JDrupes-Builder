@@ -272,4 +272,5 @@ public abstract class AbstractLauncher implements Launcher {
     public static BuildExceptionFormatter formatter() {
         return defaultFormatter;
     }
+
 }
