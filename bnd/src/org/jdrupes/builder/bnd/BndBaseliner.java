@@ -278,7 +278,7 @@ public class BndBaseliner extends AbstractBndGenerator {
 
     /// The Class FormatInfo.
     ///
-    private class FormatInfo {
+    private final class FormatInfo {
         private final int maxNameLength;
         private final int maxNewerLength;
         private final int maxOlderLength;
@@ -292,7 +292,7 @@ public class BndBaseliner extends AbstractBndGenerator {
         /// @throws Exception the exception
         ///
         @SuppressWarnings("PMD.SignatureDeclareThrowsException")
-        public FormatInfo(Jar currentJar, Jar baselineJar,
+        private FormatInfo(Jar currentJar, Jar baselineJar,
                 BundleInfo bundleInfo, List<Info> infos) throws Exception {
             maxNameLength = Math.max(bundleInfo.bsn.length(), infos.stream()
                 .map(info -> info.packageDiff.getName().length())
@@ -311,7 +311,7 @@ public class BndBaseliner extends AbstractBndGenerator {
         ///
         /// @return the string
         ///
-        public String formatString() {
+        private String formatString() {
             return "%s %-" + maxNameLength + "s %-10s %-10s %-"
                 + maxNewerLength + "s %-" + maxOlderLength + "s %-10s %s\n";
         }
@@ -320,7 +320,7 @@ public class BndBaseliner extends AbstractBndGenerator {
         ///
         /// @return the string
         ///
-        public String separatorLine() {
+        private String separatorLine() {
             return String.valueOf('=').repeat(
                 50 + maxNameLength + maxNewerLength + maxOlderLength) + "\n";
         }
