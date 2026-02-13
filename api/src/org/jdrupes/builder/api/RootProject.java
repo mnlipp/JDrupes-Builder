@@ -31,6 +31,11 @@ public interface RootProject extends Project {
     /// configuration classes before it returns the control to the
     /// project configuration class' constructor. The method is never
     /// invoked by the user.
+    /// 
+    /// This method is provided for convenience. Alternatively, project
+    /// configuration classes can invoke any user defined method at the
+    /// beginning of their constructor. Using this method simply makes
+    /// sure that such an invocation is never forgotten.
     ///
     /// @param project the project to prepare
     /// @throws Exception the exception
