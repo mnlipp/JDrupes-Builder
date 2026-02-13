@@ -24,6 +24,9 @@ import io.vavr.control.Option;
 import io.vavr.control.Try;
 import java.io.File;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.lang.ProcessBuilder.Redirect;
 import java.util.List;
 import java.util.Objects;
 import java.util.jar.Attributes;
@@ -143,9 +146,11 @@ public class JavaExecutor extends AbstractProvider
             mainClass);
 
         ProcessBuilder processBuilder = new ProcessBuilder(command);
-        processBuilder.inheritIO();
+        processBuilder.redirectInput(Redirect.INHERIT);
         try {
             Process process = processBuilder.start();
+            copyData(process.getInputStream(), context().out());
+            copyData(process.getErrorStream(), context().error());
             @SuppressWarnings("unchecked")
             var result = (Stream<T>) Stream.of(newResource(ExecResultType, this,
                 mainClass, process.waitFor()));
@@ -169,4 +174,12 @@ public class JavaExecutor extends AbstractProvider
             .flatMap(Option::toStream).headOption().peek(mc -> mainClass = mc);
     }
 
+    private void copyData(InputStream source, OutputStream sink) {
+        Thread.startVirtualThread(() -> {
+            try (source) {
+                source.transferTo(sink);
+            } catch (IOException e) { // NOPMD
+            }
+        });
+    }
 }

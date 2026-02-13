@@ -18,7 +18,6 @@
 
 package org.jdrupes.builder.core.console;
 
-import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.io.PrintStream;
@@ -28,6 +27,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.IntStream;
 import org.jdrupes.builder.api.StatusLine;
@@ -245,7 +245,8 @@ public final class SplitConsole implements AutoCloseable {
     ///
     @SuppressWarnings({ "PMD.AvoidSynchronizedAtMethodLevel",
         "PMD.AvoidLiteralsInIfCondition" })
-    private synchronized void write(byte[] text, int offset, int length) {
+    private synchronized void write(byte[] text, int offset, int length,
+            byte[] markup) {
         if (incompleteLine.length > 0) {
             // Prepend left over text and try again
             byte[] prepended = new byte[incompleteLine.length + length];
@@ -254,7 +255,7 @@ public final class SplitConsole implements AutoCloseable {
             System.arraycopy(
                 text, offset, prepended, incompleteLine.length, length);
             incompleteLine = new byte[0];
-            write(prepended);
+            write(prepended, markup);
             return;
         }
 
@@ -264,10 +265,17 @@ public final class SplitConsole implements AutoCloseable {
         for (int i = offset; i < end; i++) {
             if (text[i] == '\n') {
                 // Write line including newline, moves cursor to next line
-                realOut.write(text, offset, i - offset + 1);
+                writeMarkedup(realOut, text, offset, i - offset + 1, markup);
                 offset = i + 1;
                 // Clear left over text from status line
                 realOut.print(Ansi.clearLine());
+            }
+            if (i - offset >= term.columns()) {
+                // Write line up to here
+                writeMarkedup(realOut, text, offset, i - offset, markup);
+                offset = i;
+                // Write newline an clear left over text from status line
+                realOut.print("\n" + Ansi.clearLine());
             }
         }
         incompleteLine = new byte[end - offset];
@@ -286,8 +294,21 @@ public final class SplitConsole implements AutoCloseable {
     }
 
     @SuppressWarnings("PMD.AvoidSynchronizedAtMethodLevel")
-    private synchronized void write(byte[] text) {
-        write(text, 0, text.length);
+    private synchronized void write(byte[] text, byte[] markup) {
+        write(text, 0, text.length, markup);
+    }
+
+    @SuppressWarnings("PMD.RelianceOnDefaultCharset")
+    private void writeMarkedup(PrintStream out, byte[] chars, int off, int len,
+            byte[] markup) {
+        if (markup == null) {
+            out.write(chars, off, len);
+            return;
+        }
+        out.write(markup, 0, markup.length);
+        out.write(chars, off, len);
+        out.write(Ansi.resetAttributes().getBytes(), 0,
+            Ansi.resetAttributes().length());
     }
 
     @SuppressWarnings("PMD.AvoidSynchronizedStatement")
@@ -398,40 +419,23 @@ public final class SplitConsole implements AutoCloseable {
     ///
     public final class StreamWrapper extends OutputStream {
 
-        private final Ansi.Color color;
+        private final byte[] markup;
 
         private StreamWrapper(Ansi.Color color) {
-            this.color = color;
-        }
-
-        @SuppressWarnings("PMD.RelianceOnDefaultCharset")
-        private byte[] markup(byte[] chars, int off, int len)
-                throws IOException {
-            ByteArrayOutputStream baos = new ByteArrayOutputStream();
-            baos.writeBytes(Ansi.color(color).getBytes());
-            baos.write(chars, off, len);
-            baos.writeBytes(Ansi.resetAttributes().getBytes());
-            return baos.toByteArray();
+            markup = Optional.ofNullable(color).map(Ansi::color)
+                .map(String::getBytes).orElse(null);
         }
 
         @Override
         @SuppressWarnings("PMD.ShortVariable")
         public void write(int ch) throws IOException {
-            if (color != null) {
-                SplitConsole.this.write(markup(new byte[] { (byte) ch }, 0, 1));
-                return;
-            }
-            SplitConsole.this.write(new byte[] { (byte) ch }, 0, 1);
+            SplitConsole.this.write(new byte[] { (byte) ch }, 0, 1, markup);
         }
 
         @Override
         @SuppressWarnings("PMD.ShortVariable")
         public void write(byte[] ch, int off, int len) throws IOException {
-            if (color != null) {
-                SplitConsole.this.write(markup(ch, off, len));
-                return;
-            }
-            SplitConsole.this.write(ch, off, len);
+            SplitConsole.this.write(ch, off, len, markup);
         }
     }
 
