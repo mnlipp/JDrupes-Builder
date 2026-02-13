@@ -40,6 +40,7 @@ public interface StatusLine extends AutoCloseable {
     /// Update the text in the status line.
     ///
     /// @param format the text
+    /// @param args the arguments
     ///
     void update(String format, Object... args);
 

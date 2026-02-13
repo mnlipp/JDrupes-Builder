@@ -34,6 +34,7 @@ import org.jdrupes.builder.api.StatusLine;
 
 /// Provides a split console using ANSI escape sequences.
 ///
+@SuppressWarnings("PMD.GodClass")
 public final class SplitConsole implements AutoCloseable {
 
     private static int openCount;
@@ -45,16 +46,17 @@ public final class SplitConsole implements AutoCloseable {
     private final PrintStream realOut;
     private final PrintStream splitOut;
     private final PrintStream splitErr;
-    private final AtomicBoolean needsRedraw = new AtomicBoolean();
+    private final AtomicBoolean startRedraw = new AtomicBoolean();
+    private byte[] incompleteLine = new byte[0];
     @SuppressWarnings("PMD.AvoidSynchronizedStatement")
     private final Thread redrawThread = Thread.ofVirtual()
         .start(() -> {
             while (!Thread.currentThread().isInterrupted()) {
-                synchronized (needsRedraw) {
-                    boolean run = needsRedraw.compareAndSet(true, false);
+                synchronized (startRedraw) {
+                    boolean run = startRedraw.compareAndSet(true, false);
                     if (!run) {
                         try {
-                            needsRedraw.wait();
+                            startRedraw.wait();
                         } catch (InterruptedException e) {
                             break;
                         }
@@ -244,12 +246,35 @@ public final class SplitConsole implements AutoCloseable {
     @SuppressWarnings({ "PMD.AvoidSynchronizedAtMethodLevel",
         "PMD.AvoidLiteralsInIfCondition" })
     private synchronized void write(byte[] text, int offset, int length) {
-        for (int i = offset; i < offset + length; i++) {
-            realOut.write(text[i]);
+        if (incompleteLine.length > 0) {
+            // Prepend left over text and try again
+            byte[] prepended = new byte[incompleteLine.length + length];
+            System.arraycopy(
+                incompleteLine, 0, prepended, 0, incompleteLine.length);
+            System.arraycopy(
+                text, offset, prepended, incompleteLine.length, length);
+            incompleteLine = new byte[0];
+            write(prepended);
+            return;
+        }
+
+        // Write line(s)
+        realOut.print(Ansi.cursorToSol() + Ansi.clearLine());
+        int end = offset + length;
+        for (int i = offset; i < end; i++) {
             if (text[i] == '\n') {
-                // Clear status line
+                // Write line including newline, moves cursor to next line
+                realOut.write(text, offset, i - offset + 1);
+                offset = i + 1;
+                // Clear left over text from status line
                 realOut.print(Ansi.clearLine());
             }
+        }
+        incompleteLine = new byte[end - offset];
+        System.arraycopy(text, offset, incompleteLine, 0, end - offset);
+        if (incompleteLine.length > 0) {
+            // Show incomplete line, will be overwritten by next write
+            realOut.write(incompleteLine, 0, incompleteLine.length);
         }
         realOut.flush();
 
@@ -260,19 +285,19 @@ public final class SplitConsole implements AutoCloseable {
         redraw();
     }
 
-    private void write(byte[] text) {
+    @SuppressWarnings("PMD.AvoidSynchronizedAtMethodLevel")
+    private synchronized void write(byte[] text) {
         write(text, 0, text.length);
     }
 
-    @SuppressWarnings({ "PMD.AvoidSynchronizedAtMethodLevel",
-        "PMD.AvoidSynchronizedStatement" })
-    private synchronized void redraw() {
+    @SuppressWarnings("PMD.AvoidSynchronizedStatement")
+    private void redraw() {
         if (!term.supportsAnsi()) {
             return;
         }
-        synchronized (needsRedraw) {
-            needsRedraw.set(true);
-            needsRedraw.notifyAll();
+        synchronized (startRedraw) {
+            startRedraw.set(true);
+            startRedraw.notifyAll();
         }
     }
 
@@ -292,6 +317,9 @@ public final class SplitConsole implements AutoCloseable {
         }
         realOut.print(Ansi.cursorUp(managedLines.size()) + Ansi.cursorToSol()
             + Ansi.showCursor());
+        if (incompleteLine.length > 0) {
+            realOut.write(incompleteLine, 0, incompleteLine.length);
+        }
         realOut.flush();
     }
 

@@ -31,6 +31,12 @@ public class SplitConsoleTest {
             console.out().println("Main thread step " + i);
             Thread.sleep(300);
         }
+        for (int i = 0; i < 10; i++) {
+            console.out().print(i + " ");
+            console.out().flush();
+            Thread.sleep(300);
+        }
+        console.out().println();
 
         // Wait for all threads to finish
         for (Thread t : threads) {
