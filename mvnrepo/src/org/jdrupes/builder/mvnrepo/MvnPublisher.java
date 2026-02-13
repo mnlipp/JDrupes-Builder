@@ -47,6 +47,7 @@ import java.util.Optional;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Supplier;
 import java.util.stream.Stream;
 import java.util.zip.ZipEntry;
@@ -552,6 +553,7 @@ public class MvnPublisher extends AbstractGenerator {
         var session = new DefaultRepositorySystemSession(
             context.repositorySystemSession());
         var startMsgLogged = new AtomicBoolean(false);
+        var deployedCount = new AtomicInteger(0);
         session.setRepositoryListener(new AbstractRepositoryListener() {
             @Override
             public void artifactDeploying(RepositoryEvent event) {
@@ -569,14 +571,16 @@ public class MvnPublisher extends AbstractGenerator {
                 }
                 logger.atInfo().log("Deployed: %s", event.getArtifact());
                 context().statusLine().ifPresent(l -> l.update(
-                    MvnPublisher.this + " deployed " + event.getArtifact()));
+                    "%s deployed %d/%d", MvnPublisher.this,
+                    deployedCount.incrementAndGet(), toDeploy.size()));
             }
 
             @Override
             public void metadataDeployed(RepositoryEvent event) {
                 logger.atInfo().log("Deployed: %s", event.getMetadata());
                 context().statusLine().ifPresent(l -> l.update(
-                    MvnPublisher.this + " deployed " + event.getMetadata()));
+                    "%s deployed %d/%d", MvnPublisher.this,
+                    deployedCount.incrementAndGet(), toDeploy.size()));
             }
 
         });

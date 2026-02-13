@@ -222,18 +222,18 @@ public final class SplitConsole implements AutoCloseable {
 
     /// Update the line for outputs from the current thread.
     ///
-    /// @param text the text
+    /// @param format the text
     ///
     @SuppressWarnings("PMD.AvoidSynchronizedAtMethodLevel")
-    private synchronized void updateStatus(String text) {
+    private synchronized void updateStatus(String format, Object... args) {
         Thread thread = Thread.currentThread();
         var line = managedLine(thread);
 
         if (line != null) {
-            line.text = text;
+            line.text = String.format(format, args);
             redraw();
         } else if (offScreenLines.containsKey(thread)) {
-            offScreenLines.put(thread, text);
+            offScreenLines.put(thread, format);
         }
     }
 
@@ -350,11 +350,12 @@ public final class SplitConsole implements AutoCloseable {
 
         /// Update the text in the status line.
         ///
-        /// @param text the text
+        /// @param format the text
+        /// @param args the arguments
         ///
         @Override
-        public void update(String text) {
-            updateStatus(text);
+        public void update(String format, Object... args) {
+            updateStatus(format, args);
         }
 
         /// Deallocate the line for outputs from the current thread.

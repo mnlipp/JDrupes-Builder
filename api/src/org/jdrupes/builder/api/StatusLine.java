@@ -27,7 +27,7 @@ public interface StatusLine extends AutoCloseable {
     /// An implementation that does nothing.
     StatusLine NOOP_STATUS_LINE = new StatusLine() {
         @Override
-        public void update(String text) {
+        public void update(String text, Object... args) {
             // Does nothing
         }
 
@@ -39,9 +39,9 @@ public interface StatusLine extends AutoCloseable {
 
     /// Update the text in the status line.
     ///
-    /// @param text the text
+    /// @param format the text
     ///
-    void update(String text);
+    void update(String format, Object... args);
 
     /// Deallocate the line for outputs from the current thread.
     ///
