@@ -21,6 +21,8 @@ package org.jdrupes.builder.core.console;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.io.PrintStream;
+import java.io.PrintWriter;
+import java.io.Writer;
 import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
@@ -224,18 +226,22 @@ public final class SplitConsole implements AutoCloseable {
 
     /// Update the line for outputs from the current thread.
     ///
-    /// @param format the text
+    /// @param text the text
     ///
     @SuppressWarnings("PMD.AvoidSynchronizedAtMethodLevel")
-    private synchronized void updateStatus(String format, Object... args) {
+    private synchronized void updateStatus(String text, Object... args) {
         Thread thread = Thread.currentThread();
         var line = managedLine(thread);
 
         if (line != null) {
-            line.text = String.format(format, args);
+            if (args.length > 0) {
+                line.text = String.format(text, args);
+            } else {
+                line.text = text;
+            }
             redraw();
         } else if (offScreenLines.containsKey(thread)) {
-            offScreenLines.put(thread, format);
+            offScreenLines.put(thread, text);
         }
     }
 
@@ -391,20 +397,53 @@ public final class SplitConsole implements AutoCloseable {
     ///
     public final class DefaultStatusLine implements StatusLine {
 
+        private PrintWriter asWriter;
+
         /// Initializes a new status line for the invoking thread.
         ///
         private DefaultStatusLine() {
             allocateLine();
         }
 
-        /// Update the text in the status line.
-        ///
-        /// @param format the text
-        /// @param args the arguments
-        ///
         @Override
-        public void update(String format, Object... args) {
-            updateStatus(format, args);
+        public void update(String text, Object... args) {
+            updateStatus(text, args);
+        }
+
+        @Override
+        public PrintWriter writer(String prefix) {
+            if (asWriter == null) {
+                asWriter = new PrintWriter(new Writer() {
+                    private final String prepend = prefix == null ? "" : prefix;
+                    @SuppressWarnings("PMD.AvoidStringBufferField")
+                    private final StringBuilder buf = new StringBuilder();
+
+                    @Override
+                    public void write(char[] cbuf, int off, int len)
+                            throws IOException {
+                        for (int i = off; i < off + len; i++) {
+                            if (cbuf[i] == '\n' || cbuf[i] == '\r') {
+                                updateStatus(prepend + buf.toString());
+                                buf.setLength(0);
+                            } else {
+                                buf.append(cbuf[i]);
+                            }
+                        }
+                    }
+
+                    @Override
+                    public void flush() throws IOException {
+                        updateStatus(prepend + buf.toString());
+                    }
+
+                    @Override
+                    public void close() throws IOException {
+                        // Does nothing
+                    }
+
+                });
+            }
+            return asWriter;
         }
 
         /// Deallocate the line for outputs from the current thread.

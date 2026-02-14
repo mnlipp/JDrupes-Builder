@@ -18,6 +18,9 @@
 
 package org.jdrupes.builder.api;
 
+import java.io.PrintWriter;
+import java.io.Writer;
+
 /// An interface to a status line that can be used by [ResourceProvider]s
 /// to indicate progress during the execution of
 /// [ResourceProviderSpi#provide(ResourceRequest)].
@@ -26,9 +29,17 @@ public interface StatusLine extends AutoCloseable {
 
     /// An implementation that does nothing.
     StatusLine NOOP_STATUS_LINE = new StatusLine() {
+
+        private final PrintWriter toVoid = new PrintWriter(Writer.nullWriter());
+
         @Override
         public void update(String text, Object... args) {
             // Does nothing
+        }
+
+        @Override
+        public PrintWriter writer(String prefix) {
+            return toVoid;
         }
 
         @Override
@@ -37,12 +48,26 @@ public interface StatusLine extends AutoCloseable {
         }
     };
 
-    /// Update the text in the status line.
+    /// Update the text in the status line. If argumnts are given, `text`
+    /// is interpreted as a format string for []String#format] with the
+    /// given arguments.
     ///
-    /// @param format the text
+    /// @param text the text
     /// @param args the arguments
     ///
-    void update(String format, Object... args);
+    void update(String text, Object... args);
+
+    /// Returns a writer to the status line. This writer can be used to
+    /// append text to the status line. Closing the writer will not close
+    /// the status line.
+    /// 
+    /// If a prefix is given, it will be printed at the beginning of the
+    /// status line.
+    ///
+    /// @param prefix the prefix
+    /// @return the prints the writer
+    ///
+    PrintWriter writer(String prefix);
 
     /// Deallocate the line for outputs from the current thread.
     ///
