@@ -106,7 +106,8 @@ public class DefaultProviderSelection implements ProviderSelection {
                         r -> r != null ? r : forwardedRequest(requested)));
             }
             return project.context().resources(p, requested);
-        }).flatMap(s -> s);
+        }) // Evaluate providers eagerly, resources lazily
+            .toList().stream().flatMap(s -> s);
     }
 
     private <T extends Resource> ResourceRequest<T>
