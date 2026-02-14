@@ -8,6 +8,7 @@ import java.io.OutputStream;
 import java.time.Instant;
 import java.util.List;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.stream.Collectors;
 import org.jdrupes.builder.api.IOResource;
 import static org.jdrupes.builder.api.ResourceType.*;
@@ -39,8 +40,8 @@ class DefaultResourcesTest {
         }
 
         @Override
-        public Instant asOf() {
-            return asOf;
+        public Optional<Instant> asOf() {
+            return Optional.of(asOf);
         }
 
         @Override

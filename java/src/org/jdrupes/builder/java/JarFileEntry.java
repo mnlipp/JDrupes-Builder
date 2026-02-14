@@ -23,6 +23,7 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.time.Instant;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
 import org.jdrupes.builder.api.IOResource;
@@ -47,8 +48,8 @@ public class JarFileEntry extends ResourceObject implements IOResource {
     }
 
     @Override
-    public Instant asOf() {
-        return entry.getLastModifiedTime().toInstant();
+    public Optional<Instant> asOf() {
+        return Optional.of(entry.getLastModifiedTime().toInstant());
     }
 
     @Override

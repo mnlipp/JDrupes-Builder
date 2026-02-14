@@ -19,6 +19,7 @@
 package org.jdrupes.builder.api;
 
 import java.time.Instant;
+import java.util.Optional;
 import java.util.stream.Stream;
 
 /// Defines a container for a collection of resources. Implementations
@@ -61,9 +62,10 @@ public interface Resources<T extends Resource> extends Resource {
     /// @return the instant
     ///
     @Override
-    default Instant asOf() {
-        return stream().map(Resource::asOf).reduce(Instant.MIN, (latest,
-                next) -> next.isAfter(latest) ? next : latest);
+    default Optional<Instant> asOf() {
+        return stream()
+            .reduce((newest, next) -> next.isNewerThan(newest) ? next : newest)
+            .map(Resource::asOf).orElse(Optional.empty());
     }
 
     /// Checks if is empty.

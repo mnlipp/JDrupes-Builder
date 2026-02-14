@@ -25,6 +25,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.Instant;
 import java.util.Objects;
+import java.util.Optional;
 import org.jdrupes.builder.api.ConfigurationException;
 import org.jdrupes.builder.api.FileResource;
 import org.jdrupes.builder.api.ResourceType;
@@ -64,11 +65,11 @@ public class DefaultFileResource extends ResourceObject
     }
 
     @Override
-    public Instant asOf() {
+    public Optional<Instant> asOf() {
         if (!path.toFile().exists()) {
-            return Instant.MIN;
+            return Optional.empty();
         }
-        return Instant.ofEpochMilli(path.toFile().lastModified());
+        return Optional.of(Instant.ofEpochMilli(path.toFile().lastModified()));
     }
 
     @Override

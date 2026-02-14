@@ -33,6 +33,7 @@ import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.Spliterators;
 import java.util.function.Consumer;
 import java.util.stream.Stream;
@@ -51,7 +52,7 @@ import org.jdrupes.builder.api.ResourceType;
 public class DefaultFileTree<T extends FileResource> extends DefaultResources<T>
         implements FileTree<T> {
     private static final FluentLogger logger = FluentLogger.forEnclosingClass();
-    private Instant latestChange = Instant.MIN;
+    private Instant latestChange;
     private final Project project;
     private final Path root;
     private final String pattern;
@@ -124,9 +125,9 @@ public class DefaultFileTree<T extends FileResource> extends DefaultResources<T>
     }
 
     @Override
-    public Instant asOf() {
+    public Optional<Instant> asOf() {
         fill();
-        return latestChange;
+        return Optional.ofNullable(latestChange);
     }
 
     @SuppressWarnings("PMD.CognitiveComplexity")
@@ -159,8 +160,9 @@ public class DefaultFileTree<T extends FileResource> extends DefaultResources<T>
                     T resource = (T) ResourceFactory
                         .create(type().containedType(), path);
                     DefaultFileTree.this.add(resource);
-                    if (resource.asOf().isAfter(latestChange)) {
-                        latestChange = resource.asOf();
+                    if (resource.asOf().isPresent() && (latestChange == null
+                        || resource.asOf().get().isAfter(latestChange))) {
+                        latestChange = resource.asOf().get();
                     }
                     return FileVisitResult.CONTINUE;
                 }
@@ -180,7 +182,7 @@ public class DefaultFileTree<T extends FileResource> extends DefaultResources<T>
             public FileVisitResult postVisitDirectory(Path dir, IOException exc)
                     throws IOException {
                 var dirMod = Instant.ofEpochMilli(dir.toFile().lastModified());
-                if (dirMod.isAfter(latestChange)) {
+                if (latestChange == null || dirMod.isAfter(latestChange)) {
                     latestChange = dirMod;
                 }
                 return FileVisitResult.CONTINUE;

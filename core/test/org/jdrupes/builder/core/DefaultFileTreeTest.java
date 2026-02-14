@@ -153,13 +153,13 @@ class DefaultFileTreeTest {
             null, tmpDir, "**/*.txt");
 
         @SuppressWarnings("checkstyle:VariableDeclarationUsageDistance")
-        Instant first = ft.asOf();
+        Instant first = ft.asOf().get();
         // touch file to update modified time
         Thread.sleep(3);
         Files.writeString(f1, "xx");
         // clear so next asOf recalculates
         ft.clear();
-        Instant second = ft.asOf();
+        Instant second = ft.asOf().get();
         assertTrue(second.isAfter(first));
     }
 }

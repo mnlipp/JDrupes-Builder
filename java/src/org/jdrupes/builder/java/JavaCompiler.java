@@ -197,9 +197,8 @@ public class JavaCompiler extends JavaTool {
                 .collect(Collectors.joining(File.pathSeparator))));
 
         // (Re-)compile only if necessary
-        var classesAsOf = classSet.asOf();
-        if (sources.asOf().isAfter(classesAsOf)
-            || cpResources.asOf().isAfter(classesAsOf)
+        if (sources.isNewerThan(classSet)
+            || cpResources.isNewerThan(classSet)
             || classSet.stream().count() < sources.stream()
                 .flatMap(Resources::stream).map(FileResource::path)
                 .filter(p -> p.toString().endsWith(".java")

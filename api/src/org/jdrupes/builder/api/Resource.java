@@ -21,6 +21,7 @@ package org.jdrupes.builder.api;
 import java.time.Instant;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
+import java.time.format.FormatStyle;
 import java.util.Optional;
 
 /// Represents a resource handled by the builder. Resources can have names
@@ -32,8 +33,27 @@ public interface Resource {
     ///
     /// @return the instant
     ///
-    default Instant asOf() {
-        return Instant.MIN;
+    default Optional<Instant> asOf() {
+        return Optional.empty();
+    }
+
+    /// Checks if this resource is newer than the other.
+    ///
+    /// @param other the other
+    /// @return true, if is newer than
+    ///
+    @SuppressWarnings("PMD.SimplifyBooleanReturns")
+    default boolean isNewerThan(Resource other) {
+        if (asOf().isEmpty() && other.asOf().isEmpty()) {
+            return false;
+        }
+        if (asOf().isEmpty()) {
+            return false;
+        }
+        if (other.asOf().isEmpty()) {
+            return true;
+        }
+        return asOf().get().isAfter(other.asOf().get());
     }
 
     /// Returns the type of this resource.
@@ -55,10 +75,10 @@ public interface Resource {
     ///
     default String asOfLocalized() {
         var asOf = asOf();
-        if (asOf == Instant.MIN) {
-            return "ages ago";
+        if (asOf.isEmpty()) {
+            return "non-existant";
         }
-        return DateTimeFormatter.ISO_LOCAL_DATE_TIME
-            .format(asOf.atZone(ZoneId.systemDefault()));
+        return DateTimeFormatter.ofLocalizedDateTime(FormatStyle.SHORT)
+            .format(asOf.get().atZone(ZoneId.systemDefault()));
     }
 }

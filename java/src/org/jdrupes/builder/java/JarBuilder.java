@@ -289,7 +289,7 @@ public class JarBuilder extends AbstractGenerator {
             // manifest unchanged, check timestamps
             var newer = contents.values().stream()
                 .map(r -> r.stream().findFirst().stream()).flatMap(s -> s)
-                .filter(r -> r.asOf().isAfter(jarResource.asOf())).findAny();
+                .filter(r -> r.isNewerThan(jarResource)).findAny();
             if (newer.isEmpty()) {
                 logger.atFine().log("Existing %s is up to date.", jarName());
                 return;
@@ -332,7 +332,7 @@ public class JarBuilder extends AbstractGenerator {
                 @SuppressWarnings("PMD.AvoidInstantiatingObjectsInLoops")
                 JarEntry jarEntry = new JarEntry(entryName);
                 jarEntry.setTime(entry.getValue().stream().findFirst().get()
-                    .asOf().toEpochMilli());
+                    .asOf().get().toEpochMilli());
                 jos.putNextEntry(jarEntry);
                 try (var input = entry.getValue().stream().findFirst().get()
                     .inputStream()) {

@@ -24,6 +24,7 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.nio.charset.StandardCharsets;
 import java.time.Instant;
+import java.util.Optional;
 import java.util.function.Predicate;
 import org.jdrupes.builder.api.IOResource;
 import org.jdrupes.builder.core.ResourceObject;
@@ -37,7 +38,7 @@ public class ServicesEntryResource extends ResourceObject
         implements IOResource {
     @SuppressWarnings("PMD.AvoidStringBufferField")
     private final StringBuilder content = new StringBuilder();
-    private Instant asOf = Instant.MIN;
+    private Instant asOf;
 
     /// Initializes a new services entry resource.
     ///
@@ -46,8 +47,8 @@ public class ServicesEntryResource extends ResourceObject
     }
 
     @Override
-    public Instant asOf() {
-        return asOf;
+    public Optional<Instant> asOf() {
+        return Optional.ofNullable(asOf);
     }
 
     /// Adds the given resource which must be a `META-INF/services/*`
@@ -62,8 +63,8 @@ public class ServicesEntryResource extends ResourceObject
                 .lines().filter(Predicate.not(String::isBlank))
                 .forEach(l -> content.append(l).append('\n'));
         }
-        if (resource.asOf().isAfter(asOf)) {
-            asOf = resource.asOf();
+        if (resource.isNewerThan(this)) {
+            asOf = resource.asOf().get();
         }
     }
 
