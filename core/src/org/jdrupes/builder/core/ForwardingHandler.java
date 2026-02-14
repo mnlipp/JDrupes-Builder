@@ -19,6 +19,7 @@
 package org.jdrupes.builder.core;
 
 import java.lang.reflect.InvocationHandler;
+import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.lang.reflect.Proxy;
 import org.jdrupes.builder.api.Proxyable;
@@ -46,7 +47,11 @@ public class ForwardingHandler implements InvocationHandler {
             && args[0] instanceof Proxyable other) {
             return method.invoke(proxied, other.backing());
         }
-        return method.invoke(proxied, args);
+        try {
+            return method.invoke(proxied, args);
+        } catch (InvocationTargetException e) {
+            throw e.getCause();
+        }
     }
 
 }
