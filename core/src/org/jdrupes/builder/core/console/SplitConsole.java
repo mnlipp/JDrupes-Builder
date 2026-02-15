@@ -18,6 +18,7 @@
 
 package org.jdrupes.builder.core.console;
 
+import com.google.common.flogger.FluentLogger;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.io.PrintStream;
@@ -31,42 +32,29 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.IntStream;
 import org.jdrupes.builder.api.StatusLine;
 
 /// Provides a split console using ANSI escape sequences.
 ///
-@SuppressWarnings("PMD.GodClass")
+@SuppressWarnings("PMD.AvoidSynchronizedStatement")
 public final class SplitConsole implements AutoCloseable {
 
-    private static int openCount;
+    private static final FluentLogger logger = FluentLogger.forEnclosingClass();
+    private static AtomicInteger openCount = new AtomicInteger();
     private static SplitConsole instance;
     private final TerminalInfo term;
     private final List<ManagedLine> managedLines = new ArrayList<>();
     @SuppressWarnings("PMD.UseConcurrentHashMap")
+    // Guarded by managedLines
     private final Map<Thread, String> offScreenLines = new LinkedHashMap<>();
+    // Used to synchronize output to terminal
     private final PrintStream realOut;
     private final PrintStream splitOut;
     private final PrintStream splitErr;
-    private final AtomicBoolean startRedraw = new AtomicBoolean();
     private byte[] incompleteLine = new byte[0];
-    @SuppressWarnings("PMD.AvoidSynchronizedStatement")
-    private final Thread redrawThread = Thread.ofVirtual()
-        .start(() -> {
-            while (!Thread.currentThread().isInterrupted()) {
-                synchronized (startRedraw) {
-                    boolean run = startRedraw.compareAndSet(true, false);
-                    if (!run) {
-                        try {
-                            startRedraw.wait();
-                        } catch (InterruptedException e) {
-                            break;
-                        }
-                    }
-                }
-                doRedraw();
-            }
-        });
+    private final Redrawer redrawer;
 
     /// The Class ManagedLine.
     ///
@@ -81,37 +69,45 @@ public final class SplitConsole implements AutoCloseable {
     ///
     /// @return the split console
     ///
-    @SuppressWarnings("PMD.AvoidSynchronizedStatement")
+    @SuppressWarnings({ "PMD.AvoidLiteralsInIfCondition" })
     public static SplitConsole open() {
-        synchronized (SplitConsole.class) {
-            if (instance == null) {
+        synchronized (openCount) {
+            if (openCount.incrementAndGet() == 1) {
                 instance = new SplitConsole();
             }
+            return instance;
         }
-        openCount += 1;
-        return instance;
     }
 
     /// Initializes a new split console.
     ///
-    @SuppressWarnings("PMD.ForLoopCanBeForeach")
+    @SuppressWarnings({ "PMD.ForLoopCanBeForeach" })
     private SplitConsole() {
+        logger.atFine().log("Initializing split console");
         realOut = System.out;
 
         this.term = new TerminalInfo();
         if (!term.supportsAnsi()) {
+            logger.atFine().log("No ANSI terminal support, using plain output");
+            redrawer = null;
             splitOut = realOut;
             splitErr = realOut;
             return;
         }
 
-        recomputeLayout(term.lines() * 1 / 3);
-        for (int i = 0; i < managedLines.size(); i++) {
-            realOut.println();
+        logger.atFine().log("Using ANSI terminal support for split console");
+        synchronized (managedLines) {
+            recomputeLayout(term.lines() * 1 / 3);
+            synchronized (realOut) {
+                for (int i = 0; i < managedLines.size(); i++) {
+                    realOut.println();
+                }
+                realOut.print(Ansi.cursorUp(managedLines.size()));
+                realOut.flush();
+            }
         }
-        realOut.print(Ansi.cursorUp(managedLines.size()));
-        realOut.flush();
-        redraw();
+        redrawer = new Redrawer();
+        redrawStatus();
         splitOut = new PrintStream(new StreamWrapper(null), true,
             Charset.defaultCharset());
         splitErr = new PrintStream(new StreamWrapper(Ansi.Color.Red), true,
@@ -128,22 +124,23 @@ public final class SplitConsole implements AutoCloseable {
 
     /// Allocate a line for outputs from the current thread. 
     ///
-    @SuppressWarnings({ "PMD.AvoidSynchronizedAtMethodLevel",
-        "PMD.AvoidDuplicateLiterals" })
-    private synchronized void allocateLine() {
+    private void allocateLine() {
         Thread thread = Thread.currentThread();
-        if (managedLine(thread) != null || offScreenLines.containsKey(thread)) {
-            return;
-        }
+        synchronized (managedLines) {
+            if (managedLine(thread) != null
+                || offScreenLines.containsKey(thread)) {
+                return;
+            }
 
-        // Find free and allocate or use overflow
-        IntStream.range(0, managedLines.size())
-            .filter(i -> managedLines.get(i).thread == null).findFirst()
-            .ifPresentOrElse(i -> {
-                initManaged(i, thread, "");
-            }, () -> {
-                offScreenLines.put(thread, "");
-            });
+            // Find free and allocate or use overflow
+            IntStream.range(0, managedLines.size())
+                .filter(i -> managedLines.get(i).thread == null).findFirst()
+                .ifPresentOrElse(i -> {
+                    initManaged(i, thread, "");
+                }, () -> {
+                    offScreenLines.put(thread, "");
+                });
+        }
     }
 
     private void initManaged(int index, Thread thread, String text) {
@@ -154,29 +151,30 @@ public final class SplitConsole implements AutoCloseable {
 
     /// Deallocate the line for outputs from the current thread.
     ///
-    @SuppressWarnings("PMD.AvoidSynchronizedAtMethodLevel")
-    private synchronized void deallocateLine() {
+    private void deallocateLine() {
         Thread thread = Thread.currentThread();
-        var line = managedLine(thread);
-        if (line != null) {
-            line.thread = null;
-            line.text = "";
-            promoteOffScreenLines();
-            redraw();
-        } else {
-            offScreenLines.remove(thread);
+        synchronized (managedLines) {
+            var line = managedLine(thread);
+            if (line != null) {
+                line.thread = null;
+                line.text = "";
+                promoteOffScreenLines();
+                redrawStatus();
+            } else {
+                offScreenLines.remove(thread);
+            }
         }
     }
 
-    @SuppressWarnings("PMD.AvoidSynchronizedAtMethodLevel")
-    private synchronized void recomputeLayout(int managedHeight) {
+    private void recomputeLayout(int managedHeight) {
         while (managedLines.size() > managedHeight) {
             if (managedLines.get(managedLines.size() - 1).thread == null) {
                 managedLines.remove(managedLines.size() - 1);
                 break;
             }
             int freeSlot;
-            for (freeSlot = 0; freeSlot < managedLines.size() - 1; freeSlot++) {
+            for (freeSlot = 0; freeSlot < managedLines.size() - 1;
+                    freeSlot++) {
                 if (managedLines.get(freeSlot).thread == null) {
                     break;
                 }
@@ -228,20 +226,21 @@ public final class SplitConsole implements AutoCloseable {
     ///
     /// @param text the text
     ///
-    @SuppressWarnings("PMD.AvoidSynchronizedAtMethodLevel")
-    private synchronized void updateStatus(String text, Object... args) {
+    private void updateStatus(String text, Object... args) {
         Thread thread = Thread.currentThread();
-        var line = managedLine(thread);
+        synchronized (managedLines) {
+            var line = managedLine(thread);
 
-        if (line != null) {
-            if (args.length > 0) {
-                line.text = String.format(text, args);
-            } else {
-                line.text = text;
+            if (line != null) {
+                if (args.length > 0) {
+                    line.text = String.format(text, args);
+                } else {
+                    line.text = text;
+                }
+                redrawStatus();
+            } else if (offScreenLines.containsKey(thread)) {
+                offScreenLines.put(thread, text);
             }
-            redraw();
-        } else if (offScreenLines.containsKey(thread)) {
-            offScreenLines.put(thread, text);
         }
     }
 
@@ -249,64 +248,66 @@ public final class SplitConsole implements AutoCloseable {
     ///
     /// @param text the text
     ///
-    @SuppressWarnings({ "PMD.AvoidSynchronizedAtMethodLevel",
-        "PMD.AvoidLiteralsInIfCondition" })
-    private synchronized void write(byte[] text, int offset, int length,
-            byte[] markup) {
-        if (incompleteLine.length > 0) {
-            // Prepend left over text and try again
-            byte[] prepended = new byte[incompleteLine.length + length];
-            System.arraycopy(
-                incompleteLine, 0, prepended, 0, incompleteLine.length);
-            System.arraycopy(
-                text, offset, prepended, incompleteLine.length, length);
-            incompleteLine = new byte[0];
-            write(prepended, markup);
-            return;
-        }
-
-        // Write line(s)
-        realOut.print(Ansi.cursorToSol() + Ansi.clearLine());
-        int end = offset + length;
-        for (int i = offset; i < end; i++) {
-            if (text[i] == '\n') {
-                // Write line including newline, moves cursor to next line
-                writeMarkedup(realOut, text, offset, i - offset + 1, markup);
-                offset = i + 1;
-                // Clear left over text from status line
-                realOut.print(Ansi.clearLine());
+    @SuppressWarnings({ "PMD.AvoidLiteralsInIfCondition" })
+    private void write(byte[] text, int offset, int length, byte[] markup) {
+        synchronized (realOut) {
+            if (incompleteLine.length > 0) {
+                // Prepend left over text and try again
+                byte[] prepended = new byte[incompleteLine.length + length];
+                System.arraycopy(
+                    incompleteLine, 0, prepended, 0, incompleteLine.length);
+                System.arraycopy(
+                    text, offset, prepended, incompleteLine.length, length);
+                incompleteLine = new byte[0];
+                write(prepended, markup);
+                return;
             }
-            if (i - offset >= term.columns()) {
-                // Write line up to here
-                writeMarkedup(realOut, text, offset, i - offset, markup);
-                offset = i;
-                // Write newline an clear left over text from status line
-                realOut.print("\n" + Ansi.clearLine());
+
+            // Write line(s)
+            realOut.print(Ansi.cursorToSol() + Ansi.clearLine());
+            int end = offset + length;
+            for (int i = offset; i < end; i++) {
+                if (text[i] == '\n') {
+                    // Write line including newline, moves cursor to next line
+                    writeMarkedup(realOut, text, offset, i - offset + 1,
+                        markup);
+                    offset = i + 1;
+                    // Clear left over text from status line
+                    realOut.print(Ansi.clearLine());
+                }
+                if (i - offset >= term.columns()) {
+                    // Write line up to here
+                    writeMarkedup(realOut, text, offset, i - offset, markup);
+                    offset = i;
+                    // Write newline an clear left over text from status line
+                    realOut.print("\n" + Ansi.clearLine());
+                }
+            }
+            incompleteLine = new byte[end - offset];
+            System.arraycopy(text, offset, incompleteLine, 0, end - offset);
+            if (incompleteLine.length > 0) {
+                // Show incomplete line, will be overwritten by next write
+                realOut.write(incompleteLine, 0, incompleteLine.length);
+            }
+            realOut.flush();
+        }
+        synchronized (managedLines) {
+            // Redraw all
+            for (var line : managedLines) {
+                line.lastRendered = null;
             }
         }
-        incompleteLine = new byte[end - offset];
-        System.arraycopy(text, offset, incompleteLine, 0, end - offset);
-        if (incompleteLine.length > 0) {
-            // Show incomplete line, will be overwritten by next write
-            realOut.write(incompleteLine, 0, incompleteLine.length);
-        }
-        realOut.flush();
-
-        // Redraw all
-        for (var line : managedLines) {
-            line.lastRendered = null;
-        }
-        redraw();
+        redrawStatus();
     }
 
-    @SuppressWarnings("PMD.AvoidSynchronizedAtMethodLevel")
-    private synchronized void write(byte[] text, byte[] markup) {
+    private void write(byte[] text, byte[] markup) {
         write(text, 0, text.length, markup);
     }
 
     @SuppressWarnings("PMD.RelianceOnDefaultCharset")
     private void writeMarkedup(PrintStream out, byte[] chars, int off, int len,
             byte[] markup) {
+        // Only called by write, already synchronized
         if (markup == null) {
             out.write(chars, off, len);
             return;
@@ -317,37 +318,93 @@ public final class SplitConsole implements AutoCloseable {
             Ansi.resetAttributes().length());
     }
 
-    @SuppressWarnings("PMD.AvoidSynchronizedStatement")
-    private void redraw() {
+    private void redrawStatus() {
         if (!term.supportsAnsi()) {
             return;
         }
-        synchronized (startRedraw) {
-            startRedraw.set(true);
-            startRedraw.notifyAll();
+        if (redrawer != null) {
+            redrawer.triggerRedraw();
         }
     }
 
-    @SuppressWarnings({ "PMD.AvoidSynchronizedAtMethodLevel",
-        "PMD.ForLoopCanBeForeach" })
-    private synchronized void doRedraw() {
-        realOut.print(Ansi.hideCursor());
-        for (int i = 0; i < managedLines.size(); i++) {
-            realOut.println();
-            ManagedLine line = managedLines.get(i);
-            if (!Objects.equals(line.text, line.lastRendered)) {
-                realOut.print(Ansi.cursorToSol() + Ansi.clearLine()
-                    + line.text.substring(0,
-                        Math.min(line.text.length(), term.columns())));
-                line.lastRendered = line.text;
+    /// Redraws the status lines.
+    /// 
+    private final class Redrawer implements Runnable {
+        private final AtomicBoolean running = new AtomicBoolean(true);
+        private final AtomicBoolean redraw = new AtomicBoolean(false);
+        private final Thread thread;
+
+        private Redrawer() {
+            thread = Thread.ofVirtual().name("Split console redrawer")
+                .start(this);
+        }
+
+        @Override
+        public void run() {
+            while (true) {
+                synchronized (this) {
+                    if (!running.get()) {
+                        break;
+                    }
+                    if (!redraw.get()) {
+                        try {
+                            wait();
+                        } catch (InterruptedException e) {
+                            break;
+                        }
+                    }
+                    redraw.set(false);
+                }
+                doRedraw();
             }
         }
-        realOut.print(Ansi.cursorUp(managedLines.size()) + Ansi.cursorToSol()
-            + Ansi.showCursor());
-        if (incompleteLine.length > 0) {
-            realOut.write(incompleteLine, 0, incompleteLine.length);
+
+        private void triggerRedraw() {
+            synchronized (this) {
+                redraw.set(true);
+                notifyAll();
+            }
         }
-        realOut.flush();
+
+        @SuppressWarnings({ "PMD.EmptyCatchBlock" })
+        private void stop() {
+            synchronized (this) {
+                logger.atFine().log("Stopping redrawer");
+                running.set(false);
+                notifyAll();
+            }
+            try {
+                thread.join();
+                logger.atFine().log("Redrawer stopped");
+            } catch (InterruptedException e) {
+                // Ignore
+            }
+        }
+    }
+
+    @SuppressWarnings({ "PMD.ForLoopCanBeForeach" })
+    private void doRedraw() {
+        synchronized (managedLines) {
+            synchronized (realOut) {
+                realOut.print(Ansi.hideCursor());
+                for (int i = 0; i < managedLines.size(); i++) {
+                    realOut.println();
+                    ManagedLine line = managedLines.get(i);
+                    if (!Objects.equals(line.text, line.lastRendered)) {
+                        realOut.print(Ansi.cursorToSol() + Ansi.clearLine()
+                            + line.text.substring(0,
+                                Math.min(line.text.length(), term.columns())));
+                        line.lastRendered = line.text;
+                    }
+                }
+                realOut.print(Ansi.cursorUp(managedLines.size())
+                    + Ansi.cursorToSol() + Ansi.showCursor());
+                if (incompleteLine.length > 0) {
+                    realOut.write(incompleteLine, 0, incompleteLine.length);
+                }
+                realOut.flush();
+            }
+        }
     }
 
     /// Writes the bytes to the scrollable part of the console.
@@ -370,19 +427,19 @@ public final class SplitConsole implements AutoCloseable {
     ///
     @Override
     public void close() {
-        redrawThread.interrupt();
-        try {
-            redrawThread.join();
-        } catch (InterruptedException e) { // NOPMD
-            // Ignore, really
+        synchronized (openCount) {
+            if (openCount.get() == 0) {
+                return;
+            }
+            if (openCount.decrementAndGet() == 0) {
+                instance = null;
+                logger.atFine().log("Closing split console");
+                if (redrawer != null) {
+                    redrawer.stop();
+                    System.setOut(realOut);
+                }
+            }
         }
-        openCount -= 1;
-        if (openCount > 0 || !term.supportsAnsi()) {
-            return;
-        }
-        realOut.print(Ansi.showCursor());
-        System.setOut(realOut);
-        instance = null;
     }
 
     /// Allocates a line for outputs from the current thread.
@@ -405,11 +462,21 @@ public final class SplitConsole implements AutoCloseable {
             allocateLine();
         }
 
+        /// Update.
+        ///
+        /// @param text the text
+        /// @param args the args
+        ///
         @Override
         public void update(String text, Object... args) {
             updateStatus(text, args);
         }
 
+        /// Writer.
+        ///
+        /// @param prefix the prefix
+        /// @return the prints the writer
+        ///
         @Override
         public PrintWriter writer(String prefix) {
             if (asWriter == null) {
@@ -465,12 +532,24 @@ public final class SplitConsole implements AutoCloseable {
                 .map(String::getBytes).orElse(null);
         }
 
+        /// Write.
+        ///
+        /// @param ch the ch
+        /// @throws IOException Signals that an I/O exception has occurred.
+        ///
         @Override
         @SuppressWarnings("PMD.ShortVariable")
         public void write(int ch) throws IOException {
             SplitConsole.this.write(new byte[] { (byte) ch }, 0, 1, markup);
         }
 
+        /// Write.
+        ///
+        /// @param ch the ch
+        /// @param off the off
+        /// @param len the len
+        /// @throws IOException Signals that an I/O exception has occurred.
+        ///
         @Override
         @SuppressWarnings("PMD.ShortVariable")
         public void write(byte[] ch, int off, int len) throws IOException {
