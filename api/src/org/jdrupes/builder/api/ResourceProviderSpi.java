@@ -31,13 +31,24 @@ public interface ResourceProviderSpi {
     /// [BuildContext#resources].
     /// 
     /// When properly invoked through [BuildContext#resources], this
-    /// method is never invoked concurrently for the same request.
-    /// It may, however, be invoked concurrently for different requests.
-    /// Providers that evaluate all possibly provided resources anyway
-    /// and return only a subset for some kinds of request should
-    /// therefore invoke themselves (through [BuildContext#resources])
-    /// with a request for all resources and filter the (automatically
-    /// cached) result.
+    /// method is never invoked twice for the same request (unless there
+    /// has been a request for [Cleanliness] in between). The method
+    /// may, however, be invoked concurrently for different requests.
+    /// 
+    /// Providers that evaluate all potentially provided resources anyway
+    /// and return only a subset for some actually requested
+    /// [ResourceType]s should therefore invoke themselves through
+    /// [ResourceProvider#resources] with a request for all resources and
+    /// filter the (automatically cached) result.
+    /// 
+    /// Special care must be taken when handling resource type hierarchies.
+    /// If [ResourceType] B extends ResourceType A and the provider
+    /// provides ResourceType B, it must also provide its resources
+    /// in response to a request for ResourceType A. However, the caching
+    /// mechanism is unaware of relationships between resource types.
+    /// Requests for A and B are therefore forwarded independently.
+    /// To avoid duplicate evaluation, the provider must map a request
+    /// for A to a request for B (via [ResourceProvider#resources]).   
     ///
     /// @param <T> the type of the requested (and provided) resource
     /// @param requested the requested resources

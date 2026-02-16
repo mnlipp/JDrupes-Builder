@@ -187,6 +187,14 @@ public class JavaCompiler extends JavaTool {
             return Stream.empty();
         }
 
+        // Evaluate for most special type
+        if (requested.accepts(ClassTreeType)
+            && !requested.type().equals(ClassTreeType)) {
+            @SuppressWarnings("unchecked")
+            var result = (Stream<T>) resources(of(ClassTreeType));
+            return result;
+        }
+
         // Get classpath for compilation. Filter myself, in case the
         // compilation result is consumed by the project.
         var cpResources = newResource(ClasspathType).addAll(

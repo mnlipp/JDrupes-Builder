@@ -157,13 +157,18 @@ public class PomFileGenerator extends AbstractGenerator {
         if (cleanup(requested, pomPath)) {
             return Stream.empty();
         }
-
         if (requested.accepts(MvnRepoDependencyType)) {
             return generateRepoDependency(requested);
         }
-
         if (!requested.accepts(PomFileType)) {
             return Stream.empty();
+        }
+
+        // Always provide special type
+        if (!requested.type().equals(PomFileType)) {
+            @SuppressWarnings("unchecked")
+            var result = (Stream<T>) resources(of(PomFileType));
+            return result;
         }
 
         pomPath.getParent().toFile().mkdirs();
