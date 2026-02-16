@@ -61,6 +61,7 @@ import org.junit.platform.launcher.core.LauncherFactory;
 import org.junit.platform.launcher.listeners.LoggingListener;
 import org.junit.platform.launcher.listeners.SummaryGeneratingListener;
 
+// TODO: Auto-generated Javadoc
 /// A [Generator] for [TestResult]s using the JUnit platform. The runner
 /// assumes that it is configured as [Generator] for a test project. 
 /// The class path for running the tests is build as follows:
@@ -106,6 +107,7 @@ public class JUnitTestRunner extends AbstractGenerator {
 
     private static final FluentLogger logger = FluentLogger.forEnclosingClass();
     private boolean ignoreFailed;
+    private Object syncObject;
 
     /// Initializes a new test runner.
     ///
@@ -125,7 +127,23 @@ public class JUnitTestRunner extends AbstractGenerator {
         return this;
     }
 
+    /// By default, [JUnitTestRunner]s run independently of each other.
+    /// Because they run in the VM, this can cause concurrency issues if
+    /// components in different test projects share static resources.
+    /// 
+    /// By invoking this method, [JUnitTestRunner]s with the same
+    /// [syncObject] are synchronized, i.e. run in sequence.
+    ///
+    /// @param syncObject the sync object
+    /// @return the j unit test runner
+    ///
+    public JUnitTestRunner syncOn(Object syncObject) {
+        this.syncObject = syncObject;
+        return this;
+    }
+
     @Override
+    @SuppressWarnings({ "PMD.AvoidSynchronizedStatement", "PMD.NcssCount" })
     protected <T extends Resource> Stream<T>
             doProvide(ResourceRequest<T> requested) {
         if (!requested.accepts(new ResourceType<TestResult>() {})) {
@@ -179,7 +197,13 @@ public class JUnitTestRunner extends AbstractGenerator {
                 testListener);
             logger.atInfo().log("Running tests in project %s",
                 project().name());
-            launcher.execute(request);
+            if (syncObject != null) {
+                synchronized (syncObject) {
+                    launcher.execute(request);
+                }
+            } else {
+                launcher.execute(request);
+            }
 
             // Evaluate results
             var summary = summaryListener.getSummary();
