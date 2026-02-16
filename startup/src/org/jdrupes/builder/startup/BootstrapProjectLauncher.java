@@ -40,7 +40,7 @@ import org.jdrupes.builder.api.Launcher;
 import org.jdrupes.builder.api.Project;
 import org.jdrupes.builder.api.RootProject;
 import org.jdrupes.builder.core.AbstractRootProject;
-import org.jdrupes.builder.core.LauncherSupport;
+import org.jdrupes.builder.core.DefaultBuildContext;
 import org.jdrupes.builder.java.ClasspathElement;
 import org.jdrupes.builder.java.JavaCompiler;
 import org.jdrupes.builder.mvnrepo.MvnRepoLookup;
@@ -86,7 +86,7 @@ public class BootstrapProjectLauncher extends AbstractLauncher {
         addCliProperties(jdbldProps, commandLine);
         configureLogging(buildRootDirectory, jdbldProps);
 
-        bootstrapProject = LauncherSupport.createProjects(
+        bootstrapProject = DefaultBuildContext.createProjects(
             buildRootDirectory, rootPrjCls, Collections.emptyList(), jdbldProps,
             commandLine);
     }

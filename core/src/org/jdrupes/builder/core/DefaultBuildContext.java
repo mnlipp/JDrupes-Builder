@@ -22,6 +22,7 @@ import java.io.PrintStream;
 import java.nio.file.Path;
 import java.util.Arrays;
 import java.util.EnumSet;
+import java.util.List;
 import java.util.Optional;
 import java.util.Properties;
 import java.util.concurrent.ExecutorService;
@@ -35,6 +36,7 @@ import org.jdrupes.builder.api.Project;
 import org.jdrupes.builder.api.Resource;
 import org.jdrupes.builder.api.ResourceProvider;
 import org.jdrupes.builder.api.ResourceRequest;
+import org.jdrupes.builder.api.RootProject;
 import org.jdrupes.builder.api.StatusLine;
 import org.jdrupes.builder.core.FutureStreamCache.Key;
 import org.jdrupes.builder.core.console.SplitConsole;
@@ -171,5 +173,39 @@ public class DefaultBuildContext implements BuildContext {
     public void close() {
         executor.shutdownNow();
         console.close();
+    }
+
+    /// Creates and initializes the root project and the sub projects.
+    /// Adds the sub projects to the root project automatically. This
+    /// method should be used if the launcher detects the sub projects
+    /// e.g. by reflection and the root project does not add its sub
+    /// projects itself.
+    ///
+    /// @param buildRoot the build root
+    /// @param rootProject the root project
+    /// @param subprojects the sub projects
+    /// @param jdbldProps the builder properties
+    /// @param commandLine the command line
+    /// @return the root project
+    ///
+    public static AbstractRootProject createProjects(
+            Path buildRoot, Class<? extends RootProject> rootProject,
+            List<Class<? extends Project>> subprojects,
+            Properties jdbldProps, CommandLine commandLine) {
+        try {
+            return ScopedValue
+                .where(scopedBuildContext,
+                    new DefaultBuildContext(buildRoot, jdbldProps, commandLine))
+                .call(() -> {
+                    var result = (AbstractRootProject) rootProject
+                        .getConstructor().newInstance();
+                    subprojects.forEach(result::project);
+                    return result;
+    
+                });
+        } catch (SecurityException | NegativeArraySizeException
+                | IllegalArgumentException | ReflectiveOperationException e) {
+            throw new IllegalArgumentException(e);
+        }
     }
 }

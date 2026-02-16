@@ -53,7 +53,7 @@ import org.jdrupes.builder.api.ResourceFactory;
 import org.jdrupes.builder.api.RootProject;
 import org.jdrupes.builder.api.UnavailableException;
 import org.jdrupes.builder.core.AbstractRootProject;
-import org.jdrupes.builder.core.LauncherSupport;
+import org.jdrupes.builder.core.DefaultBuildContext;
 import org.jdrupes.builder.java.JarFile;
 import static org.jdrupes.builder.java.JavaTypes.*;
 
@@ -102,7 +102,7 @@ public class BuildProjectLauncher extends AbstractLauncher
         var rootProjects = new ArrayList<Class<? extends RootProject>>();
         var subprojects = new ArrayList<Class<? extends Project>>();
         findProjects(extClsLdr, rootProjects, subprojects);
-        rootProject = LauncherSupport.createProjects(buildRoot,
+        rootProject = DefaultBuildContext.createProjects(buildRoot,
             rootProjects.get(0), subprojects, jdbldProps, commandLine);
     }
 
