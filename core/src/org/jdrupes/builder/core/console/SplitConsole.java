@@ -38,7 +38,7 @@ import org.jdrupes.builder.api.StatusLine;
 
 /// Provides a split console using ANSI escape sequences.
 ///
-@SuppressWarnings("PMD.AvoidSynchronizedStatement")
+@SuppressWarnings({ "PMD.AvoidSynchronizedStatement", "PMD.GodClass" })
 public final class SplitConsole implements AutoCloseable {
 
     private static final FluentLogger logger = FluentLogger.forEnclosingClass();
@@ -116,18 +116,22 @@ public final class SplitConsole implements AutoCloseable {
         System.setErr(splitErr);
     }
 
-    private ManagedLine managedLine(Thread thread) {
+    private Optional<ManagedLine> managedLine(Thread thread) {
+        Objects.nonNull(thread);
         return managedLines.stream()
             .filter(l -> Objects.equals(l.thread, thread))
-            .findFirst().orElse(null);
+            .findFirst();
     }
 
     /// Allocate a line for outputs from the current thread. 
     ///
     private void allocateLine() {
+        if (openCount.get() == 0) {
+            return;
+        }
         Thread thread = Thread.currentThread();
         synchronized (managedLines) {
-            if (managedLine(thread) != null
+            if (managedLine(thread).isPresent()
                 || offScreenLines.containsKey(thread)) {
                 return;
             }
@@ -147,6 +151,7 @@ public final class SplitConsole implements AutoCloseable {
         var line = managedLines.get(index);
         line.thread = thread;
         line.text = text;
+        line.lastRendered = null;
     }
 
     /// Deallocate the line for outputs from the current thread.
@@ -154,15 +159,12 @@ public final class SplitConsole implements AutoCloseable {
     private void deallocateLine() {
         Thread thread = Thread.currentThread();
         synchronized (managedLines) {
-            var line = managedLine(thread);
-            if (line != null) {
+            managedLine(thread).ifPresentOrElse(line -> {
                 line.thread = null;
                 line.text = "";
                 promoteOffScreenLines();
                 redrawStatus();
-            } else {
-                offScreenLines.remove(thread);
-            }
+            }, () -> offScreenLines.remove(thread));
         }
     }
 
@@ -203,23 +205,13 @@ public final class SplitConsole implements AutoCloseable {
                 break;
             }
             if (managedLines.get(i).thread == null) {
-                shiftManaged(i);
-                var offLine = offScreenLines.entrySet().iterator().next();
-                initManaged(managedLines.size() - 1, offLine.getKey(),
-                    offLine.getValue());
-                offScreenLines.remove(offLine.getKey());
+                // shiftManaged(i);
+                var offLineIter = offScreenLines.entrySet().iterator();
+                var offLine = offLineIter.next();
+                initManaged(i, offLine.getKey(), offLine.getValue());
+                offLineIter.remove();
             }
         }
-    }
-
-    private void shiftManaged(int index) {
-        var lastManaged = managedLines.size() - 1;
-        for (int i = index; i < lastManaged; i++) {
-            var toMove = managedLines.get(i + 1);
-            managedLines.set(i, toMove);
-            toMove.lastRendered = null;
-        }
-        managedLines.set(lastManaged, new ManagedLine());
     }
 
     /// Update the line for outputs from the current thread.
@@ -229,18 +221,18 @@ public final class SplitConsole implements AutoCloseable {
     private void updateStatus(String text, Object... args) {
         Thread thread = Thread.currentThread();
         synchronized (managedLines) {
-            var line = managedLine(thread);
-
-            if (line != null) {
+            managedLine(thread).ifPresentOrElse(line -> {
                 if (args.length > 0) {
                     line.text = String.format(text, args);
                 } else {
                     line.text = text;
                 }
+                logger.atFinest().log(
+                    "Updated status for %s: %s", line.thread, line.text);
                 redrawStatus();
-            } else if (offScreenLines.containsKey(thread)) {
+            }, () -> {
                 offScreenLines.put(thread, text);
-            }
+            });
         }
     }
 
@@ -291,13 +283,7 @@ public final class SplitConsole implements AutoCloseable {
             }
             realOut.flush();
         }
-        synchronized (managedLines) {
-            // Redraw all
-            for (var line : managedLines) {
-                line.lastRendered = null;
-            }
-        }
-        redrawStatus();
+        redrawStatus(true);
     }
 
     private void write(byte[] text, byte[] markup) {
@@ -319,11 +305,15 @@ public final class SplitConsole implements AutoCloseable {
     }
 
     private void redrawStatus() {
+        redrawStatus(false);
+    }
+
+    private void redrawStatus(boolean force) {
         if (!term.supportsAnsi()) {
             return;
         }
         if (redrawer != null) {
-            redrawer.triggerRedraw();
+            redrawer.triggerRedraw(force);
         }
     }
 
@@ -332,6 +322,7 @@ public final class SplitConsole implements AutoCloseable {
     private final class Redrawer implements Runnable {
         private final AtomicBoolean running = new AtomicBoolean(true);
         private final AtomicBoolean redraw = new AtomicBoolean(false);
+        private final AtomicBoolean force = new AtomicBoolean(false);
         private final Thread thread;
 
         private Redrawer() {
@@ -355,13 +346,18 @@ public final class SplitConsole implements AutoCloseable {
                     }
                     redraw.set(false);
                 }
-                doRedraw();
+                if (openCount.get() > 0) {
+                    doRedraw(force.getAndSet(false));
+                }
             }
         }
 
-        private void triggerRedraw() {
+        private void triggerRedraw(boolean force) {
             synchronized (this) {
                 redraw.set(true);
+                if (force) {
+                    this.force.set(true);
+                }
                 notifyAll();
             }
         }
@@ -383,19 +379,23 @@ public final class SplitConsole implements AutoCloseable {
     }
 
     @SuppressWarnings({ "PMD.ForLoopCanBeForeach" })
-    private void doRedraw() {
+    private void doRedraw(boolean force) {
         synchronized (managedLines) {
             synchronized (realOut) {
                 realOut.print(Ansi.hideCursor());
                 for (int i = 0; i < managedLines.size(); i++) {
                     realOut.println();
                     ManagedLine line = managedLines.get(i);
-                    if (!Objects.equals(line.text, line.lastRendered)) {
-                        realOut.print(Ansi.cursorToSol() + Ansi.clearLine()
-                            + line.text.substring(0,
-                                Math.min(line.text.length(), term.columns())));
-                        line.lastRendered = line.text;
+                    if (!force
+                        && Objects.equals(line.text, line.lastRendered)) {
+                        continue;
                     }
+                    realOut.print(Ansi.cursorToSol() + Ansi.clearLine());
+                    if (openCount.get() > 0) {
+                        realOut.print("> " + line.text.substring(0,
+                            Math.min(line.text.length(), term.columns() - 2)));
+                    }
+                    line.lastRendered = line.text;
                 }
                 realOut.print(Ansi.cursorUp(managedLines.size())
                     + Ansi.cursorToSol() + Ansi.showCursor());
@@ -431,14 +431,29 @@ public final class SplitConsole implements AutoCloseable {
             if (openCount.get() == 0) {
                 return;
             }
-            if (openCount.decrementAndGet() == 0) {
-                instance = null;
-                logger.atFine().log("Closing split console");
-                if (redrawer != null) {
-                    redrawer.stop();
-                    System.setOut(realOut);
-                }
+            if (openCount.decrementAndGet() > 0) {
+                return;
             }
+
+            // Don't use this anymore
+            instance = null;
+
+            // Cleanup
+            logger.atFine().log("Closing split console");
+            if (redrawer != null) {
+                redrawer.stop();
+                synchronized (managedLines) {
+                    for (var line : managedLines) {
+                        line.thread = null;
+                        line.text = "";
+                        line.lastRendered = null;
+                    }
+                    offScreenLines.clear();
+                }
+                doRedraw(true);
+            }
+            System.setOut(realOut);
+            logger.atFine().log("Split console closed");
         }
     }
 
