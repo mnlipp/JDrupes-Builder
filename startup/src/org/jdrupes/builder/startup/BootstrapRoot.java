@@ -20,13 +20,11 @@ package org.jdrupes.builder.startup;
 
 import static org.jdrupes.builder.api.Intent.*;
 import org.jdrupes.builder.api.Masked;
-import org.jdrupes.builder.api.RootProject;
-import org.jdrupes.builder.core.AbstractProject;
+import org.jdrupes.builder.core.AbstractRootProject;
 
 /// The built-in root project associated with the root directory.
 ///
-public class BootstrapRoot extends AbstractProject
-        implements RootProject, Masked {
+public class BootstrapRoot extends AbstractRootProject implements Masked {
 
     /// Instantiates a new bootstrap root.
     ///

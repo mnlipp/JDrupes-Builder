@@ -17,6 +17,7 @@ import org.jdrupes.builder.java.JarFile;
 import org.jdrupes.builder.mvnrepo.PomFile;
 import static org.junit.jupiter.api.Assertions.*;
 import org.jdrupes.builder.startup.BuildProjectLauncher;
+import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.w3c.dom.Document;
@@ -35,6 +36,11 @@ class LibrariesTests {
             new String[0]);
         launcher.resources(launcher.rootProject().projects("**"),
             launcher.rootProject().of(Cleanliness.class).usingAll());
+    }
+
+    @AfterAll
+    public static void cleanUp() throws Exception {
+        launcher.close();
     }
 
     @Test

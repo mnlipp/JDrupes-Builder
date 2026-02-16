@@ -18,6 +18,7 @@
 
 package org.jdrupes.builder.api;
 
+import java.io.IOException;
 import java.util.stream.Stream;
 
 /// Defines the methods provided by a launcher.
@@ -39,4 +40,10 @@ public interface Launcher extends AutoCloseable {
     /// @return the root project
     ///
     RootProject rootProject();
+
+    /// Close the launcher. The re-declaration of this method removes
+    /// the [IOException], which is never thrown.
+    ///
+    @Override
+    void close();
 }

@@ -23,8 +23,10 @@ import java.nio.file.Path;
 import java.util.Arrays;
 import java.util.EnumSet;
 import java.util.Optional;
+import java.util.Properties;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.function.Supplier;
 import java.util.stream.Stream;
 import org.apache.commons.cli.CommandLine;
 import org.jdrupes.builder.api.BuildContext;
@@ -46,12 +48,22 @@ public class DefaultBuildContext implements BuildContext {
     private final FutureStreamCache cache;
     private ExecutorService executor
         = Executors.newVirtualThreadPerTaskExecutor();
+    private final Path buildRoot;
+    private final Properties jdbldProperties;
+    private final CommandLine commandLine;
     private final SplitConsole console;
+    @SuppressWarnings("PMD.FieldNamingConventions")
+    /* default */ static final ScopedValue<
+            DefaultBuildContext> scopedBuildContext = ScopedValue.newInstance();
 
     /// Instantiates a new default build. By default, the build uses
     /// a virtual thread per task executor.
     ///
-    /* default */ DefaultBuildContext() {
+    /* default */ DefaultBuildContext(Path buildRoot,
+            Properties jdbldProperties, CommandLine commandLine) {
+        this.buildRoot = buildRoot;
+        this.jdbldProperties = jdbldProperties;
+        this.commandLine = commandLine;
         cache = new FutureStreamCache();
         console = SplitConsole.open();
     }
@@ -70,6 +82,24 @@ public class DefaultBuildContext implements BuildContext {
     ///
     public void executor(ExecutorService executor) {
         this.executor = executor;
+    }
+
+    /// Returns the build root.
+    ///
+    /// @return the path
+    ///
+    public Path buildRoot() {
+        return buildRoot;
+    }
+
+    /// Call within this context. 
+    ///
+    /// @param <T> the generic type
+    /// @param supplier the supplier
+    /// @return the t
+    ///
+    public <T> T call(Supplier<T> supplier) {
+        return ScopedValue.where(scopedBuildContext, this).call(supplier::get);
     }
 
     /* default */ SplitConsole console() {
@@ -103,13 +133,13 @@ public class DefaultBuildContext implements BuildContext {
                 return Stream.empty();
             }
             // Log invocation
-            requested = defReq.queried(project);
+            var req = defReq.queried(project);
             // As a project's provide only delegates to other providers
             // it is inefficient to invoke it asynchronously. Besides, it
             // leads to recursive invocations of the project's deploy
             // method too easily and results in a loop detection without
             // there really being a loop.
-            return ((AbstractProvider) provider).doProvide(requested);
+            return call(() -> ((AbstractProvider) provider).doProvide(req));
         }
         var req = requested;
         if (!req.uses().isEmpty()) {
@@ -123,17 +153,17 @@ public class DefaultBuildContext implements BuildContext {
     @Override
     public Path jdbldDirectory() {
         return Path
-            .of(LauncherSupport.jdbldProperties().getProperty(JDBLD_DIRECTORY));
+            .of(jdbldProperties.getProperty(JDBLD_DIRECTORY));
     }
 
     @Override
     public CommandLine commandLine() {
-        return LauncherSupport.commandLine();
+        return commandLine;
     }
 
     @Override
     public String property(String name, String defaultValue) {
-        return LauncherSupport.jdbldProperties().getProperty(name,
+        return jdbldProperties.getProperty(name,
             defaultValue);
     }
 

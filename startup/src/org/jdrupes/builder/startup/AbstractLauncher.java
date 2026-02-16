@@ -228,8 +228,9 @@ public abstract class AbstractLauncher implements Launcher {
     public <T extends Resource> Stream<T> resources(Stream<Project> projects,
             ResourceRequest<T> request) {
         return reportBuildException(
-            () -> projects.map(p -> p.resources(request)).flatMap(r -> r)
-                .toList().stream());
+            () -> ((DefaultBuildContext) rootProject().context()).call(
+                () -> projects.map(p -> p.resources(request)).flatMap(r -> r)
+                    .toList().stream()));
     }
 
     /// A utility method for reliably reporting problems as [BuildException]s.

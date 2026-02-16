@@ -11,17 +11,15 @@ import org.apache.maven.model.Developer;
 import org.apache.maven.model.License;
 import org.apache.maven.model.Scm;
 import org.eclipse.jgit.api.Git;
-
 import static jdbld.ExtProps.GitApi;
 import static org.jdrupes.builder.api.Intent.*;
 import static org.jdrupes.builder.api.Project.Properties.Version;
-
 import org.jdrupes.builder.api.BuildException;
 import org.jdrupes.builder.api.MergedTestProject;
 import org.jdrupes.builder.api.Project;
 import org.jdrupes.builder.api.RootProject;
 import org.jdrupes.builder.api.TestResult;
-import org.jdrupes.builder.core.AbstractProject;
+import org.jdrupes.builder.core.AbstractRootProject;
 import org.jdrupes.builder.eclipse.EclipseConfiguration;
 import org.jdrupes.builder.eclipse.EclipseConfigurator;
 import org.jdrupes.builder.java.AppJarFile;
@@ -51,7 +49,7 @@ import static org.jdrupes.builder.java.JavaTypes.*;
 import org.jdrupes.builder.java.SourcesJarFile;
 import org.jdrupes.builder.junit.JUnitTestRunner;
 
-public class Root extends AbstractProject implements RootProject {
+public class Root extends AbstractRootProject {
 
     @Override
     public void prepareProject(Project project) {

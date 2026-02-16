@@ -18,11 +18,9 @@
 
 package org.jdrupes.builder.core;
 
-import java.lang.reflect.InvocationTargetException;
 import java.nio.file.FileSystems;
 import java.nio.file.Path;
 import java.nio.file.PathMatcher;
-import java.util.Collections;
 import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -36,13 +34,10 @@ import java.util.Set;
 import java.util.Spliterators.AbstractSpliterator;
 import java.util.Stack;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.Future;
 import java.util.function.Consumer;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 import org.jdrupes.builder.api.BuildException;
-import org.jdrupes.builder.api.Cleanliness;
 import org.jdrupes.builder.api.ConfigurationException;
 import org.jdrupes.builder.api.Generator;
 import org.jdrupes.builder.api.Intent;
@@ -58,7 +53,6 @@ import org.jdrupes.builder.api.ResourceProvider;
 import org.jdrupes.builder.api.ResourceRequest;
 import org.jdrupes.builder.api.ResourceType;
 import org.jdrupes.builder.api.RootProject;
-import org.jdrupes.builder.core.LauncherSupport.CommandData;
 
 /// A default implementation of a [Project].
 ///
@@ -67,9 +61,6 @@ import org.jdrupes.builder.core.LauncherSupport.CommandData;
 public abstract class AbstractProject extends AbstractProvider
         implements Project {
 
-    private Map<Class<? extends Project>, Future<Project>> projects;
-    private static ThreadLocal<AbstractProject> fallbackParent
-        = new ThreadLocal<>();
     private static Path jdbldDirectory = Path.of("marker:jdbldDirectory");
     private final AbstractProject parent;
     private final String projectName;
@@ -78,7 +69,6 @@ public abstract class AbstractProject extends AbstractProvider
         = new ConcurrentHashMap<>();
     @SuppressWarnings("PMD.UseConcurrentHashMap")
     private final Map<PropertyKey, Object> properties = new HashMap<>();
-    private Map<String, CommandData> commands;
 
     /// Named parameter for specifying the parent project.
     ///
@@ -151,23 +141,23 @@ public abstract class AbstractProject extends AbstractProvider
     @SuppressWarnings({ "PMD.ConstructorCallsOverridableMethod",
         "PMD.AvoidCatchingGenericException", "PMD.CognitiveComplexity",
         "PMD.AvoidDeeplyNestedIfStmts", "PMD.CyclomaticComplexity",
-        "PMD.UseLocaleWithCaseConversions" })
+        "PMD.UseLocaleWithCaseConversions", "PMD.CollapsibleIfStatements" })
     protected AbstractProject(NamedParameter<?>... params) {
         // Evaluate parent project
         var parentProject = NamedParameter.<
                 Class<? extends Project>> get(params, "parent", null);
         if (parentProject == null) {
-            parent = fallbackParent.get();
+            if (AbstractRootProject.scopedRootProject.isBound()) {
+                parent = AbstractRootProject.scopedRootProject.get();
+            } else {
+                parent = null;
+            }
             if (this instanceof RootProject) {
                 if (parent != null) {
                     throw new ConfigurationException().from(this).message(
                         "Root project of type %s cannot be a sub project",
                         getClass().getSimpleName());
                 }
-                // ConcurrentHashMap does not support null values.
-                projects = Collections.synchronizedMap(new HashMap<>());
-                commands = new HashMap<>();
-                commandAlias("clean").resources(of(Cleanliness.class));
             }
         } else {
             parent = (AbstractProject) project(parentProject);
@@ -197,7 +187,7 @@ public abstract class AbstractProject extends AbstractProvider
                     "Root project of type %s cannot specify a directory.",
                     getClass().getSimpleName());
             }
-            projectDirectory = LauncherSupport.buildRoot();
+            projectDirectory = context().buildRoot();
         } else {
             if (directory == null) {
                 directory = Path.of(projectName.toLowerCase());
@@ -214,21 +204,15 @@ public abstract class AbstractProject extends AbstractProvider
         }
     }
 
-    /// Root project.
-    ///
-    /// @return the root project
-    ///
     @Override
-    public final RootProject rootProject() {
-        if (this instanceof RootProject root) {
-            return root;
-        }
+    public RootProject rootProject() {
         // The method may be called (indirectly) from the constructor
         // of a subproject, that specifies its parent project class, to
         // get the parent project instance. In this case, the new
         // project's parent attribute has not been set yet and we have
         // to use the fallback.
-        return Optional.ofNullable(parent).orElse(fallbackParent.get())
+        return Optional.ofNullable(parent)
+            .orElseGet(AbstractRootProject.scopedRootProject::get)
             .rootProject();
     }
 
@@ -242,30 +226,7 @@ public abstract class AbstractProject extends AbstractProvider
         if (this.getClass().equals(prjCls)) {
             return this;
         }
-        if (projects == null) {
-            return rootProject().project(prjCls);
-        }
-
-        // "this" is the root project.
-        try {
-            return projects.computeIfAbsent(prjCls, k -> {
-                return context().executor().submit(() -> {
-                    try {
-                        fallbackParent.set(this);
-                        return (Project) k.getConstructor().newInstance();
-                    } catch (SecurityException | InstantiationException
-                            | IllegalAccessException
-                            | InvocationTargetException
-                            | NoSuchMethodException e) {
-                        throw new IllegalArgumentException(e);
-                    } finally {
-                        fallbackParent.set(null);
-                    }
-                });
-            }).get();
-        } catch (InterruptedException | ExecutionException e) {
-            throw new BuildException().from(this).cause(e);
-        }
+        return rootProject().project(prjCls);
     }
 
     /// Parent project.
@@ -407,69 +368,6 @@ public abstract class AbstractProject extends AbstractProvider
     public <T extends Resource> T newResource(ResourceType<T> type,
             Object... args) {
         return ResourceFactory.create(type, this, args);
-    }
-
-    /// Define command, see [RootProject#commandAlias].
-    ///
-    /// @param name the name
-    /// @return the root project
-    ///
-    public RootProject.CommandBuilder commandAlias(String name) {
-        if (!(this instanceof RootProject)) {
-            throw new ConfigurationException().from(this).message(
-                "Commands can only be defined for the root project.");
-        }
-        return new CommandBuilder((RootProject) this, name);
-    }
-
-    /// The Class CommandBuilder.
-    ///
-    public class CommandBuilder implements RootProject.CommandBuilder {
-        private final RootProject rootProject;
-        private final String name;
-        private String projects = "";
-
-        /// Initializes a new command builder.
-        ///
-        /// @param rootProject the root project
-        /// @param name the name
-        ///
-        public CommandBuilder(RootProject rootProject, String name) {
-            this.rootProject = rootProject;
-            this.name = name;
-        }
-
-        /// Projects.
-        ///
-        /// @param projects the projects
-        /// @return the root project. command builder
-        ///
-        @Override
-        public RootProject.CommandBuilder projects(String projects) {
-            this.projects = projects;
-            return this;
-        }
-
-        /// Resources.
-        ///
-        /// @param requests the requests
-        /// @return the root project
-        ///
-        @Override
-        public RootProject resources(ResourceRequest<?>... requests) {
-            for (int i = 0; i < requests.length; i++) {
-                if (requests[i].uses().isEmpty()) {
-                    requests[i] = requests[i].usingAll();
-                }
-            }
-            commands.put(name, new CommandData(projects, requests));
-            return rootProject;
-        }
-    }
-
-    /* default */ CommandData lookupCommand(String name) {
-        return commands.getOrDefault(name,
-            new CommandData("", new ResourceRequest[0]));
     }
 
     @SuppressWarnings("PMD.CommentRequired")

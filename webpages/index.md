@@ -17,7 +17,7 @@ Here's the source code for a sample build configuration, which will be explained
 in more detail below:
 
 ```java
-public class SimpleApp extends AbstractProject implements RootProject {
+public class SimpleApp extends AbstractRootProject {
 
     public SimpleApp() {
         super(name("demo-project-simple-app"));

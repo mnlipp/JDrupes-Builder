@@ -39,6 +39,7 @@ import static org.jdrupes.builder.api.Intent.*;
 import org.jdrupes.builder.api.Launcher;
 import org.jdrupes.builder.api.Project;
 import org.jdrupes.builder.api.RootProject;
+import org.jdrupes.builder.core.AbstractRootProject;
 import org.jdrupes.builder.core.LauncherSupport;
 import org.jdrupes.builder.java.ClasspathElement;
 import org.jdrupes.builder.java.JavaCompiler;
@@ -63,29 +64,18 @@ public class BootstrapProjectLauncher extends AbstractLauncher {
     protected Properties jdbldProps;
     /// The command line.
     protected CommandLine commandLine;
-    private RootProject rootProject;
+    private final AbstractRootProject bootstrapProject;
+    private final Path buildRootDirectory;
 
     /// Initializes a new bootstrap launcher.
     ///
-    public BootstrapProjectLauncher() {
-        // Make javadoc happy.
-    }
-
-    /// Executes a build. An instance of the class passed as argument is
-    /// created and used as root project for the build.
-    /// 
-    /// Unless the root project is the only project, the root project
-    /// must declare dependencies, else the subprojects won't be
-    /// instantiated.
-    ///
-    /// @param rootPrjCls the root project
-    /// @param args the args
-    /// @return the builds the project launcher
+    /// @param rootPrjCls the root project class
+    /// @param args the arguments
     ///
     @SuppressWarnings("PMD.UseVarargs")
-    public BuildProjectLauncher buildBuildProjectLauncher(
+    public BootstrapProjectLauncher(
             Class<? extends RootProject> rootPrjCls, String[] args) {
-        Path buildRootDirectory = Path.of("").toAbsolutePath();
+        buildRootDirectory = Path.of("").toAbsolutePath();
         jdbldProps = propertiesFromFiles(buildRootDirectory);
         try {
             commandLine = new DefaultParser().parse(baseOptions(), args);
@@ -96,9 +86,36 @@ public class BootstrapProjectLauncher extends AbstractLauncher {
         addCliProperties(jdbldProps, commandLine);
         configureLogging(buildRootDirectory, jdbldProps);
 
-        rootProject = LauncherSupport.createProjects(buildRootDirectory,
-            rootPrjCls, Collections.emptyList(), jdbldProps, commandLine);
+        bootstrapProject = LauncherSupport.createProjects(
+            buildRootDirectory, rootPrjCls, Collections.emptyList(), jdbldProps,
+            commandLine);
+    }
 
+    @Override
+    public void close() {
+        bootstrapProject.close();
+    }
+
+    /// Builds the build project launcher.
+    ///
+    /// @param rootPrjCls the root project
+    /// @param args the args
+    /// @return the builds the project launcher
+    ///
+    @SuppressWarnings("PMD.UseVarargs")
+    public BuildProjectLauncher buildBuildProjectLauncher(
+            Class<? extends RootProject> rootPrjCls, String[] args) {
+        return bootstrapProject.context().call(() -> {
+            URL[] cpUrls = buildProjectClasses(bootstrapProject);
+            logger.atFine().log("Build project launcher with classpath: %s",
+                Arrays.toString(cpUrls));
+            return new BuildProjectLauncher(
+                new URLClassLoader(cpUrls, getClass().getClassLoader()),
+                buildRootDirectory, args);
+        });
+    }
+
+    private URL[] buildProjectClasses(RootProject rootProject) {
         // Add build extensions to the build project.
         var mvnLookup = new MvnRepoLookup();
         Optional.ofNullable(jdbldProps
@@ -112,7 +129,7 @@ public class BootstrapProjectLauncher extends AbstractLauncher {
         buildCoords.forEach(mvnLookup::resolve);
         rootProject.project(BootstrapBuild.class).dependency(Expose,
             mvnLookup);
-        var cpUrls = rootProject.resources(rootProject
+        return rootProject.resources(rootProject
             .of(ClasspathElement.class).using(Supply, Expose)).map(cpe -> {
                 try {
                     if (cpe instanceof FileTree tree) {
@@ -125,11 +142,6 @@ public class BootstrapProjectLauncher extends AbstractLauncher {
                     throw new BuildException().from(rootProject).cause(e);
                 }
             }).toArray(URL[]::new);
-        logger.atFine().log("Launching build project with classpath: %s",
-            Arrays.toString(cpUrls));
-        return new BuildProjectLauncher(
-            new URLClassLoader(cpUrls, getClass().getClassLoader()),
-            buildRootDirectory, args);
     }
 
     /// Root project.
@@ -137,15 +149,8 @@ public class BootstrapProjectLauncher extends AbstractLauncher {
     /// @return the root project
     ///
     @Override
-    public RootProject rootProject() {
-        return rootProject;
-    }
-
-    @Override
-    public void close() throws Exception {
-        if (rootProject != null) {
-            rootProject.context().close();
-        }
+    public AbstractRootProject rootProject() {
+        return bootstrapProject;
     }
 
     /// The main method.
@@ -155,15 +160,18 @@ public class BootstrapProjectLauncher extends AbstractLauncher {
     @SuppressWarnings("PMD.SystemPrintln")
     public static void main(String[] args) {
         try {
-            if (!reportBuildException(
-                () -> {
-                    try (var bootPl = new BootstrapProjectLauncher();
-                            var buildPl = bootPl.buildBuildProjectLauncher(
-                                BootstrapRoot.class, args)) {
-                        return buildPl.runCommands();
-                    }
-                })) {
-                Runtime.getRuntime().exit(1);
+            if (!reportBuildException(() -> {
+                BuildProjectLauncher buildPl;
+                try (var bootPl = new BootstrapProjectLauncher(
+                    BootstrapRoot.class, args)) {
+                    buildPl = bootPl.buildBuildProjectLauncher(
+                        BootstrapRoot.class, args);
+                }
+                try (buildPl) {
+                    return buildPl.runCommands();
+                }
+            })) {
+                System.exit(1);
             }
         } catch (BuildException e) {
             if (e.getCause() == null) {
@@ -177,7 +185,7 @@ public class BootstrapProjectLauncher extends AbstractLauncher {
             if (!e.details().isBlank()) {
                 System.out.println(e.details());
             }
-            Runtime.getRuntime().exit(2);
+            System.exit(2);
         }
     }
 }

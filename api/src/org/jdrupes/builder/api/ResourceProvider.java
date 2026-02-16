@@ -45,7 +45,6 @@ public interface ResourceProvider {
     /// @return the stream
     ///
     default <T extends Resource> Stream<T>
-
             resources(ResourceRequest<T> requested) {
         return context().resources(this, requested);
     }

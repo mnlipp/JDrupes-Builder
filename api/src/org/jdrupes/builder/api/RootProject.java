@@ -18,11 +18,14 @@
 
 package org.jdrupes.builder.api;
 
+import java.io.IOException;
 import java.util.stream.Stream;
 
-/// A marker interface to identify the root project.
+/// Additional methods for the root project. Root projects are always
+/// created with an associated [BuildContext]. This context is closed
+/// when the root project is closed.
 ///
-public interface RootProject extends Project {
+public interface RootProject extends Project, AutoCloseable {
 
     /// May be overridden by the root project to apply common settings
     /// to projects of specific types or with specific properties.
@@ -63,6 +66,12 @@ public interface RootProject extends Project {
     default CommandBuilder commandAlias(String name) {
         throw new UnsupportedOperationException();
     }
+
+    /// Close the project. The re-declaration of this method removes
+    /// the [IOException], which is never thrown.
+    ///
+    @Override
+    void close();
 
     /// A builder for command aliases.
     interface CommandBuilder {

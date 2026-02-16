@@ -218,6 +218,21 @@ public class JUnitTestRunner extends AbstractGenerator {
         return asList.toString();
     }
 
+    private void printExecutionResult(String testName,
+            TestExecutionResult result) {
+        context().error().format("Failed: %s\n", testName);
+        if (result.getThrowable().isEmpty()) {
+            return;
+        }
+
+        // Find initial exception
+        Throwable thrown = result.getThrowable().get();
+        while (thrown.getCause() != null) {
+            thrown = thrown.getCause();
+        }
+        thrown.printStackTrace(context().error());
+    }
+
     /// A [TestExecutionListener] for JUnit.
     ///
     /// @see TestEvent
@@ -292,11 +307,15 @@ public class JUnitTestRunner extends AbstractGenerator {
             if (testExecutionResult.getThrowable().isEmpty()) {
                 logger.atWarning().log("Failed: %s",
                     lazy(() -> prettyTestName(testIdentifier)));
+                printExecutionResult(prettyTestName(testIdentifier),
+                    testExecutionResult);
                 return;
             }
             logger.atWarning()
                 .withCause(testExecutionResult.getThrowable().get())
                 .log("Failed: %s", lazy(() -> prettyTestName(testIdentifier)));
+            printExecutionResult(prettyTestName(testIdentifier),
+                testExecutionResult);
         }
 
         @Override

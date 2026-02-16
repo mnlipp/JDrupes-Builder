@@ -18,23 +18,16 @@
 
 package org.jdrupes.builder.core;
 
-import java.lang.reflect.InvocationTargetException;
 import java.nio.file.Path;
 import java.util.List;
 import java.util.Properties;
 import org.apache.commons.cli.CommandLine;
 import org.jdrupes.builder.api.Project;
-import org.jdrupes.builder.api.ResourceRequest;
 import org.jdrupes.builder.api.RootProject;
 
 /// Provides support for creating projects based on [AbstractProject].
 ///
 public final class LauncherSupport {
-
-    private static Path buildRoot;
-    private static Properties jdbldProps;
-    private static CommandLine commandLine;
-    private static DefaultBuildContext buildContext;
 
     private LauncherSupport() {
     }
@@ -52,57 +45,24 @@ public final class LauncherSupport {
     /// @param commandLine the command line
     /// @return the root project
     ///
-    public static RootProject createProjects(
+    public static AbstractRootProject createProjects(
             Path buildRoot, Class<? extends RootProject> rootProject,
             List<Class<? extends Project>> subprojects,
             Properties jdbldProps, CommandLine commandLine) {
         try {
-            buildContext = new DefaultBuildContext();
-            LauncherSupport.buildRoot = buildRoot;
-            LauncherSupport.jdbldProps = jdbldProps;
-            LauncherSupport.commandLine = commandLine;
-            var result = rootProject.getConstructor().newInstance();
-            subprojects.forEach(result::project);
-            return result;
+            return ScopedValue
+                .where(DefaultBuildContext.scopedBuildContext,
+                    new DefaultBuildContext(buildRoot, jdbldProps, commandLine))
+                .call(() -> {
+                    var result = (AbstractRootProject) rootProject
+                        .getConstructor().newInstance();
+                    subprojects.forEach(result::project);
+                    return result;
+
+                });
         } catch (SecurityException | NegativeArraySizeException
-                | IllegalArgumentException | InstantiationException
-                | IllegalAccessException | InvocationTargetException
-                | NoSuchMethodException e) {
+                | IllegalArgumentException | ReflectiveOperationException e) {
             throw new IllegalArgumentException(e);
         }
-    }
-
-    /* default */ static DefaultBuildContext buildContext() {
-        return buildContext;
-    }
-
-    /* default */ static Path buildRoot() {
-        return buildRoot;
-    }
-
-    /* default */ static Properties jdbldProperties() {
-        return jdbldProps;
-    }
-
-    /* default */ static CommandLine commandLine() {
-        return commandLine;
-    }
-
-    /// The Record CommandData.
-    ///
-    /// @param pattern the pattern
-    /// @param requests the requests
-    ///
-    public record CommandData(String pattern, ResourceRequest<?>... requests) {
-    }
-
-    /// Lookup the command in the given root project.
-    ///
-    /// @param project the project
-    /// @param name the name
-    /// @return the optional
-    ///
-    public static CommandData lookupCommand(RootProject project, String name) {
-        return ((AbstractProject) project).lookupCommand(name);
     }
 }

@@ -2,19 +2,17 @@ package jdbld;
 
 import static org.jdrupes.builder.api.Intent.*;
 import org.jdrupes.builder.api.Project;
-import org.jdrupes.builder.api.RootProject;
 import org.jdrupes.builder.api.TestResult;
 import org.jdrupes.builder.bnd.BndBaselineEvaluation;
-
 import static org.jdrupes.builder.bnd.BndProperties.*;
-import org.jdrupes.builder.core.AbstractProject;
+import org.jdrupes.builder.core.AbstractRootProject;
 import org.jdrupes.builder.eclipse.EclipseConfiguration;
 import org.jdrupes.builder.java.JarFile;
 import org.jdrupes.builder.mvnrepo.PomFile;
 import static org.jdrupes.builder.mvnrepo.MvnProperties.*;
 import java.util.Map;
 
-public class Root extends AbstractProject implements RootProject {
+public class Root extends AbstractRootProject {
 
     @Override
     public void prepareProject(Project project) {

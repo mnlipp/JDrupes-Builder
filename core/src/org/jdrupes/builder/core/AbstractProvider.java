@@ -1,6 +1,6 @@
 /*
  * JDrupes Builder
- * Copyright (C) 2025 Michael N. Lipp
+ * Copyright (C) 2025, 2026 Michael N. Lipp
  * 
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as
@@ -35,11 +35,18 @@ import org.jdrupes.builder.api.Resources;
 public abstract class AbstractProvider implements ResourceProvider {
 
     private static final FluentLogger logger = FluentLogger.forEnclosingClass();
+    private final DefaultBuildContext context;
     private String name;
 
     /// Initializes a new abstract provider.
     ///
     public AbstractProvider() {
+        if (!DefaultBuildContext.scopedBuildContext.isBound()) {
+            throw new IllegalStateException(
+                "Creating a provider outside of a project constructor"
+                    + " or a provider invocation");
+        }
+        context = DefaultBuildContext.scopedBuildContext.get();
         // Default name
         name = getClass().getSimpleName();
         if (name.isBlank()) {
@@ -102,7 +109,7 @@ public abstract class AbstractProvider implements ResourceProvider {
 
     @Override
     public DefaultBuildContext context() {
-        return LauncherSupport.buildContext();
+        return context;
     }
 
     /// Convenience function to create a new resource. Short for invoking

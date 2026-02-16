@@ -18,6 +18,7 @@
 
 package org.jdrupes.builder.api;
 
+import java.io.IOException;
 import java.io.PrintStream;
 import java.nio.file.Path;
 import java.util.Optional;
@@ -95,7 +96,8 @@ public interface BuildContext extends AutoCloseable {
     ///
     PrintStream error();
 
-    /// Closes the context.
+    /// Close the context. The re-declaration of this method removes
+    /// the [IOException], which is never thrown.
     ///
     @Override
     void close();

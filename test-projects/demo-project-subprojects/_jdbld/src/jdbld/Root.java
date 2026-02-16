@@ -3,14 +3,13 @@ package jdbld;
 import static org.jdrupes.builder.api.Intent.*;
 import java.nio.file.Path;
 import org.jdrupes.builder.api.Project;
-import org.jdrupes.builder.api.RootProject;
 import org.jdrupes.builder.api.TestResult;
-import org.jdrupes.builder.core.AbstractProject;
+import org.jdrupes.builder.core.AbstractRootProject;
 import org.jdrupes.builder.eclipse.EclipseConfiguration;
 import org.jdrupes.builder.java.JarFile;
 import org.jdrupes.builder.uberjar.UberJarBuilder;
 
-public class Root extends AbstractProject implements RootProject {
+public class Root extends AbstractRootProject {
 
     @Override
     public void prepareProject(Project project) {

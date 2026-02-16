@@ -13,6 +13,7 @@ import org.jdrupes.builder.api.Cleanliness;
 import org.jdrupes.builder.api.Launcher;
 import org.jdrupes.builder.java.JarFile;
 import org.jdrupes.builder.startup.BuildProjectLauncher;
+import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 
@@ -28,6 +29,11 @@ class BuildTest {
             new String[0]);
         launcher.resources(launcher.rootProject().projects("**"),
             launcher.rootProject().of(Cleanliness.class).usingAll());
+    }
+
+    @AfterAll
+    public static void cleanUp() throws Exception {
+        launcher.close();
     }
 
     @Test

@@ -75,6 +75,7 @@ public class FutureStream<T extends Resource> {
             try (var statusLine = context.console().statusLine()) {
                 statusLine.update(provider + " evaluating " + request);
                 return ScopedValue
+                    .where(DefaultBuildContext.scopedBuildContext, context)
                     .where(providerInvocationAllowed, new AtomicBoolean(true))
                     .where(caller, this)
                     .where(FutureStream.statusLine, statusLine)
@@ -82,7 +83,6 @@ public class FutureStream<T extends Resource> {
                         .provide(request).toList());
             }
         });
-
     }
 
     private List<FutureStream<?>> callChain() {
@@ -110,8 +110,8 @@ public class FutureStream<T extends Resource> {
     /// @return the stream
     ///
     public Stream<T> stream() {
-        return StreamSupport
-            .stream(new Spliterators.AbstractSpliterator<>(Long.MAX_VALUE, 0) {
+        return StreamSupport.stream(
+            new Spliterators.AbstractSpliterator<>(Long.MAX_VALUE, 0) {
 
                 private Iterator<T> theIterator;
 
