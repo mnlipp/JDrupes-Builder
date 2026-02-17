@@ -21,13 +21,14 @@ import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 
-class BuildTest {
+class SimpleAppTests {
     private static Launcher launcher;
 
     @BeforeAll
     public static void initProject() throws URISyntaxException {
-        var buildRoot = Path.of(BuildTest.class.getProtectionDomain()
-            .getCodeSource().getLocation().toURI()).getParent().getParent();
+        var buildRoot = Path.of(SimpleAppTests.class.getProtectionDomain()
+            .getCodeSource().getLocation().toURI())
+            .getParent().getParent().getParent();
         launcher = new BuildProjectLauncher(
             Thread.currentThread().getContextClassLoader(), buildRoot,
             new String[0]);
