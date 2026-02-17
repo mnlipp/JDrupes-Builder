@@ -75,13 +75,13 @@ public class BuildProjectLauncher extends AbstractLauncher
     private final ClassLoader extClsLdr;
     private AbstractRootProject rootProject;
 
-    /// Instantiates a new direct launcher. The classpath is scanned for
-    /// classes that implement [Project] but do not implement [Masked].
+    /// Instantiates a new build project launcher. The classpath is scanned
+    /// for classes that implement [Project] but do not implement [Masked].
     /// One of these must also implement the [RootProject] interface.
     /// The latter is instantiated and registered as root project with all
     /// other classes found as direct sub projects.
     ///
-    /// @param classloader the classloader
+    /// @param classloader the classloader for the build project
     /// @param buildRoot the build root
     /// @param args the arguments. Flags are processed in the constructor,
     /// command line arguments are processed in [runCommands].
