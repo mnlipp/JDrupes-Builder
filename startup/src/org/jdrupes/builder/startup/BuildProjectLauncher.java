@@ -109,8 +109,13 @@ public class BuildProjectLauncher extends AbstractLauncher
         var rootProjects = new ArrayList<Class<? extends RootProject>>();
         var subprojects = new ArrayList<Class<? extends Project>>();
         findProjects(extClsLdr, rootProjects, subprojects);
-        rootProject = DefaultBuildContext.createProjects(buildRoot,
+        @SuppressWarnings("PMD.CloseResource")
+        var newRootProject = DefaultBuildContext.createProjects(buildRoot,
             rootProjects.get(0), subprojects, jdbldProps, commandLine);
+        if (rootProject != null) {
+            rootProject.close();
+        }
+        rootProject = newRootProject;
         return rootProject;
     }
 
