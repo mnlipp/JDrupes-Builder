@@ -1,4 +1,4 @@
-package basic;
+package simpleapp;
 
 import static org.junit.jupiter.api.Assertions.*;
 import java.io.IOException;
