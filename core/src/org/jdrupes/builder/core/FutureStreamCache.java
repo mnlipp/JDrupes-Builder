@@ -66,4 +66,16 @@ public class FutureStreamCache {
                     FutureStream<? extends Resource>>) (Object) supplier);
     }
 
+    /// Purge all values for the given [ResourceProvider].
+    ///
+    /// @param provider the provider
+    ///
+    public void purge(ResourceProvider provider) {
+        cache.forEach((k, _) -> {
+            if (k.provider().equals(provider)) {
+                cache.remove(k);
+            }
+        });
+    }
+
 }

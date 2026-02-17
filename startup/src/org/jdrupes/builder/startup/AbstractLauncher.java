@@ -47,6 +47,7 @@ import org.jdrupes.builder.api.Project;
 import org.jdrupes.builder.api.Resource;
 import org.jdrupes.builder.api.ResourceFactory;
 import org.jdrupes.builder.api.ResourceRequest;
+import static org.jdrupes.builder.api.ResourceType.*;
 import org.jdrupes.builder.api.RootProject;
 import org.jdrupes.builder.core.BuildExceptionFormatter;
 import org.jdrupes.builder.core.DefaultBuildContext;
@@ -227,10 +228,14 @@ public abstract class AbstractLauncher implements Launcher {
     @Override
     public <T extends Resource> Stream<T> resources(Stream<Project> projects,
             ResourceRequest<T> request) {
-        return reportBuildException(
+        var result = reportBuildException(
             () -> ((DefaultBuildContext) rootProject().context()).call(
                 () -> projects.map(p -> p.resources(request)).flatMap(r -> r)
                     .toList().stream()));
+        if (request.requires(CleanlinessType)) {
+            regenerateRootProject();
+        }
+        return result;
     }
 
     /// A utility method for reliably reporting problems as [BuildException]s.

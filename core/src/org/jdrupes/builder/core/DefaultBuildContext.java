@@ -27,15 +27,18 @@ import java.util.Optional;
 import java.util.Properties;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Supplier;
 import java.util.stream.Stream;
 import org.apache.commons.cli.CommandLine;
 import org.jdrupes.builder.api.BuildContext;
+import org.jdrupes.builder.api.BuildException;
 import org.jdrupes.builder.api.Intent;
 import org.jdrupes.builder.api.Project;
 import org.jdrupes.builder.api.Resource;
 import org.jdrupes.builder.api.ResourceProvider;
 import org.jdrupes.builder.api.ResourceRequest;
+import static org.jdrupes.builder.api.ResourceType.CleanlinessType;
 import org.jdrupes.builder.api.RootProject;
 import org.jdrupes.builder.api.StatusLine;
 import org.jdrupes.builder.core.FutureStreamCache.Key;
@@ -47,15 +50,20 @@ public class DefaultBuildContext implements BuildContext {
 
     /// The key for specifying the builder directory in the properties file.
     public static final String JDBLD_DIRECTORY = "jdbldDirectory";
+    @SuppressWarnings("PMD.FieldNamingConventions")
+    private static final ScopedValue<AtomicBoolean> providerInvocationAllowed
+        = ScopedValue.newInstance();
     private final FutureStreamCache cache;
     private ExecutorService executor
         = Executors.newVirtualThreadPerTaskExecutor();
     private final Path buildRoot;
     private final Properties jdbldProperties;
     private final CommandLine commandLine;
+    private final AwaitableCounter executingFutureStreams
+        = new AwaitableCounter();
     private final SplitConsole console;
     @SuppressWarnings("PMD.FieldNamingConventions")
-    /* default */ static final ScopedValue<
+    private static final ScopedValue<
             DefaultBuildContext> scopedBuildContext = ScopedValue.newInstance();
 
     /// Instantiates a new default build. By default, the build uses
@@ -86,12 +94,47 @@ public class DefaultBuildContext implements BuildContext {
         this.executor = executor;
     }
 
+    /// Executing future streams.
+    ///
+    /// @return the awaitable counter
+    ///
+    public AwaitableCounter executingFutureStreams() {
+        return executingFutureStreams;
+    }
+
     /// Returns the build root.
     ///
     /// @return the path
     ///
     public Path buildRoot() {
         return buildRoot;
+    }
+
+    @Override
+    public Path jdbldDirectory() {
+        return Path.of(jdbldProperties.getProperty(JDBLD_DIRECTORY));
+    }
+
+    @Override
+    public CommandLine commandLine() {
+        return commandLine;
+    }
+
+    @Override
+    public String property(String name, String defaultValue) {
+        return jdbldProperties.getProperty(name,
+            defaultValue);
+    }
+
+    /// Returns the context.
+    ///
+    /// @return the optional
+    ///
+    public static Optional<DefaultBuildContext> context() {
+        if (scopedBuildContext.isBound()) {
+            return Optional.of(scopedBuildContext.get());
+        }
+        return Optional.empty();
     }
 
     /// Call within this context. 
@@ -129,44 +172,62 @@ public class DefaultBuildContext implements BuildContext {
     @Override
     public <T extends Resource> Stream<T> resources(ResourceProvider provider,
             ResourceRequest<T> requested) {
+        return ScopedValue.where(scopedBuildContext, this)
+            .where(providerInvocationAllowed, new AtomicBoolean(true))
+            .call(() -> inResourcesContext(provider, requested));
+    }
+
+    @SuppressWarnings("PMD.AvoidSynchronizedStatement")
+    private <T extends Resource> Stream<T> inResourcesContext(
+            ResourceProvider provider, ResourceRequest<T> requested) {
         if (provider instanceof Project project) {
             var defReq = (DefaultResourceRequest<T>) requested;
             if (Arrays.asList(defReq.queried()).contains(provider)) {
                 return Stream.empty();
             }
-            // Log invocation
+            // Log invocation with request
             var req = defReq.queried(project);
             // As a project's provide only delegates to other providers
             // it is inefficient to invoke it asynchronously. Besides, it
             // leads to recursive invocations of the project's deploy
             // method too easily and results in a loop detection without
             // there really being a loop.
-            return call(() -> ((AbstractProvider) provider).doProvide(req));
+            return ((AbstractProvider) provider).toSpi().provide(req);
         }
         var req = requested;
         if (!req.uses().isEmpty()) {
             req = requested.using(EnumSet.noneOf(Intent.class));
         }
-        return cache.computeIfAbsent(new Key<>(provider, req),
-            k -> new FutureStream<T>(this, k.provider(), k.request()))
-            .stream();
+        if (!requested.type().equals(CleanlinessType)) {
+            return cache.computeIfAbsent(new Key<>(provider, req),
+                k -> new FutureStream<T>(this, scopedBuildContext,
+                    providerInvocationAllowed, k.provider(), k.request()))
+                .stream();
+        }
+
+        // Special handling for cleanliness. Clean one by one...
+        synchronized (executor) {
+            // Await completion of all generating threads
+            try {
+                executingFutureStreams().await(0);
+            } catch (InterruptedException e) {
+                throw new BuildException().cause(e);
+            }
+        }
+        var result = ((AbstractProvider) provider).toSpi().provide(requested);
+        // Purge cached results from provider
+        cache.purge(provider);
+        return result;
     }
 
-    @Override
-    public Path jdbldDirectory() {
-        return Path
-            .of(jdbldProperties.getProperty(JDBLD_DIRECTORY));
-    }
-
-    @Override
-    public CommandLine commandLine() {
-        return commandLine;
-    }
-
-    @Override
-    public String property(String name, String defaultValue) {
-        return jdbldProperties.getProperty(name,
-            defaultValue);
+    /// Checks if is provider invocation is allowed. Clears the
+    /// allowed flag to also detect nested invocations.
+    ///
+    /// @return true, if is provider invocation allowed
+    ///
+    public static boolean isProviderInvocationAllowed() {
+        return providerInvocationAllowed.isBound()
+            && providerInvocationAllowed.get().getAndSet(false);
     }
 
     @Override
@@ -201,7 +262,7 @@ public class DefaultBuildContext implements BuildContext {
                         .getConstructor().newInstance();
                     subprojects.forEach(result::project);
                     return result;
-    
+
                 });
         } catch (SecurityException | NegativeArraySizeException
                 | IllegalArgumentException | ReflectiveOperationException e) {

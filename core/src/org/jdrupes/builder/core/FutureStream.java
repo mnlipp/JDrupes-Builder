@@ -44,9 +44,6 @@ public class FutureStream<T extends Resource> {
 
     private static final FluentLogger logger = FluentLogger.forEnclosingClass();
     @SuppressWarnings("PMD.FieldNamingConventions")
-    private static final ScopedValue<AtomicBoolean> providerInvocationAllowed
-        = ScopedValue.newInstance();
-    @SuppressWarnings("PMD.FieldNamingConventions")
     private static final ScopedValue<FutureStream<?>> caller
         = ScopedValue.newInstance();
     /* default */@SuppressWarnings("PMD.FieldNamingConventions")
@@ -59,11 +56,16 @@ public class FutureStream<T extends Resource> {
     /// Instantiates a new future resources.
     ///
     /// @param context the context
+    /// @param scopedBuildContext the scoped build context for re-binding
+    /// @param providerInvocationAllowed scoped provider invocation allowed
+    /// for re-binding
     /// @param provider the provider
     /// @param request the requested
     ///
-    public FutureStream(DefaultBuildContext context, ResourceProvider provider,
-            ResourceRequest<T> request) {
+    public FutureStream(DefaultBuildContext context,
+            ScopedValue<DefaultBuildContext> scopedBuildContext,
+            ScopedValue<AtomicBoolean> providerInvocationAllowed,
+            ResourceProvider provider, ResourceRequest<T> request) {
         initiallyCalledBy = caller.isBound() ? caller.get() : null;
         holding = new FutureStreamCache.Key<>(provider, request);
         logger.atFiner().log("Evaluating %s → %s", holding.request(),
@@ -71,12 +73,15 @@ public class FutureStream<T extends Resource> {
                 ? " requested by " + initiallyCalledBy
                 : "")));
         logger.atFinest().log("Call chain: %s", lazy(this::callChain));
+        boolean isAllowed = DefaultBuildContext.isProviderInvocationAllowed();
         values = context.executor().submit(() -> {
-            try (var statusLine = context.console().statusLine()) {
+            try (var _ = context.executingFutureStreams().count();
+                    var statusLine = context.console().statusLine()) {
                 statusLine.update(provider + " evaluating " + request);
                 return ScopedValue
-                    .where(DefaultBuildContext.scopedBuildContext, context)
-                    .where(providerInvocationAllowed, new AtomicBoolean(true))
+                    .where(scopedBuildContext, context)
+                    .where(providerInvocationAllowed,
+                        new AtomicBoolean(isAllowed))
                     .where(caller, this)
                     .where(FutureStream.statusLine, statusLine)
                     .call(() -> ((AbstractProvider) provider).toSpi()
@@ -93,16 +98,6 @@ public class FutureStream<T extends Resource> {
             cur = cur.initiallyCalledBy;
         } while (cur != null);
         return result;
-    }
-
-    /// Checks if is provider invocation is allowed. Clears the
-    /// allowed flag to also detect nested invocations.
-    ///
-    /// @return true, if is provider invocation allowed
-    ///
-    public static boolean isProviderInvocationAllowed() {
-        return providerInvocationAllowed.isBound()
-            && providerInvocationAllowed.get().getAndSet(false);
     }
 
     /// Returns the lazily evaluated stream of resources.

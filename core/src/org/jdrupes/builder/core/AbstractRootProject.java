@@ -18,7 +18,6 @@
 
 package org.jdrupes.builder.core;
 
-import java.lang.reflect.InvocationTargetException;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
@@ -74,26 +73,29 @@ public abstract class AbstractRootProject extends AbstractProject
             return this;
         }
         try {
-            final DefaultBuildContext context = context();
-            return projects.computeIfAbsent(prjCls, k -> {
-                return context().executor().submit(() -> {
-                    try {
-                        return ScopedValue
-                            .where(DefaultBuildContext.scopedBuildContext,
-                                context)
-                            .where(scopedRootProject, this)
-                            .call(() -> (Project) k.getConstructor()
-                                .newInstance());
-                    } catch (SecurityException | InstantiationException
-                            | IllegalAccessException
-                            | InvocationTargetException
-                            | NoSuchMethodException e) {
-                        throw new IllegalArgumentException(e);
-                    }
-                });
-            }).get();
+            return projects.computeIfAbsent(prjCls, this::futureProject)
+                .get();
         } catch (InterruptedException | ExecutionException e) {
             throw new BuildException().from(this).cause(e);
+        }
+    }
+
+    private Future<Project> futureProject(Class<? extends Project> prjCls) {
+        @SuppressWarnings("PMD.CloseResource")
+        final DefaultBuildContext context = context();
+        return context().executor().submit(() -> {
+            return context.call(() -> createProject(prjCls));
+        });
+    }
+
+    private Project createProject(Class<? extends Project> prjCls) {
+        try {
+            return ScopedValue
+                .where(scopedRootProject, this)
+                .call(() -> (Project) prjCls.getConstructor()
+                    .newInstance());
+        } catch (SecurityException | ReflectiveOperationException e) {
+            throw new IllegalArgumentException(e);
         }
     }
 

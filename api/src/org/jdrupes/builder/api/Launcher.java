@@ -25,7 +25,9 @@ import java.util.stream.Stream;
 ///
 public interface Launcher extends AutoCloseable {
 
-    /// Provide the requested resources from the given projects.
+    /// Provide the requested resources from the given projects, using
+    /// the context from the root project. The launcher must automatically
+    /// regenerate the root project if [Cleanliness] was requested.
     ///
     /// @param <T> the requested type
     /// @param projects the projects
@@ -35,11 +37,29 @@ public interface Launcher extends AutoCloseable {
     <T extends Resource> Stream<T> resources(Stream<Project> projects,
             ResourceRequest<T> requested);
 
+    /// Provide the requested resources from the root project, using
+    /// the context from the root project.
+    ///
+    /// @param <T> the generic type
+    /// @param requested the requested
+    /// @return the stream
+    ///
+    default <T extends Resource> Stream<T>
+            resources(ResourceRequest<T> requested) {
+        return resources(Stream.of(rootProject()), requested);
+    }
+
     /// Return the root project.
     ///
     /// @return the root project
     ///
     RootProject rootProject();
+
+    /// Regenerate root project, see [Cleanliness].
+    ///
+    /// @return the root project
+    ///
+    RootProject regenerateRootProject();
 
     /// Close the launcher. The re-declaration of this method removes
     /// the [IOException], which is never thrown.

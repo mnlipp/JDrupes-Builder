@@ -41,12 +41,12 @@ public abstract class AbstractProvider implements ResourceProvider {
     /// Initializes a new abstract provider.
     ///
     public AbstractProvider() {
-        if (!DefaultBuildContext.scopedBuildContext.isBound()) {
+        if (DefaultBuildContext.context().isEmpty()) {
             throw new IllegalStateException(
                 "Creating a provider outside of a project constructor"
                     + " or a provider invocation");
         }
-        context = DefaultBuildContext.scopedBuildContext.get();
+        context = DefaultBuildContext.context().get();
         // Default name
         name = getClass().getSimpleName();
         if (name.isBlank()) {
@@ -81,7 +81,7 @@ public abstract class AbstractProvider implements ResourceProvider {
             @Override
             public <T extends Resource> Stream<T>
                     provide(ResourceRequest<T> requested) {
-                if (!FutureStream.isProviderInvocationAllowed()) {
+                if (!DefaultBuildContext.isProviderInvocationAllowed()) {
                     logger.atWarning().withStackTrace(MEDIUM)
                         .log("Direct invocation of %s is not allowed", this);
                 }

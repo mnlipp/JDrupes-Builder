@@ -18,8 +18,17 @@
 
 package org.jdrupes.builder.api;
 
-/// A phony resource that (when requested) causes a generator to remove
+/// A "phony resource" that (when requested) causes a generator to remove
 /// its generated outputs.
+/// 
+/// Note that requesting [Cleanliness] may leave [ResourceProvider]s in an
+/// inconsistent state. The reason is that providers can cache resources
+/// that they depend on. If a [Cleanliness] resource is requested, all
+/// cleaned resources would have to be removed from these caches, which
+/// cannot be done reliably.
+/// 
+/// Therefore, the build project should be discarded after [Cleanliness]
+/// has been requested and re-generated. 
 ///
 public interface Cleanliness extends Resource {
 }

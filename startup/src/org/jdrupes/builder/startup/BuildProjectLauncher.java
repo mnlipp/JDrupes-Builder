@@ -70,8 +70,10 @@ public class BuildProjectLauncher extends AbstractLauncher
     protected Properties jdbldProps;
     /// The command line.
     protected CommandLine commandLine;
+    private final Path buildRoot;
     private static final String RUNTIME_EXTENSIONS = "runtimeExtensions";
-    private final AbstractRootProject rootProject;
+    private final ClassLoader extClsLdr;
+    private AbstractRootProject rootProject;
 
     /// Instantiates a new direct launcher. The classpath is scanned for
     /// classes that implement [Project] but do not implement [Masked].
@@ -88,6 +90,7 @@ public class BuildProjectLauncher extends AbstractLauncher
         "PMD.ConstructorCallsOverridableMethod" })
     public BuildProjectLauncher(ClassLoader classloader, Path buildRoot,
             String[] args) {
+        this.buildRoot = buildRoot;
         jdbldProps = propertiesFromFiles(buildRoot);
         try {
             commandLine = new DefaultParser().parse(baseOptions(), args);
@@ -97,13 +100,18 @@ public class BuildProjectLauncher extends AbstractLauncher
         }
         addCliProperties(jdbldProps, commandLine);
         configureLogging(buildRoot, jdbldProps);
+        extClsLdr = addRuntimeExts(classloader);
+        regenerateRootProject();
+    }
 
-        final var extClsLdr = addRuntimeExts(classloader);
+    @Override
+    public AbstractRootProject regenerateRootProject() {
         var rootProjects = new ArrayList<Class<? extends RootProject>>();
         var subprojects = new ArrayList<Class<? extends Project>>();
         findProjects(extClsLdr, rootProjects, subprojects);
         rootProject = DefaultBuildContext.createProjects(buildRoot,
             rootProjects.get(0), subprojects, jdbldProps, commandLine);
+        return rootProject;
     }
 
     private ClassLoader addRuntimeExts(ClassLoader classloader) {
@@ -181,38 +189,36 @@ public class BuildProjectLauncher extends AbstractLauncher
     /// @return true, if successful
     ///
     @SuppressWarnings({ "PMD.AvoidLiteralsInIfCondition",
-        "PMD.AvoidInstantiatingObjectsInLoops", "PMD.CognitiveComplexity" })
+        "PMD.AvoidInstantiatingObjectsInLoops" })
     public boolean runCommands() {
-        return rootProject().context().call(() -> {
-            for (var arg : commandLine.getArgs()) {
-                var parts = arg.split(":");
-                String resource = parts[parts.length - 1];
-                var cmdData = rootProject.lookupCommand(resource);
-                if (cmdData.requests().length == 0) {
-                    rootProject().context().out()
-                        .println("Unknown command: " + resource);
-                    throw new UnavailableException().from(rootProject());
-                }
-                String pattern = cmdData.pattern();
-                if (parts.length > 1) {
-                    pattern = parts[0];
-                }
-                for (var req : cmdData.requests()) {
-                    if (!resources(rootProject().projects(pattern), req)
-                        // eliminate duplicates
-                        .collect(Collectors.toSet()).stream()
-                        // output generated resources
-                        .peek(r -> rootProject().context().out()
-                            .println(r.toString()))
-                        .map(r -> !(r instanceof FaultAware far)
-                            || !far.isFaulty())
-                        .reduce(true, (r1, r2) -> r1 && r2)) {
-                        return false;
-                    }
+        for (var arg : commandLine.getArgs()) {
+            var parts = arg.split(":");
+            String resource = parts[parts.length - 1];
+            var cmdData = rootProject.lookupCommand(resource);
+            if (cmdData.requests().length == 0) {
+                rootProject.context().out()
+                    .println("Unknown command: " + resource);
+                throw new UnavailableException().from(rootProject);
+            }
+            String pattern = cmdData.pattern();
+            if (parts.length > 1) {
+                pattern = parts[0];
+            }
+            for (var req : cmdData.requests()) {
+                if (!resources(rootProject.projects(pattern), req)
+                    // eliminate duplicates
+                    .collect(Collectors.toSet()).stream()
+                    // output generated resources
+                    .peek(r -> rootProject.context().out()
+                        .println(r.toString()))
+                    .map(r -> !(r instanceof FaultAware far)
+                        || !far.isFaulty())
+                    .reduce(true, (r1, r2) -> r1 && r2)) {
+                    return false;
                 }
             }
-            return true;
-        });
+        }
+        return true;
     }
 
     /// This main can be used to start the user's JDrupes Builder

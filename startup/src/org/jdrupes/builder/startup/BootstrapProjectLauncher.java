@@ -144,13 +144,15 @@ public class BootstrapProjectLauncher extends AbstractLauncher {
             }).toArray(URL[]::new);
     }
 
-    /// Root project.
-    ///
-    /// @return the root project
-    ///
     @Override
     public AbstractRootProject rootProject() {
         return bootstrapProject;
+    }
+
+    @Override
+    public RootProject regenerateRootProject() {
+        throw new UnsupportedOperationException(
+            "The bootstrap launcher does not support regenerate");
     }
 
     /// The main method.
