@@ -310,9 +310,9 @@ public class JUnitTestRunner extends AbstractGenerator {
             if (testIdentifier.getSource().isPresent()
                 && testIdentifier.getSource().get() instanceof ClassSource) {
                 tests.add(testIdentifier);
-                context().statusLine().update(JUnitTestRunner.this
-                    + " running: " + prettyTestName(testIdentifier));
             }
+            context().statusLine().update(JUnitTestRunner.this
+                + " running: " + prettyTestName(testIdentifier));
         }
 
         @Override
