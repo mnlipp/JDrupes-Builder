@@ -37,6 +37,7 @@ import org.jdrupes.builder.api.ResourceProvider;
 import org.jdrupes.builder.api.ResourceType;
 import org.jdrupes.builder.api.Resources;
 import org.jdrupes.builder.api.TestResult;
+import org.jdrupes.builder.api.VirtualResource;
 
 /// A factory for creating the Core resource objects.
 ///
@@ -149,6 +150,14 @@ public class CoreResourceFactory implements ResourceFactory {
         candidate = createNarrowed(type, ExecResult.class,
             () -> new DefaultExecResult((ResourceProvider) args[0],
                 (String) args[1], (int) args[2]));
+        if (candidate.isPresent()) {
+            return candidate;
+        }
+
+        // ? extends VirtualResource
+        candidate = createNarrowed(type, VirtualResource.class,
+            () -> new DefaultVirtualResource(
+                (ResourceType<? extends VirtualResource>) type));
         if (candidate.isPresent()) {
             return candidate;
         }
