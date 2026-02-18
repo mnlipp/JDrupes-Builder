@@ -23,7 +23,8 @@ class BuildTest {
     @BeforeAll
     public static void initProject() throws URISyntaxException {
         var buildRoot = Path.of(BuildTest.class.getProtectionDomain()
-            .getCodeSource().getLocation().toURI()).getParent().getParent();
+            .getCodeSource().getLocation().toURI())
+            .getParent().getParent().getParent();
         launcher = new BuildProjectLauncher(
             Thread.currentThread().getContextClassLoader(), buildRoot,
             new String[0]);

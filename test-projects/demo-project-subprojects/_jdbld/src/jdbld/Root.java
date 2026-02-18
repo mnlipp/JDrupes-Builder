@@ -1,20 +1,34 @@
 package jdbld;
 
 import static org.jdrupes.builder.api.Intent.*;
+
+import java.io.IOException;
+import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.StandardCopyOption;
+
+import org.jdrupes.builder.api.BuildException;
+import org.jdrupes.builder.api.MergedTestProject;
 import org.jdrupes.builder.api.Project;
+import org.jdrupes.builder.api.RootProject;
 import org.jdrupes.builder.api.TestResult;
 import org.jdrupes.builder.core.AbstractRootProject;
 import org.jdrupes.builder.eclipse.EclipseConfiguration;
+import org.jdrupes.builder.eclipse.EclipseConfigurator;
 import org.jdrupes.builder.java.JarFile;
+import org.jdrupes.builder.java.JavaCompiler;
+import org.jdrupes.builder.java.JavaProject;
+import org.jdrupes.builder.java.JavaResourceCollector;
+import org.jdrupes.builder.junit.JUnitTestRunner;
+import org.jdrupes.builder.mvnrepo.MvnRepoLookup;
 import org.jdrupes.builder.uberjar.UberJarBuilder;
 
 public class Root extends AbstractRootProject {
 
     @Override
     public void prepareProject(Project project) {
-        ProjectPreparation.setupCommonGenerators(project);
-        ProjectPreparation.setupEclipseConfigurator(project);
+        setupCommonGenerators(project);
+        setupEclipseConfigurator(project);
     }
 
     public Root() {
@@ -35,6 +49,83 @@ public class Root extends AbstractRootProject {
         commandAlias("build").resources(of(JarFile.class));
         commandAlias("test").resources(of(TestResult.class));
         commandAlias("eclipse").resources(of(EclipseConfiguration.class));
+    }
+
+    public static void setupCommonGenerators(Project project) {
+        if (project instanceof JavaProject) {
+            if (project instanceof MergedTestProject) {
+                setupTestProject(project);
+            } else {
+                setupProject(project);
+            }
+        }
+    }
+
+    private static void setupProject(Project project) {
+        project.generator(JavaCompiler::new).addSources(Path.of("src"),
+            "**/*.java");
+        project.generator(JavaResourceCollector::new).add(
+            Path.of("resources"), "**/*");
+    }
+
+    private static void setupTestProject(Project project) {
+        project.generator(JavaCompiler::new).addSources(Path.of("test"),
+            "**/*.java");
+        project.generator(JavaResourceCollector::new).add(Path.of(
+            "test-resources"), "**/*");
+        project.dependency(Consume, new MvnRepoLookup()
+            .bom("org.junit:junit-bom:5.14.2")
+            .resolve("org.junit.jupiter:junit-jupiter-api")
+            .resolve("org.junit.jupiter:junit-jupiter-engine"));
+        project.dependency(Supply, JUnitTestRunner::new);
+    }
+
+    public static void setupEclipseConfigurator(Project project) {
+        project.generator(new EclipseConfigurator(project)
+            .eclipseAlias(project instanceof RootProject ? project.name()
+                : "org.jdrupes.builder.demo.subprojects." + project.name())
+            .adaptProjectConfiguration((doc, buildSpec, natures) -> {
+                if (project instanceof JavaProject) {
+                    var cmd = buildSpec
+                        .appendChild(doc.createElement("buildCommand"));
+                    cmd.appendChild(doc.createElement("name"))
+                        .appendChild(doc.createTextNode(
+                            "net.sf.eclipsecs.core.CheckstyleBuilder"));
+                    cmd.appendChild(doc.createElement("arguments"));
+                    natures.appendChild(doc.createElement("nature"))
+                        .appendChild(doc.createTextNode(
+                            "net.sf.eclipsecs.core.CheckstyleNature"));
+                    cmd = buildSpec
+                        .appendChild(doc.createElement("buildCommand"));
+                    cmd.appendChild(doc.createElement("name"))
+                        .appendChild(doc.createTextNode(
+                            "ch.acanda.eclipse.pmd.builder.PMDBuilder"));
+                    cmd.appendChild(doc.createElement("arguments"));
+                    natures.appendChild(doc.createElement("nature"))
+                        .appendChild(doc.createTextNode(
+                            "ch.acanda.eclipse.pmd.builder.PMDNature"));
+                }
+            })
+            .adaptConfiguration(() -> {
+                if (!(project instanceof JavaProject)) {
+                    return;
+                }
+                try {
+                    Files.copy(
+                        Root.class.getResourceAsStream("net.sf.jautodoc.prefs"),
+                        project.directory()
+                            .resolve(".settings/net.sf.jautodoc.prefs"),
+                        StandardCopyOption.REPLACE_EXISTING);
+                    Files.copy(Root.class.getResourceAsStream("checkstyle"),
+                        project.directory().resolve(".checkstyle"),
+                        StandardCopyOption.REPLACE_EXISTING);
+                    Files.copy(Root.class.getResourceAsStream("eclipse-pmd"),
+                        project.directory().resolve(".eclipse-pmd"),
+                        StandardCopyOption.REPLACE_EXISTING);
+                } catch (IOException e) {
+                    throw new BuildException().from(project).cause(e);
+                }
+            }));
     }
 
 }

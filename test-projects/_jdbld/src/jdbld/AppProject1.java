@@ -39,7 +39,8 @@ public class AppProject1 extends AbstractProject implements JdbldTestProject {
 
         // Consume only generators
         dependency(Consume, JavaCompiler::new).addSources(Path.of("_jdbld/src"),
-            "**/*.java").addSources(Path.of("_jdbld/test"), "**/*.java");
+            "**/*.java").addSources(Path.of("_jdbld/test"), "**/*.java")
+            .destination(directory().resolve("_jdbld/build/classes"));
         dependency(Consume, JavaResourceCollector::new).add(Path.of(
             "_jdbld/resources"), "**/*");
         dependency(Supply, JUnitTestRunner::new);
