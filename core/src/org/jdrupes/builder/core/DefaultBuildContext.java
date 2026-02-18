@@ -152,11 +152,8 @@ public class DefaultBuildContext implements BuildContext {
     }
 
     @Override
-    public Optional<StatusLine> statusLine() {
-        if (!FutureStream.statusLine.isBound()) {
-            return Optional.empty();
-        }
-        return Optional.of(FutureStream.statusLine.get());
+    public StatusLine statusLine() {
+        return FutureStream.statusLine.orElse(SplitConsole.nullStatusLine());
     }
 
     @Override

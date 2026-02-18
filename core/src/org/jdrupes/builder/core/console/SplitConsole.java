@@ -42,6 +42,23 @@ import org.jdrupes.builder.api.StatusLine;
 public final class SplitConsole implements AutoCloseable {
 
     private static final FluentLogger logger = FluentLogger.forEnclosingClass();
+    private static final StatusLine NULL_STATUS_LINE = new StatusLine() {
+        @Override
+        public void update(String text, Object... args) {
+            // Does nothing
+        }
+
+        @Override
+        @SuppressWarnings("PMD.RelianceOnDefaultCharset")
+        public PrintWriter writer(String prefix) {
+            return new PrintWriter(OutputStream.nullOutputStream());
+        }
+
+        @Override
+        public void close() {
+            // Does nothing
+        }
+    };
     private static AtomicInteger openCount = new AtomicInteger();
     private static SplitConsole instance;
     private final TerminalInfo term;
@@ -77,6 +94,15 @@ public final class SplitConsole implements AutoCloseable {
             }
             return instance;
         }
+    }
+
+    /// Return a status line implementation that discards all update
+    /// information.
+    ///
+    /// @return the status line
+    ///
+    public static StatusLine nullStatusLine() {
+        return NULL_STATUS_LINE;
     }
 
     /// Initializes a new split console.

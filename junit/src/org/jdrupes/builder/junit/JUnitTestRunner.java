@@ -61,7 +61,6 @@ import org.junit.platform.launcher.core.LauncherFactory;
 import org.junit.platform.launcher.listeners.LoggingListener;
 import org.junit.platform.launcher.listeners.SummaryGeneratingListener;
 
-// TODO: Auto-generated Javadoc
 /// A [Generator] for [TestResult]s using the JUnit platform. The runner
 /// assumes that it is configured as [Generator] for a test project. 
 /// The class path for running the tests is build as follows:
@@ -311,9 +310,8 @@ public class JUnitTestRunner extends AbstractGenerator {
             if (testIdentifier.getSource().isPresent()
                 && testIdentifier.getSource().get() instanceof ClassSource) {
                 tests.add(testIdentifier);
-                context().statusLine().ifPresent(
-                    l -> l.update(JUnitTestRunner.this + " running: "
-                        + prettyTestName(testIdentifier)));
+                context().statusLine().update(JUnitTestRunner.this
+                    + " running: " + prettyTestName(testIdentifier));
             }
         }
 

@@ -21,7 +21,6 @@ package org.jdrupes.builder.api;
 import java.io.IOException;
 import java.io.PrintStream;
 import java.nio.file.Path;
-import java.util.Optional;
 import java.util.stream.Stream;
 import org.apache.commons.cli.CommandLine;
 
@@ -73,14 +72,18 @@ public interface BuildContext extends AutoCloseable {
     ///
     String property(String name, String defaultValue);
 
-    /// Returns the status line. The status line may be used by
-    /// [ResourceProvider]s to indicate progress during the execution of
-    /// [ResourceProviderSpi#provide(ResourceRequest)]. A [StatusLine] is
-    /// automatically allocated by the context when [#resources] is invoked.
+    /// Returns the status line for the current thread. The status line
+    /// may be used by [ResourceProvider]s to indicate progress during
+    /// the execution of [ResourceProviderSpi#provide(ResourceRequest)].
+    /// A [StatusLine] is automatically allocated by the context when
+    /// [#resources] is invoked.
+    /// 
+    /// When called while not executing [#resources], this method
+    /// returns a dummy status line that discards all updates.
     ///
     /// @return the status line
     ///
-    Optional<StatusLine> statusLine();
+    StatusLine statusLine();
 
     /// Returns the [PrintStream] for the standard output.
     ///
