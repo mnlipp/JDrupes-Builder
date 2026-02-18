@@ -33,13 +33,13 @@ import java.util.Set;
 ///
 public interface ResourceRequest<T extends Resource> extends Cloneable {
 
-    /// Return the requested type.
+    /// Returns the requested type.
     ///
     /// @return the resource type
     ///
     ResourceType<? extends T> type();
 
-    /// Return a new resource request for a resource with the given name.
+    /// Returns a new resource request for a resource with the given name.
     /// 
     /// Support for resource names is optional and provider-specific.
     /// Expect the name to be ignored if not explicitly supported for
@@ -56,7 +56,7 @@ public interface ResourceRequest<T extends Resource> extends Cloneable {
     ///
     Optional<String> name();
 
-    /// Return a new resource request that uses project providers with
+    /// Returns a new resource request that uses project providers with
     /// the given intents.
     ///
     /// @param intents the intents
@@ -64,7 +64,7 @@ public interface ResourceRequest<T extends Resource> extends Cloneable {
     ///
     ResourceRequest<T> using(Set<Intent> intents);
 
-    /// Return a new resource request that uses a project's providers
+    /// Returns a new resource request that uses a project's providers
     /// with the given intents.
     ///
     /// @param intent the intent
@@ -75,7 +75,7 @@ public interface ResourceRequest<T extends Resource> extends Cloneable {
         return using(EnumSet.of(intent, intents));
     }
 
-    /// Return a new resource request that uses all providers of projects.
+    /// Returns a new resource request that uses all providers of projects.
     ///
     /// @return the resource request
     ///
@@ -85,23 +85,30 @@ public interface ResourceRequest<T extends Resource> extends Cloneable {
 
     /// Returns the intents to be used for selecting providers.
     ///
-    /// @return the sets the
+    /// @return the intents
     ///
     Set<Intent> uses();
 
-    /// Checks if the query accepts results of the given type. This
-    /// is short for `type().isAssignableFrom(type)`. 
+    /// Returns true if resources of the given type satisfy this request.
+    /// This method is typically used by providers to decide whether to
+    /// provide their resources of that type in response to the request.
+    /// 
+    /// Technically, this is the same as `type().isAssignableFrom(type)`. 
     ///
     /// @param type the type to check
-    /// @return true, if successful
+    /// @return true if resources of the type would satisfy this request
     ///
     boolean accepts(ResourceType<?> type);
 
-    /// Checks if the query requires results of the given type. This
-    /// is short for `type.isAssignableFrom(type())`. 
+    /// Returns true if this request explicitly targets the type
+    /// argument. This method is typically used by providers that can
+    /// provide variants of a resource type to check which variant
+    /// should be provided.
+    /// 
+    /// Technically, this is the same as `type.isAssignableFrom(type())`. 
     ///
     /// @param type the type to check
     /// @return true, if successful
     ///
-    boolean requires(ResourceType<?> type);
+    boolean isFor(ResourceType<?> type);
 }

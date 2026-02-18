@@ -94,11 +94,11 @@ public abstract class AbstractProvider implements ResourceProvider {
     /// invocation is allowed.
     ///
     /// @param <T> the generic type
-    /// @param requested the requested
+    /// @param request the request for resources
     /// @return the stream
     ///
     protected abstract <T extends Resource> Stream<T>
-            doProvide(ResourceRequest<T> requested);
+            doProvide(ResourceRequest<T> request);
 
     @Override
     @SuppressWarnings("PMD.ShortMethodName")

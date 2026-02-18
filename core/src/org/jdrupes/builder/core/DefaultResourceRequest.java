@@ -98,7 +98,7 @@ public class DefaultResourceRequest<T extends Resource>
     }
 
     @Override
-    public boolean requires(ResourceType<?> type) {
+    public boolean isFor(ResourceType<?> type) {
         return type.isAssignableFrom(this.type);
     }
 

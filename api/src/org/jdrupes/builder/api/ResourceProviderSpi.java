@@ -51,8 +51,8 @@ public interface ResourceProviderSpi {
     /// for A to a request for B (via [ResourceProvider#resources]).   
     ///
     /// @param <T> the type of the requested (and provided) resource
-    /// @param requested the requested resources
+    /// @param request the request for resources
     /// @return the provided resource(s) as stream
     ///
-    <T extends Resource> Stream<T> provide(ResourceRequest<T> requested);
+    <T extends Resource> Stream<T> provide(ResourceRequest<T> request);
 }

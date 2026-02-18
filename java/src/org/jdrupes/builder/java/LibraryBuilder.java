@@ -161,30 +161,30 @@ public class LibraryBuilder extends JarBuilder
     @SuppressWarnings({ "PMD.CollapsibleIfStatements", "unchecked",
         "PMD.CyclomaticComplexity" })
     protected <T extends Resource> Stream<T>
-            doProvide(ResourceRequest<T> requested) {
-        if (!requested.accepts(LibraryJarFileType)
-            && !requested.accepts(CleanlinessType)) {
+            doProvide(ResourceRequest<T> request) {
+        if (!request.accepts(LibraryJarFileType)
+            && !request.accepts(CleanlinessType)) {
             return Stream.empty();
         }
 
         // Maybe only delete
-        if (requested.accepts(CleanlinessType)) {
+        if (request.accepts(CleanlinessType)) {
             destination().resolve(jarName()).toFile().delete();
             return Stream.empty();
         }
 
         // Upgrade to most specific type to avoid duplicate generation
-        if (mainClass() != null && !requested.type().equals(AppJarFileType)) {
+        if (mainClass() != null && !request.type().equals(AppJarFileType)) {
             return (Stream<T>) context()
                 .resources(this, project().of(AppJarFileType));
         }
-        if (mainClass() == null && !requested.type().equals(JarFileType)) {
+        if (mainClass() == null && !request.type().equals(JarFileType)) {
             return (Stream<T>) context()
                 .resources(this, project().of(JarFileType));
         }
 
         // Make sure mainClass is set for app jar
-        if (requested.requires(AppJarFileType) && mainClass() == null) {
+        if (request.isFor(AppJarFileType) && mainClass() == null) {
             throw new ConfigurationException().from(this).message(
                 "Main class must be set for %s", name());
         }
@@ -197,7 +197,7 @@ public class LibraryBuilder extends JarBuilder
                     .message("Cannot create directory " + destDir);
             }
         }
-        var jarResource = requested.requires(AppJarFileType)
+        var jarResource = request.isFor(AppJarFileType)
             ? project().newResource(AppJarFileType,
                 destDir.resolve(jarName()))
             : project().newResource(LibraryJarFileType,

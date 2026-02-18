@@ -1,6 +1,6 @@
 #!/usr/bin/bash
 
-defaultVersion="0.0.18"
+defaultVersion="0.0.19-SNAPSHOT"
 propertiesFile=".jdbld.properties"
 
 if [ ! -r "$propertiesFile" ]; then

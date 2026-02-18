@@ -232,7 +232,7 @@ public abstract class AbstractLauncher implements Launcher {
             () -> ((DefaultBuildContext) rootProject().context()).call(
                 () -> projects.map(p -> p.resources(request)).flatMap(r -> r)
                     .toList().stream()));
-        if (request.requires(CleanlinessType)) {
+        if (request.isFor(CleanlinessType)) {
             regenerateRootProject();
         }
         return result;

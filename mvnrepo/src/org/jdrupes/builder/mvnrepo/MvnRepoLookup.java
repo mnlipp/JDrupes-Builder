@@ -194,19 +194,19 @@ public class MvnRepoLookup extends AbstractProvider
     /// Provide.
     ///
     /// @param <T> the generic type
-    /// @param requested the requested resources
+    /// @param request the requested resources
     /// @return the stream
     ///
     @Override
     protected <T extends Resource> Stream<T>
-            doProvide(ResourceRequest<T> requested) {
-        if (requested.accepts(MvnRepoDependencyType)) {
+            doProvide(ResourceRequest<T> request) {
+        if (request.accepts(MvnRepoDependencyType)) {
             return provideMvnDeps();
         }
-        if (!requested.accepts(MvnRepoLibraryJarFileType)) {
+        if (!request.accepts(MvnRepoLibraryJarFileType)) {
             return Stream.empty();
         }
-        if (!requested.requires(MvnRepoLibraryJarFileType)) {
+        if (!request.isFor(MvnRepoLibraryJarFileType)) {
             @SuppressWarnings({ "unchecked", "PMD.AvoidDuplicateLiterals" })
             var result = (Stream<T>) context()
                 .resources(this, of(MvnRepoLibraryJarFileType));
