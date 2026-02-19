@@ -596,6 +596,11 @@ public final class SplitConsole implements AutoCloseable {
         public void write(byte[] ch, int off, int len) throws IOException {
             SplitConsole.this.write(ch, off, len, markup);
         }
+
+        @Override
+        public void close() throws IOException {
+            // Don't forward close
+        }
     }
 
 }
