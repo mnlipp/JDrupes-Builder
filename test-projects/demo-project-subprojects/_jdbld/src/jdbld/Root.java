@@ -6,7 +6,6 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
-
 import org.jdrupes.builder.api.BuildException;
 import org.jdrupes.builder.api.MergedTestProject;
 import org.jdrupes.builder.api.Project;
@@ -22,6 +21,8 @@ import org.jdrupes.builder.java.JavaResourceCollector;
 import org.jdrupes.builder.junit.JUnitTestRunner;
 import org.jdrupes.builder.mvnrepo.MvnRepoLookup;
 import org.jdrupes.builder.uberjar.UberJarBuilder;
+import org.jdrupes.builder.vscode.VscodeConfiguration;
+import org.jdrupes.builder.vscode.VscodeConfigurator;
 
 public class Root extends AbstractRootProject {
 
@@ -29,6 +30,7 @@ public class Root extends AbstractRootProject {
     public void prepareProject(Project project) {
         setupCommonGenerators(project);
         setupEclipseConfigurator(project);
+        setupVscodeConfigurator(project);
     }
 
     public Root() {
@@ -49,6 +51,7 @@ public class Root extends AbstractRootProject {
         commandAlias("build").resources(of(JarFile.class));
         commandAlias("test").resources(of(TestResult.class));
         commandAlias("eclipse").resources(of(EclipseConfiguration.class));
+        commandAlias("vscode").resources(of(VscodeConfiguration.class));
     }
 
     public static void setupCommonGenerators(Project project) {
@@ -128,4 +131,8 @@ public class Root extends AbstractRootProject {
             }));
     }
 
+    private static void setupVscodeConfigurator(Project project) {
+        project.generator(VscodeConfigurator::new)
+            .jdk("25", Path.of("/usr/lib/jvm/java-25-openjdk/"));
+    }
 }
