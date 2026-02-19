@@ -22,6 +22,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -29,6 +30,9 @@ import java.util.function.Consumer;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import org.jdrupes.builder.api.BuildException;
+import org.jdrupes.builder.api.FileTree;
+import org.jdrupes.builder.api.MergedTestProject;
+
 import static org.jdrupes.builder.api.Intent.*;
 import org.jdrupes.builder.api.Project;
 import org.jdrupes.builder.api.Resource;
@@ -37,6 +41,8 @@ import static org.jdrupes.builder.api.ResourceType.resourceType;
 import org.jdrupes.builder.core.AbstractGenerator;
 import org.jdrupes.builder.java.JarFile;
 import org.jdrupes.builder.java.JavaCompiler;
+import org.jdrupes.builder.java.JavaResourceTree;
+
 import static org.jdrupes.builder.java.JavaTypes.*;
 
 /// The [VscodeConfigurator] provides the resource [VscodeConfiguration].
@@ -102,9 +108,9 @@ public class VscodeConfigurator extends AbstractGenerator {
         Path vscodeDir = project().directory().resolve(".vscode");
         vscodeDir.toFile().mkdirs();
         try {
-            generateSettingsJson(vscodeDir.resolve("settings.json"));
-            generateLaunchJson(vscodeDir.resolve("launch.json"));
-            generateTasksJson(vscodeDir.resolve("tasks.json"));
+            generateSettings(vscodeDir.resolve("settings.json"));
+            generateLaunch(vscodeDir.resolve("launch.json"));
+            generateTasks(vscodeDir.resolve("tasks.json"));
         } catch (IOException e) {
             throw new BuildException().from(this).cause(e);
         }
@@ -119,34 +125,58 @@ public class VscodeConfigurator extends AbstractGenerator {
         return result;
     }
 
-    private void generateSettingsJson(Path file) throws IOException {
+    private void generateSettings(Path file) throws IOException {
         @SuppressWarnings({ "PMD.UseConcurrentHashMap" })
         Map<String, Object> settings = new HashMap<>();
         settings.put("java.configuration.updateBuildConfiguration",
             "automatic");
 
-        // Set java compiler target
-        project().providers().select(Supply)
+        // TODO Generalize. Currently we assume a Java compiler exists
+        // and use it to obtain the output directory for all generators
+        project().providers().select(Consume, Reveal, Supply)
             .filter(p -> p instanceof JavaCompiler)
-            .map(p -> (JavaCompiler) p).findFirst().flatMap(
-                jc -> jc.optionArgument("--release", "--target", "-target"))
-            .filter(jdkLocations::containsKey)
-            .ifPresent(version -> {
-                @SuppressWarnings("PMD.UseConcurrentHashMap")
-                Map<String, Object> runtime = new HashMap<>();
-                runtime.put("name", "JavaSE-" + version);
-                runtime.put("path", jdkLocations.get(version).toString());
-                runtime.put("default", true);
-                settings.put("java.configuration.runtimes", List.of(runtime));
+            .map(p -> (JavaCompiler) p).findFirst().ifPresent(jc -> {
+                var outputDirectory = project().relativize(jc.destination());
+                settings.put("java.project.outputPath",
+                    outputDirectory.toString());
+                jc.optionArgument("--release", "--target", "-target")
+                    .filter(jdkLocations::containsKey)
+                    .ifPresent(version -> {
+                        @SuppressWarnings("PMD.UseConcurrentHashMap")
+                        Map<String, Object> runtime = new HashMap<>();
+                        runtime.put("name", "JavaSE-" + version);
+                        runtime.put("path",
+                            jdkLocations.get(version).toString());
+                        runtime.put("default", true);
+                        settings.put("java.configuration.runtimes",
+                            List.of(runtime));
+                    });
             });
 
+        // Add project's source trees
+        var sourcePaths = new ArrayList<String>();
+        addSrcPaths(sourcePaths, project());
+
         // Add output directories of contributing projects
-        var referenced = new java.util.ArrayList<String>();
-        collectContributing(project()).collect(Collectors.toSet()).stream()
-            .forEach(proj -> {
-                referenced
-                    .add(proj.buildDirectory().resolve("classes").toString());
+        var referenced = new ArrayList<String>();
+        project().providers().select(Consume, Reveal, Expose, Forward)
+            .filter(p -> p instanceof Project)
+            .map(Project.class::cast).forEach(p -> {
+                if (p instanceof MergedTestProject) {
+                    if (p.parentProject().get().equals(project())) {
+                        // Test projects contribute their resources to the
+                        // parent
+                        addSrcPaths(sourcePaths, p);
+                    }
+                    return;
+                }
+                addOutputs(referenced, p);
             });
+
+        // Source paths are complete now
+        if (!sourcePaths.isEmpty()) {
+            settings.put("java.project.sourcePaths", sourcePaths);
+        }
 
         // Add JARs to classpath
         referenced.addAll(project().resources(of(ClasspathElementType)
@@ -165,18 +195,41 @@ public class VscodeConfigurator extends AbstractGenerator {
         Files.writeString(file, json);
     }
 
-    private Stream<Project> collectContributing(Project project) {
-        return project.providers().select(Consume, Reveal, Forward, Expose)
-            .filter(p -> p instanceof Project).map(p -> (Project) p)
-            .map(p -> Stream.concat(Stream.of(p), collectContributing(p)))
-            .flatMap(s -> s);
+    private void addSrcPaths(List<String> sourcePaths, Project project) {
+        project.providers().without(Project.class).resources(
+            of(JavaSourceTreeType).using(Consume, Reveal, Supply))
+            .map(FileTree::root).filter(p -> p.toFile().canRead())
+            .map(p -> project().relativize(p)).forEach(p -> {
+                sourcePaths.add(p.toString());
+            });
+        project.providers().without(Project.class).resources(
+            of(JavaResourceTreeType).using(Consume, Reveal, Supply))
+            .map(FileTree::root).filter(p -> p.toFile().canRead())
+            .map(p -> project().relativize(p)).forEach(p -> {
+                sourcePaths.add(p.toString());
+            });
     }
 
-    private void generateLaunchJson(Path file) throws IOException {
+    private void addOutputs(List<String> referenced,
+            Project project) {
+        // TODO Generalize. Currently we assume a Java compiler exists
+        // and use it to obtain the output directory for all generators
+        var javaCompiler = project.providers().select(Consume, Reveal, Supply)
+            .filter(p -> p instanceof JavaCompiler)
+            .map(JavaCompiler.class::cast).findFirst();
+        // Output from referenced project becomes input for our project
+        var outputDirectory
+            = javaCompiler.map(jc -> project().relativize(jc.destination()));
+        outputDirectory.ifPresent(o -> {
+            referenced.add(o.toString());
+        });
+    }
+
+    private void generateLaunch(Path file) throws IOException {
         @SuppressWarnings("PMD.UseConcurrentHashMap")
         Map<String, Object> launch = new HashMap<>();
         launch.put("version", "0.2.0");
-        launch.put("configurations", new java.util.ArrayList<>());
+        launch.put("configurations", new ArrayList<>());
         launchAdaptor.accept(launch);
         ObjectMapper mapper = new ObjectMapper();
         String json = mapper.writerWithDefaultPrettyPrinter()
@@ -198,7 +251,7 @@ public class VscodeConfigurator extends AbstractGenerator {
         return this;
     }
 
-    private void generateTasksJson(Path file) throws IOException {
+    private void generateTasks(Path file) throws IOException {
         @SuppressWarnings("PMD.UseConcurrentHashMap")
         Map<String, Object> tasks = new HashMap<>();
         tasks.put("version", "2.0.0");
