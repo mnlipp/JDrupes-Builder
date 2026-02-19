@@ -216,11 +216,6 @@ public abstract class AbstractProject extends AbstractProvider
             .rootProject();
     }
 
-    /// Project.
-    ///
-    /// @param prjCls the prj cls
-    /// @return the project
-    ///
     @Override
     public Project project(Class<? extends Project> prjCls) {
         if (this.getClass().equals(prjCls)) {
@@ -229,10 +224,6 @@ public abstract class AbstractProject extends AbstractProvider
         return rootProject().project(prjCls);
     }
 
-    /// Parent project.
-    ///
-    /// @return the optional
-    ///
     @Override
     public Optional<Project> parentProject() {
         return Optional.ofNullable(parent);
@@ -244,21 +235,12 @@ public abstract class AbstractProject extends AbstractProvider
         return projectName;
     }
 
-    /// Directory.
-    ///
-    /// @return the path
-    ///
     @Override
     @SuppressWarnings("checkstyle:OverloadMethodsDeclarationOrder")
     public Path directory() {
         return projectDirectory;
     }
 
-    /// Generator.
-    ///
-    /// @param provider the provider
-    /// @return the project
-    ///
     @Override
     public Project generator(Generator provider) {
         if (this instanceof MergedTestProject) {
@@ -269,12 +251,6 @@ public abstract class AbstractProject extends AbstractProvider
         return this;
     }
 
-    /// Dependency.
-    ///
-    /// @param intent the intent
-    /// @param provider the provider
-    /// @return the project
-    ///
     @Override
     public Project dependency(Intent intent, ResourceProvider provider) {
         providers.put(provider, intent);
@@ -305,31 +281,16 @@ public abstract class AbstractProject extends AbstractProvider
             .filter(e -> e.getValue() == intent).map(Entry::getKey);
     }
 
-    /// Providers.
-    ///
-    /// @return the default provider selection
-    ///
     @Override
     public DefaultProviderSelection providers() {
         return new DefaultProviderSelection(this);
     }
 
-    /// Providers.
-    ///
-    /// @param intends the intends
-    /// @return the provider selection
-    ///
     @Override
     public ProviderSelection providers(Set<Intent> intends) {
         return new DefaultProviderSelection(this, intends);
     }
 
-    /// Returns the.
-    ///
-    /// @param <T> the generic type
-    /// @param property the property
-    /// @return the t
-    ///
     @Override
     @SuppressWarnings("unchecked")
     public <T> T get(PropertyKey property) {
@@ -342,12 +303,6 @@ public abstract class AbstractProject extends AbstractProvider
             });
     }
 
-    /// Sets the.
-    ///
-    /// @param property the property
-    /// @param value the value
-    /// @return the abstract project
-    ///
     @Override
     public AbstractProject set(PropertyKey property, Object value) {
         if (!property.type().isAssignableFrom(value.getClass())) {
