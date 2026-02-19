@@ -263,6 +263,24 @@ public class Root extends AbstractRootProject {
     private static void setupVscodeConfiguration(Project project) {
         project.generator(VscodeConfigurator::new)
             .jdk("25", Path.of("/usr/lib/jvm/java-25-openjdk/"))
+            .adaptTasks(c -> {
+                if (!(project instanceof Root)) {
+                    return;
+                }
+                ((List<Map<String, Object>>) c.get("tasks")).addAll(List.of(
+                    Map.of("name", "Build JDrupes Builder",
+                        "type", "shell",
+                        "label", "build",
+                        "command",
+                        "JDBLD_JAR=build/app/jdrupes-builder-current.jar"
+                          + " ./jdbld -B-x \"test-projects/*project*\" build"),
+                    Map.of("name", "Generate vscode configuration",
+                        "type", "shell",
+                        "label", "build",
+                        "command",
+                        "JDBLD_JAR=build/app/jdrupes-builder-current.jar"
+                            + " ./jdbld -B-x \"test-projects/*project*\" vscode")));
+            })
             .adaptLaunch(c -> {
                 if (!(project instanceof Root)) {
                     return;
