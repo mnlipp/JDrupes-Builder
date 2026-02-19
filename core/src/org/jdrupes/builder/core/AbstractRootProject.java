@@ -26,6 +26,7 @@ import java.util.concurrent.Future;
 import org.jdrupes.builder.api.BuildException;
 import org.jdrupes.builder.api.Cleanliness;
 import org.jdrupes.builder.api.ConfigurationException;
+import static org.jdrupes.builder.api.Intent.*;
 import org.jdrupes.builder.api.NamedParameter;
 import org.jdrupes.builder.api.Project;
 import org.jdrupes.builder.api.ResourceRequest;
@@ -52,7 +53,8 @@ public abstract class AbstractRootProject extends AbstractProject
         // ConcurrentHashMap does not support null values.
         projects = Collections.synchronizedMap(new HashMap<>());
         commands = new HashMap<>();
-        commandAlias("clean").resources(of(Cleanliness.class));
+        commandAlias("clean").projects("**")
+            .resources(of(Cleanliness.class).using(Supply, Consume));
     }
 
     @Override
