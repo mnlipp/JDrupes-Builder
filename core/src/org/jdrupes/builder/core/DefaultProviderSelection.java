@@ -18,7 +18,10 @@
 
 package org.jdrupes.builder.core;
 
+import com.google.common.flogger.FluentLogger;
+import java.util.ArrayList;
 import java.util.EnumSet;
+import java.util.List;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
@@ -38,6 +41,7 @@ import org.jdrupes.builder.api.ResourceRequest;
 ///
 public class DefaultProviderSelection implements ProviderSelection {
 
+    private static final FluentLogger logger = FluentLogger.forEnclosingClass();
     private final AbstractProject project;
     private final Set<Intent> preSelected;
     private Predicate<ResourceProvider> filter = _ -> true;
@@ -96,18 +100,24 @@ public class DefaultProviderSelection implements ProviderSelection {
 
     @Override
     public <T extends Resource> Stream<T>
-            resources(ResourceRequest<T> requested) {
+            resources(ResourceRequest<T> request) {
         AtomicReference<ResourceRequest<T>> projectRequest
             = new AtomicReference<>();
-        return select(requested.uses()).map(p -> {
+        // Forward requests to providers eagerly to start execution
+        List<ResourceProvider> providersUsed = new ArrayList<>();
+        var pending = select(request.uses()).map(p -> {
+            providersUsed.add(p);
             if (p instanceof Project) {
                 return project.context().resources(p,
                     projectRequest.updateAndGet(
-                        r -> r != null ? r : forwardedRequest(requested)));
+                        r -> r != null ? r : forwardedRequest(request)));
             }
-            return project.context().resources(p, requested);
-        }) // Evaluate providers eagerly, resources lazily
-            .toList().stream().flatMap(s -> s);
+            return project.context().resources(p, request);
+        }).toList();
+        logger.atFinest().log("%s forwards % to %s",
+            project, request, providersUsed);
+        // Evaluate resources lazily to prevent deadlocks
+        return pending.stream().flatMap(s -> s);
     }
 
     private <T extends Resource> ResourceRequest<T>
