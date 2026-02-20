@@ -268,18 +268,20 @@ public class Root extends AbstractRootProject {
                     return;
                 }
                 ((List<Map<String, Object>>) c.get("tasks")).addAll(List.of(
-                    Map.of("name", "Build JDrupes Builder",
+                    Map.of("label", "Build JDrupes Builder",
                         "type", "shell",
-                        "label", "build",
+                        "group", "build",
                         "command",
                         "JDBLD_JAR=build/app/jdrupes-builder-current.jar"
-                          + " ./jdbld -B-x \"test-projects/*project*\" build"),
-                    Map.of("name", "Generate vscode configuration",
+                          + " ./jdbld -B-x \"test-projects/*project*\" build",
+                        "problemMatcher", List.of("$gcc")),
+                    Map.of("label", "Generate vscode configuration",
                         "type", "shell",
-                        "label", "build",
+                        "group", "build",
                         "command",
                         "JDBLD_JAR=build/app/jdrupes-builder-current.jar"
-                            + " ./jdbld -B-x \"test-projects/*project*\" vscode")));
+                            + " ./jdbld -B-x \"test-projects/*project*\" vscode",
+                        "problemMatcher", List.of("$gcc"))));
             })
             .adaptLaunch(c -> {
                 if (!(project instanceof Root)) {
