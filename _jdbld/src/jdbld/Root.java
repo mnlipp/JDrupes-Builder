@@ -26,7 +26,7 @@ import org.jdrupes.builder.java.AppJarFile;
 import org.jdrupes.builder.java.JavaCompiler;
 import org.jdrupes.builder.java.JavaProject;
 import org.jdrupes.builder.java.JavaResourceCollector;
-import org.jdrupes.builder.mvnrepo.JavadocJarGenerator;
+import org.jdrupes.builder.mvnrepo.JavadocJarBuilder;
 import org.jdrupes.builder.mvnrepo.MvnPublication;
 import org.jdrupes.builder.mvnrepo.MvnPublisher;
 import org.jdrupes.builder.mvnrepo.MvnRepoLookup;
@@ -149,7 +149,7 @@ public class Root extends AbstractRootProject {
             of(JavaSourceTreeType).using(Supply, Expose)));
 
         // Supply javadoc jar
-        generator(JavadocJarGenerator::new);
+        generator(JavadocJarBuilder::new);
 
         // Publish (deploy). Credentials and signing information is
         // obtained through properties.

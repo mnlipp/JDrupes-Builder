@@ -14,7 +14,7 @@ layout: jdbld
   * [JarBuilder](javadoc/org/jdrupes/builder/java/JarBuilder.html)
   * [JavaCompiler](javadoc/org/jdrupes/builder/java/JavaCompiler.html)
   * [Javadoc](javadoc/org/jdrupes/builder/java/Javadoc.html)
-  * [JavadocJarGenerator](javadoc/org/jdrupes/builder/mvnrepo/JavadocJarGenerator.html)
+  * [JavadocJarBuilder](javadoc/org/jdrupes/builder/mvnrepo/JavadocJarBuilder.html)
   * [JavaExecutor](javadoc/org/jdrupes/builder/java/JavaExecutor.html)
   * [JUnitTestRunner](javadoc/org/jdrupes/builder/junit/JUnitTestRunner.html)
   * [LibraryBuilder](javadoc/org/jdrupes/builder/java/LibraryBuilder.html)

@@ -42,14 +42,14 @@ import static org.jdrupes.builder.mvnrepo.MvnProperties.*;
 ///     `<version>` is the value of the project's property
 ///     [Project.Properties#Version].
 ///
-public class JavadocJarGenerator extends JarBuilder {
+public class JavadocJarBuilder extends JarBuilder {
 
     /// Initializes a new sources jar generator.
     ///
     /// @param project the project
     ///
     @SuppressWarnings({ "PMD.ConstructorCallsOverridableMethod" })
-    public JavadocJarGenerator(Project project) {
+    public JavadocJarBuilder(Project project) {
         super(project, JavadocJarFileType);
         var trees = project().resources(
             of(JavadocDirectory.class).using(Supply)).map(
