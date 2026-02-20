@@ -22,14 +22,19 @@ public class SimpleApp extends AbstractRootProject {
     public SimpleApp() {
         super(name("demo-project-simple-app"));
         generator(JavaCompiler::new).addSources(Path.of("src"), "**/*.java");
-        generator(UberJarGenerator::new).addFrom(providers().select(Supply))
-            .mainClass("jdbld.demo.simpleapp.App");
+        generator(UberJarBuilder::new).addFrom(providers()
+            .select(Supply)).mainClass("jdbld.demo.simpleapp.App");
 
         // Command arguments
-        commandAlias("build", of(AppJarFile.class));
+        commandAlias("build").resources(of(AppJarFile.class));
     }
 }
 ```
+
+You can find the source code for this sample build configuration in the
+[GitHub repository](https://github.com/mnlipp/jdbld). To get started,
+copy the content of the directory `test-projects/demo-project-simple-app`
+into a directory of your choice.
 
 In jdbld terminology, a build system is a provider of resources.
 It is implemented as a graph of
@@ -100,3 +105,28 @@ as they happen when a user requests the application jar from the project.
 
 ![Simple app jar project](javadoc/build-appjar-project.svg)
 
+## Start the build
+
+To start the build, copy the shell script `jdbld` from the GitHub repository
+into the root directory of your project and make it executable:
+
+```bash
+chmod +x jdbld
+```
+
+Then run the script in the root directory of your project:
+
+```bash
+./jdbld build
+```
+
+This will build the application jar and store it in the directory
+`build/libs`.
+
+Note that JDrupes Builder requires Java 25 or higher. If you have an
+older version of Java, as default when executing `java -version`, you
+must set the environment variable `JAVA_HOME` to a JDK with version 25
+or higher. 
+
+More details about the invocation of JDrupes Builder can be found in
+section [invocation](./invocation.html).
