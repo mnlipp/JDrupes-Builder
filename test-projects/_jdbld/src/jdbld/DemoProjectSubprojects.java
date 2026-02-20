@@ -36,6 +36,7 @@ public class DemoProjectSubprojects extends AbstractProject
         dependency(Consume, project(Uberjar.class));
         dependency(Consume, project(Startup.class));
         dependency(Consume, project(Eclipse.class));
+        dependency(Consume, project(Vscode.class));
         dependency(Consume, project(JUnit.class));
         dependency(Consume, project(MvnRepo.class));
         TestProjects.prepareProject(this);
