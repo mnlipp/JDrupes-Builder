@@ -45,7 +45,7 @@ import static org.jdrupes.builder.java.JavaTypes.*;
 ///
 /// The generator provides two types of resources.
 /// 
-/// 1. A [JarFile]. This type of resource is also returned if a more
+/// 1. A [LibraryJarFile]. This type of resource is also returned if a more
 ///    general [ResourceType] such as [ClasspathElement] is requested.
 ///
 /// 2. An [AppJarFile]. When requesting this special jar type, the
