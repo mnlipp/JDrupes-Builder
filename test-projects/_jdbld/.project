@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<projectDescription>
+	<name>_jdbld-test-projects</name>
+	<comment></comment>
+	<projects>
+	</projects>
+	<buildSpec>
+		<buildCommand>
+			<name>org.eclipse.jdt.core.javabuilder</name>
+			<arguments>
+			</arguments>
+		</buildCommand>
+		<buildCommand>
+			<name>net.sf.eclipsecs.core.CheckstyleBuilder</name>
+			<arguments>
+			</arguments>
+		</buildCommand>
+	</buildSpec>
+    <natures>
+        <nature>org.eclipse.jdt.core.javanature</nature>
+        <nature>net.sf.eclipsecs.core.CheckstyleNature</nature>
+        <nature>ch.acanda.eclipse.pmd.builder.PMDNature</nature>
+    </natures>
+	<linkedResources>
+		<link>
+			<name>sibling-src</name>
+			<type>2</type>
+			<location>/home/mnl/devel/JDrupes-Builder/_jdbld/src</location>
+		</link>
+	</linkedResources>
+</projectDescription>
