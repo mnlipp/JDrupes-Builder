@@ -111,6 +111,7 @@ To start the build, copy the shell script `jdbld` from the GitHub repository
 into the root directory of your project and make it executable:
 
 ```bash
+curl -L https://raw.githubusercontent.com/mnlipp/JDrupes-Builder/refs/heads/main/jdbld -o jdbld
 chmod +x jdbld
 ```
 
