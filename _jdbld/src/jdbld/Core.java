@@ -1,7 +1,6 @@
 package jdbld;
 
 import static org.jdrupes.builder.api.Intent.*;
-
 import org.jdrupes.builder.api.MergedTestProject;
 import org.jdrupes.builder.core.AbstractProject;
 import org.jdrupes.builder.java.JavaProject;

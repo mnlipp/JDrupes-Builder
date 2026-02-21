@@ -1,7 +1,6 @@
 package jdbld;
 
 import static org.jdrupes.builder.api.Intent.Expose;
-
 import org.jdrupes.builder.core.AbstractProject;
 import org.jdrupes.builder.java.JavaProject;
 import org.jdrupes.builder.mvnrepo.MvnRepoLookup;

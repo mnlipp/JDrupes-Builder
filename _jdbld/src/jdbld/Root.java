@@ -7,16 +7,16 @@ import java.nio.file.StandardCopyOption;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Stream;
+import static jdbld.ExtProps.GitApi;
 import org.apache.maven.model.Developer;
 import org.apache.maven.model.License;
 import org.apache.maven.model.Scm;
 import org.eclipse.jgit.api.Git;
-import static jdbld.ExtProps.GitApi;
-import static org.jdrupes.builder.api.Intent.*;
-import static org.jdrupes.builder.api.Project.Properties.Version;
 import org.jdrupes.builder.api.BuildException;
+import static org.jdrupes.builder.api.Intent.*;
 import org.jdrupes.builder.api.MergedTestProject;
 import org.jdrupes.builder.api.Project;
+import static org.jdrupes.builder.api.Project.Properties.Version;
 import org.jdrupes.builder.api.RootProject;
 import org.jdrupes.builder.api.TestResult;
 import org.jdrupes.builder.core.AbstractRootProject;
@@ -26,7 +26,14 @@ import org.jdrupes.builder.java.AppJarFile;
 import org.jdrupes.builder.java.JavaCompiler;
 import org.jdrupes.builder.java.JavaProject;
 import org.jdrupes.builder.java.JavaResourceCollector;
+import static org.jdrupes.builder.java.JavaTypes.*;
+import org.jdrupes.builder.java.Javadoc;
+import org.jdrupes.builder.java.JavadocDirectory;
+import org.jdrupes.builder.java.JavadocJarFile;
+import org.jdrupes.builder.java.SourcesJarFile;
+import org.jdrupes.builder.junit.JUnitTestRunner;
 import org.jdrupes.builder.mvnrepo.JavadocJarBuilder;
+import static org.jdrupes.builder.mvnrepo.MvnProperties.*;
 import org.jdrupes.builder.mvnrepo.MvnPublication;
 import org.jdrupes.builder.mvnrepo.MvnPublisher;
 import org.jdrupes.builder.mvnrepo.MvnRepoLookup;
@@ -40,14 +47,6 @@ import org.jdrupes.gitversioning.api.VersionEvaluator;
 import org.jdrupes.gitversioning.core.DefaultTagFilter;
 import org.w3c.dom.Document;
 import org.w3c.dom.Node;
-
-import static org.jdrupes.builder.mvnrepo.MvnProperties.*;
-import org.jdrupes.builder.java.Javadoc;
-import org.jdrupes.builder.java.JavadocDirectory;
-import org.jdrupes.builder.java.JavadocJarFile;
-import static org.jdrupes.builder.java.JavaTypes.*;
-import org.jdrupes.builder.java.SourcesJarFile;
-import org.jdrupes.builder.junit.JUnitTestRunner;
 
 public class Root extends AbstractRootProject {
 
@@ -273,7 +272,7 @@ public class Root extends AbstractRootProject {
                         "group", "build",
                         "command",
                         "JDBLD_JAR=build/app/jdrupes-builder-current.jar"
-                          + " ./jdbld -B-x \"test-projects/*project*\" build",
+                            + " ./jdbld -B-x \"test-projects/*project*\" build",
                         "problemMatcher", List.of("$gcc")),
                     Map.of("label", "Generate vscode configuration",
                         "type", "shell",
