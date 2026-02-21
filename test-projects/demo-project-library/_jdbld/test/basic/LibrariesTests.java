@@ -62,11 +62,12 @@ class LibrariesTests {
                 "META-INF/maven/org.jdrupes.builder.demo.library/api/pom.xml")
                 .stream().forEach(e -> assertTrue(entryNames.contains(e)));
             var manifest = jarFile.getEntry("META-INF/MANIFEST.MF");
-            assertNotNull(manifest);
+            assertNotNull(manifest, "MANIFEST.MF missing");
             @SuppressWarnings("resource")
             String content = new InputStreamReader(jarFile.getInputStream(
                 manifest), StandardCharsets.UTF_8).readAllAsString();
-            assertTrue(content.contains("Bundle-Name: api"));
+            assertTrue(content.contains("Bundle-Name: api"),
+                "Bundle-Name mssing in manifest");
         }
 
         var implLib = paths.stream().filter(p -> p.toString()

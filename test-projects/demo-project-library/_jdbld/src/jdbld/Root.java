@@ -115,20 +115,6 @@ public class Root extends AbstractRootProject {
                 model.setDevelopers(List.of(developer));
             });
 
-            String bundleVersion = project.get(Version);
-            if (bundleVersion.endsWith("-SNAPSHOT")) {
-                bundleVersion = bundleVersion.replaceFirst("-", ".-")
-                    .replaceAll("-SNAPSHOT$", "-\\${tstamp}-SNAPSHOT");
-            } else {
-                bundleVersion += ".ga";
-            }
-            project.dependency(Consume, BndAnalyzer::new)
-                .instruction("Bundle-SymbolicName", project.name())
-                .instruction("Bundle-Version", bundleVersion)
-                .instructions(
-                    Map.of("-diffignore", "Git-Descriptor, Git-SHA",
-                        "Bundle-Version", bundleVersion));
-
             project.generator(LibraryBuilder::new)
                 .addFrom(project.providers().select(Supply))
                 .addAttributeValues(Map.of(
@@ -144,6 +130,21 @@ public class Root extends AbstractRootProject {
                         .resolve((String) project.get(GroupId))
                         .resolve(project.name())
                         .resolve("pom.xml"), pomFile)));
+
+            // Add provider after reference to test delayed evaluation.
+            String bundleVersion = project.get(Version);
+            if (bundleVersion.endsWith("-SNAPSHOT")) {
+                bundleVersion = bundleVersion.replaceFirst("-", ".-")
+                    .replaceAll("-SNAPSHOT$", "-\\${tstamp}-SNAPSHOT");
+            } else {
+                bundleVersion += ".ga";
+            }
+            project.dependency(Consume, BndAnalyzer::new)
+                .instruction("Bundle-SymbolicName", project.name())
+                .instruction("Bundle-Version", bundleVersion)
+                .instructions(
+                    Map.of("-diffignore", "Git-Descriptor, Git-SHA",
+                        "Bundle-Version", bundleVersion));
         }
 
     }
