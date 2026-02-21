@@ -32,6 +32,7 @@ import org.jdrupes.builder.api.MergedTestProject;
 import org.jdrupes.builder.api.Project;
 import org.jdrupes.builder.api.RootProject;
 import org.jdrupes.builder.api.TestResult;
+import org.jdrupes.builder.bnd.BndAnalyzer;
 import org.jdrupes.builder.bnd.BndBaselineEvaluation;
 import static org.jdrupes.builder.bnd.BndProperties.*;
 import org.jdrupes.builder.core.AbstractRootProject;
@@ -113,6 +114,20 @@ public class Root extends AbstractRootProject {
                 developer.setName("Michael N. Lipp");
                 model.setDevelopers(List.of(developer));
             });
+
+            String bundleVersion = project.get(Version);
+            if (bundleVersion.endsWith("-SNAPSHOT")) {
+                bundleVersion = bundleVersion.replaceFirst("-", ".-")
+                    .replaceAll("-SNAPSHOT$", "-\\${tstamp}-SNAPSHOT");
+            } else {
+                bundleVersion += ".ga";
+            }
+            project.dependency(Consume, BndAnalyzer::new)
+                .instruction("Bundle-SymbolicName", project.name())
+                .instruction("Bundle-Version", bundleVersion)
+                .instructions(
+                    Map.of("-diffignore", "Git-Descriptor, Git-SHA",
+                        "Bundle-Version", bundleVersion));
 
             project.generator(LibraryBuilder::new)
                 .addFrom(project.providers().select(Supply))

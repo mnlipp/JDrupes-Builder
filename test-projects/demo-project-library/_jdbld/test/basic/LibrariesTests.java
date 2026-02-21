@@ -1,7 +1,9 @@
 package basic;
 
 import java.io.IOException;
+import java.io.InputStreamReader;
 import java.net.URISyntaxException;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
 import java.util.Collections;
 import java.util.List;
@@ -59,6 +61,12 @@ class LibrariesTests {
             List.of(
                 "META-INF/maven/org.jdrupes.builder.demo.library/api/pom.xml")
                 .stream().forEach(e -> assertTrue(entryNames.contains(e)));
+            var manifest = jarFile.getEntry("META-INF/MANIFEST.MF");
+            assertNotNull(manifest);
+            @SuppressWarnings("resource")
+            String content = new InputStreamReader(jarFile.getInputStream(
+                manifest), StandardCharsets.UTF_8).readAllAsString();
+            assertTrue(content.contains("Bundle-Name: api"));
         }
 
         var implLib = paths.stream().filter(p -> p.toString()
