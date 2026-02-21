@@ -30,7 +30,7 @@ options for running the JDrupes Builder.
 `jdbldDirectory = <name>`
 : sets the name of the directory that
 contains the sources of the builder project. The default value is
-`_jdrupes`. The builder project sources consist of all files matching
+`_jdbld`. The builder project sources consist of all files matching
 the pattern "`**/<jdbldDirectory>/src/**/*.java`".
 
 `jdbldVersion = <version>`
