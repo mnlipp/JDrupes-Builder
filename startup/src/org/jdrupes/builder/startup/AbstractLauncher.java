@@ -228,10 +228,9 @@ public abstract class AbstractLauncher implements Launcher {
     @Override
     public <T extends Resource> Stream<T> resources(Stream<Project> projects,
             ResourceRequest<T> request) {
-        var result = reportBuildException(
-            () -> ((DefaultBuildContext) rootProject().context()).call(
-                () -> projects.map(p -> p.resources(request)).flatMap(r -> r)
-                    .toList().stream()));
+        var result = reportBuildException(() -> projects
+            .map(p -> rootProject().context().resources(p, request))
+            .flatMap(r -> r).toList().stream());
         if (request.isFor(CleanlinessType)) {
             regenerateRootProject();
         }
