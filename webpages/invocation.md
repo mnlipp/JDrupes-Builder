@@ -27,26 +27,26 @@ that the current directory is the root directory of a JDrupes
 Builder-managed project. It also allows you to configure some
 options for running the JDrupes Builder.
 
-`jdbldDirectory = <name>`
-: sets the name of the directory that
-contains the sources of the builder project. The default value is
-`_jdbld`. The builder project sources consist of all files matching
-the pattern "`**/<jdbldDirectory>/src/**/*.java`".
+  * `jdbldDirectory = <name>`
+    : sets the name of the directory that
+    contains the sources of the builder project. The default value is
+    `_jdbld`. The builder project sources consist of all files matching
+    the pattern "`**/<jdbldDirectory>/src/**/*.java`".
 
-`jdbldVersion = <version>`
-: sets the version of the JDrupes Builder to use.
+  * `jdbldVersion = <version>`
+    : sets the version of the JDrupes Builder to use.
 
-`buildExtensions = ...`
-: is a comma-separated list of Maven coordinates of libraries that are
-added to the classpath when compiling the builder project.
+  * `buildExtensions = ...`
+    : is a comma-separated list of Maven coordinates of libraries that are
+    added to the classpath when compiling the builder project.
     
-`extensionsSnapshotRepository = <url>`
-: sets the snapshot repository to use if one of the Maven coordinates
-in `buildExtensions` refers to a snapshot.
+  * `extensionsSnapshotRepository = <url>`
+    : sets the snapshot repository to use if one of the Maven coordinates
+    in `buildExtensions` refers to a snapshot.
     
-`javaHome = <directory>`
-: sets the directory that contains the JDK to use. Note that the
-environment variable `JAVA_HOME` takes precedence. 
+  * `javaHome = <directory>`
+    : sets the directory that contains the JDK to use. Note that the
+    environment variable `JAVA_HOME` takes precedence. 
 
 ## `jdbld` arguments
 
