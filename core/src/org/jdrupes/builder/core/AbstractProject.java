@@ -55,6 +55,19 @@ import org.jdrupes.builder.api.ResourceType;
 import org.jdrupes.builder.api.RootProject;
 
 /// A default implementation of a [Project].
+/// 
+/// Noteworthy features:
+/// 
+///   * Providers are added to a project successively in its constructor.
+///     This implies that the list of providers is incomplete during
+///     the execution of the constructor and may only be accesses via the
+///     lazily evaluated `Stream` return by [#providers]. The only place
+///     where the registered providers are accessed is the private method
+///     `dependencies`. Therefore this method checks if access to providers
+///     is unlocked. Unlocking happens via [#unlockProviders] after
+///     new instances of projects have been created, either in
+///     [AbstractProject] for regular projects or in [DefaultBuildContext]
+///     for the root project.
 ///
 @SuppressWarnings({ "PMD.CouplingBetweenObjects", "PMD.GodClass",
     "PMD.TooManyMethods" })
@@ -258,10 +271,18 @@ public abstract class AbstractProject extends AbstractProvider
         return this;
     }
 
-    /// Unlock dependencies.
+    /// Unlock access to providers.
     ///
-    protected void unlockProviders() {
+    /* default */ void unlockProviders() {
         providersUnlocked = true;
+    }
+
+    /// Returns true if providers are unlocked.
+    ///
+    /// @return true, if unlocked
+    ///
+    /* default */ boolean providersUnlocked() {
+        return providersUnlocked;
     }
 
     /* default */ Stream<ResourceProvider> dependencies(Set<Intent> intents) {

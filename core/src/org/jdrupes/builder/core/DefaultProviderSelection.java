@@ -101,7 +101,7 @@ public class DefaultProviderSelection implements ProviderSelection {
             resources(ResourceRequest<T> request) {
         AtomicReference<ResourceRequest<T>> projectRequest
             = new AtomicReference<>();
-        return select(request.uses()).map(p -> {
+        var providerStream = select(request.uses()).map(p -> {
             if (p instanceof Project) {
                 logger.atFinest()
                     .log("%s forwards % to %s", project, request, p);
@@ -110,7 +110,14 @@ public class DefaultProviderSelection implements ProviderSelection {
                         r -> r != null ? r : forwardedRequest(request)));
             }
             return project.context().resources(p, request);
-        }).flatMap(s -> s);
+        });
+        if (project.providersUnlocked()) {
+            // If accessing providers is allowed, get the providers
+            // eagerly to trigger evaluation. Resources are still
+            // obtained lazily.
+            providerStream = providerStream.toList().stream();
+        }
+        return providerStream.flatMap(s -> s);
     }
 
     private <T extends Resource> ResourceRequest<T>
