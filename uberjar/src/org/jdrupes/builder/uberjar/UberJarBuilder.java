@@ -165,8 +165,9 @@ public class UberJarBuilder extends LibraryBuilder {
     protected void collectFromProviders(
             Map<Path, Resources<IOResource>> contents) {
         openJars = new ConcurrentHashMap<>();
-        providers().stream().map(p -> p.resources(
-            of(ClasspathElementType).using(Supply, Expose)))
+        contentProviders().stream().filter(p -> !p.equals(this))
+            .map(p -> p.resources(
+                of(ClasspathElementType).using(Supply, Expose)))
             .flatMap(s -> s).parallel()
             .filter(resourceFilter::test).forEach(cpe -> {
                 if (cpe instanceof FileTree<?> fileTree) {
@@ -182,7 +183,7 @@ public class UberJarBuilder extends LibraryBuilder {
         // they can be added to the uber jar, i.e. they must be added
         // with their transitive dependencies.
         var lookup = new MvnRepoLookup();
-        lookup.resolve(providers().stream().map(
+        lookup.resolve(contentProviders().stream().map(
             p -> p.resources(of(MvnRepoDependencyType).usingAll()))
             .flatMap(s -> s));
         project().context().resources(lookup, of(ClasspathElementType)

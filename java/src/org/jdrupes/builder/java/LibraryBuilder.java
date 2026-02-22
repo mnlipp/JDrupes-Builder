@@ -128,7 +128,7 @@ public class LibraryBuilder extends JarBuilder
     ///
     /// @return the cached stream
     ///
-    protected StreamCollector<ResourceProvider> providers() {
+    protected StreamCollector<ResourceProvider> contentProviders() {
         return providers;
     }
 
@@ -149,10 +149,10 @@ public class LibraryBuilder extends JarBuilder
     ///
     protected void collectFromProviders(
             Map<Path, Resources<IOResource>> contents) {
-        providers().stream().map(
+        contentProviders().stream().map(
             p -> p.resources(of(ClassTree.class).using(Supply)))
             .flatMap(s -> s).parallel().forEach(t -> collect(contents, t));
-        providers().stream().map(p -> p.resources(
+        contentProviders().stream().map(p -> p.resources(
             of(JavaResourceTree.class).using(Supply)))
             .flatMap(s -> s).parallel().forEach(t -> collect(contents, t));
     }
