@@ -22,6 +22,6 @@
 			<attribute name="javadoc_location" value="jar:file:/home/mnl/.m2/repository/org/eclipse/jgit/org.eclipse.jgit/7.3.0.202506031305-r/org.eclipse.jgit-7.3.0.202506031305-r-javadoc.jar!/"/>
 		</attributes>
 	</classpathentry>
-	<classpathentry kind="lib" path="lib/jdrupes-builder-last-used.jar"/>
+	<classpathentry kind="lib" path="/JDrupes-Builder/build/app/jdrupes-builder-current.jar" sourcepath="/JDrupes-Builder"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>
