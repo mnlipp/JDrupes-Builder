@@ -101,7 +101,7 @@ public abstract class AbstractRootProject extends AbstractProject
             return ScopedValue.where(scopedRootProject, this)
                 .call(() -> {
                     var result = prjCls.getConstructor().newInstance();
-                    ((AbstractProject) result).unlockDependencies();
+                    ((AbstractProject) result).unlockProviders();
                     return result;
                 });
         } catch (SecurityException | ReflectiveOperationException e) {

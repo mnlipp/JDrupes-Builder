@@ -257,7 +257,7 @@ public class DefaultBuildContext implements BuildContext {
                 .call(() -> {
                     var result = (AbstractRootProject) rootProject
                         .getConstructor().newInstance();
-                    result.unlockDependencies();
+                    result.unlockProviders();
                     subprojects.forEach(result::project);
                     return result;
 

@@ -19,9 +19,7 @@
 package org.jdrupes.builder.core;
 
 import com.google.common.flogger.FluentLogger;
-import java.util.ArrayList;
 import java.util.EnumSet;
-import java.util.List;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
@@ -103,21 +101,16 @@ public class DefaultProviderSelection implements ProviderSelection {
             resources(ResourceRequest<T> request) {
         AtomicReference<ResourceRequest<T>> projectRequest
             = new AtomicReference<>();
-        // Forward requests to providers eagerly to start execution
-        List<ResourceProvider> providersUsed = new ArrayList<>();
-        var pending = select(request.uses()).map(p -> {
-            providersUsed.add(p);
+        return select(request.uses()).map(p -> {
             if (p instanceof Project) {
+                logger.atFinest()
+                    .log("%s forwards % to %s", project, request, p);
                 return project.context().resources(p,
                     projectRequest.updateAndGet(
                         r -> r != null ? r : forwardedRequest(request)));
             }
             return project.context().resources(p, request);
-        }).toList();
-        logger.atFinest().log("%s forwards % to %s",
-            project, request, providersUsed);
-        // Evaluate resources lazily to prevent deadlocks
-        return pending.stream().flatMap(s -> s);
+        }).flatMap(s -> s);
     }
 
     private <T extends Resource> ResourceRequest<T>

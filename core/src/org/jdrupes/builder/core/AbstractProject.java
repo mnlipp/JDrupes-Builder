@@ -67,7 +67,7 @@ public abstract class AbstractProject extends AbstractProvider
     private final Path projectDirectory;
     private final Map<ResourceProvider, Intent> providers
         = new ConcurrentHashMap<>();
-    private boolean dependenciesUnlocked;
+    private boolean providersUnlocked;
     @SuppressWarnings("PMD.UseConcurrentHashMap")
     private final Map<PropertyKey, Object> properties = new HashMap<>();
 
@@ -260,8 +260,8 @@ public abstract class AbstractProject extends AbstractProvider
 
     /// Unlock dependencies.
     ///
-    protected void unlockDependencies() {
-        dependenciesUnlocked = true;
+    protected void unlockProviders() {
+        providersUnlocked = true;
     }
 
     /* default */ Stream<ResourceProvider> dependencies(Set<Intent> intents) {
@@ -272,7 +272,7 @@ public abstract class AbstractProject extends AbstractProvider
     }
 
     private Stream<ResourceProvider> providersWithIntent(Intent intent) {
-        if (!dependenciesUnlocked) {
+        if (!providersUnlocked) {
             throw new BuildException().message(
                 "Attempt to access dependencies of %s while"
                     + " executing its constructor.",
