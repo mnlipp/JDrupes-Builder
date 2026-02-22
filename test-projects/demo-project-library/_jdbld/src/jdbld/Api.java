@@ -19,10 +19,7 @@
 package jdbld;
 
 import static org.jdrupes.builder.api.Intent.*;
-import java.util.Map;
-import org.jdrupes.builder.bnd.BndAnalyzer;
 import org.jdrupes.builder.bnd.BndBaseliner;
-import org.jdrupes.builder.bnd.BndProperties;
 import org.jdrupes.builder.core.AbstractProject;
 import org.jdrupes.builder.java.JavaLibraryProject;
 
@@ -30,9 +27,6 @@ public class Api extends AbstractProject implements JavaLibraryProject {
 
     public Api() {
         super(name("api"));
-        dependency(Consume, BndAnalyzer::new).instructions(
-            this.<Map<String, String>> get(BndProperties.BndInstructions))
-            .instruction("Export-Package", "*");
         dependency(Supply, BndBaseliner::new);
     }
 

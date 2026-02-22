@@ -23,7 +23,6 @@ import static java.util.jar.Attributes.Name.IMPLEMENTATION_VENDOR;
 import static java.util.jar.Attributes.Name.IMPLEMENTATION_VERSION;
 import static org.jdrupes.builder.api.Intent.*;
 import static org.jdrupes.builder.api.Project.Properties.Version;
-
 import org.apache.maven.model.Developer;
 import org.apache.maven.model.License;
 import org.apache.maven.model.Scm;
@@ -34,7 +33,6 @@ import org.jdrupes.builder.api.RootProject;
 import org.jdrupes.builder.api.TestResult;
 import org.jdrupes.builder.bnd.BndAnalyzer;
 import org.jdrupes.builder.bnd.BndBaselineEvaluation;
-import static org.jdrupes.builder.bnd.BndProperties.*;
 import org.jdrupes.builder.core.AbstractRootProject;
 import org.jdrupes.builder.eclipse.EclipseConfiguration;
 import org.jdrupes.builder.eclipse.EclipseConfigurator;
@@ -70,10 +68,6 @@ public class Root extends AbstractRootProject {
     public Root() {
         super(name("demo-project-library"));
         set(GroupId, "org.jdrupes.builder.demo.library");
-        set(BndInstructions, Map.of(
-            "Bundle-Copyright", "Michael N. Lipp (c) 2026",
-            "Bundle-License", "http://www.gnu.org/licenses/agpl-3.0.txt",
-            "-diffignore", "Git-Descriptor, Git-SHA"));
 
         // Commands
         commandAlias("build")
@@ -143,8 +137,11 @@ public class Root extends AbstractRootProject {
                 .instruction("Bundle-SymbolicName", project.name())
                 .instruction("Bundle-Version", bundleVersion)
                 .instructions(
-                    Map.of("-diffignore", "Git-Descriptor, Git-SHA",
-                        "Bundle-Version", bundleVersion));
+                    Map.of("Bundle-Copyright", "Michael N. Lipp (c) 2026",
+                        "Bundle-License",
+                        "http://www.gnu.org/licenses/agpl-3.0.txt",
+                        "-diffignore", "Git-Descriptor, Git-SHA"))
+                .instructions(project.directory().resolve("bnd.bnd"));
         }
 
     }

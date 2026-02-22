@@ -1,12 +1,12 @@
 package basic;
 
 import java.io.IOException;
-import java.io.InputStreamReader;
 import java.net.URISyntaxException;
-import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
 import java.util.Collections;
 import java.util.List;
+import java.util.jar.Attributes;
+import java.util.jar.Manifest;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
@@ -61,13 +61,17 @@ class LibrariesTests {
             List.of(
                 "META-INF/maven/org.jdrupes.builder.demo.library/api/pom.xml")
                 .stream().forEach(e -> assertTrue(entryNames.contains(e)));
-            var manifest = jarFile.getEntry("META-INF/MANIFEST.MF");
-            assertNotNull(manifest, "MANIFEST.MF missing");
-            @SuppressWarnings("resource")
-            String content = new InputStreamReader(jarFile.getInputStream(
-                manifest), StandardCharsets.UTF_8).readAllAsString();
-            assertTrue(content.contains("Bundle-Name: api"),
-                "Bundle-Name mssing in manifest");
+            var manifestEntry = jarFile.getEntry("META-INF/MANIFEST.MF");
+            assertNotNull(manifestEntry, "MANIFEST.MF missing");
+            var manifest = new Manifest(jarFile.getInputStream(manifestEntry));
+            var bundleName = new Attributes.Name("Bundle-Name");
+            assertTrue(manifest.getMainAttributes().containsKey(bundleName),
+                "Bundle-Name missing in manifest");
+            assertEquals("api", manifest.getMainAttributes()
+                .get(bundleName), "Wrong Bundle-Name in manifest");
+            assertEquals("jdbld.demo.library.api", manifest.getMainAttributes()
+                .get(new Attributes.Name("Export-Package")),
+                "Wrong Bundle-Name in manifest");
         }
 
         var implLib = paths.stream().filter(p -> p.toString()
