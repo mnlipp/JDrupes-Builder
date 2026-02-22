@@ -75,8 +75,11 @@ public class FutureStream<T extends Resource> {
         logger.atFinest().log("Call chain: %s", lazy(this::callChain));
         boolean isAllowed = DefaultBuildContext.isProviderInvocationAllowed();
         values = context.executor().submit(() -> {
+            var origThreadName = Thread.currentThread().getName();
             try (var _ = context.executingFutureStreams().count();
                     var statusLine = context.console().statusLine()) {
+                Thread.currentThread().setName(
+                    provider + " ← " + request.type());
                 statusLine.update(provider + " evaluating " + request);
                 return ScopedValue
                     .where(scopedBuildContext, context)
@@ -86,6 +89,8 @@ public class FutureStream<T extends Resource> {
                     .where(FutureStream.statusLine, statusLine)
                     .call(() -> ((AbstractProvider) provider).toSpi()
                         .provide(request).toList());
+            } finally {
+                Thread.currentThread().setName(origThreadName);
             }
         });
     }

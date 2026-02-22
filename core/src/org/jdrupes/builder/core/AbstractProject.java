@@ -67,6 +67,7 @@ public abstract class AbstractProject extends AbstractProvider
     private final Path projectDirectory;
     private final Map<ResourceProvider, Intent> providers
         = new ConcurrentHashMap<>();
+    private boolean dependenciesUnlocked;
     @SuppressWarnings("PMD.UseConcurrentHashMap")
     private final Map<PropertyKey, Object> properties = new HashMap<>();
 
@@ -257,26 +258,26 @@ public abstract class AbstractProject extends AbstractProvider
         return this;
     }
 
+    /// Unlock dependencies.
+    ///
+    protected void unlockDependencies() {
+        dependenciesUnlocked = true;
+    }
+
     /* default */ Stream<ResourceProvider> dependencies(Set<Intent> intents) {
-        Stream<ResourceProvider> result = null;
-        for (Intent intent : List.of(Consume, Reveal, Supply, Expose,
-            Forward)) {
-            if (intents.contains(intent)) {
-                var append = providersWithIntent(intent);
-                if (result == null) {
-                    result = append;
-                } else {
-                    result = Stream.concat(result, append);
-                }
-            }
-        }
-        if (result == null) {
-            return Stream.empty();
-        }
-        return result;
+        // Ordered evaluation
+        return List.of(Consume, Reveal, Supply, Expose, Forward).stream()
+            .filter(intents::contains).map(this::providersWithIntent)
+            .flatMap(s -> s);
     }
 
     private Stream<ResourceProvider> providersWithIntent(Intent intent) {
+        if (!dependenciesUnlocked) {
+            throw new BuildException().message(
+                "Attempt to access dependencies of %s while"
+                    + " executing its constructor.",
+                this);
+        }
         return providers.entrySet().stream()
             .filter(e -> e.getValue() == intent).map(Entry::getKey);
     }

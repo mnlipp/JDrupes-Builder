@@ -86,16 +86,24 @@ public abstract class AbstractRootProject extends AbstractProject
         @SuppressWarnings("PMD.CloseResource")
         final DefaultBuildContext context = context();
         return context().executor().submit(() -> {
-            return context.call(() -> createProject(prjCls));
+            var origThreadName = Thread.currentThread().getName();
+            try {
+                Thread.currentThread().setName("Creating " + prjCls);
+                return context.call(() -> createProject(prjCls));
+            } finally {
+                Thread.currentThread().setName(origThreadName);
+            }
         });
     }
 
     private Project createProject(Class<? extends Project> prjCls) {
         try {
-            return ScopedValue
-                .where(scopedRootProject, this)
-                .call(() -> (Project) prjCls.getConstructor()
-                    .newInstance());
+            return ScopedValue.where(scopedRootProject, this)
+                .call(() -> {
+                    var result = prjCls.getConstructor().newInstance();
+                    ((AbstractProject) result).unlockDependencies();
+                    return result;
+                });
         } catch (SecurityException | ReflectiveOperationException e) {
             throw new IllegalArgumentException(e);
         }
