@@ -139,6 +139,9 @@ public abstract class AbstractProvider implements ResourceProvider {
 
     @Override
     public String toString() {
-        return "Provider " + getClass().getSimpleName();
+        if (name().equals(getClass().getSimpleName())) {
+            return getClass().getSimpleName();
+        }
+        return "Provider " + name();
     }
 }
