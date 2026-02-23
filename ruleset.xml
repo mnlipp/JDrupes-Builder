@@ -8,6 +8,8 @@
 JGrapes rules
     </description>
 
+    <exclude-pattern>_jdbld/.*</exclude-pattern>
+    <exclude-pattern>.*/_jdbld/.*</exclude-pattern>
     <exclude-pattern>.*/test/.*</exclude-pattern>
     <exclude-pattern>.*/bin/.*</exclude-pattern>
     <exclude-pattern>.*/build/.*</exclude-pattern>
