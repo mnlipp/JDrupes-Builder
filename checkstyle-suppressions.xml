@@ -5,6 +5,6 @@
 
 <suppressions>
     <suppress files="_jdbld/.*" checks=".*"/>
-    <suppress files=".*/_jdbld/.*" checks=".*"/>
+    <!-- <suppress files=".*/_jdbld/.*" checks=".*"/> -->
 </suppressions>
 
