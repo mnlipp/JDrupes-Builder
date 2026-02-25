@@ -30,9 +30,9 @@
   <property name="severity" value="warning"/>
   <property name="charset" value="UTF-8"/>
   <property name="fileExtensions" value="java, properties, xml"/>
-  <module name="SuppressionFilter">
-    <property name="file" value="checkstyle-suppressions.xml"/>
-    <property name="optional" value="false"/>
+  <module name="SuppressionSingleFilter">
+    <property name="files" value="_jdbld/.*"/>
+    <property name="checks" value=".*"/>
   </module>
   <module name="SuppressWarningsFilter"/>
   <module name="TreeWalker">
