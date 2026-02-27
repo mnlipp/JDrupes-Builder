@@ -98,30 +98,6 @@ public class DefaultExecResult<T extends Resource> extends ResourceObject
         return this;
     }
 
-    @Override
-    public int hashCode() {
-        final int prime = 31;
-        int result = super.hashCode();
-        result = prime * result + Objects.hash(exitValue, isFaulty, provider);
-        return result;
-    }
-
-    @Override
-    public boolean equals(Object obj) {
-        if (this == obj) {
-            return true;
-        }
-        if (!super.equals(obj)) {
-            return false;
-        }
-        if (!(obj instanceof DefaultExecResult)) {
-            return false;
-        }
-        DefaultExecResult<?> other = (DefaultExecResult<?>) obj;
-        return exitValue == other.exitValue && isFaulty == other.isFaulty
-            && Objects.equals(provider, other.provider);
-    }
-
     /// To string.
     ///
     /// @return the string
