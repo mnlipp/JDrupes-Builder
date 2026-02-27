@@ -75,7 +75,7 @@ public class ResourceType<T extends Resource> {
 
     /// The resource type for [ExecResult].
     @SuppressWarnings("PMD.FieldNamingConventions")
-    public static final ResourceType<ExecResult> ExecResultType
+    public static final ResourceType<ExecResult<?>> ExecResultType
         = new ResourceType<>() {};
 
     private final Class<T> type;
@@ -139,6 +139,12 @@ public class ResourceType<T extends Resource> {
                 containedType = new ResourceType<>(subType);
             }
             return;
+        }
+
+        // If this is a parameterized type, but not resources,
+        // ignore the parameter(s).
+        if (type instanceof ParameterizedType pType) {
+            type = pType.getRawType();
         }
 
         // If type is not a parameterized type, its super or one of its
