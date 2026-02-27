@@ -148,7 +148,7 @@ public class CoreResourceFactory implements ResourceFactory {
 
         // ? extends ExecResult
         candidate = createNarrowed(type, ExecResult.class,
-            () -> new DefaultExecResult((ResourceProvider) args[0],
+            () -> new DefaultExecResult<>((ResourceProvider) args[0],
                 (String) args[1], (int) args[2]));
         if (candidate.isPresent()) {
             return candidate;

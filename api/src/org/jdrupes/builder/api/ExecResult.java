@@ -18,9 +18,16 @@
 
 package org.jdrupes.builder.api;
 
-/// Provides the results from executing a process.
+import java.util.stream.Stream;
+
+/// Provides the results from executing a process. The type of resource
+/// related to the execution depends on the provider. It is recommended
+/// to this as a base interface for defining execution results with
+/// the resource type bound to a specific type.
 ///
-public interface ExecResult extends Resource, FaultAware {
+/// @param <T> the resource type
+///
+public interface ExecResult<T extends Resource> extends Resource, FaultAware {
 
     /// The exit value.
     ///
@@ -28,4 +35,11 @@ public interface ExecResult extends Resource, FaultAware {
     ///
     int exitValue();
 
+    /// Returns the stream of resources produced by the execution.
+    ///
+    /// @return the stream
+    ///
+    default Stream<T> resources() {
+        return Stream.empty();
+    }
 }

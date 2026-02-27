@@ -1,6 +1,6 @@
 /*
  * JDrupes Builder
- * Copyright (C) 2025 Michael N. Lipp
+ * Copyright (C) 2025, 2026 Michael N. Lipp
  * 
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as
@@ -19,17 +19,22 @@
 package org.jdrupes.builder.core;
 
 import java.util.Objects;
+import java.util.stream.Stream;
 import org.jdrupes.builder.api.ExecResult;
-import org.jdrupes.builder.api.FaultAware;
+import org.jdrupes.builder.api.Resource;
 import org.jdrupes.builder.api.ResourceProvider;
 
 /// Default implementation of a test result.
 ///
-public class DefaultExecResult extends ResourceObject implements ExecResult {
+/// @param <T> the generic type
+///
+public class DefaultExecResult<T extends Resource> extends ResourceObject
+        implements ExecResult<T> {
 
     private final ResourceProvider provider;
     private final int exitValue;
     private boolean isFaulty;
+    private Stream<T> resources;
 
     /// Initializes a new default exec result. Note that an `exitValue`
     /// different from 0 does not automatically mark the result as faulty. 
@@ -46,19 +51,50 @@ public class DefaultExecResult extends ResourceObject implements ExecResult {
         this.exitValue = exitValue;
     }
 
+    /// Exit value.
+    ///
+    /// @return the int
+    ///
     @Override
     public int exitValue() {
         return exitValue;
     }
 
+    /// Checks if is faulty.
+    ///
+    /// @return true, if is faulty
+    ///
     @Override
     public boolean isFaulty() {
         return isFaulty;
     }
 
+    /// Sets the faulty.
+    ///
+    /// @return the default exec result
+    ///
     @Override
-    public FaultAware setFaulty() {
+    public DefaultExecResult<T> setFaulty() {
         isFaulty = true;
+        return this;
+    }
+
+    /// Resources.
+    ///
+    /// @return the stream
+    ///
+    @Override
+    public Stream<T> resources() {
+        return resources;
+    }
+
+    /// Sets the resources associated with this result.
+    ///
+    /// @param resources the resources
+    /// @return the default exec result
+    ///
+    public DefaultExecResult<T> resources(Stream<T> resources) {
+        this.resources = resources;
         return this;
     }
 
@@ -66,7 +102,7 @@ public class DefaultExecResult extends ResourceObject implements ExecResult {
     public int hashCode() {
         final int prime = 31;
         int result = super.hashCode();
-        result = prime * result + Objects.hash(exitValue, provider);
+        result = prime * result + Objects.hash(exitValue, isFaulty, provider);
         return result;
     }
 
@@ -81,8 +117,8 @@ public class DefaultExecResult extends ResourceObject implements ExecResult {
         if (!(obj instanceof DefaultExecResult)) {
             return false;
         }
-        DefaultExecResult other = (DefaultExecResult) obj;
-        return exitValue == other.exitValue
+        DefaultExecResult<?> other = (DefaultExecResult<?>) obj;
+        return exitValue == other.exitValue && isFaulty == other.isFaulty
             && Objects.equals(provider, other.provider);
     }
 
