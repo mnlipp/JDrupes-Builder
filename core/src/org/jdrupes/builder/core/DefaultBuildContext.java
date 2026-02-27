@@ -48,8 +48,6 @@ import org.jdrupes.builder.core.console.SplitConsole;
 ///
 public class DefaultBuildContext implements BuildContext {
 
-    /// The key for specifying the builder directory in the properties file.
-    public static final String JDBLD_DIRECTORY = "jdbldDirectory";
     @SuppressWarnings("PMD.FieldNamingConventions")
     private static final ScopedValue<AtomicBoolean> providerInvocationAllowed
         = ScopedValue.newInstance();
@@ -108,11 +106,6 @@ public class DefaultBuildContext implements BuildContext {
     ///
     public Path buildRoot() {
         return buildRoot;
-    }
-
-    @Override
-    public Path jdbldDirectory() {
-        return Path.of(jdbldProperties.getProperty(JDBLD_DIRECTORY));
     }
 
     @Override

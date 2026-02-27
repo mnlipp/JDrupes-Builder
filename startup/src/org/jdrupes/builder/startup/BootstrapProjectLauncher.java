@@ -31,6 +31,7 @@ import java.util.Properties;
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.DefaultParser;
 import org.apache.commons.cli.ParseException;
+import org.jdrupes.builder.api.BuildContext;
 import org.jdrupes.builder.api.BuildException;
 import org.jdrupes.builder.api.ConfigurationException;
 import org.jdrupes.builder.api.FileResource;
@@ -119,10 +120,10 @@ public class BootstrapProjectLauncher extends AbstractLauncher {
         // Add build extensions to the build project.
         var mvnLookup = new MvnRepoLookup();
         Optional.ofNullable(jdbldProps
-            .getProperty(BootstrapBuild.EXTENSIONS_SNAPSHOT_REPO, null))
+            .getProperty(BuildContext.EXTENSIONS_SNAPSHOT_REPOSITORY, null))
             .map(URI::create).ifPresent(mvnLookup::snapshotRepository);
         var buildCoords = Arrays.asList(jdbldProps
-            .getProperty(BootstrapBuild.BUILD_EXTENSIONS, "").split(","))
+            .getProperty(BuildContext.JDBLD_EXTENSIONS, "").split(","))
             .stream().map(String::trim).filter(c -> !c.isBlank()).toList();
         logger.atFine().log("Adding build extensions: %s"
             + " to classpath for builder project compilation", buildCoords);

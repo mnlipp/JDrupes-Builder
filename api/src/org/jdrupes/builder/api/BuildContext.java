@@ -28,12 +28,43 @@ import org.apache.commons.cli.CommandLine;
 ///
 public interface BuildContext extends AutoCloseable {
 
+    /// The key for specifying the builder directory in the properties file.
+    String JDBLD_DIRECTORY = "jdbldDirectory";
+
+    /// The key for specifying the builder version in the properties file.
+    String JDBLD_VERSION = "jdbldVersion";
+
+    /// The key for specifying the build extensions in the properties file.
+    String JDBLD_EXTENSIONS = "jdbldExtensions";
+
+    /// The key for specifying the extensions snapshot repository in the
+    /// properties file.
+    @SuppressWarnings("PMD.LongVariable")
+    String EXTENSIONS_SNAPSHOT_REPOSITORY = "extensionsSnapshotRepository";
+
+    /// The key for specifying the common configuration and cache directory.
+    String JDBLD_COMMON_DIRECTORY = "jdbldCommonDirectory";
+
     /// Returns the relative path from a project directory to
     /// the JDrupes Builder directory.
     ///
     /// @return the path
     ///
-    Path jdbldDirectory();
+    default Path jdbldDirectory() {
+        return Path.of(property(JDBLD_DIRECTORY, "_jdbld"));
+    }
+
+    /// The path to the common cache directory. This may be used by
+    /// providers to cache information that is shared between projects.
+    /// Providers must create a sub-directory of this directory, preferably
+    /// with the same name FQN as the provider.
+    ///
+    /// @return the path
+    ///
+    default Path commonCacheDirectory() {
+        return Path.of(property(JDBLD_COMMON_DIRECTORY,
+            System.getProperty("user.home"))).resolve(".jdbld/cache");
+    }
 
     /// The command line as processed by Apache Commons CLI.
     ///

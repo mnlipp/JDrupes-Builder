@@ -37,10 +37,6 @@ import static org.jdrupes.builder.java.JavaTypes.*;
 ///
 public class BootstrapBuild extends AbstractProject implements Masked {
 
-    /* default */ static final String BUILD_EXTENSIONS = "buildExtensions";
-    /* default */ static final String EXTENSIONS_SNAPSHOT_REPO
-        = "extensionsSnapshotRepository";
-
     private static final FluentLogger logger = FluentLogger.forEnclosingClass();
 
     /// Instantiates a new bootstrap project.
