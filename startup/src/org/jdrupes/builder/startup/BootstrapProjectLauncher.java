@@ -123,7 +123,7 @@ public class BootstrapProjectLauncher extends AbstractLauncher {
             .getProperty(BuildContext.EXTENSIONS_SNAPSHOT_REPOSITORY, null))
             .map(URI::create).ifPresent(mvnLookup::snapshotRepository);
         var buildCoords = Arrays.asList(jdbldProps
-            .getProperty(BuildContext.JDBLD_EXTENSIONS, "").split(","))
+            .getProperty(BuildContext.BUILD_EXTENSIONS, "").split(","))
             .stream().map(String::trim).filter(c -> !c.isBlank()).toList();
         logger.atFine().log("Adding build extensions: %s"
             + " to classpath for builder project compilation", buildCoords);

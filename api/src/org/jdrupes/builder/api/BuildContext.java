@@ -35,7 +35,7 @@ public interface BuildContext extends AutoCloseable {
     String JDBLD_VERSION = "jdbldVersion";
 
     /// The key for specifying the build extensions in the properties file.
-    String JDBLD_EXTENSIONS = "jdbldExtensions";
+    String BUILD_EXTENSIONS = "buildExtensions";
 
     /// The key for specifying the extensions snapshot repository in the
     /// properties file.

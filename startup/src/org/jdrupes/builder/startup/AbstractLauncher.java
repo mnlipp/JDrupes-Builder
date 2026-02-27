@@ -39,6 +39,7 @@ import java.util.stream.Stream;
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.Option;
 import org.apache.commons.cli.Options;
+import org.jdrupes.builder.api.BuildContext;
 import org.jdrupes.builder.api.BuildException;
 import org.jdrupes.builder.api.ConfigurationException;
 import org.jdrupes.builder.api.Launcher;
@@ -80,10 +81,13 @@ public abstract class AbstractLauncher implements Launcher {
     ///
     protected static Properties propertiesFromFiles(Path buildRoot) {
         Properties fallbacks = new Properties();
-        fallbacks.putAll(Map.of(DefaultBuildContext.JDBLD_DIRECTORY, "_jdbld"));
+        fallbacks.putAll(Map.of(BuildContext.JDBLD_DIRECTORY, "_jdbld",
+            BuildContext.JDBLD_COMMON_DIRECTORY,
+            Path.of(System.getProperty("user.home")).resolve(".jdbld")
+                .toString()));
         for (Path propsPath : List.of(
-            Path.of(System.getProperty("user.home"))
-                .resolve(".jdbld").resolve("jdbld.properties"),
+            Path.of(fallbacks.getProperty(BuildContext.JDBLD_COMMON_DIRECTORY))
+                .resolve("jdbld.properties"),
             buildRoot.resolve(".jdbld.properties"))) {
             try {
                 if (propsPath.toFile().canRead()) {
