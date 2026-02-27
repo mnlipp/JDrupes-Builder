@@ -22,6 +22,7 @@ import java.util.stream.Stream;
 
 /// The interface ResourceRetriever, see [Generator].
 ///
+@SuppressWarnings("PMD.ImplicitFunctionalInterface")
 public interface ResourceRetriever {
 
     /// Adds the given provider(s) as source for resources.
@@ -29,7 +30,10 @@ public interface ResourceRetriever {
     /// @param providers the provider to add
     /// @return the resource retriever
     ///
-    ResourceRetriever addFrom(ResourceProvider... providers);
+    default ResourceRetriever addFrom(ResourceProvider... providers) {
+        addFrom(Stream.of(providers));
+        return this;
+    }
 
     /// Adds the given providers as sources for resources. The stream
     /// must not be terminated before the generators' provide method
