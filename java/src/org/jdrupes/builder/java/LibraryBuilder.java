@@ -100,24 +100,12 @@ public class LibraryBuilder extends JarBuilder
         return this;
     }
 
-    /// Additionally uses the given providers for obtaining contents for the
-    /// jar.
-    ///
-    /// @param providers the providers
-    /// @return the jar generator
-    ///
     @Override
     public LibraryBuilder addFrom(ResourceProvider... providers) {
         addFrom(Stream.of(providers));
         return this;
     }
 
-    /// Additionally uses the given providers for obtaining contents for the
-    /// jar.
-    ///
-    /// @param providers the providers
-    /// @return the jar generator
-    ///
     @Override
     public LibraryBuilder addFrom(Stream<ResourceProvider> providers) {
         this.providers.add(providers.filter(p -> !p.equals(this)));
