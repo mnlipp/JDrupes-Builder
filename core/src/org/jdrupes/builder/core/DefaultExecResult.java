@@ -18,7 +18,6 @@
 
 package org.jdrupes.builder.core;
 
-import java.util.Objects;
 import java.util.stream.Stream;
 import org.jdrupes.builder.api.ExecResult;
 import org.jdrupes.builder.api.Resource;
@@ -49,6 +48,14 @@ public class DefaultExecResult<T extends Resource> extends ResourceObject
         name(name);
         this.provider = provider;
         this.exitValue = exitValue;
+    }
+
+    /// Returns the [ResourceProvider] that generated this result.
+    ///
+    /// @return the resource provider
+    ///
+    public ResourceProvider provider() {
+        return provider;
     }
 
     /// Exit value.
@@ -105,7 +112,8 @@ public class DefaultExecResult<T extends Resource> extends ResourceObject
     @Override
     public String toString() {
         return ExecResult.class.getSimpleName()
+            + " from " + provider.name()
             + name().map(n -> ": " + n).orElse("")
-            + " [exitValue=" + exitValue + "]";
+            + " {exitValue=" + exitValue + "}";
     }
 }
