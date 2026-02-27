@@ -97,4 +97,20 @@ public interface FileTree<T extends FileResource> extends Resources<T> {
     /// @return the file tree
     ///
     FileTree<T> delete();
+
+    /// Convenience method to create a file tree.
+    ///
+    /// @param project the project
+    /// @param relativeRoot the root of the file tree relative to the
+    /// project's directory
+    /// @param pattern the pattern
+    /// @return the file tree
+    ///
+    @SuppressWarnings("PMD.UseDiamondOperator")
+    static FileTree<FileResource> create(
+            Project project, Path relativeRoot, String pattern) {
+        return project.newResource(
+            new ResourceType<FileTree<FileResource>>() {},
+            project.directory().resolve(relativeRoot), pattern);
+    }
 }

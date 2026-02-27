@@ -35,4 +35,16 @@ public interface FileResource extends IOResource {
     default void delete() {
         path().toFile().delete();
     }
+
+    /// Convenience method for creating a file resource.
+    ///
+    /// @param project the project
+    /// @param path the path relative to the project's directory
+    /// @return the file resource
+    ///
+    @SuppressWarnings("PMD.UseDiamondOperator")
+    static FileResource create(Project project, Path path) {
+        return project.newResource(new ResourceType<FileResource>() {},
+            project.directory().resolve(path));
+    }
 }
