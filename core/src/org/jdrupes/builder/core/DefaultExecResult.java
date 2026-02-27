@@ -20,6 +20,7 @@ package org.jdrupes.builder.core;
 
 import java.util.Objects;
 import org.jdrupes.builder.api.ExecResult;
+import org.jdrupes.builder.api.FaultAware;
 import org.jdrupes.builder.api.ResourceProvider;
 
 /// Default implementation of a test result.
@@ -28,8 +29,10 @@ public class DefaultExecResult extends ResourceObject implements ExecResult {
 
     private final ResourceProvider provider;
     private final int exitValue;
+    private boolean isFaulty;
 
-    /// Initializes a new default exec result.
+    /// Initializes a new default exec result. Note that an `exitValue`
+    /// different from 0 does not automatically mark the result as faulty. 
     ///
     /// @param provider the provider
     /// @param name the name
@@ -46,6 +49,17 @@ public class DefaultExecResult extends ResourceObject implements ExecResult {
     @Override
     public int exitValue() {
         return exitValue;
+    }
+
+    @Override
+    public boolean isFaulty() {
+        return isFaulty;
+    }
+
+    @Override
+    public FaultAware setFaulty() {
+        isFaulty = true;
+        return this;
     }
 
     @Override
@@ -79,7 +93,7 @@ public class DefaultExecResult extends ResourceObject implements ExecResult {
     @Override
     public String toString() {
         return ExecResult.class.getSimpleName()
-            + name().map(n -> ":" + n).orElse("")
+            + name().map(n -> ": " + n).orElse("")
             + " [exitValue=" + exitValue + "]";
     }
 }

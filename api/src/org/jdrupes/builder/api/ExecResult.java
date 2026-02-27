@@ -20,7 +20,7 @@ package org.jdrupes.builder.api;
 
 /// Provides the results from executing a process.
 ///
-public interface ExecResult extends Resource {
+public interface ExecResult extends Resource, FaultAware {
 
     /// The exit value.
     ///

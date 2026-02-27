@@ -151,9 +151,13 @@ public class JavaExecutor extends AbstractProvider
             Process process = processBuilder.start();
             copyData(process.getInputStream(), context().out());
             copyData(process.getErrorStream(), context().error());
+            var execResult = newResource(ExecResultType, this, mainClass,
+                process.waitFor());
+            if (execResult.exitValue() != 0) {
+                execResult.setFaulty();
+            }
             @SuppressWarnings("unchecked")
-            var result = (Stream<T>) Stream.of(newResource(ExecResultType, this,
-                mainClass, process.waitFor()));
+            var result = (Stream<T>) Stream.of(execResult);
             return result;
         } catch (IOException | InterruptedException e) {
             throw new BuildException().from(this).cause(e);
