@@ -238,7 +238,7 @@ public class DefaultFileTree<T extends FileResource> extends DefaultResources<T>
     }
 
     @Override
-    public FileTree<T> delete() {
+    public void cleanup() {
         final PathMatcher pathMatcher = FileSystems.getDefault()
             .getPathMatcher("glob:" + pattern);
         try {
@@ -260,8 +260,7 @@ public class DefaultFileTree<T extends FileResource> extends DefaultResources<T>
                     if (exc != null) {
                         return FileVisitResult.CONTINUE;
                     }
-                    if (!dir.equals(root)
-                        && Files.list(dir).findFirst().isEmpty()) {
+                    if (Files.list(dir).findFirst().isEmpty()) {
                         Files.delete(dir);
                     }
                     return FileVisitResult.CONTINUE;
@@ -281,7 +280,6 @@ public class DefaultFileTree<T extends FileResource> extends DefaultResources<T>
             throw new BuildException().from(project).cause(e);
         }
         filled = false;
-        return this;
     }
 
     @Override

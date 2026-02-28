@@ -425,7 +425,7 @@ public class JarBuilder extends AbstractGenerator {
 
         // Maybe only delete
         if (requested.accepts(CleanlinessType)) {
-            jarResource.delete();
+            jarResource.cleanup();
             return Stream.empty();
         }
 

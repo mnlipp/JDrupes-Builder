@@ -183,7 +183,7 @@ public class JavaCompiler extends JavaTool {
         var destDir = project().buildDirectory().resolve(destination);
         final var classSet = project().newResource(ClassTreeType, destDir);
         if (requested.accepts(CleanlinessType)) {
-            classSet.delete();
+            classSet.cleanup();
             return Stream.empty();
         }
 
@@ -213,7 +213,7 @@ public class JavaCompiler extends JavaTool {
                     && !p.endsWith("package-info.java")
                     && !p.endsWith("module-info.java"))
                 .count()) {
-            classSet.delete();
+            classSet.cleanup();
             compile(cpResources, destDir);
         } else {
             logger.atFiner().log("Classes in %s are up to date", project());

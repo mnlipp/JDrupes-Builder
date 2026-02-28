@@ -68,6 +68,15 @@ public interface Resource {
     ///
     Optional<String> name();
 
+    /// Cleanup the resource. This method is called by [ResourceProvider]s
+    /// in response to a request for [Cleanliness]. The default
+    /// implementation does nothing. Derived classes should override this
+    /// and delete any physical representation of the resource.
+    ///
+    default void cleanup() {
+        // Do nothing
+    }
+
     /// Returns a localized string representation of the instant
     /// at which this resource was created or last modified.
     ///

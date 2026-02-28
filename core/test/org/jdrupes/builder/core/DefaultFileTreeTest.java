@@ -133,7 +133,7 @@ class DefaultFileTreeTest {
         // trigger fill
         assertTrue(ft.stream().findAny().isPresent());
 
-        ft.delete();
+        ft.cleanup();
 
         // files should be gone
         assertFalse(Files.exists(f1));

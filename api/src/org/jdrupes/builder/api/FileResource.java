@@ -30,9 +30,10 @@ public interface FileResource extends IOResource {
     ///
     Path path();
 
-    /// Convenience method for deleting the file.
+    /// Cleans up by deleting the file.
     ///
-    default void delete() {
+    @Override
+    default void cleanup() {
         path().toFile().delete();
     }
 

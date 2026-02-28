@@ -91,12 +91,10 @@ public interface FileTree<T extends FileResource> extends Resources<T> {
     FileTree<T> clear();
 
     /// Deletes all files in this file tree and directories that are
-    /// empty after deletion of the files (expect for root, which is
-    /// not deleted).
+    /// empty after deletion of the files including the root directory.
     ///
-    /// @return the file tree
-    ///
-    FileTree<T> delete();
+    @Override
+    void cleanup();
 
     /// Convenience method to create a file tree.
     ///

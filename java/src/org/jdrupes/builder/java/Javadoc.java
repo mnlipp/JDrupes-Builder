@@ -200,7 +200,7 @@ public class Javadoc extends JavaTool {
         var destDir = project().buildDirectory().resolve(destination);
         var generated = project().newResource(ClassTreeType, destDir, "**/*");
         if (requested.accepts(CleanlinessType)) {
-            generated.delete();
+            generated.cleanup();
             destDir.toFile().delete();
             return Stream.empty();
         }
