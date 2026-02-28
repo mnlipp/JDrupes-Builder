@@ -32,18 +32,28 @@ import static org.jdrupes.builder.java.JavaTypes.*;
 ///
 public class ClasspathScanner extends AbstractGenerator {
 
-    private final String path;
+    private String path;
 
-    /// Instantiates a new classpath provider. The `path` is a list of
-    /// directories or jar files separated by the system's path separator.
-    /// Relative paths are resolved against the project's directory.
+    /// Instantiates a new classpath provider. The path needs to be
+    /// set with [#path].
     ///
     /// @param project the project
-    /// @param path the path
     ///
-    public ClasspathScanner(Project project, String path) {
+    public ClasspathScanner(Project project) {
         super(project);
+        path = "";
+    }
+
+    /// Sets the path. The `path` is a list of directories or jar
+    /// files separated by the system's path separator. Relative
+    /// paths are resolved against the project's directory.
+    ///
+    /// @param path the path
+    /// @return the classpath scanner
+    ///
+    public ClasspathScanner path(String path) {
         this.path = path;
+        return this;
     }
 
     /// Provide [FileTree]s with classes from a given classpath if the

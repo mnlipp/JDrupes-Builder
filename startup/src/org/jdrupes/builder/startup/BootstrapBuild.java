@@ -52,7 +52,7 @@ public class BootstrapBuild extends AbstractProject implements Masked {
             .toAbsolutePath().toString();
         logger.atFine().log("Using java.class.path %s as base for"
             + " builder project compilation", jcp);
-        dependency(Consume, new ClasspathScanner(this, jcp));
+        dependency(Consume, new ClasspathScanner(this).path(jcp));
 
         // Collect directories with "build configuration", derive source
         // trees and use as java sources.
