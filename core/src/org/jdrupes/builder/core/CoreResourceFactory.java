@@ -26,6 +26,7 @@ import java.util.Optional;
 import static java.util.function.Predicate.not;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 import org.jdrupes.builder.api.ExecResult;
 import org.jdrupes.builder.api.FileResource;
 import org.jdrupes.builder.api.FileTree;
@@ -127,7 +128,7 @@ public class CoreResourceFactory implements ResourceFactory {
     /// @return the optional
     ///
     @Override
-    @SuppressWarnings({ "unchecked" })
+    @SuppressWarnings({ "unchecked", "PMD.AvoidLiteralsInIfCondition" })
     public <T extends Resource> Optional<T> newResource(ResourceType<T> type,
             Project project, Object... args) {
         // ? extends FileResource
@@ -148,8 +149,14 @@ public class CoreResourceFactory implements ResourceFactory {
 
         // ? extends ExecResult
         candidate = createNarrowed(type, ExecResult.class,
-            () -> new DefaultExecResult<>((ResourceProvider) args[0],
-                (String) args[1], (int) args[2]));
+            () -> {
+                var result = new DefaultExecResult<>((ResourceProvider) args[0],
+                    (String) args[1], (int) args[2]);
+                if (args.length > 3) {
+                    result.resources((Stream<Resource>) args[3]);
+                }
+                return result;
+            });
         if (candidate.isPresent()) {
             return candidate;
         }
