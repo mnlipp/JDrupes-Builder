@@ -72,6 +72,7 @@ public class Root extends AbstractRootProject {
         dependency(Expose, project(Eclipse.class));
         dependency(Expose, project(Vscode.class));
         dependency(Expose, project(JUnit.class));
+        dependency(Expose, project(NodeJs.class));
 
         // Generate POM
         generator(PomFileGenerator::new).adaptPom(model -> {
