@@ -63,7 +63,7 @@ public interface BuildContext extends AutoCloseable {
     ///
     default Path commonCacheDirectory() {
         return Path.of(property(JDBLD_COMMON_DIRECTORY,
-            System.getProperty("user.home"))).resolve(".jdbld/cache");
+            System.getProperty("user.home") + "/.jdbld")).resolve("cache");
     }
 
     /// The command line as processed by Apache Commons CLI.

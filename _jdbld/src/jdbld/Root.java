@@ -6,10 +6,12 @@ import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
 import java.util.List;
 import java.util.Map;
+import java.util.function.Consumer;
 import java.util.stream.Stream;
 import static jdbld.ExtProps.GitApi;
 import org.apache.maven.model.Developer;
 import org.apache.maven.model.License;
+import org.apache.maven.model.Model;
 import org.apache.maven.model.Scm;
 import org.eclipse.jgit.api.Git;
 import org.jdrupes.builder.api.BuildException;
@@ -22,7 +24,6 @@ import org.jdrupes.builder.api.TestResult;
 import org.jdrupes.builder.core.AbstractRootProject;
 import org.jdrupes.builder.eclipse.EclipseConfiguration;
 import org.jdrupes.builder.eclipse.EclipseConfigurator;
-import org.jdrupes.builder.java.AppJarFile;
 import org.jdrupes.builder.java.JavaCompiler;
 import org.jdrupes.builder.java.JavaProject;
 import org.jdrupes.builder.java.JavaResourceCollector;
@@ -30,6 +31,7 @@ import static org.jdrupes.builder.java.JavaTypes.*;
 import org.jdrupes.builder.java.Javadoc;
 import org.jdrupes.builder.java.JavadocDirectory;
 import org.jdrupes.builder.java.JavadocJarFile;
+import org.jdrupes.builder.java.LibraryJarFile;
 import org.jdrupes.builder.java.SourcesJarFile;
 import org.jdrupes.builder.junit.JUnitTestRunner;
 import org.jdrupes.builder.mvnrepo.JavadocJarBuilder;
@@ -46,6 +48,7 @@ import org.jdrupes.builder.vscode.VscodeConfigurator;
 import org.jdrupes.gitversioning.api.VersionEvaluator;
 import org.jdrupes.gitversioning.core.DefaultTagFilter;
 import org.w3c.dom.Document;
+import org.w3c.dom.Element;
 import org.w3c.dom.Node;
 
 public class Root extends AbstractRootProject {
@@ -59,7 +62,7 @@ public class Root extends AbstractRootProject {
     }
 
     public Root() {
-        super(name("jdrupes-builder"));
+        super(name("JDrupes-Builder"));
         set(GroupId, "org.jdrupes");
 
         dependency(Expose, project(Api.class));
@@ -72,29 +75,10 @@ public class Root extends AbstractRootProject {
         dependency(Expose, project(Eclipse.class));
         dependency(Expose, project(Vscode.class));
         dependency(Expose, project(JUnit.class));
-        dependency(Expose, project(NodeJs.class));
+        dependency(Forward, project(NodeJs.class));
 
         // Generate POM
-        generator(PomFileGenerator::new).adaptPom(model -> {
-            model.setDescription("See URL.");
-            model.setUrl("https://builder.jdrupes.org/");
-            var scm = new Scm();
-            scm.setUrl("https://github.com/jdrupes/jdrupes-builder");
-            scm.setConnection(
-                "scm:git://github.com/jdrupes/jdrupes-builder.git");
-            scm.setDeveloperConnection(
-                "scm:git://github.com/jdrupes/jdrupes-builder.git");
-            model.setScm(scm);
-            var license = new License();
-            license.setName("AGPL 3.0");
-            license.setUrl("https://www.gnu.org/licenses/agpl-3.0.en.html");
-            license.setDistribution("repo");
-            model.setLicenses(List.of(license));
-            var developer = new Developer();
-            developer.setId("mnlipp");
-            developer.setName("Michael N. Lipp");
-            model.setDevelopers(List.of(developer));
-        });
+        generator(PomFileGenerator::new).adaptPom(addCommonPomInfo());
 
         // Provide app jar
         generator(new UberJarBuilder(this)
@@ -113,10 +97,11 @@ public class Root extends AbstractRootProject {
                 .map(pomFile -> Map.entry(Path.of("META-INF/maven")
                     .resolve((String) get(GroupId)).resolve(name())
                     .resolve("pom.xml"), pomFile)))
-            .destination(buildDirectory().resolve(Path.of("app"))));
+            .destination(buildDirectory().resolve(Path.of("app")))
+            .jarName("jdrupes-builder-" + get(Version) + ".jar"));
 
         // Supply javadoc
-        generator(Javadoc::new)
+        generator(Javadoc::new).projects(Stream.of(this, project(NodeJs.class)))
             .destination(rootProject().directory().resolve("webpages/javadoc"))
             .tagletpath(new MvnRepoLookup()
                 .resolve("org.jdrupes.taglets:plantuml-taglet:3.1.0",
@@ -156,8 +141,8 @@ public class Root extends AbstractRootProject {
         generator(MvnPublisher::new);
 
         // Commands
-        commandAlias("build").resources(of(AppJarFile.class),
-            of(JavadocDirectoryType));
+        commandAlias("build").resources(of(LibraryJarFile.class)
+            .using(Supply, Forward), of(JavadocDirectoryType));
         commandAlias("test").resources(of(TestResult.class));
         commandAlias("sourcesJar").resources(of(SourcesJarFile.class));
         commandAlias("javadoc").resources(of(JavadocDirectory.class));
@@ -166,6 +151,29 @@ public class Root extends AbstractRootProject {
         commandAlias("vscode").resources(of(VscodeConfiguration.class));
         commandAlias("pomFile").resources(of(PomFile.class));
         commandAlias("mavenPublication").resources(of(MvnPublication.class));
+    }
+
+    public static Consumer<Model> addCommonPomInfo() {
+        return model -> {
+            model.setDescription("See URL.");
+            model.setUrl("https://builder.jdrupes.org/");
+            var scm = new Scm();
+            scm.setUrl("https://github.com/jdrupes/jdrupes-builder");
+            scm.setConnection(
+                "scm:git://github.com/jdrupes/jdrupes-builder.git");
+            scm.setDeveloperConnection(
+                "scm:git://github.com/jdrupes/jdrupes-builder.git");
+            model.setScm(scm);
+            var license = new License();
+            license.setName("AGPL 3.0");
+            license.setUrl("https://www.gnu.org/licenses/agpl-3.0.en.html");
+            license.setDistribution("repo");
+            model.setLicenses(List.of(license));
+            var developer = new Developer();
+            developer.setId("mnlipp");
+            developer.setName("Michael N. Lipp");
+            model.setDevelopers(List.of(developer));
+        };
     }
 
     public static void setupVersion(Project project) {
@@ -182,7 +190,6 @@ public class Root extends AbstractRootProject {
             .subDirectory(project.directory())
             .tagFilter(new DefaultTagFilter().prepend("v"));
         project.set(Version, evaluator.version());
-
     }
 
     private static void setupCommonGenerators(Project project) {
@@ -212,9 +219,18 @@ public class Root extends AbstractRootProject {
     }
 
     private static void setupEclipseConfigurator(Project project) {
+        var eclipseAlias = project.name();
+        if (!(project instanceof RootProject)) {
+            if (project instanceof JdbldExtension) {
+                eclipseAlias = project.get(GroupId)
+                    + ".builder.ext." + project.name();
+            } else {
+                eclipseAlias = project.get(GroupId)
+                    + ".builder." + project.name();
+            }
+        }
         project.generator(new EclipseConfigurator(project)
-            .eclipseAlias(project instanceof RootProject ? project.name()
-                : project.get(GroupId) + ".builder." + project.name())
+            .eclipseAlias(eclipseAlias)
             .adaptProjectConfiguration((Document doc,
                     Node buildSpec, Node natures) -> {
                 if (project instanceof JavaProject) {
@@ -237,7 +253,26 @@ public class Root extends AbstractRootProject {
                         .appendChild(doc.createTextNode(
                             "ch.acanda.eclipse.pmd.builder.PMDNature"));
                 }
-            }).adaptConfiguration(() -> {
+            }).adaptClasspathConfiguration((_, classpath) -> {
+                // Sub-projects that have their own library reference
+                // the jdrupes-builder in their POM but must not have
+                // a reference to the JDrupes-Builder project in Eclipse
+                // because this is not a Java project.
+                var children = classpath.getChildNodes();
+                for (int i = 0; i < children.getLength(); i += 1) {
+                    Node child = children.item(i);
+                    if (child.getNodeType() == Node.ELEMENT_NODE &&
+                        "classpathentry".equals(child.getNodeName())) {
+                        Element entry = (Element) child;
+                        if (("/" + project.rootProject().name())
+                            .equals(entry.getAttribute("path"))) {
+                            classpath.removeChild(child);
+                            break;
+                        }
+                    }
+                }
+            })
+            .adaptConfiguration(() -> {
                 if (!(project instanceof JavaProject)) {
                     return;
                 }

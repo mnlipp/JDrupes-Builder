@@ -16,7 +16,7 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package org.jdrupes.builder.nodejs;
+package org.jdrupes.builder.ext.nodejs;
 
 import com.google.common.flogger.FluentLogger;
 import java.io.File;
@@ -74,6 +74,8 @@ import org.jdrupes.builder.core.AbstractProvider;
 /// The provider also uses the function set with [#provided] to determine
 /// the resources to be removed when it is invoked with a request for
 /// [Cleanliness].
+/// 
+/// This provider is packaged separately in "org.jdrupes:jdbld-ext-nodejs:...".
 ///
 public class NpmExecutor extends AbstractProvider implements Renamable {
 
@@ -83,6 +85,8 @@ public class NpmExecutor extends AbstractProvider implements Renamable {
     private final List<Stream<Resource>> requiredResources = new ArrayList<>();
     private Function<Project, Stream<Resource>> getProvided
         = _ -> Stream.empty();
+    private String nodeJsVersion;
+    private NodeJsDownloader nodeJsDownloader;
 
     /// Initializes a new NPM executor.
     ///
@@ -101,6 +105,16 @@ public class NpmExecutor extends AbstractProvider implements Renamable {
     @Override
     public NpmExecutor name(String name) {
         rename(name);
+        return this;
+    }
+
+    /// Sets the node.js version to use. Setting a version is mandatory.
+    ///
+    /// @param version the version
+    /// @return the npm executor
+    ///
+    public NpmExecutor nodeJsVersion(String version) {
+        nodeJsVersion = version;
         return this;
     }
 
@@ -173,6 +187,12 @@ public class NpmExecutor extends AbstractProvider implements Renamable {
         }
 
         // Check prerequisites
+        if (nodeJsVersion == null) {
+            throw new BuildException().from(this)
+                .message("No node.js version specified");
+        }
+        nodeJsDownloader = new NodeJsDownloader(this, context()
+            .commonCacheDirectory().resolve(getClass().getPackageName()));
         File packageJson = project.directory().resolve("package.json").toFile();
         if (!packageJson.canRead()) {
             throw new BuildException().from(this)
@@ -211,7 +231,10 @@ public class NpmExecutor extends AbstractProvider implements Renamable {
 
     private <T extends Resource> Stream<T> runNpm(
             Project project, List<String> arguments) {
-        List<String> command = new ArrayList<>(List.of("npm"));
+        var nodeJsExecutable = nodeJsDownloader.npmExecutable(nodeJsVersion);
+        logger.atFine().log("Running %s with %s", this, nodeJsExecutable);
+        List<String> command
+            = new ArrayList<>(List.of(nodeJsExecutable.toString()));
         command.addAll(arguments);
         ProcessBuilder processBuilder = new ProcessBuilder(command)
             .directory(project.directory().toFile())
@@ -222,8 +245,8 @@ public class NpmExecutor extends AbstractProvider implements Renamable {
             copyData(process.getErrorStream(), context().error());
             @SuppressWarnings("unchecked")
             var result = (Stream<T>) Stream.of(newResource(ExecResultType, this,
-                "[" + project.name() + "]$ "
-                    + command.stream().collect(Collectors.joining(" ")),
+                "[" + project.name() + "]$ npm "
+                    + arguments.stream().collect(Collectors.joining(" ")),
                 process.waitFor(), getProvided.apply(project)));
             return result;
         } catch (IOException | InterruptedException e) {

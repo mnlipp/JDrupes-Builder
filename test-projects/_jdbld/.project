@@ -16,16 +16,16 @@
 			</arguments>
 		</buildCommand>
 	</buildSpec>
-    <natures>
-        <nature>org.eclipse.jdt.core.javanature</nature>
-        <nature>net.sf.eclipsecs.core.CheckstyleNature</nature>
-        <nature>ch.acanda.eclipse.pmd.builder.PMDNature</nature>
-    </natures>
+	<natures>
+		<nature>org.eclipse.jdt.core.javanature</nature>
+		<nature>net.sf.eclipsecs.core.CheckstyleNature</nature>
+		<nature>ch.acanda.eclipse.pmd.builder.PMDNature</nature>
+	</natures>
 	<linkedResources>
 		<link>
 			<name>sibling-src</name>
 			<type>2</type>
-			<location>/home/mnl/devel/JDrupes-Builder/_jdbld/src</location>
+			<locationURI>$%7BPARENT-2-PROJECT_LOC%7D/_jdbld/src</locationURI>
 		</link>
 	</linkedResources>
 </projectDescription>
