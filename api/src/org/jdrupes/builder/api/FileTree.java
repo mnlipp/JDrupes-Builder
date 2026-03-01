@@ -96,7 +96,7 @@ public interface FileTree<T extends FileResource> extends Resources<T> {
     @Override
     void cleanup();
 
-    /// Convenience method to create a file tree.
+    /// Creates a new file tree from the given project and path.
     ///
     /// @param project the project
     /// @param relativeRoot the root of the file tree relative to the
@@ -105,7 +105,7 @@ public interface FileTree<T extends FileResource> extends Resources<T> {
     /// @return the file tree
     ///
     @SuppressWarnings("PMD.UseDiamondOperator")
-    static FileTree<FileResource> create(
+    static FileTree<FileResource> from(
             Project project, Path relativeRoot, String pattern) {
         return project.newResource(
             new ResourceType<FileTree<FileResource>>() {},

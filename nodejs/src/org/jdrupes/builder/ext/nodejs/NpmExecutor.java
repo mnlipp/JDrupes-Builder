@@ -148,7 +148,7 @@ public class NpmExecutor extends AbstractProvider implements Renamable {
     ///
     public NpmExecutor required(Path root, String pattern) {
         requiredResources
-            .add(Stream.of(FileTree.create(project, root, pattern)));
+            .add(Stream.of(FileTree.from(project, root, pattern)));
         return this;
     }
 
@@ -159,7 +159,7 @@ public class NpmExecutor extends AbstractProvider implements Renamable {
     /// @return the npm executor
     ///
     public NpmExecutor required(Path root) {
-        requiredResources.add(Stream.of(FileResource.create(project, root)));
+        requiredResources.add(Stream.of(FileResource.from(project, root)));
         return this;
     }
 
