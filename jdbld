@@ -41,7 +41,7 @@ elif ! expr >/dev/null "$jdbldVersion" : '.*-SNAPSHOT$'; then
   builderJar="$jdbldCommon/versions/jdrupes-builder-$jdbldVersion.jar"
   # Get if not already there
   if [ ! -r "$builderJar" ]; then
-    mkdir -p "$jdbldCommon/.jdbld/versions"
+    mkdir -p "$jdbldCommon/versions"
     # Get version
     curl "$repositoryBaseUrl/$jdbldVersion/jdrupes-builder-$jdbldVersion.jar" \
       -o "$builderJar"
