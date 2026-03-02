@@ -16,5 +16,5 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-/// Support for uilding OSGi bundles with Bnd.
-package org.jdrupes.builder.bnd;
+/// Support for building OSGi bundles with Bnd.
+package org.jdrupes.builder.ext.bnd;

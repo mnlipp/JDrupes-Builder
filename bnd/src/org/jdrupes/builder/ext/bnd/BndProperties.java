@@ -16,7 +16,7 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package org.jdrupes.builder.bnd;
+package org.jdrupes.builder.ext.bnd;
 
 import java.util.Collections;
 import java.util.Map;

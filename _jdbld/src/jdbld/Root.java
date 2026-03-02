@@ -68,13 +68,13 @@ public class Root extends AbstractRootProject {
         dependency(Expose, project(Api.class));
         dependency(Expose, project(Core.class));
         dependency(Expose, project(Java.class));
-        dependency(Expose, project(Bnd.class));
         dependency(Expose, project(MvnRepo.class));
         dependency(Expose, project(Uberjar.class));
         dependency(Expose, project(Startup.class));
         dependency(Expose, project(Eclipse.class));
         dependency(Expose, project(Vscode.class));
         dependency(Expose, project(JUnit.class));
+        dependency(Forward, project(Bnd.class));
         dependency(Forward, project(NodeJs.class));
 
         // Generate POM
@@ -82,9 +82,6 @@ public class Root extends AbstractRootProject {
 
         // Provide app jar
         generator(new UberJarBuilder(this)
-            // bndlib and its dependencies are a mess
-            .ignoreDuplicates(
-                "about.html", "OSGI-OPT/src/**", "LICENSE", "aQute/**")
             .addFrom(providers().select(Expose))
             // Runtime (only) dependencies of executable jar
             .addFrom(new MvnRepoLookup().resolve(
@@ -101,7 +98,8 @@ public class Root extends AbstractRootProject {
             .jarName("jdrupes-builder-" + get(Version) + ".jar"));
 
         // Supply javadoc
-        generator(Javadoc::new).projects(Stream.of(this, project(NodeJs.class)))
+        generator(Javadoc::new).projects(Stream.of(this, project(NodeJs.class),
+            project(Bnd.class)))
             .destination(rootProject().directory().resolve("webpages/javadoc"))
             .tagletpath(new MvnRepoLookup()
                 .resolve("org.jdrupes.taglets:plantuml-taglet:3.1.0",
@@ -224,7 +222,7 @@ public class Root extends AbstractRootProject {
             if (project instanceof JdbldExtension) {
                 eclipseAlias = project.get(GroupId)
                     + ".builder.ext." + project.name();
-            } else {
+            } else if (project instanceof JavaProject) {
                 eclipseAlias = project.get(GroupId)
                     + ".builder." + project.name();
             }

@@ -19,7 +19,7 @@
 package jdbld;
 
 import static org.jdrupes.builder.api.Intent.*;
-import org.jdrupes.builder.bnd.BndBaseliner;
+import org.jdrupes.builder.ext.bnd.BndBaseliner;
 import org.jdrupes.builder.core.AbstractProject;
 import org.jdrupes.builder.java.JavaLibraryProject;
 

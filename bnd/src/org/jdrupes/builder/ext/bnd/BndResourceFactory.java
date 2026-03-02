@@ -16,7 +16,7 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package org.jdrupes.builder.bnd;
+package org.jdrupes.builder.ext.bnd;
 
 import java.lang.reflect.Proxy;
 import java.nio.file.Path;
@@ -26,8 +26,8 @@ import org.jdrupes.builder.api.Proxyable;
 import org.jdrupes.builder.api.Resource;
 import org.jdrupes.builder.api.ResourceFactory;
 import org.jdrupes.builder.api.ResourceType;
-import static org.jdrupes.builder.bnd.BndTypes.*;
 import org.jdrupes.builder.core.ForwardingHandler;
+import static org.jdrupes.builder.ext.bnd.BndTypes.*;
 
 /// A factory for creating Bnd related resource objects.
 ///

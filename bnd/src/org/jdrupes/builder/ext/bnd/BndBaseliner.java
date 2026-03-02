@@ -16,7 +16,7 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package org.jdrupes.builder.bnd;
+package org.jdrupes.builder.ext.bnd;
 
 import aQute.bnd.differ.Baseline;
 import aQute.bnd.differ.Baseline.BundleInfo;
@@ -46,7 +46,7 @@ import org.jdrupes.builder.api.Resource;
 import org.jdrupes.builder.api.ResourceRequest;
 import org.jdrupes.builder.api.ResourceType;
 import org.jdrupes.builder.api.Resources;
-import static org.jdrupes.builder.bnd.BndTypes.*;
+import static org.jdrupes.builder.ext.bnd.BndTypes.*;
 import static org.jdrupes.builder.java.JavaTypes.*;
 import org.jdrupes.builder.java.LibraryJarFile;
 import static org.jdrupes.builder.mvnrepo.MvnProperties.*;
@@ -67,6 +67,8 @@ import org.jdrupes.builder.mvnrepo.PomFileGenerator;
 /// The [BndBaseliner] then performs the baseline evaluation. Instructions
 /// `-diffignore` and `-diffpackages` are supported and forwarded to
 /// `bndlib`.
+/// 
+/// This provider is packaged separately in "org.jdrupes:jdbld-ext-nodejs:...".
 ///
 @SuppressWarnings("PMD.TooManyStaticImports")
 public class BndBaseliner extends AbstractBndGenerator {

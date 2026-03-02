@@ -16,7 +16,7 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package org.jdrupes.builder.bnd;
+package org.jdrupes.builder.ext.bnd;
 
 import aQute.bnd.osgi.Analyzer;
 import aQute.bnd.version.Version;
@@ -80,6 +80,8 @@ import org.jdrupes.builder.java.ManifestAttributes;
 /// register the analyzer in [RootProject#prepareProject] and add the
 /// instructions via [#instructions(Path)], where `Path` refers to the
 /// `bnd.bnd` file.
+/// 
+/// This provider is packaged separately in "org.jdrupes:jdbld-ext-nodejs:...".
 ///
 @SuppressWarnings("PMD.TooManyStaticImports")
 public class BndAnalyzer extends AbstractBndGenerator {
