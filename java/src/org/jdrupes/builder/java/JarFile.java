@@ -18,10 +18,24 @@
 
 package org.jdrupes.builder.java;
 
+import java.nio.file.Path;
 import org.jdrupes.builder.api.FileResource;
+import org.jdrupes.builder.api.ResourceFactory;
+import org.jdrupes.builder.api.ResourceType;
 
 /// A [FileResource] that represents a Java jar file].
 ///
 public interface JarFile extends FileResource {
+
+    /// Creates a jar file resource from the given values.
+    ///
+    /// @param <T> the generic type
+    /// @param jarType the jar type
+    /// @param path the path
+    /// @return the t
+    ///
+    static <T extends JarFile> T from(ResourceType<T> jarType, Path path) {
+        return ResourceFactory.create(jarType, path);
+    }
 
 }

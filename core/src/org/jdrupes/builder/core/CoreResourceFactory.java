@@ -19,6 +19,7 @@
 package org.jdrupes.builder.core;
 
 import java.lang.reflect.Method;
+import java.lang.reflect.Modifier;
 import java.lang.reflect.Proxy;
 import java.nio.file.Path;
 import java.util.Arrays;
@@ -107,7 +108,9 @@ public class CoreResourceFactory implements ResourceFactory {
         return ResourceType.getAllInterfaces(derived)
             .filter(not(baseItfs::contains))
             .filter(itf -> Arrays.stream(itf.getDeclaredMethods())
-                .filter(not(Method::isDefault)).findAny().isPresent())
+                .filter(not(Method::isDefault))
+                .filter(m -> !Modifier.isStatic(m.getModifiers()))
+                .findAny().isPresent())
             .findAny().isPresent();
     }
 

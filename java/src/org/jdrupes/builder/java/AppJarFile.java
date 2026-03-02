@@ -18,9 +18,21 @@
 
 package org.jdrupes.builder.java;
 
+import java.nio.file.Path;
 import org.jdrupes.builder.api.FileResource;
+import org.jdrupes.builder.api.ResourceFactory;
+import org.jdrupes.builder.api.ResourceType;
 
 /// A [FileResource] that represents an application jar.
 ///
 public interface AppJarFile extends LibraryJarFile {
+
+    /// Creates an application library jar file from the given path.
+    ///
+    /// @param path the path
+    /// @return the library jar file
+    ///
+    static AppJarFile from(Path path) {
+        return ResourceFactory.create(new ResourceType<>() {}, path);
+    }
 }

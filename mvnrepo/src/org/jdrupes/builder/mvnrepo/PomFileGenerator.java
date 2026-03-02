@@ -203,8 +203,7 @@ public class PomFileGenerator extends AbstractGenerator {
         }
 
         @SuppressWarnings("unchecked")
-        var result = (Stream<T>) Stream
-            .of(project().newResource(PomFileType, pomPath));
+        var result = (Stream<T>) Stream.of(PomFile.from(pomPath));
         return result;
     }
 
@@ -225,7 +224,7 @@ public class PomFileGenerator extends AbstractGenerator {
         // explicitly declared dependencies and the repository
         // dependencies supplied by the projects on the compile
         // or runtime classpath.
-        var compilationDeps = newResource(MvnRepoDependenciesType)
+        var compilationDeps = Resources.of(MvnRepoDependenciesType)
             .addAll(project().providers(Supply, Expose).without(this)
                 .without(Project.class).resources(of(MvnRepoDependencyType)))
             .addAll(project().providers()
@@ -233,7 +232,7 @@ public class PomFileGenerator extends AbstractGenerator {
                 .flatMap(p -> p.resources(of(MvnRepoDependencyType)
                     .using(Supply))));
         addDependencies(model, compilationDeps, "compile");
-        var runtimeDeps = newResource(MvnRepoDependenciesType)
+        var runtimeDeps = Resources.of(MvnRepoDependenciesType)
             .addAll(project().providers(Reveal).without(this)
                 .without(Project.class).resources(of(MvnRepoDependencyType)))
             .addAll(project().providers()
@@ -281,11 +280,10 @@ public class PomFileGenerator extends AbstractGenerator {
         if (requested.accepts(MvnRepoDependenciesType)) {
             return Stream.empty();
         }
-        return Stream.of((T) newResource(MvnRepoDependencyType,
-            project().<String> get(GroupId)
-                + ":" + Optional.ofNullable(project()
-                    .<String> get(ArtifactId)).orElse(project().name())
-                + ":" + project().get(Version)));
+        return Stream.of((T) MvnRepoDependency.from(String.format("%s:%s:%s",
+            project().<String> get(GroupId), Optional.ofNullable(project()
+                .<String> get(ArtifactId)).orElse(project().name()),
+            project().get(Version))));
     }
 
 }

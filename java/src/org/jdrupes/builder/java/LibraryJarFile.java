@@ -19,6 +19,8 @@
 package org.jdrupes.builder.java;
 
 import java.nio.file.Path;
+import org.jdrupes.builder.api.ResourceFactory;
+import org.jdrupes.builder.api.ResourceType;
 
 /// Marker interface for a jar file that is a library.
 ///
@@ -29,4 +31,12 @@ public interface LibraryJarFile extends JarFile, ClasspathElement {
         return path();
     }
 
+    /// Creates a library jar file from the given path.
+    ///
+    /// @param path the path
+    /// @return the library jar file
+    ///
+    static LibraryJarFile from(Path path) {
+        return ResourceFactory.create(new ResourceType<>() {}, path);
+    }
 }

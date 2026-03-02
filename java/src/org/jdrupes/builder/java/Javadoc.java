@@ -87,7 +87,7 @@ public class Javadoc extends JavaTool {
     public Javadoc(Project project) {
         super(project);
         projects.add(project);
-        tagletpath = project().newResource(new ResourceType<>() {});
+        tagletpath = Resources.of(new ResourceType<>() {});
     }
 
     /// Sets the projects to generate javadoc for.
@@ -140,8 +140,8 @@ public class Javadoc extends JavaTool {
     /// @return the resources collector
     /// 
     public final Javadoc addSources(Path directory, String pattern) {
-        addSources(
-            project().newResource(JavaSourceTreeType, directory, pattern));
+        addSources(FileTree.from(
+            project(), directory, pattern, JavaSourceFile.class));
         return this;
     }
 
@@ -198,7 +198,7 @@ public class Javadoc extends JavaTool {
 
         // Get destination and check if we only have to cleanup.
         var destDir = project().buildDirectory().resolve(destination);
-        var generated = project().newResource(ClassTreeType, destDir, "**/*");
+        var generated = ClassTree.from(project(), destDir);
         if (requested.accepts(CleanlinessType)) {
             generated.cleanup();
             destDir.toFile().delete();
@@ -234,8 +234,8 @@ public class Javadoc extends JavaTool {
             logDiagnostics(diagnostics);
         }
         @SuppressWarnings("unchecked")
-        var result = (Stream<T>) Stream
-            .of(project().newResource(JavadocDirectoryType, destDir));
+        var result = (Stream<T>) Stream.of(
+            JavadocDirectory.from(project(), destDir));
         return result;
     }
 
@@ -248,7 +248,7 @@ public class Javadoc extends JavaTool {
         allOptions.addAll(List.of("-d", destDir.toString()));
 
         // Handle classpath
-        var cpResources = newResource(ClasspathType).addAll(projects.stream()
+        var cpResources = Resources.of(ClasspathType).addAll(projects.stream()
             .flatMap(p -> p.resources(of(ClasspathElement.class)
                 .using(Consume, Reveal, Expose))));
         logger.atFinest().log("Generating in %s with classpath %s", project(),

@@ -26,9 +26,7 @@ import org.jdrupes.builder.api.Cleanliness;
 import org.jdrupes.builder.api.Generator;
 import org.jdrupes.builder.api.Project;
 import org.jdrupes.builder.api.Renamable;
-import org.jdrupes.builder.api.Resource;
 import org.jdrupes.builder.api.ResourceRequest;
-import org.jdrupes.builder.api.ResourceType;
 import static org.jdrupes.builder.api.ResourceType.CleanlinessType;
 
 /// A base implementation of a [Generator].
@@ -60,19 +58,6 @@ public abstract class AbstractGenerator extends AbstractProvider
     public AbstractGenerator name(String name) {
         rename(name);
         return this;
-    }
-
-    /// Short for `project().newResource(type, args)`.
-    ///
-    /// @param <T> the generic type
-    /// @param type the type
-    /// @param args the args
-    /// @return the t
-    ///
-    @Override
-    protected <T extends Resource> T newResource(ResourceType<T> type,
-            Object... args) {
-        return project.newResource(type, args);
     }
 
     /// If the request includes [Cleanliness] deletes the given files 

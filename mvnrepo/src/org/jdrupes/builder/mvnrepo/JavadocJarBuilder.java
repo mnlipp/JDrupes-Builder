@@ -24,7 +24,6 @@ import org.jdrupes.builder.api.FileTree;
 import static org.jdrupes.builder.api.Intent.Supply;
 import org.jdrupes.builder.api.Project;
 import static org.jdrupes.builder.api.Project.Properties.Version;
-import org.jdrupes.builder.api.ResourceType;
 import org.jdrupes.builder.java.JarBuilder;
 import static org.jdrupes.builder.java.JavaTypes.*;
 import org.jdrupes.builder.java.JavadocDirectory;
@@ -53,9 +52,8 @@ public class JavadocJarBuilder extends JarBuilder {
         super(project, JavadocJarFileType);
         var trees = project().resources(
             of(JavadocDirectory.class).using(Supply)).map(
-                d -> project().newResource(
-                    new ResourceType<FileTree<FileResource>>() {},
-                    d.path(), "**/*"));
+                d -> FileTree.from(project(), d.path(), "**/*",
+                    FileResource.class));
         addTrees(trees);
         jarName(Optional.ofNullable(project().get(ArtifactId))
             .orElse(project().name()) + "-" + project().get(Version)

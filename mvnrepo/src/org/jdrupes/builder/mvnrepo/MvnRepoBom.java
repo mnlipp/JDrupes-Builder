@@ -18,7 +18,19 @@
 
 package org.jdrupes.builder.mvnrepo;
 
+import org.jdrupes.builder.api.ResourceFactory;
+import static org.jdrupes.builder.mvnrepo.MvnRepoTypes.MvnRepoBomType;
+
 /// Represents a BOM in a maven repository.
 ///
 public interface MvnRepoBom extends MvnRepoPom {
+
+    /// Creates a BOM from a coordinate.
+    ///
+    /// @param coordinate the coordinate
+    /// @return the mvn repo dependency
+    ///
+    static MvnRepoBom from(String coordinate) {
+        return ResourceFactory.create(MvnRepoBomType, coordinate);
+    }
 }

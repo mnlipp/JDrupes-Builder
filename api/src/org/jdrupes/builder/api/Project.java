@@ -371,19 +371,6 @@ public interface Project extends ResourceProvider {
     ///
     <T> T get(PropertyKey property);
    
-    /// Convenience method to create a new resource. Short for invoking
-    /// [ResourceFactory#create] with the given type as first argument,
-    /// the current project as second argument and the remaining given
-    /// arguments appended.
-    ///
-    /// @param <T> the resource type
-    /// @param type the type
-    /// @param args the arguments
-    /// @return the resource
-    ///
-    <T extends Resource> T newResource(ResourceType<T> type,
-            Object... args);
-
     /// Convenience method for reading the content of a file into a
     /// [String]. The path is resolved against the project's directory.
     ///

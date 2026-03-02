@@ -18,8 +18,20 @@
 
 package org.jdrupes.builder.mvnrepo;
 
+import org.jdrupes.builder.api.ResourceFactory;
+import static org.jdrupes.builder.mvnrepo.MvnRepoTypes.MvnRepoDependencyType;
+
 /// Represents a dependency on a maven artifact obtainable from a
 /// maven repository.
 ///
 public interface MvnRepoDependency extends MvnRepoResource {
+
+    /// Creates a dependency from a coordinate.
+    ///
+    /// @param coordinate the coordinate
+    /// @return the mvn repo dependency
+    ///
+    static MvnRepoDependency from(String coordinate) {
+        return ResourceFactory.create(MvnRepoDependencyType, coordinate);
+    }
 }

@@ -41,6 +41,7 @@ import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 import org.jdrupes.builder.api.BuildException;
 import org.jdrupes.builder.api.ConfigurationException;
+import org.jdrupes.builder.api.FileResource;
 import org.jdrupes.builder.api.FileTree;
 import org.jdrupes.builder.api.IOResource;
 import org.jdrupes.builder.api.Project;
@@ -233,8 +234,7 @@ public class JarBuilder extends AbstractGenerator {
     ///
     public JarBuilder add(Path prefix, FileTree<?> tree) {
         entryStreams.add(tree.entries().map(e -> Map.entry(prefix.resolve(e),
-            (IOResource) newResource(FileResourceType,
-                tree.root().resolve(e)))));
+            FileResource.from(tree.root().resolve(e)))));
         return this;
     }
 
@@ -247,7 +247,7 @@ public class JarBuilder extends AbstractGenerator {
     public JarBuilder add(Path prefix, Stream<? extends FileTree<?>> trees) {
         entryStreams.add(
             trees.flatMap(t -> t.entries().map(e -> Map.entry(prefix.resolve(e),
-                newResource(FileResourceType, t.root().resolve(e))))));
+                FileResource.from(t.root().resolve(e))))));
         return this;
     }
 
@@ -355,7 +355,7 @@ public class JarBuilder extends AbstractGenerator {
     protected void collectContents(Map<Path, Resources<IOResource>> contents) {
         entryStreams.stream().forEach(entry -> {
             contents.computeIfAbsent(entry.getKey(),
-                _ -> project().newResource(IOResourcesType))
+                _ -> Resources.with(IOResource.class))
                 .add(entry.getValue());
         });
         fileTrees.stream().parallel()
@@ -375,7 +375,7 @@ public class JarBuilder extends AbstractGenerator {
         fileTree.stream().forEach(file -> {
             var relPath = root.relativize(file.path());
             collected.computeIfAbsent(relPath,
-                _ -> project().newResource(IOResourcesType)).add(file);
+                _ -> Resources.with(IOResource.class)).add(file);
         });
     }
 
@@ -420,8 +420,7 @@ public class JarBuilder extends AbstractGenerator {
                     .message("Cannot create directory: %s", destDir);
             }
         }
-        var jarResource = project().newResource(jarType,
-            destDir.resolve(jarName()));
+        var jarResource = JarFile.from(jarType, destDir.resolve(jarName()));
 
         // Maybe only delete
         if (requested.accepts(CleanlinessType)) {

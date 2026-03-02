@@ -23,7 +23,6 @@ import static com.google.common.flogger.StackSize.*;
 import java.util.stream.Stream;
 import org.jdrupes.builder.api.Renamable;
 import org.jdrupes.builder.api.Resource;
-import org.jdrupes.builder.api.ResourceFactory;
 import org.jdrupes.builder.api.ResourceProvider;
 import org.jdrupes.builder.api.ResourceProviderSpi;
 import org.jdrupes.builder.api.ResourceRequest;
@@ -110,20 +109,6 @@ public abstract class AbstractProvider implements ResourceProvider {
     @Override
     public DefaultBuildContext context() {
         return context;
-    }
-
-    /// Convenience function to create a new resource. Short for invoking
-    /// [ResourceFactory#create] with the requested resource type,
-    /// `null` for the project and the remaining given arguments appended.
-    ///
-    /// @param <T> the resource type
-    /// @param type the type
-    /// @param args the arguments
-    /// @return the resource
-    ///
-    protected <T extends Resource> T newResource(ResourceType<T> type,
-            Object... args) {
-        return ResourceFactory.create(type, null, args);
     }
 
     /// Retrieves the resources as a Vavr stream.

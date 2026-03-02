@@ -97,15 +97,15 @@ public class ResourceType<T extends Resource> {
     /// and contained type. The common usage pattern is to import
     /// this method statically.
     ///
-    /// @param <C> the generic type
-    /// @param <T> the generic type
+    /// @param <C> the container type
+    /// @param <E> the element type
     /// @param type the type
-    /// @param containedType the contained type
+    /// @param elementType the element type
     /// @return the resource type
     ///
-    public static <C extends Resources<?>, T extends Resource> ResourceType<C>
-            resourceType(Class<C> type, Class<T> containedType) {
-        return new ResourceType<>(type, resourceType(containedType));
+    public static <C extends Resources<E>, E extends Resource> ResourceType<C>
+            create(Class<C> type, Class<E> elementType) {
+        return new ResourceType<>(type, resourceType(elementType));
     }
 
     /// Creates a new resource type from the given type. The common

@@ -18,12 +18,29 @@
 
 package org.jdrupes.builder.java;
 
+import java.nio.file.Path;
 import org.jdrupes.builder.api.FileTree;
+import org.jdrupes.builder.api.Project;
+import org.jdrupes.builder.api.ResourceFactory;
 import org.jdrupes.builder.api.ResourceFile;
+import static org.jdrupes.builder.java.JavaTypes.JavaResourceTreeType;
 
 /// A [FileTree] that consists of [ResourceFile]s and can be used in
 /// a Java classpath.
 ///
 public interface JavaResourceTree
         extends FileTree<ResourceFile>, ClasspathElement {
+
+    /// Creates a new Java resource tree from the given values.
+    ///
+    /// @param project the project
+    /// @param directory the directory
+    /// @param pattern the pattern
+    /// @return the java resource tree
+    ///
+    static JavaResourceTree from(Project project, Path directory,
+            String pattern) {
+        return ResourceFactory.create(JavaResourceTreeType, project, directory,
+            pattern);
+    }
 }

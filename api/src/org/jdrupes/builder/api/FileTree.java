@@ -96,19 +96,42 @@ public interface FileTree<T extends FileResource> extends Resources<T> {
     @Override
     void cleanup();
 
-    /// Creates a new file tree from the given project and path.
+    /// Creates a new general file tree from the given project and path.
     ///
     /// @param project the project
-    /// @param relativeRoot the root of the file tree relative to the
-    /// project's directory
+    /// @param directory the root of the file tree relative to the
+    /// project's directory (or an absolute path)
     /// @param pattern the pattern
     /// @return the file tree
     ///
     @SuppressWarnings("PMD.UseDiamondOperator")
     static FileTree<FileResource> from(
-            Project project, Path relativeRoot, String pattern) {
-        return project.newResource(
-            new ResourceType<FileTree<FileResource>>() {},
-            project.directory().resolve(relativeRoot), pattern);
+            Project project, Path directory, String pattern) {
+        return ResourceFactory.create(
+            new ResourceType<FileTree<FileResource>>() {}, project,
+            project != null ? project.directory().resolve(directory)
+                : directory,
+            pattern);
+    }
+
+    /// Creates a new file tree with elements of the given type from the
+    /// given project and path.
+    ///
+    /// @param <T> the generic type
+    /// @param project the project
+    /// @param directory the root of the file tree relative to the
+    /// project's directory (or an absolute path)
+    /// @param pattern the pattern
+    /// @param type the type
+    /// @return the file tree
+    ///
+    @SuppressWarnings("unchecked")
+    static <T extends FileResource> FileTree<T> from(
+            Project project, Path directory, String pattern, Class<T> type) {
+        return (FileTree<T>) ResourceFactory.create(
+            ResourceType.create(FileTree.class, type), project,
+            project != null ? project.directory().resolve(directory)
+                : directory,
+            pattern);
     }
 }

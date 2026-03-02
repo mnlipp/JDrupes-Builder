@@ -182,10 +182,9 @@ public class EclipseConfigurator extends AbstractGenerator {
         configurationAdaptor.run();
 
         // Create result
-        @SuppressWarnings({ "unchecked", "PMD.UseDiamondOperator" })
-        var result = (Stream<T>) Stream.of(project().newResource(
-            new ResourceType<EclipseConfiguration>() {},
-            project().name(), eclipseAlias()));
+        @SuppressWarnings({ "unchecked" })
+        var result = (Stream<T>) Stream.of(
+            EclipseConfiguration.from(project(), eclipseAlias()));
         return result;
     }
 

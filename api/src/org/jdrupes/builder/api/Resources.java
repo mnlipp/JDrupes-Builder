@@ -85,4 +85,37 @@ public interface Resources<T extends Resource> extends Resource {
     /// @return the resources
     ///
     Resources<T> clear();
+
+    /// Creates a new resource container with elements of the given type.
+    ///
+    /// @param <T> the generic type
+    /// @param type the type
+    /// @return the resources container
+    ///
+    @SuppressWarnings("unchecked")
+    static <T extends Resource> Resources<T> with(Class<T> type) {
+        return of(ResourceType.create(Resources.class, type));
+    }
+
+    /// Creates a new resource container with elements of the given type.
+    ///
+    /// @param <T> the generic type
+    /// @param type the type
+    /// @return the resources container
+    ///
+    static <T extends Resource> Resources<T> with(ResourceType<T> type) {
+        return of(new ResourceType<>(Resources.class, type));
+    }
+
+    /// Creates a new resource container with the specified container
+    /// and elements type.
+    ///
+    /// @param <T> the generic type
+    /// @param type the type
+    /// @return the resources container
+    ///
+    @SuppressWarnings("PMD.ShortMethodName")
+    static <T extends Resource> T of(ResourceType<T> type) {
+        return ResourceFactory.create(type);
+    }
 }

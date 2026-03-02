@@ -74,7 +74,7 @@ public class JavaCompiler extends JavaTool {
 
     private static final FluentLogger logger = FluentLogger.forEnclosingClass();
     private final Resources<FileTree<JavaSourceFile>> sources
-        = project().newResource(new ResourceType<>() {});
+        = Resources.of(new ResourceType<>() {});
     private Path destination;
 
     /// Initializes a new java compiler.
@@ -130,8 +130,8 @@ public class JavaCompiler extends JavaTool {
     /// @return the resources collector
     ///
     public final JavaCompiler addSources(Path directory, String pattern) {
-        addSources(
-            project().newResource(JavaSourceTreeType, directory, pattern));
+        addSources(FileTree.from(
+            project(), directory, pattern, JavaSourceFile.class));
         return this;
     }
 
@@ -181,7 +181,7 @@ public class JavaCompiler extends JavaTool {
         // Get this project's previously generated classes for checking
         // or deleting.
         var destDir = project().buildDirectory().resolve(destination);
-        final var classSet = project().newResource(ClassTreeType, destDir);
+        final var classSet = ClassTree.from(project(), destDir);
         if (requested.accepts(CleanlinessType)) {
             classSet.cleanup();
             return Stream.empty();
@@ -197,7 +197,7 @@ public class JavaCompiler extends JavaTool {
 
         // Get classpath for compilation. Filter myself, in case the
         // compilation result is consumed by the project.
-        var cpResources = newResource(ClasspathType).addAll(
+        var cpResources = Resources.of(ClasspathType).addAll(
             project().providers(Consume, Reveal, Expose).without(this)
                 .resources(of(ClasspathElementType)));
         logger.atFiner().log("Compiling in %s with classpath %s", project(),

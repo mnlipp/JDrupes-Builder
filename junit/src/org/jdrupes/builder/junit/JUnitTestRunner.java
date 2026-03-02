@@ -39,7 +39,7 @@ import org.jdrupes.builder.api.Project;
 import org.jdrupes.builder.api.Resource;
 import org.jdrupes.builder.api.ResourceRequest;
 import org.jdrupes.builder.api.ResourceType;
-import static org.jdrupes.builder.api.ResourceType.*;
+import org.jdrupes.builder.api.Resources;
 import org.jdrupes.builder.api.TestResult;
 import org.jdrupes.builder.core.AbstractGenerator;
 import org.jdrupes.builder.java.ClassTree;
@@ -150,7 +150,7 @@ public class JUnitTestRunner extends AbstractGenerator {
         }
 
         // Collect the classpath.
-        var cpResources = newResource(ClasspathType)
+        var cpResources = Resources.of(ClasspathType)
             .addAll(project().resources(of(ClasspathElementType)
                 .using(Consume, Reveal, Expose, Supply)));
         if (project() instanceof MergedTestProject) {
@@ -206,8 +206,8 @@ public class JUnitTestRunner extends AbstractGenerator {
 
             // Evaluate results
             var summary = summaryListener.getSummary();
-            var result = project().newResource(TestResultType,
-                this, buildName(testListener), summary.getTestsStartedCount(),
+            var result = TestResult.from(project(), this,
+                buildName(testListener), summary.getTestsStartedCount(),
                 summary.getTestsFailedCount());
             if (summary.getTestsFailedCount() > 0 && !ignoreFailed) {
                 result.setFaulty();

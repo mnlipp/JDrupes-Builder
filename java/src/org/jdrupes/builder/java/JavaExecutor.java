@@ -123,7 +123,7 @@ public class JavaExecutor extends AbstractProvider
         }
 
         // Collect the classpath and check mainClass.
-        var cpResources = newResource(ClasspathType)
+        var cpResources = Resources.of(ClasspathType)
             .addAll(providers.stream()
                 .map(p -> p.resources(of(ClasspathElementType).usingAll()))
                 .flatMap(s -> s));
@@ -151,8 +151,8 @@ public class JavaExecutor extends AbstractProvider
             Process process = processBuilder.start();
             copyData(process.getInputStream(), context().out());
             copyData(process.getErrorStream(), context().error());
-            var execResult = newResource(ExecResultType, this, mainClass,
-                process.waitFor());
+            var execResult
+                = ExecResult.from(this, mainClass, process.waitFor());
             if (execResult.exitValue() != 0) {
                 execResult.setFaulty();
             }

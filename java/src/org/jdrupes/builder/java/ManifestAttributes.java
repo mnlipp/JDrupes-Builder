@@ -22,6 +22,7 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.jar.Attributes;
 import org.jdrupes.builder.api.Resource;
+import org.jdrupes.builder.api.ResourceFactory;
 import org.jdrupes.builder.api.ResourceType;
 import org.jdrupes.builder.core.ResourceObject;
 import static org.jdrupes.builder.java.JavaTypes.ManifestAttributesType;
@@ -101,6 +102,15 @@ public class ManifestAttributes extends Attributes implements Resource {
         @SuppressWarnings("PMD.LooseCoupling")
         ManifestAttributes other = (ManifestAttributes) obj;
         return Objects.equals(resourceDelegee, other.resourceDelegee);
+    }
+
+    /// Creates a new manifest attributes resource.
+    ///
+    /// @return the manifest attributes
+    ///
+    @SuppressWarnings("PMD.LooseCoupling")
+    public static ManifestAttributes create() {
+        return ResourceFactory.create(ManifestAttributesType);
     }
 
 }

@@ -18,10 +18,22 @@
 
 package org.jdrupes.builder.mvnrepo;
 
+import java.nio.file.Path;
 import org.jdrupes.builder.api.FileResource;
+import org.jdrupes.builder.api.ResourceFactory;
+import org.jdrupes.builder.api.ResourceType;
 
 /// A [FileResource] that represents a POM file.
 ///
 public interface PomFile extends FileResource {
+
+    /// Creates a new POM file resource from the given path.
+    ///
+    /// @param path the path
+    /// @return the POM file
+    ///
+    static PomFile from(Path path) {
+        return ResourceFactory.create(new ResourceType<>() {}, path);
+    }
 
 }

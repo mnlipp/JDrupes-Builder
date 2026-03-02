@@ -159,7 +159,8 @@ public class NpmExecutor extends AbstractProvider implements Renamable {
     /// @return the npm executor
     ///
     public NpmExecutor required(Path root) {
-        requiredResources.add(Stream.of(FileResource.from(project, root)));
+        requiredResources.add(
+            Stream.of(FileResource.from(project.directory().resolve(root))));
         return this;
     }
 
@@ -208,15 +209,15 @@ public class NpmExecutor extends AbstractProvider implements Renamable {
         }
 
         // Make sure that the required resources exists
-        var required = newResource(new ResourceType<Resources<Resource>>() {});
+        var required = Resources.of(new ResourceType<Resources<Resource>>() {});
         requiredResources.stream().forEach(required::addAll);
 
         // Get (previously) provided and check if up-to-date
-        var provided = newResource(new ResourceType<Resources<Resource>>() {});
+        var provided = Resources.of(new ResourceType<Resources<Resource>>() {});
         provided.addAll(getProvided.apply(project));
         if (required.asOf().isPresent() && provided.asOf().isPresent()
             && !required.asOf().get().isAfter(provided.asOf().get())) {
-            var execResult = newResource(ExecResultType, this,
+            var execResult = ExecResult.from(this,
                 "existing " + provided.stream().map(Resource::toString)
                     .collect(Collectors.joining(", ")),
                 0, provided.stream());
@@ -244,7 +245,7 @@ public class NpmExecutor extends AbstractProvider implements Renamable {
             copyData(process.getInputStream(), context().out());
             copyData(process.getErrorStream(), context().error());
             @SuppressWarnings("unchecked")
-            var result = (Stream<T>) Stream.of(newResource(ExecResultType, this,
+            var result = (Stream<T>) Stream.of(ExecResult.from(this,
                 "[" + project.name() + "]$ npm "
                     + arguments.stream().collect(Collectors.joining(" ")),
                 process.waitFor(), getProvided.apply(project)));

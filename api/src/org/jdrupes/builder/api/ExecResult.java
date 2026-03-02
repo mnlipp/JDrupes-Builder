@@ -42,4 +42,32 @@ public interface ExecResult<T extends Resource> extends Resource, FaultAware {
     default Stream<T> resources() {
         return Stream.empty();
     }
+
+    /// Creates a new execution result from the given values.
+    ///
+    /// @param provider the provider
+    /// @param name the name
+    /// @param exitValue the exit value
+    /// @return the exec result
+    ///
+    static ExecResult<?> from(ResourceProvider provider, String name,
+            int exitValue) {
+        return ResourceFactory.create(
+            new ResourceType<>() {}, provider, name, exitValue);
+    }
+
+    /// Creates a new execution result from the given values.
+    ///
+    /// @param <T> the generic type
+    /// @param provider the provider
+    /// @param name the name
+    /// @param exitValue the exit value
+    /// @param resources the resources
+    /// @return the exec result
+    ///
+    static <T extends Resource> ExecResult<T> from(ResourceProvider provider,
+            String name, int exitValue, Stream<T> resources) {
+        return ResourceFactory.create(
+            new ResourceType<>() {}, provider, name, exitValue, resources);
+    }
 }

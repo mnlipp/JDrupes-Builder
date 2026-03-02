@@ -18,7 +18,10 @@
 
 package org.jdrupes.builder.eclipse;
 
+import org.jdrupes.builder.api.Project;
 import org.jdrupes.builder.api.Resource;
+import org.jdrupes.builder.api.ResourceFactory;
+import org.jdrupes.builder.api.ResourceType;
 
 /// A resource request for the Eclipse configuration files. The request
 /// results in information about the Eclipse configuration.
@@ -37,4 +40,14 @@ public interface EclipseConfiguration extends Resource {
     ///
     String eclipseAlias();
 
+    /// Creates a new EclipseConfiguration from the given values.
+    ///
+    /// @param project the project
+    /// @param eclipseAlias the eclipse alias
+    /// @return the eclipse configuration
+    ///
+    static EclipseConfiguration from(Project project, String eclipseAlias) {
+        return ResourceFactory.create(new ResourceType<>() {},
+            project, project.name(), eclipseAlias);
+    }
 }

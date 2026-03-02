@@ -18,7 +18,19 @@
 
 package org.jdrupes.builder.mvnrepo;
 
+import org.jdrupes.builder.api.ResourceFactory;
+import static org.jdrupes.builder.mvnrepo.MvnRepoTypes.MvnPublicationType;
+
 /// Represents an artifact created in a maven repository.
 ///
 public interface MvnPublication extends MvnRepoResource {
+
+    /// Creates a maven publication from Maven coordinates.
+    ///
+    /// @param coordinates the coordinates
+    /// @return the maven publication
+    ///
+    static MvnPublication from(String coordinates) {
+        return ResourceFactory.create(MvnPublicationType, coordinates);
+    }
 }

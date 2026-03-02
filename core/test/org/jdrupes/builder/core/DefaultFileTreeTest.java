@@ -8,8 +8,6 @@ import java.util.List;
 import java.util.stream.Collectors;
 import org.jdrupes.builder.api.FileResource;
 import org.jdrupes.builder.api.FileTree;
-import org.jdrupes.builder.api.ResourceFactory;
-import org.jdrupes.builder.api.ResourceType;
 import org.junit.jupiter.api.AfterEach;
 import static org.junit.jupiter.api.Assertions.*;
 import org.junit.jupiter.api.BeforeEach;
@@ -49,9 +47,7 @@ class DefaultFileTreeTest {
         Files.writeString(f2, "two");
 
         // use pattern to match all files under tmpDir
-        FileTree<FileResource> ft = ResourceFactory.create(
-            new ResourceType<FileTree<FileResource>>() {},
-            null, tmpDir, "**/*.txt");
+        FileTree<FileResource> ft = FileTree.from(null, tmpDir, "**/*.txt");
 
         // stream should discover files
         List<String> names = ft.stream()
@@ -83,10 +79,7 @@ class DefaultFileTreeTest {
         Files.writeString(f2, "b");
         Files.writeString(f3, "c");
 
-        FileTree<FileResource> ft = ResourceFactory.create(
-            new ResourceType<FileTree<FileResource>>() {},
-            null, tmpDir, "**/*.txt");
-
+        FileTree<FileResource> ft = FileTree.from(null, tmpDir, "**/*.txt");
         // exclude the subdir's files
         ft.exclude("subdir/**");
         List<String> names = ft.stream().map(fr -> fr.name().orElse(""))
@@ -101,9 +94,7 @@ class DefaultFileTreeTest {
         // now verify directory reporting when directories are explicitly
         // matched create a file tree that matches directories as well
         // (pattern "**/*")
-        FileTree<FileResource> ftDirs = ResourceFactory.create(
-            new ResourceType<FileTree<FileResource>>() {},
-            null, tmpDir, "**/*");
+        FileTree<FileResource> ftDirs = FileTree.from(null, tmpDir, "**/*");
         ftDirs.exclude("subdir/**");
         ftDirs.withDirectories();
         List<String> namesWithDirs
@@ -126,9 +117,7 @@ class DefaultFileTreeTest {
         Files.writeString(f1, "a");
         Files.writeString(f2, "b");
 
-        FileTree<FileResource> ft = ResourceFactory.create(
-            new ResourceType<FileTree<FileResource>>() {},
-            null, tmpDir, "**/*.txt");
+        FileTree<FileResource> ft = FileTree.from(null, tmpDir, "**/*.txt");
 
         // trigger fill
         assertTrue(ft.stream().findAny().isPresent());
@@ -148,9 +137,7 @@ class DefaultFileTreeTest {
         Path f1 = tmpDir.resolve("x.txt");
         Files.writeString(f1, "x");
 
-        FileTree<FileResource> ft = ResourceFactory.create(
-            new ResourceType<FileTree<FileResource>>() {},
-            null, tmpDir, "**/*.txt");
+        FileTree<FileResource> ft = FileTree.from(null, tmpDir, "**/*.txt");
 
         @SuppressWarnings("checkstyle:VariableDeclarationUsageDistance")
         Instant first = ft.asOf().get();

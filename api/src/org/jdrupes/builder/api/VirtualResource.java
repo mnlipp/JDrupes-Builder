@@ -23,4 +23,12 @@ package org.jdrupes.builder.api;
 /// their creation.
 ///
 public interface VirtualResource extends Resource {
+
+    /// Creates a new virtual resource.
+    ///
+    /// @return the virtual resource
+    ///
+    static VirtualResource create() {
+        return ResourceFactory.create(new ResourceType<>() {});
+    }
 }

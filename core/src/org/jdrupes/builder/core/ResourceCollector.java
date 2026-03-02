@@ -47,8 +47,7 @@ public class ResourceCollector<T extends Resource> extends AbstractGenerator {
     public ResourceCollector(Project project, ResourceType<T> type) {
         super(project);
         this.type = type;
-        resources = project()
-            .newResource(new ResourceType<>(Resources.class, type) {});
+        resources = Resources.with(type);
     }
 
     /// Adds the given file tree with resource directories.

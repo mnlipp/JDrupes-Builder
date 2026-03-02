@@ -138,7 +138,7 @@ public class BndAnalyzer extends AbstractBndGenerator {
         try (var analyzer = new Analyzer();
                 var jar = new aQute.bnd.osgi.Jar("dot")) {
             // Assemble bundle content
-            var content = newResource(ClassTreesType).addAll(project()
+            var content = Resources.of(ClassTreesType).addAll(project()
                 .providers().resources(of(ClassTree.class).using(Supply)));
             // A bnd ("better never document") Jar can actually be a
             // classfile tree, and several such "Jar"s can be merged.
@@ -149,7 +149,7 @@ public class BndAnalyzer extends AbstractBndGenerator {
             applyInstructions(analyzer);
 
             // Add classpath dependencies
-            var bundleDeps = newResource(
+            var bundleDeps = Resources.of(
                 new ResourceType<Resources<LibraryJarFile>>() {}).addAll(
                     project().providers(Consume, Reveal, Expose)
                         .resources(project().of(LibraryJarFileType)));
@@ -164,7 +164,7 @@ public class BndAnalyzer extends AbstractBndGenerator {
             // Evaluate and convert to result type
             var manifest = analyzer.calcManifest();
             verifyManifest(manifest);
-            var asResource = newResource(ManifestAttributesType);
+            var asResource = ManifestAttributes.create();
             asResource.putAll(manifest.getMainAttributes());
             @SuppressWarnings("unchecked")
             var result = (T) asResource;

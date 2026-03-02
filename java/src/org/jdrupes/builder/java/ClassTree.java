@@ -18,10 +18,24 @@
 
 package org.jdrupes.builder.java;
 
+import java.nio.file.Path;
 import org.jdrupes.builder.api.FileTree;
+import org.jdrupes.builder.api.Project;
+import org.jdrupes.builder.api.ResourceFactory;
+import static org.jdrupes.builder.java.JavaTypes.ClassTreeType;
 
 /// A [FileTree] that consists of [ClassFile]s.
 ///
 public interface ClassTree extends FileTree<ClassFile>, ClasspathElement {
+
+    /// Creates a new class tree from the given values.
+    ///
+    /// @param project the project
+    /// @param directory the directory
+    /// @return the class tree
+    ///
+    static ClassTree from(Project project, Path directory) {
+        return ResourceFactory.create(ClassTreeType, project, directory);
+    }
 
 }

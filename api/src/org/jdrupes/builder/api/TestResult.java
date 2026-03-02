@@ -19,6 +19,7 @@
 package org.jdrupes.builder.api;
 
 import java.util.Optional;
+import static org.jdrupes.builder.api.ResourceType.TestResultType;
 
 /// Provides the results from running tests.
 ///
@@ -48,4 +49,19 @@ public interface TestResult extends Resource, FaultAware {
     /// @return the number
     ///
     long failed();
+
+    /// Creates a new test result from the given values.
+    ///
+    /// @param project the project
+    /// @param provider the provider
+    /// @param name the name
+    /// @param executed the executed
+    /// @param failed the failed
+    /// @return the test result
+    ///
+    static TestResult from(Project project, ResourceProvider provider,
+            String name, long executed, long failed) {
+        return ResourceFactory.create(
+            TestResultType, project, provider, name, executed, failed);
+    }
 }

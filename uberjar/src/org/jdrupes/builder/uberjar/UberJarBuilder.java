@@ -235,7 +235,7 @@ public class UberJarBuilder extends LibraryBuilder {
             }).forEach(e -> {
                 var relPath = Path.of(e.getRealName());
                 entries.computeIfAbsent(relPath,
-                    _ -> project().newResource(IOResourcesType))
+                    _ -> Resources.with(IOResource.class))
                     .add(new JarFileEntry(jar, e));
             });
     }
@@ -320,10 +320,8 @@ public class UberJarBuilder extends LibraryBuilder {
             }
         }
         var jarResource = request.isFor(AppJarFileType)
-            ? project().newResource(AppJarFileType,
-                destDir.resolve(jarName()))
-            : project().newResource(LibraryJarFileType,
-                destDir.resolve(jarName()));
+            ? AppJarFile.from(destDir.resolve(jarName()))
+            : LibraryJarFile.from(destDir.resolve(jarName()));
         try {
             buildJar(jarResource);
         } finally {
