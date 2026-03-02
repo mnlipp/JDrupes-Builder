@@ -94,7 +94,7 @@ public interface Resources<T extends Resource> extends Resource {
     ///
     @SuppressWarnings("unchecked")
     static <T extends Resource> Resources<T> with(Class<T> type) {
-        return of(ResourceType.create(Resources.class, type));
+        return (Resources<T>) of(ResourceType.create(Resources.class, type));
     }
 
     /// Creates a new resource container with elements of the given type.
