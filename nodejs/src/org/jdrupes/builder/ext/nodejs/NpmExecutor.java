@@ -47,9 +47,9 @@ import static org.jdrupes.builder.api.ResourceType.*;
 import org.jdrupes.builder.api.Resources;
 import org.jdrupes.builder.core.AbstractProvider;
 
-/// A provider for [execution results][ExecResult]s from invoking npm.
+/// A provider for [execution results][ExecResult] from invoking npm.
 /// The provider generates resources in response to requests for
-/// [ExecResult]'s where the request's [ResourceRequest#name()] matches
+/// [ExecResult] where the request's [ResourceRequest#name()] matches
 /// this [provider's name][ResourceProvider#name()].
 /// 
 ///   * The provider first checks if a file `package.json` exists, else it
