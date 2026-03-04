@@ -7,8 +7,8 @@ layout: jdbld
 
 # Provider Index
 
-  * [BndAnalyzer](javadoc/org/jdrupes/builder/bnd/BndAnalyzer.html)
-  * [BndBaseliner](javadoc/org/jdrupes/builder/bnd/BndBaseliner.html)
+  * [BndAnalyzer](javadoc/org/jdrupes/builder/ext/bnd/BndAnalyzer.html)
+  * [BndBaseliner](javadoc/org/jdrupes/builder/ext/bnd/BndBaseliner.html)
   * [ClasspathScanner](javadoc/org/jdrupes/builder/java/ClasspathScanner.html)
   * [EclipseConfigurator](javadoc/org/jdrupes/builder/eclipse/EclipseConfigurator.html)
   * [JarBuilder](javadoc/org/jdrupes/builder/java/JarBuilder.html)
@@ -20,7 +20,7 @@ layout: jdbld
   * [LibraryBuilder](javadoc/org/jdrupes/builder/java/LibraryBuilder.html)
   * [MvnRepoLookup](javadoc/org/jdrupes/builder/mvnrepo/MvnRepoLookup.html)
   * [MvnPublisher](javadoc/org/jdrupes/builder/mvnrepo/MvnPublisher.html)
-  * [NpmExecutor](javadoc/org/jdrupes/builder/nodejs/NpmExecutor.html)
+  * [NpmExecutor](javadoc/org/jdrupes/builder/ext/nodejs/NpmExecutor.html)
   * [PomFileGenerator](javadoc/org/jdrupes/builder/mvnrepo/PomFileGenerator.html)
   * [SourcesJarGenerator](javadoc/org/jdrupes/builder/mvnrepo/SourcesJarGenerator.html)
   * [UberJarGenerator](javadoc/org/jdrupes/builder/uberjar/UberJarGenerator.html)
