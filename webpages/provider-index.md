@@ -20,6 +20,7 @@ layout: jdbld
   * [LibraryBuilder](javadoc/org/jdrupes/builder/java/LibraryBuilder.html)
   * [MvnRepoLookup](javadoc/org/jdrupes/builder/mvnrepo/MvnRepoLookup.html)
   * [MvnPublisher](javadoc/org/jdrupes/builder/mvnrepo/MvnPublisher.html)
+  * [NpmExecutor](javadoc/org/jdrupes/builder/nodejs/NpmExecutor.html)
   * [PomFileGenerator](javadoc/org/jdrupes/builder/mvnrepo/PomFileGenerator.html)
   * [SourcesJarGenerator](javadoc/org/jdrupes/builder/mvnrepo/SourcesJarGenerator.html)
   * [UberJarGenerator](javadoc/org/jdrupes/builder/uberjar/UberJarGenerator.html)
