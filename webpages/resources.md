@@ -74,6 +74,10 @@ part of the base interface, the dynamic proxy mechanism is no longer
 sufficient. In this case, you must provide a custom implementation of the
 resource and a corresponding `ResourceFactory` to instantiate it.
 
+Note that you will never need to define new resource types with additional
+methods for a normal build project. You may need to do this only when authoring
+an extension that also makes new `ResourceProvider`s available.
+
 ### Define the resource interface
 
 First, define your interface with the additional methods:
