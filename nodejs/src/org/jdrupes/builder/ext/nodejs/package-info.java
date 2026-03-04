@@ -16,5 +16,5 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-/// Support for building OSGi bundles using [Bnd](https://bnd.bndtools.org/).
-package org.jdrupes.builder.ext.bnd;
+/// Support for running [Node.js](https://nodejs.org) to provide resources.
+package org.jdrupes.builder.ext.nodejs;

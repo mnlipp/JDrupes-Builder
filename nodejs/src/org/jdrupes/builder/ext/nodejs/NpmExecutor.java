@@ -79,7 +79,10 @@ import org.jdrupes.builder.core.AbstractProvider;
 /// The generated resources can also be provided directly in response
 /// to a request, see [#provideResources(ResourceRequest)].
 /// 
-/// This provider is packaged separately in "org.jdrupes:jdbld-ext-nodejs:...".
+/// This provider is made available as an extension.
+/// [![org.jdrupes:jdbld-ext-nodejs:](
+/// https://img.shields.io/maven-central/v/org.jdrupes/jdbld-ext-nodejs?label=org.jdrupes:jdbld-ext-nodejs%3A)
+/// ](https://mvnrepository.com/artifact/org.jdrupes/jdbld-ext-nodejs)
 ///
 public class NpmExecutor extends AbstractProvider implements Renamable {
 

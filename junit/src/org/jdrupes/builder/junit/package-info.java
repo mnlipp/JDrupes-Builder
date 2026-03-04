@@ -16,5 +16,5 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-/// Support for building OSGi bundles using [Bnd](https://bnd.bndtools.org/).
-package org.jdrupes.builder.ext.bnd;
+/// Support for building and running [JUnit](https://junit.org/) tests.
+package org.jdrupes.builder.junit;

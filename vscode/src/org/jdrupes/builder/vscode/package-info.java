@@ -1,6 +1,6 @@
 /*
  * JDrupes Builder
- * Copyright (C) 2026 Michael N. Lipp
+ * Copyright (C) 2025 Michael N. Lipp
  * 
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as
@@ -16,5 +16,7 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-/// Support for building OSGi bundles using [Bnd](https://bnd.bndtools.org/).
-package org.jdrupes.builder.ext.bnd;
+/// Generate configuration files for
+/// [Visual Studio Code](https://code.visualstudio.com/)
+///
+package org.jdrupes.builder.vscode;

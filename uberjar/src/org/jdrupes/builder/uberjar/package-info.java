@@ -16,5 +16,7 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-/// Support for building OSGi bundles using [Bnd](https://bnd.bndtools.org/).
-package org.jdrupes.builder.ext.bnd;
+/// A provider for
+/// [UberJar](https://support.sonatype.com/hc/en-us/articles/28958118202131-What-is-an-uber-jar)s.
+/// 
+package org.jdrupes.builder.uberjar;

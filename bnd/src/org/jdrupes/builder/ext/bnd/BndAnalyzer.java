@@ -81,7 +81,10 @@ import org.jdrupes.builder.java.ManifestAttributes;
 /// instructions via [#instructions(Path)], where `Path` refers to the
 /// `bnd.bnd` file.
 /// 
-/// This provider is packaged separately in "org.jdrupes:jdbld-ext-nodejs:...".
+/// This provider is made available as an extension.
+/// [![org.jdrupes:jdbld-ext-bnd:](
+/// https://img.shields.io/maven-central/v/org.jdrupes/jdbld-ext-bnd?label=org.jdrupes:jdbld-ext-bnd%3A)
+/// ](https://mvnrepository.com/artifact/org.jdrupes/jdbld-ext-bnd)
 ///
 @SuppressWarnings("PMD.TooManyStaticImports")
 public class BndAnalyzer extends AbstractBndGenerator {
