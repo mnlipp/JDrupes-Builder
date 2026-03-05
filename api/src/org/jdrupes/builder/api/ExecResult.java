@@ -36,6 +36,7 @@ public interface ExecResult<T extends Resource> extends Resource, FaultAware {
     int exitValue();
 
     /// Returns the stream of resources produced by the execution.
+    /// Each invocation of this method must return a new stream.
     ///
     /// @return the stream
     ///

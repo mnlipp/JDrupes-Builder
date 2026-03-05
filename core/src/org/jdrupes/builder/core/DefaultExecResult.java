@@ -33,7 +33,7 @@ public class DefaultExecResult<T extends Resource> extends ResourceObject
     private final ResourceProvider provider;
     private final int exitValue;
     private boolean isFaulty;
-    private Stream<T> resources;
+    private final StreamCollector<T> resources;
 
     /// Initializes a new default exec result. Note that an `exitValue`
     /// different from 0 does not automatically mark the result as faulty. 
@@ -48,6 +48,7 @@ public class DefaultExecResult<T extends Resource> extends ResourceObject
         name(name);
         this.provider = provider;
         this.exitValue = exitValue;
+        resources = new StreamCollector<>(true);
     }
 
     /// Returns the [ResourceProvider] that generated this result.
@@ -58,41 +59,25 @@ public class DefaultExecResult<T extends Resource> extends ResourceObject
         return provider;
     }
 
-    /// Exit value.
-    ///
-    /// @return the int
-    ///
     @Override
     public int exitValue() {
         return exitValue;
     }
 
-    /// Checks if is faulty.
-    ///
-    /// @return true, if is faulty
-    ///
     @Override
     public boolean isFaulty() {
         return isFaulty;
     }
 
-    /// Sets the faulty.
-    ///
-    /// @return the default exec result
-    ///
     @Override
     public DefaultExecResult<T> setFaulty() {
         isFaulty = true;
         return this;
     }
 
-    /// Resources.
-    ///
-    /// @return the stream
-    ///
     @Override
     public Stream<T> resources() {
-        return resources;
+        return resources.stream();
     }
 
     /// Sets the resources associated with this result.
@@ -101,14 +86,10 @@ public class DefaultExecResult<T extends Resource> extends ResourceObject
     /// @return the default exec result
     ///
     public DefaultExecResult<T> resources(Stream<T> resources) {
-        this.resources = resources;
+        this.resources.add(resources);
         return this;
     }
 
-    /// To string.
-    ///
-    /// @return the string
-    ///
     @Override
     public String toString() {
         return ExecResult.class.getSimpleName()
