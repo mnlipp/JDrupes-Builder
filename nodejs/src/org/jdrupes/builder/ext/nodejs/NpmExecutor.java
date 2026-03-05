@@ -46,6 +46,7 @@ import org.jdrupes.builder.api.ResourceType;
 import static org.jdrupes.builder.api.ResourceType.*;
 import org.jdrupes.builder.api.Resources;
 import org.jdrupes.builder.core.AbstractProvider;
+import org.jdrupes.builder.core.StreamCollector;
 
 /// A provider for [execution results][ExecResult] from invoking npm.
 /// The provider generates resources in response to requests for
@@ -89,7 +90,8 @@ public class NpmExecutor extends AbstractProvider implements Renamable {
     private static final FluentLogger logger = FluentLogger.forEnclosingClass();
     private final Project project;
     private final List<String> arguments = new ArrayList<>();
-    private final List<Stream<Resource>> requiredResources = new ArrayList<>();
+    private final StreamCollector<Resource> requiredResources
+        = new StreamCollector<>(false);
     private Function<Project, Stream<Resource>> getProvided
         = _ -> Stream.empty();
     private String nodeJsVersion;
@@ -199,23 +201,40 @@ public class NpmExecutor extends AbstractProvider implements Renamable {
     }
 
     @Override
-    @SuppressWarnings("PMD.CyclomaticComplexity")
+    @SuppressWarnings({ "PMD.CyclomaticComplexity", "PMD.CognitiveComplexity" })
     protected <T extends Resource> Stream<T>
             doProvide(ResourceRequest<T> request) {
         if (request.accepts(CleanlinessType)) {
             getProvided.apply(project).forEach(Resource::cleanup);
             return Stream.empty();
         }
+
+        // Handle request for generated resources
         if (requestForGenerated != null
             && request.accepts(requestForGenerated.type())
             && (requestForGenerated.name().isEmpty()
                 || Objects.equals(requestForGenerated.name().get(),
                     request.name().orElse(null)))) {
+            // Always evaluate for most special type
+            if (!request.equals(requestForGenerated)) {
+                @SuppressWarnings({ "unchecked", "PMD.AvoidDuplicateLiterals" })
+                var result = (Stream<T>) resources(requestForGenerated);
+                return result;
+            }
             return provideGenerated();
         }
+
+        // Check for and handle request for execution result
         if (!request.accepts(ExecResultType)
             || !name().equals(request.name().orElse(null))) {
             return Stream.empty();
+        }
+        // Always evaluate for most special type
+        if (!request.type().equals(ExecResultType)) {
+            @SuppressWarnings("unchecked")
+            var result = (Stream<T>) resources(of(ExecResultType)
+                .withName(name()));
+            return result;
         }
 
         // Check prerequisites
@@ -239,9 +258,9 @@ public class NpmExecutor extends AbstractProvider implements Renamable {
             runNpm(project, List.of("install"));
         }
 
-        // Make sure that the required resources exists
+        // Make sure that the required resources exist
         var required = Resources.of(new ResourceType<Resources<Resource>>() {});
-        requiredResources.stream().forEach(required::addAll);
+        required.addAll(requiredResources.stream());
 
         // Get (previously) provided and check if up-to-date
         var provided = Resources.of(new ResourceType<Resources<Resource>>() {});
@@ -255,9 +274,7 @@ public class NpmExecutor extends AbstractProvider implements Renamable {
             @SuppressWarnings("unchecked")
             var result = (Stream<T>) Stream.of(execResult);
             return result;
-
         }
-
         return runNpm(project, arguments);
     }
 
