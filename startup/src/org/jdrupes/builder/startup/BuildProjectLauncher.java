@@ -61,8 +61,7 @@ import static org.jdrupes.builder.java.JavaTypes.*;
 /// It expects that the JDrupes Builder project has already been compiled
 /// and its classes are available on the classpath.
 ///
-public class BuildProjectLauncher extends AbstractLauncher
-        implements AutoCloseable {
+public class BuildProjectLauncher extends AbstractLauncher {
 
     private static final FluentLogger logger = FluentLogger.forEnclosingClass();
     /// The JDrupes Builder properties read from the file

@@ -49,7 +49,6 @@ import org.eclipse.aether.util.graph.visitor.PreorderNodeListGenerator;
 import org.jdrupes.builder.api.BuildException;
 import org.jdrupes.builder.api.Resource;
 import org.jdrupes.builder.api.ResourceFactory;
-import org.jdrupes.builder.api.ResourceProvider;
 import org.jdrupes.builder.api.ResourceRequest;
 import org.jdrupes.builder.core.AbstractProvider;
 import static org.jdrupes.builder.mvnrepo.MvnRepoTypes.*;
@@ -67,8 +66,7 @@ import static org.jdrupes.builder.mvnrepo.MvnRepoTypes.*;
 ///     `MvnRepoJarFile`.
 ///
 @SuppressWarnings("PMD.CouplingBetweenObjects")
-public class MvnRepoLookup extends AbstractProvider
-        implements ResourceProvider {
+public class MvnRepoLookup extends AbstractProvider {
 
     private static Context rootContextInstance;
     private final List<String> coordinates = new ArrayList<>();
