@@ -18,6 +18,8 @@
 
 package org.jdrupes.builder.core;
 
+import java.time.Instant;
+import java.util.Optional;
 import java.util.stream.Stream;
 import org.jdrupes.builder.api.ExecResult;
 import org.jdrupes.builder.api.Resource;
@@ -34,6 +36,7 @@ public class DefaultExecResult<T extends Resource> extends ResourceObject
     private final int exitValue;
     private boolean isFaulty;
     private final StreamCollector<T> resources;
+    private Instant asOf;
 
     /// Initializes a new default exec result. Note that an `exitValue`
     /// different from 0 does not automatically mark the result as faulty. 
@@ -88,6 +91,23 @@ public class DefaultExecResult<T extends Resource> extends ResourceObject
     public DefaultExecResult<T> resources(Stream<T> resources) {
         this.resources.add(resources);
         return this;
+    }
+
+    @Override
+    public DefaultExecResult<T> asOf(Instant asOf) {
+        if (this.asOf != null) {
+            throw new IllegalStateException("asOf() may only be called once.");
+        }
+        this.asOf = asOf;
+        return this;
+    }
+
+    @Override
+    public Optional<Instant> asOf() {
+        if (asOf == null) {
+            return Optional.empty();
+        }
+        return Optional.of(asOf);
     }
 
     @Override

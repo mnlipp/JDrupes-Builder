@@ -25,6 +25,7 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.lang.ProcessBuilder.Redirect;
 import java.nio.file.Path;
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -61,6 +62,10 @@ import org.jdrupes.builder.core.StreamCollector;
 ///     the provider itself does not process these resources, it is assumed
 ///     that they are processed by the `npm` command and therefore need to be
 ///     available.
+/// 
+///   * If no arguments were specified, the provider returns an [ExecResult]
+///     that indicates successful invocation. The date of the result is set
+///     to the date of `node_modules/.package-lock.json`.
 /// 
 ///   * The provider invokes the function configured with [#generated] and
 ///     collects all resources. If the generated resources exist and no
@@ -105,6 +110,14 @@ public class NpmExecutor extends AbstractProvider implements Renamable {
     public NpmExecutor(Project project) {
         this.project = project;
         rename(NpmExecutor.class.getSimpleName() + " in " + project);
+    }
+
+    /// Returns the project that this provider belongs to.
+    ///
+    /// @return the project
+    ///
+    public Project project() {
+        return project;
     }
 
     /// Name.
@@ -189,19 +202,18 @@ public class NpmExecutor extends AbstractProvider implements Renamable {
     /// Provide the generated resources in response to a request like
     /// the given one.
     ///
-    /// @param <T> the resource type
     /// @param proto defines the kind of request that the npm executor
     /// should respond to with the generated resources
-    /// @return the stream
+    /// @return the npm executor
     ///
-    public <T extends Resource> Stream<T>
-            provideResources(ResourceRequest<T> proto) {
+    public NpmExecutor provideResources(ResourceRequest<?> proto) {
         requestForGenerated = proto;
-        return Stream.empty();
+        return this;
     }
 
     @Override
-    @SuppressWarnings({ "PMD.CyclomaticComplexity", "PMD.CognitiveComplexity" })
+    @SuppressWarnings({ "PMD.CyclomaticComplexity", "PMD.CognitiveComplexity",
+        "PMD.NcssCount" })
     protected <T extends Resource> Stream<T>
             doProvide(ResourceRequest<T> request) {
         if (request.accepts(CleanlinessType)) {
@@ -258,22 +270,28 @@ public class NpmExecutor extends AbstractProvider implements Renamable {
             runNpm(project, List.of("install"));
         }
 
-        // Make sure that the required resources exist
+        // Make sure that the required resources are retrieved and exist
         var required = Resources.of(new ResourceType<Resources<Resource>>() {});
         required.addAll(requiredResources.stream());
+        if (arguments.isEmpty()) {
+            @SuppressWarnings("unchecked")
+            var result = (T) ExecResult
+                .from(this, "npm init", 0, Stream.empty())
+                .asOf(Instant.ofEpochMilli(dotPackageLock.lastModified()));
+            return Stream.of(result);
+        }
 
         // Get (previously) provided and check if up-to-date
         var provided = Resources.of(new ResourceType<Resources<Resource>>() {});
         provided.addAll(getProvided.apply(project));
         if (required.asOf().isPresent() && provided.asOf().isPresent()
             && !required.asOf().get().isAfter(provided.asOf().get())) {
-            var execResult = ExecResult.from(this,
+            @SuppressWarnings("unchecked")
+            var result = (T) ExecResult.from(this,
                 "existing " + provided.stream().map(Resource::toString)
                     .collect(Collectors.joining(", ")),
-                0, provided.stream());
-            @SuppressWarnings("unchecked")
-            var result = (Stream<T>) Stream.of(execResult);
-            return result;
+                0, provided.stream()).asOf(provided.asOf().get());
+            return Stream.of(result);
         }
         return runNpm(project, arguments);
     }
@@ -296,7 +314,8 @@ public class NpmExecutor extends AbstractProvider implements Renamable {
             var result = (Stream<T>) Stream.of(ExecResult.from(this,
                 "[" + project.name() + "]$ npm "
                     + arguments.stream().collect(Collectors.joining(" ")),
-                process.waitFor(), getProvided.apply(project)));
+                process.waitFor(), getProvided.apply(project))
+                .asOf(Instant.now()));
             return result;
         } catch (IOException | InterruptedException e) {
             throw new BuildException().from(this).cause(e);

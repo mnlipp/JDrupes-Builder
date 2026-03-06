@@ -18,6 +18,7 @@
 
 package org.jdrupes.builder.api;
 
+import java.time.Instant;
 import java.util.stream.Stream;
 
 /// Provides the results from executing a process. The type of resource
@@ -34,6 +35,13 @@ public interface ExecResult<T extends Resource> extends Resource, FaultAware {
     /// @return the exit value
     ///
     int exitValue();
+
+    /// Sets the instant to be returned by [Resource#asOf].
+    ///
+    /// @param asOf the as of
+    /// @return the exec result
+    ///
+    ExecResult<T> asOf(Instant asOf);
 
     /// Returns the stream of resources produced by the execution.
     /// Each invocation of this method must return a new stream.
