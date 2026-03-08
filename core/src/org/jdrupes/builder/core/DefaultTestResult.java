@@ -19,7 +19,6 @@
 package org.jdrupes.builder.core;
 
 import java.util.Objects;
-import org.jdrupes.builder.api.FaultAware;
 import org.jdrupes.builder.api.Project;
 import org.jdrupes.builder.api.ResourceProvider;
 import org.jdrupes.builder.api.TestResult;
@@ -59,9 +58,9 @@ public class DefaultTestResult extends ResourceObject implements TestResult {
     }
 
     @Override
-    public FaultAware setFaulty() {
+    public DefaultTestResult setFaulty() {
         isFaulty = true;
-        return null;
+        return this;
     }
 
     @Override
