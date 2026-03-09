@@ -70,6 +70,7 @@ jar: `JDBLD_JAR=build/app/jdrupes-builder-current.jar ./jdbld build`
     they don't keep up a distinction between an API and an implementation.
 - **Testing:** Test projects are located in `test-projects/`. JUnit tests for
   core components are in `core/test/`.
+- **Documentation:** Javadoc comments are written in Markdown (see JEP 467).
 
 ## Directory Structure
 
