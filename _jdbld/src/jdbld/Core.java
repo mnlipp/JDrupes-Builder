@@ -12,6 +12,7 @@ public class Core extends AbstractProject implements JavaProject {
         super(name("core"));
         dependency(Expose, project(Api.class));
         dependency(Expose, new MvnRepoLookup().resolve(
+            "io.github.azagniotov:ant-style-path-matcher:1.0.0",
             "com.google.flogger:flogger:0.9",
             "io.vavr:vavr:0.11.0"));
     }

@@ -100,10 +100,7 @@ class DefaultFileTreeTest {
         List<String> namesWithDirs
             = ftDirs.stream().map(fr -> fr.name().orElse(""))
                 .collect(Collectors.toList());
-        // should contain both sub directories as only the files in subdir
-        // were excluded
-        assertTrue(namesWithDirs.stream()
-            .anyMatch(n -> n.endsWith("subdir") || n.endsWith("subdir/")));
+        // should contain otherdir as subdir was excluded
         assertTrue(namesWithDirs.stream()
             .anyMatch(n -> n.endsWith("otherdir") || n.endsWith("otherdir/")));
     }
