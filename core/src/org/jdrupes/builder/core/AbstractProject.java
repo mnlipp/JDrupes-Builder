@@ -428,8 +428,10 @@ public abstract class AbstractProject extends AbstractProvider
     @Override
     public String toString() {
         var relDir = rootProject().directory().relativize(directory());
-        return "Project " + name() + (relDir.toString().isBlank() ? ""
-            : (" (in " + relDir + ")"));
+        return "Project " + name()
+            + (relDir.toString().isBlank() || relDir.toString().equals(name())
+                ? ""
+                : (" (in " + relDir + ")"));
     }
 
 }
