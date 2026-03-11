@@ -36,7 +36,8 @@ public interface LibraryJarFile extends JarFile, ClasspathElement {
     /// @param path the path
     /// @return the library jar file
     ///
-    static LibraryJarFile from(Path path) {
+    @SuppressWarnings("PMD.ShortMethodName")
+    static LibraryJarFile of(Path path) {
         return ResourceFactory.create(new ResourceType<>() {}, path);
     }
 }

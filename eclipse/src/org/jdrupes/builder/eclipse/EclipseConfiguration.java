@@ -46,7 +46,8 @@ public interface EclipseConfiguration extends Resource {
     /// @param eclipseAlias the eclipse alias
     /// @return the eclipse configuration
     ///
-    static EclipseConfiguration from(Project project, String eclipseAlias) {
+    @SuppressWarnings("PMD.ShortMethodName")
+    static EclipseConfiguration of(Project project, String eclipseAlias) {
         return ResourceFactory.create(new ResourceType<>() {},
             project, project.name(), eclipseAlias);
     }

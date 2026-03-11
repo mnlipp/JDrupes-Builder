@@ -206,7 +206,7 @@ public class JUnitTestRunner extends AbstractGenerator {
 
             // Evaluate results
             var summary = summaryListener.getSummary();
-            var result = TestResult.from(project(), this,
+            var result = TestResult.of(project(), this,
                 buildName(testListener), summary.getTestsStartedCount(),
                 summary.getTestsFailedCount());
             if (summary.getTestsFailedCount() > 0 && !ignoreFailed) {

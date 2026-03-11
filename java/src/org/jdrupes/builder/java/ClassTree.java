@@ -34,7 +34,8 @@ public interface ClassTree extends FileTree<ClassFile>, ClasspathElement {
     /// @param directory the directory
     /// @return the class tree
     ///
-    static ClassTree from(Project project, Path directory) {
+    @SuppressWarnings("PMD.ShortMethodName")
+    static ClassTree of(Project project, Path directory) {
         return ResourceFactory.create(ClassTreeType, project, directory);
     }
 

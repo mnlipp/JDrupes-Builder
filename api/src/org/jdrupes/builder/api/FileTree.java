@@ -104,8 +104,8 @@ public interface FileTree<T extends FileResource> extends Resources<T> {
     /// @param pattern the pattern
     /// @return the file tree
     ///
-    @SuppressWarnings("PMD.UseDiamondOperator")
-    static FileTree<FileResource> from(
+    @SuppressWarnings({ "PMD.UseDiamondOperator", "PMD.ShortMethodName" })
+    static FileTree<FileResource> of(
             Project project, Path directory, String pattern) {
         return ResourceFactory.create(
             new ResourceType<FileTree<FileResource>>() {}, project,
@@ -125,8 +125,8 @@ public interface FileTree<T extends FileResource> extends Resources<T> {
     /// @param type the type
     /// @return the file tree
     ///
-    @SuppressWarnings("unchecked")
-    static <T extends FileResource> FileTree<T> from(
+    @SuppressWarnings({ "unchecked", "PMD.ShortMethodName" })
+    static <T extends FileResource> FileTree<T> of(
             Project project, Path directory, String pattern, Class<T> type) {
         return (FileTree<T>) ResourceFactory.create(
             ResourceType.create(FileTree.class, type), project,

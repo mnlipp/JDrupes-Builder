@@ -33,7 +33,8 @@ public interface VscodeConfiguration extends FileResource {
     /// @param project the project
     /// @return the eclipse configuration
     ///
-    static VscodeConfiguration from(Project project) {
+    @SuppressWarnings("PMD.ShortMethodName")
+    static VscodeConfiguration of(Project project) {
         return ResourceFactory.create(new ResourceType<>() {},
             project, project.directory());
     }

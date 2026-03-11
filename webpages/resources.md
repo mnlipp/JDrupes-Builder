@@ -21,7 +21,7 @@ if you want to define a new type of file resource, you can extend the
 ```java
 public interface AudioFile extends FileResource {
 
-    static AudioFile from(Path path) {
+    static AudioFile of(Path path) {
         return ResourceFactory.create(new ResourceType<>() {}, path);
     }
 }
@@ -46,15 +46,15 @@ to write a concrete class that implements your new interface; the builder
 handles it dynamically as long as the interface does not define additional
 methods (`static` and `default` methods can be added).
 
-### Convention for the "from" method
+### Convention for the "of" method
 
 Following the style of existing resource interfaces in the JDrupes Builder
-API, it is recommended to provide a static `from` method in your interface.
+API, it is recommended to provide a static `of` method in your interface.
 This method serves as a convenient factory for creating instances of the
 resource and encapsulates the call to `ResourceFactory.create`.
 
 ```java
-    static AudioFile from(Path path) {
+    static AudioFile of(Path path) {
         return ResourceFactory.create(new ResourceType<>() {}, path);
     }
 ```
@@ -63,7 +63,7 @@ This makes the usage of your new resource type consistent with the rest of
 the API:
 
 ```java
-AudioFile audio = AudioFile.from(project.buildDirectory()
+AudioFile audio = AudioFile.of(project.buildDirectory()
   .resolve("background.mp3"));
 ```
 

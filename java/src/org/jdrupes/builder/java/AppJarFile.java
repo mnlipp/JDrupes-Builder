@@ -32,7 +32,8 @@ public interface AppJarFile extends LibraryJarFile {
     /// @param path the path
     /// @return the library jar file
     ///
-    static AppJarFile from(Path path) {
+    @SuppressWarnings("PMD.ShortMethodName")
+    static AppJarFile of(Path path) {
         return ResourceFactory.create(new ResourceType<>() {}, path);
     }
 }

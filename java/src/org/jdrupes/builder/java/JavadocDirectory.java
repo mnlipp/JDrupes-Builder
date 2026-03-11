@@ -36,7 +36,8 @@ public interface JavadocDirectory extends FileResource {
     /// absolute path)
     /// @return the file resource
     ///
-    static JavadocDirectory from(Project project, Path path) {
+    @SuppressWarnings("PMD.ShortMethodName")
+    static JavadocDirectory of(Project project, Path path) {
         return ResourceFactory.create(new ResourceType<>() {},
             project.directory().resolve(path));
     }

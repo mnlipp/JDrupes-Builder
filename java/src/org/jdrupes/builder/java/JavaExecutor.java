@@ -152,7 +152,7 @@ public class JavaExecutor extends AbstractProvider
             copyData(process.getInputStream(), context().out());
             copyData(process.getErrorStream(), context().error());
             var execResult
-                = ExecResult.from(this, mainClass, process.waitFor());
+                = ExecResult.of(this, mainClass, process.waitFor());
             if (execResult.exitValue() != 0) {
                 execResult.setFaulty();
             }

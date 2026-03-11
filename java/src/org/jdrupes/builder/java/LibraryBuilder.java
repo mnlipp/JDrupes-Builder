@@ -186,8 +186,8 @@ public class LibraryBuilder extends JarBuilder
             }
         }
         var jarResource = request.isFor(AppJarFileType)
-            ? AppJarFile.from(destDir.resolve(jarName()))
-            : LibraryJarFile.from(destDir.resolve(jarName()));
+            ? AppJarFile.of(destDir.resolve(jarName()))
+            : LibraryJarFile.of(destDir.resolve(jarName()));
 
         buildJar(jarResource);
         return Stream.of((T) jarResource);

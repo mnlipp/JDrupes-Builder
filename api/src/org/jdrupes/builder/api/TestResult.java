@@ -59,7 +59,8 @@ public interface TestResult extends Resource, FaultAware {
     /// @param failed the failed
     /// @return the test result
     ///
-    static TestResult from(Project project, ResourceProvider provider,
+    @SuppressWarnings("PMD.ShortMethodName")
+    static TestResult of(Project project, ResourceProvider provider,
             String name, long executed, long failed) {
         return ResourceFactory.create(
             TestResultType, project, provider, name, executed, failed);

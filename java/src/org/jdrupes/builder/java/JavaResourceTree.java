@@ -38,7 +38,8 @@ public interface JavaResourceTree
     /// @param pattern the pattern
     /// @return the java resource tree
     ///
-    static JavaResourceTree from(Project project, Path directory,
+    @SuppressWarnings("PMD.ShortMethodName")
+    static JavaResourceTree of(Project project, Path directory,
             String pattern) {
         return ResourceFactory.create(JavaResourceTreeType, project, directory,
             pattern);

@@ -234,7 +234,7 @@ public class JarBuilder extends AbstractGenerator {
     ///
     public JarBuilder add(Path prefix, FileTree<?> tree) {
         entryStreams.add(tree.entries().map(e -> Map.entry(prefix.resolve(e),
-            FileResource.from(tree.root().resolve(e)))));
+            FileResource.of(tree.root().resolve(e)))));
         return this;
     }
 
@@ -247,7 +247,7 @@ public class JarBuilder extends AbstractGenerator {
     public JarBuilder add(Path prefix, Stream<? extends FileTree<?>> trees) {
         entryStreams.add(
             trees.flatMap(t -> t.entries().map(e -> Map.entry(prefix.resolve(e),
-                FileResource.from(t.root().resolve(e))))));
+                FileResource.of(t.root().resolve(e))))));
         return this;
     }
 
@@ -420,7 +420,7 @@ public class JarBuilder extends AbstractGenerator {
                     .message("Cannot create directory: %s", destDir);
             }
         }
-        var jarResource = JarFile.from(jarType, destDir.resolve(jarName()));
+        var jarResource = JarFile.of(jarType, destDir.resolve(jarName()));
 
         // Maybe only delete
         if (requested.accepts(CleanlinessType)) {

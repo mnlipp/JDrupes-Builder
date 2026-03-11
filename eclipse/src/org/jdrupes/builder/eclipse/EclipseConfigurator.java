@@ -184,7 +184,7 @@ public class EclipseConfigurator extends AbstractGenerator {
         // Create result
         @SuppressWarnings({ "unchecked" })
         var result = (Stream<T>) Stream.of(
-            EclipseConfiguration.from(project(), eclipseAlias()));
+            EclipseConfiguration.of(project(), eclipseAlias()));
         return result;
     }
 

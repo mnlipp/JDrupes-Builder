@@ -42,8 +42,8 @@ public interface FileResource extends IOResource {
     /// @param path the absolute path
     /// @return the file resource
     ///
-    @SuppressWarnings("PMD.UseDiamondOperator")
-    static FileResource from(Path path) {
+    @SuppressWarnings({ "PMD.UseDiamondOperator", "PMD.ShortMethodName" })
+    static FileResource of(Path path) {
         return ResourceFactory.create(new ResourceType<FileResource>() {},
             path);
     }

@@ -31,7 +31,8 @@ public interface MvnRepoDependency extends MvnRepoResource {
     /// @param coordinate the coordinate
     /// @return the mvn repo dependency
     ///
-    static MvnRepoDependency from(String coordinate) {
+    @SuppressWarnings("PMD.ShortMethodName")
+    static MvnRepoDependency of(String coordinate) {
         return ResourceFactory.create(MvnRepoDependencyType, coordinate);
     }
 }

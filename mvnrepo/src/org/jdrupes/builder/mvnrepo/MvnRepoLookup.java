@@ -225,10 +225,10 @@ public class MvnRepoLookup extends AbstractProvider {
     private <T extends Resource> Stream<T> provideMvnDeps() {
         @SuppressWarnings("unchecked")
         var boms = (Stream<T>) this.boms.stream()
-            .map(MvnRepoBom::from);
+            .map(MvnRepoBom::of);
         @SuppressWarnings("unchecked")
         var deps = (Stream<T>) coordinates.stream()
-            .map(MvnRepoDependency::from);
+            .map(MvnRepoDependency::of);
         return Stream.concat(boms, deps);
     }
 
@@ -297,13 +297,13 @@ public class MvnRepoLookup extends AbstractProvider {
         var depMgmt = new DependencyManagement();
         model.setDependencyManagement(depMgmt);
         boms.stream().forEach(c -> {
-            var mvnResource = MvnRepoDependency.from(c);
+            var mvnResource = MvnRepoDependency.of(c);
             var dep = DependencyConverter.convert(mvnResource, "import");
             dep.setType("pom");
             depMgmt.addDependency(dep);
         });
         coordinates.forEach(c -> {
-            var mvnResource = MvnRepoDependency.from(c);
+            var mvnResource = MvnRepoDependency.of(c);
             model.addDependency(
                 DependencyConverter.convert(mvnResource, "compile"));
         });

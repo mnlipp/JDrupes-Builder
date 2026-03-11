@@ -59,7 +59,8 @@ public interface ExecResult<T extends Resource> extends Resource, FaultAware {
     /// @param exitValue the exit value
     /// @return the exec result
     ///
-    static ExecResult<?> from(ResourceProvider provider, String name,
+    @SuppressWarnings("PMD.ShortMethodName")
+    static ExecResult<?> of(ResourceProvider provider, String name,
             int exitValue) {
         return ResourceFactory.create(
             new ResourceType<>() {}, provider, name, exitValue);
@@ -74,7 +75,8 @@ public interface ExecResult<T extends Resource> extends Resource, FaultAware {
     /// @param resources the resources
     /// @return the exec result
     ///
-    static <T extends Resource> ExecResult<T> from(ResourceProvider provider,
+    @SuppressWarnings("PMD.ShortMethodName")
+    static <T extends Resource> ExecResult<T> of(ResourceProvider provider,
             String name, int exitValue, Stream<T> resources) {
         return ResourceFactory.create(
             new ResourceType<>() {}, provider, name, exitValue, resources);

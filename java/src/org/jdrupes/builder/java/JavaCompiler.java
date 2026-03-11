@@ -130,7 +130,7 @@ public class JavaCompiler extends JavaTool {
     /// @return the resources collector
     ///
     public final JavaCompiler addSources(Path directory, String pattern) {
-        addSources(FileTree.from(
+        addSources(FileTree.of(
             project(), directory, pattern, JavaSourceFile.class));
         return this;
     }
@@ -181,7 +181,7 @@ public class JavaCompiler extends JavaTool {
         // Get this project's previously generated classes for checking
         // or deleting.
         var destDir = project().buildDirectory().resolve(destination);
-        final var classSet = ClassTree.from(project(), destDir);
+        final var classSet = ClassTree.of(project(), destDir);
         if (requested.accepts(CleanlinessType)) {
             classSet.cleanup();
             return Stream.empty();

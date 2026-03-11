@@ -115,7 +115,7 @@ public class VscodeConfigurator extends AbstractGenerator {
 
         // Return a result
         @SuppressWarnings({ "unchecked" })
-        var result = (Stream<T>) Stream.of(VscodeConfiguration.from(project()));
+        var result = (Stream<T>) Stream.of(VscodeConfiguration.of(project()));
         return result;
     }
 

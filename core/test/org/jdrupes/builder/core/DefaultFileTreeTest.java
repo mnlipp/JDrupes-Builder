@@ -47,7 +47,7 @@ class DefaultFileTreeTest {
         Files.writeString(f2, "two");
 
         // use pattern to match all files under tmpDir
-        FileTree<FileResource> ft = FileTree.from(null, tmpDir, "**/*.txt");
+        FileTree<FileResource> ft = FileTree.of(null, tmpDir, "**/*.txt");
 
         // stream should discover files
         List<String> names = ft.stream()
@@ -79,7 +79,7 @@ class DefaultFileTreeTest {
         Files.writeString(f2, "b");
         Files.writeString(f3, "c");
 
-        FileTree<FileResource> ft = FileTree.from(null, tmpDir, "**/*.txt");
+        FileTree<FileResource> ft = FileTree.of(null, tmpDir, "**/*.txt");
         // exclude the subdir's files
         ft.exclude("subdir/**");
         List<String> names = ft.stream().map(fr -> fr.name().orElse(""))
@@ -94,7 +94,7 @@ class DefaultFileTreeTest {
         // now verify directory reporting when directories are explicitly
         // matched create a file tree that matches directories as well
         // (pattern "**/*")
-        FileTree<FileResource> ftDirs = FileTree.from(null, tmpDir, "**/*");
+        FileTree<FileResource> ftDirs = FileTree.of(null, tmpDir, "**/*");
         ftDirs.exclude("subdir/**");
         ftDirs.withDirectories();
         List<String> namesWithDirs
@@ -114,7 +114,7 @@ class DefaultFileTreeTest {
         Files.writeString(f1, "a");
         Files.writeString(f2, "b");
 
-        FileTree<FileResource> ft = FileTree.from(null, tmpDir, "**/*.txt");
+        FileTree<FileResource> ft = FileTree.of(null, tmpDir, "**/*.txt");
 
         // trigger fill
         assertTrue(ft.stream().findAny().isPresent());
@@ -134,7 +134,7 @@ class DefaultFileTreeTest {
         Path f1 = tmpDir.resolve("x.txt");
         Files.writeString(f1, "x");
 
-        FileTree<FileResource> ft = FileTree.from(null, tmpDir, "**/*.txt");
+        FileTree<FileResource> ft = FileTree.of(null, tmpDir, "**/*.txt");
 
         @SuppressWarnings("checkstyle:VariableDeclarationUsageDistance")
         Instant first = ft.asOf().get();

@@ -321,8 +321,8 @@ public class UberJarBuilder extends LibraryBuilder {
             }
         }
         var jarResource = request.isFor(AppJarFileType)
-            ? AppJarFile.from(destDir.resolve(jarName()))
-            : LibraryJarFile.from(destDir.resolve(jarName()));
+            ? AppJarFile.of(destDir.resolve(jarName()))
+            : LibraryJarFile.of(destDir.resolve(jarName()));
         try {
             buildJar(jarResource);
         } finally {

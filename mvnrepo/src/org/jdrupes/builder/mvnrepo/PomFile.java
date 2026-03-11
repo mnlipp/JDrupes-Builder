@@ -32,7 +32,8 @@ public interface PomFile extends FileResource {
     /// @param path the path
     /// @return the POM file
     ///
-    static PomFile from(Path path) {
+    @SuppressWarnings("PMD.ShortMethodName")
+    static PomFile of(Path path) {
         return ResourceFactory.create(new ResourceType<>() {}, path);
     }
 

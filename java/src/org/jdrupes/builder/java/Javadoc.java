@@ -140,7 +140,7 @@ public class Javadoc extends JavaTool {
     /// @return the resources collector
     /// 
     public final Javadoc addSources(Path directory, String pattern) {
-        addSources(FileTree.from(
+        addSources(FileTree.of(
             project(), directory, pattern, JavaSourceFile.class));
         return this;
     }
@@ -198,7 +198,7 @@ public class Javadoc extends JavaTool {
 
         // Get destination and check if we only have to cleanup.
         var destDir = project().buildDirectory().resolve(destination);
-        var generated = ClassTree.from(project(), destDir);
+        var generated = ClassTree.of(project(), destDir);
         if (requested.accepts(CleanlinessType)) {
             generated.cleanup();
             destDir.toFile().delete();
@@ -235,7 +235,7 @@ public class Javadoc extends JavaTool {
         }
         @SuppressWarnings("unchecked")
         var result = (Stream<T>) Stream.of(
-            JavadocDirectory.from(project(), destDir));
+            JavadocDirectory.of(project(), destDir));
         return result;
     }
 

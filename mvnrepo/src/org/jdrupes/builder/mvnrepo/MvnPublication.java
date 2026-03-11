@@ -30,7 +30,8 @@ public interface MvnPublication extends MvnRepoResource {
     /// @param coordinates the coordinates
     /// @return the maven publication
     ///
-    static MvnPublication from(String coordinates) {
+    @SuppressWarnings("PMD.ShortMethodName")
+    static MvnPublication of(String coordinates) {
         return ResourceFactory.create(MvnPublicationType, coordinates);
     }
 }

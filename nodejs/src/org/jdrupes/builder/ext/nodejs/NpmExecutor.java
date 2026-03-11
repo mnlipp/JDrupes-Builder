@@ -171,7 +171,7 @@ public class NpmExecutor extends AbstractProvider implements Renamable {
     ///
     public NpmExecutor required(Path root, String pattern) {
         requiredResources
-            .add(Stream.of(FileTree.from(project, root, pattern)));
+            .add(Stream.of(FileTree.of(project, root, pattern)));
         return this;
     }
 
@@ -183,7 +183,7 @@ public class NpmExecutor extends AbstractProvider implements Renamable {
     ///
     public NpmExecutor required(Path root) {
         requiredResources.add(
-            Stream.of(FileResource.from(project.directory().resolve(root))));
+            Stream.of(FileResource.of(project.directory().resolve(root))));
         return this;
     }
 
@@ -276,7 +276,7 @@ public class NpmExecutor extends AbstractProvider implements Renamable {
         if (arguments.isEmpty()) {
             @SuppressWarnings("unchecked")
             var result = (T) ExecResult
-                .from(this, "npm init", 0, Stream.empty())
+                .of(this, "npm init", 0, Stream.empty())
                 .asOf(Instant.ofEpochMilli(dotPackageLock.lastModified()));
             return Stream.of(result);
         }
@@ -287,7 +287,7 @@ public class NpmExecutor extends AbstractProvider implements Renamable {
         if (required.asOf().isPresent() && provided.asOf().isPresent()
             && !required.asOf().get().isAfter(provided.asOf().get())) {
             @SuppressWarnings("unchecked")
-            var result = (T) ExecResult.from(this,
+            var result = (T) ExecResult.of(this,
                 "existing " + provided.stream().map(Resource::toString)
                     .collect(Collectors.joining(", ")),
                 0, provided.stream()).asOf(provided.asOf().get());
@@ -311,7 +311,7 @@ public class NpmExecutor extends AbstractProvider implements Renamable {
             copyData(process.getInputStream(), context().out());
             copyData(process.getErrorStream(), context().error());
             @SuppressWarnings("unchecked")
-            var result = (Stream<T>) Stream.of(ExecResult.from(this,
+            var result = (Stream<T>) Stream.of(ExecResult.of(this,
                 "[" + project.name() + "]$ npm "
                     + arguments.stream().collect(Collectors.joining(" ")),
                 process.waitFor(), getProvided.apply(project))

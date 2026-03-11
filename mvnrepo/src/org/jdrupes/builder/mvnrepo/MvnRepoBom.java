@@ -30,7 +30,8 @@ public interface MvnRepoBom extends MvnRepoPom {
     /// @param coordinate the coordinate
     /// @return the mvn repo dependency
     ///
-    static MvnRepoBom from(String coordinate) {
+    @SuppressWarnings("PMD.ShortMethodName")
+    static MvnRepoBom of(String coordinate) {
         return ResourceFactory.create(MvnRepoBomType, coordinate);
     }
 }

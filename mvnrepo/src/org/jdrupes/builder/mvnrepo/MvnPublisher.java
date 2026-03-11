@@ -383,7 +383,7 @@ public class MvnPublisher extends AbstractGenerator {
                 });
             }
         }
-        return Stream.of(MvnPublication.from(String.format("%s:%s:%s",
+        return Stream.of(MvnPublication.of(String.format("%s:%s:%s",
             mainArtifact.getGroupId(), mainArtifact.getArtifactId(),
             mainArtifact.getVersion())));
     }

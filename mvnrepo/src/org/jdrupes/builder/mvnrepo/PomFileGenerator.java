@@ -203,7 +203,7 @@ public class PomFileGenerator extends AbstractGenerator {
         }
 
         @SuppressWarnings("unchecked")
-        var result = (Stream<T>) Stream.of(PomFile.from(pomPath));
+        var result = (Stream<T>) Stream.of(PomFile.of(pomPath));
         return result;
     }
 
@@ -280,7 +280,7 @@ public class PomFileGenerator extends AbstractGenerator {
         if (requested.accepts(MvnRepoDependenciesType)) {
             return Stream.empty();
         }
-        return Stream.of((T) MvnRepoDependency.from(String.format("%s:%s:%s",
+        return Stream.of((T) MvnRepoDependency.of(String.format("%s:%s:%s",
             project().<String> get(GroupId), Optional.ofNullable(project()
                 .<String> get(ArtifactId)).orElse(project().name()),
             project().get(Version))));

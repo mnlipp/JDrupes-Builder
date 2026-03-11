@@ -34,7 +34,8 @@ public interface JarFile extends FileResource {
     /// @param path the path
     /// @return the t
     ///
-    static <T extends JarFile> T from(ResourceType<T> jarType, Path path) {
+    @SuppressWarnings("PMD.ShortMethodName")
+    static <T extends JarFile> T of(ResourceType<T> jarType, Path path) {
         return ResourceFactory.create(jarType, path);
     }
 
