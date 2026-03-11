@@ -19,10 +19,9 @@
 package org.jdrupes.builder.uberjar;
 
 import com.google.common.flogger.FluentLogger;
+import io.github.azagniotov.matcher.AntPathMatcher;
 import java.io.IOException;
-import java.nio.file.FileSystems;
 import java.nio.file.Path;
-import java.nio.file.PathMatcher;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -131,9 +130,12 @@ import static org.jdrupes.builder.mvnrepo.MvnRepoTypes.*;
 public class UberJarBuilder extends LibraryBuilder {
 
     private static final FluentLogger logger = FluentLogger.forEnclosingClass();
+    @SuppressWarnings("PMD.FieldNamingConventions")
+    private static final AntPathMatcher pathMatcher
+        = new AntPathMatcher.Builder().build();
     private Map<Path, java.util.jar.JarFile> openJars = Map.of();
     private Predicate<Resource> resourceFilter = _ -> true;
-    private final List<PathMatcher> ignoredDuplicates = new ArrayList<>();
+    private final List<String> ignoredDuplicates = new ArrayList<>();
 
     /// Instantiates a new uber jar generator.
     ///
@@ -155,9 +157,7 @@ public class UberJarBuilder extends LibraryBuilder {
     /// @return the uber jar builder
     ///
     public UberJarBuilder ignoreDuplicates(String... patterns) {
-        Arrays.asList(patterns).forEach(
-            p -> ignoredDuplicates.add(FileSystems.getDefault()
-                .getPathMatcher("glob:" + p)));
+        ignoredDuplicates.addAll(Arrays.asList(patterns));
         return this;
     }
 
@@ -266,7 +266,8 @@ public class UberJarBuilder extends LibraryBuilder {
             if (entryName.startsWith("META-INF")) {
                 candidates.clear();
             }
-            if (ignoredDuplicates.stream().map(m -> m.matches(entryName))
+            if (ignoredDuplicates.stream()
+                .map(p -> pathMatcher.isMatch(p, entryName.toString()))
                 .filter(Boolean::booleanValue).findFirst().isPresent()) {
                 return;
             }

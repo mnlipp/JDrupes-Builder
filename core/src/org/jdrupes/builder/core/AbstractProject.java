@@ -18,9 +18,8 @@
 
 package org.jdrupes.builder.core;
 
-import java.nio.file.FileSystems;
+import io.github.azagniotov.matcher.AntPathMatcher;
 import java.nio.file.Path;
-import java.nio.file.PathMatcher;
 import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -72,6 +71,9 @@ import org.jdrupes.builder.api.RootProject;
 public abstract class AbstractProject extends AbstractProvider
         implements Project {
 
+    @SuppressWarnings("PMD.FieldNamingConventions")
+    private static final AntPathMatcher pathMatcher
+        = new AntPathMatcher.Builder().build();
     private static Path jdbldDirectory = Path.of("marker:jdbldDirectory");
     private final AbstractProject parent;
     private final String projectName;
@@ -389,18 +391,17 @@ public abstract class AbstractProject extends AbstractProvider
         }
     }
 
-    /// Provide the projects matching the pattern.
+    /// Provide the projects matching the given ant-style path pattern.
     ///
     /// @param pattern the pattern
     /// @return the stream
     /// @see RootProject#projects(String)
     ///
     public Stream<Project> projects(String pattern) {
-        final PathMatcher pathMatcher = FileSystems.getDefault()
-            .getPathMatcher("glob:" + pattern);
         return StreamSupport.stream(new ProjectTreeSpliterator(this), false)
-            .filter(p -> pathMatcher
-                .matches(rootProject().directory().relativize(p.directory())));
+            .filter(p -> pathMatcher.isMatch(pattern,
+                rootProject().directory().relativize(p.directory())
+                    .toString()));
     }
 
     @Override

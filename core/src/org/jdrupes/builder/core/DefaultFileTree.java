@@ -19,13 +19,12 @@
 package org.jdrupes.builder.core;
 
 import com.google.common.flogger.FluentLogger;
+import io.github.azagniotov.matcher.AntPathMatcher;
 import java.io.IOException;
 import java.nio.file.AccessDeniedException;
-import java.nio.file.FileSystems;
 import java.nio.file.FileVisitResult;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.PathMatcher;
 import java.nio.file.SimpleFileVisitor;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.time.Instant;
@@ -52,6 +51,9 @@ import org.jdrupes.builder.api.ResourceType;
 public class DefaultFileTree<T extends FileResource> extends DefaultResources<T>
         implements FileTree<T> {
     private static final FluentLogger logger = FluentLogger.forEnclosingClass();
+    @SuppressWarnings("PMD.FieldNamingConventions")
+    private static final AntPathMatcher pathMatcher
+        = new AntPathMatcher.Builder().build();
     private Instant latestChange;
     private final Project project;
     private final Path root;
@@ -132,12 +134,6 @@ public class DefaultFileTree<T extends FileResource> extends DefaultResources<T>
 
     @SuppressWarnings("PMD.CognitiveComplexity")
     private void find(Path root, String pattern) throws IOException {
-        final PathMatcher pathMatcher = FileSystems.getDefault()
-            .getPathMatcher("glob:" + pattern);
-        final var excludeMatchers = excludes.parallelStream()
-            .map(e -> FileSystems.getDefault()
-                .getPathMatcher("glob:" + e))
-            .toList();
         Files.walkFileTree(root, new SimpleFileVisitor<>() {
 
             @Override
@@ -147,15 +143,15 @@ public class DefaultFileTree<T extends FileResource> extends DefaultResources<T>
             }
 
             private FileVisitResult testAndAdd(Path path) {
-                if (excludeMatchers.parallelStream()
-                    .filter(em -> em.matches(root.relativize(path)))
+                if (excludes.parallelStream().filter(ex -> pathMatcher
+                    .isMatch(ex, root.relativize(path).toString()))
                     .findAny().isPresent()) {
                     if (path.toFile().isDirectory()) {
                         return FileVisitResult.SKIP_SUBTREE;
                     }
                     return FileVisitResult.CONTINUE;
                 }
-                if (pathMatcher.matches(path)) {
+                if (pathMatcher.isMatch(pattern, path.toString())) {
                     @SuppressWarnings("unchecked")
                     T resource = (T) ResourceFactory
                         .create(type().containedType(), path);
@@ -239,8 +235,6 @@ public class DefaultFileTree<T extends FileResource> extends DefaultResources<T>
 
     @Override
     public void cleanup() {
-        final PathMatcher pathMatcher = FileSystems.getDefault()
-            .getPathMatcher("glob:" + pattern);
         try {
             var root = root();
             Files.walkFileTree(root, new SimpleFileVisitor<>() {
@@ -248,7 +242,7 @@ public class DefaultFileTree<T extends FileResource> extends DefaultResources<T>
                 @Override
                 public FileVisitResult visitFile(Path path,
                         BasicFileAttributes attrs) throws IOException {
-                    if (pathMatcher.matches(path)) {
+                    if (pathMatcher.isMatch(pattern, path.toString())) {
                         Files.delete(path);
                     }
                     return FileVisitResult.CONTINUE;

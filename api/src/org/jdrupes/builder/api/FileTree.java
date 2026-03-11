@@ -31,7 +31,7 @@ import java.util.stream.Stream;
 ///
 /// * [Project] the project
 /// * [Path] the root directory
-/// * [String] the pattern
+/// * [String] the ant-style path pattern
 /// * `boolean` whether to include directories (optional, defaults to `false`)
 ///
 /// Implementations of this interface must ensure that the content
@@ -52,7 +52,7 @@ public interface FileTree<T extends FileResource> extends Resources<T> {
     ///
     FileTree<T> withDirectories();
 
-    /// Add a file name pattern to exclude from the tree.
+    /// Add a ant-style path pattern to exclude from the tree.
     ///
     /// @param pattern the pattern
     /// @return the file tree
