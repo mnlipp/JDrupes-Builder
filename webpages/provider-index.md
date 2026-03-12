@@ -14,6 +14,7 @@ layout: jdbld
   * [BndBaseliner](javadoc/org/jdrupes/builder/ext/bnd/BndBaseliner.html) (E)
   * [ClasspathScanner](javadoc/org/jdrupes/builder/java/ClasspathScanner.html)
   * [EclipseConfigurator](javadoc/org/jdrupes/builder/eclipse/EclipseConfigurator.html)
+  * [FileTreeBuilder](javadoc/org/jdrupes/builder/core/FileTreeBuilder.html)
   * [JarBuilder](javadoc/org/jdrupes/builder/java/JarBuilder.html)
   * [JavaCompiler](javadoc/org/jdrupes/builder/java/JavaCompiler.html)
   * [Javadoc](javadoc/org/jdrupes/builder/java/Javadoc.html)
