@@ -120,4 +120,162 @@ class DefaultResourcesTest {
         assertTrue(resources.isEmpty(), "clear should remove all elements");
     }
 
+    @Test
+    void testAddAllStream() {
+        CoreResourceFactory factory = new CoreResourceFactory();
+
+        Resources<IOResource> resources = factory.newResource(
+            IOResourcesType, null).orElseThrow();
+
+        // Create dummy resources
+        IOResource r1 = new DummyIOResource("r1");
+        IOResource r2 = new DummyIOResource("r2");
+
+        // Test addAll with stream
+        resources.addAll(List.of(r1, r2).stream());
+
+        assertFalse(resources.isEmpty());
+        assertEquals(2, resources.stream().count());
+
+        // Test that order is preserved
+        List<String> names = resources.stream()
+            .map(res -> res.name().orElse(""))
+            .collect(Collectors.toList());
+        assertEquals(List.of("r1", "r2"), names);
+    }
+
+    @Test
+    void testAddAllResources() {
+        CoreResourceFactory factory = new CoreResourceFactory();
+
+        Resources<IOResource> resources1 = factory.newResource(
+            IOResourcesType, null).orElseThrow();
+        Resources<IOResource> resources2 = factory.newResource(
+            IOResourcesType, null).orElseThrow();
+
+        // Create dummy resources
+        IOResource r1 = new DummyIOResource("r1");
+        IOResource r2 = new DummyIOResource("r2");
+        IOResource r3 = new DummyIOResource("r3");
+
+        // Add to first set
+        resources1.add(r1).add(r2);
+
+        // Add all from second set to first
+        resources2.add(r3);
+        resources1.addAll(resources2);
+
+        assertFalse(resources1.isEmpty());
+        assertEquals(3, resources1.stream().count());
+
+        // Test that order is preserved
+        List<String> names = resources1.stream()
+            .map(res -> res.name().orElse(""))
+            .collect(Collectors.toList());
+        assertEquals(List.of("r1", "r2", "r3"), names);
+    }
+
+    @Test
+    void testAddDuplicate() {
+        CoreResourceFactory factory = new CoreResourceFactory();
+
+        Resources<IOResource> resources = factory.newResource(
+            IOResourcesType, null).orElseThrow();
+
+        // Create dummy resource
+        IOResource r1 = new DummyIOResource("r1");
+
+        // Add same resource twice - should only appear once
+        // (sets don't allow duplicates)
+        resources.add(r1);
+        resources.add(r1);
+
+        assertFalse(resources.isEmpty());
+        assertEquals(1, resources.stream().count());
+    }
+
+    @Test
+    void testIsEmptyWithNoElements() {
+        CoreResourceFactory factory = new CoreResourceFactory();
+
+        Resources<IOResource> resources = factory.newResource(
+            IOResourcesType, null).orElseThrow();
+
+        assertTrue(resources.isEmpty());
+    }
+
+    @Test
+    void testStreamOrdering() {
+        CoreResourceFactory factory = new CoreResourceFactory();
+
+        Resources<IOResource> resources = factory.newResource(
+            IOResourcesType, null).orElseThrow();
+
+        // Create dummy resources in specific order
+        IOResource r1 = new DummyIOResource("r1");
+        IOResource r2 = new DummyIOResource("r2");
+        IOResource r3 = new DummyIOResource("r3");
+
+        // Add them in order
+        resources.add(r1);
+        resources.add(r2);
+        resources.add(r3);
+
+        // Stream should preserve insertion order
+        List<String> names = resources.stream()
+            .map(res -> res.name().orElse(""))
+            .collect(Collectors.toList());
+        assertEquals(List.of("r1", "r2", "r3"), names);
+    }
+
+    @Test
+    void testAsOfMethod() {
+        CoreResourceFactory factory = new CoreResourceFactory();
+
+        Resources<IOResource> resources = factory.newResource(
+            IOResourcesType, null).orElseThrow();
+
+        // Empty resources should have no asOf time
+        assertFalse(resources.asOf().isPresent());
+
+        // Add resources with specific times
+        IOResource r1 = new DummyIOResource("r1");
+        IOResource r2 = new DummyIOResource("r2");
+
+        resources.add(r1);
+        resources.add(r2);
+
+        // Should return some asOf time (from the newest resource)
+        assertTrue(resources.asOf().isPresent());
+    }
+
+    @Test
+    void testToString() {
+        CoreResourceFactory factory = new CoreResourceFactory();
+
+        Resources<IOResource> resources = factory.newResource(
+            IOResourcesType, null).orElseThrow();
+
+        // Empty resources should have readable toString
+        String emptyString = resources.toString();
+        assertTrue(emptyString.contains("IOResource"));
+        assertTrue(emptyString.contains("with 0 elements"));
+
+        // Add resources and check toString
+        IOResource r1 = new DummyIOResource("r1");
+        resources.add(r1);
+
+        String nonEmptyString = resources.toString();
+        assertTrue(nonEmptyString.contains("with 1 elements"));
+    }
+
+    @Test
+    void testResourceType() {
+        CoreResourceFactory factory = new CoreResourceFactory();
+
+        Resources<IOResource> resources = factory.newResource(
+            IOResourcesType, null).orElseThrow();
+
+        assertEquals(IOResourcesType, resources.type());
+    }
 }
