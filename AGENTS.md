@@ -51,15 +51,22 @@ The project uses its own `jdbld` script for build operations.
 - **Generate Documentation:** `./jdbld javadoc`.
 - **Clean Build:** `./jdbld clean`.
 
-Note: When building the builder itself, you might need to specify the bootstrap
-jar: `JDBLD_JAR=build/app/jdrupes-builder-current.jar ./jdbld build`
+Note: To build the builder using the version under development, you must
+specify the jar created by `./jdbld build` as follows:
+`JDBLD_JAR=build/app/jdrupes-builder-current.jar ./jdbld build`.
+To avoid confusion with the test projects in `test-projects/`, these
+must be excluded from the build with the option `-B-x "test-projects/*project*"`.
+So invocations of the build script look like this:
+`JDBLD_JAR=build/app/jdrupes-builder-current.jar ./jdbld -B-x "test-projects/*project*" -B-x "test-projects/*project*" ...`.
 
 ## Development Conventions
 
 - **Code Quality:** Rigorous use of Checkstyle (`checkstyle.xml`) and PMD
   (`ruleset.xml`).
-- **Style:** Adhere to the existing Java style. Use virtual threads where
-  appropriate (as seen in `NpmExecutor`).
+- **Style:**
+  - Adhere to the existing Java style. Use virtual threads where
+    appropriate (as seen in `NpmExecutor`).
+  - Line length should not exceed 80 characters.
 - **Architecture:** 
   - The classes in api/ define a real API. The classes in core/ and startup/
     implement it. This distinction must be preserved. It must be possible
