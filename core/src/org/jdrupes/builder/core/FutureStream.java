@@ -76,7 +76,7 @@ public class FutureStream<T extends Resource> {
         boolean isAllowed = DefaultBuildContext.isProviderInvocationAllowed();
         values = context.executor().submit(() -> {
             var origThreadName = Thread.currentThread().getName();
-            try (var _ = context.executingFutureStreams().count();
+            try (var _ = context.executingFutureStreams().acquire();
                     var statusLine = context.console().statusLine()) {
                 Thread.currentThread().setName(
                     provider + " ← " + request.type());
