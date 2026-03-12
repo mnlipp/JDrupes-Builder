@@ -143,15 +143,16 @@ public class DefaultFileTree<T extends FileResource> extends DefaultResources<T>
             }
 
             private FileVisitResult testAndAdd(Path path) {
+                Path pathInTree = root.relativize(path);
                 if (excludes.parallelStream().filter(ex -> pathMatcher
-                    .isMatch(ex, root.relativize(path).toString()))
+                    .isMatch(ex, pathInTree.toString()))
                     .findAny().isPresent()) {
                     if (path.toFile().isDirectory()) {
                         return FileVisitResult.SKIP_SUBTREE;
                     }
                     return FileVisitResult.CONTINUE;
                 }
-                if (pathMatcher.isMatch(pattern, path.toString())) {
+                if (pathMatcher.isMatch(pattern, pathInTree.toString())) {
                     @SuppressWarnings("unchecked")
                     T resource = (T) ResourceFactory
                         .create(type().containedType(), path);
