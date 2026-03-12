@@ -11,7 +11,9 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import org.jdrupes.builder.api.Cleanliness;
 import org.jdrupes.builder.api.Launcher;
+import org.jdrupes.builder.api.Project;
 import org.jdrupes.builder.java.JarFile;
+import static org.jdrupes.builder.java.JavaTypes.*;
 import org.jdrupes.builder.startup.BuildProjectLauncher;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
@@ -66,5 +68,20 @@ class BuildTest {
                 "builder/test/app/App.class", "builder/test/base2/Base2.class")
                 .stream().forEach(e -> assertTrue(entryNames.contains(e)));
         }
+    }
+
+    @Test
+    public void testCopied() throws IOException {
+        var prjs = launcher.rootProject().projects("base1")
+            .collect(Collectors.toSet());
+        assertEquals(1, prjs.size());
+        Project base1 = prjs.iterator().next();
+        var resTrees = base1.resources(base1.of(JavaResourceTreeType)
+            .usingAll()).collect(Collectors.toSet());
+        var copiedTree = resTrees.stream()
+            .filter(t -> t.root().toString().contains("copied")).findFirst();
+        assertTrue(copiedTree.isPresent());
+        assertTrue(copiedTree.get().entries().filter(p -> p.toString()
+            .contains("test-copy.properties")).findFirst().isPresent());
     }
 }
