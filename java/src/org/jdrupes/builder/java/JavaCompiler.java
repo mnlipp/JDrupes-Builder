@@ -131,7 +131,7 @@ public class JavaCompiler extends JavaTool {
     ///
     public final JavaCompiler addSources(Path directory, String pattern) {
         addSources(FileTree.of(
-            project(), directory, pattern, JavaSourceFile.class));
+            project(), directory, JavaSourceFile.class, pattern));
         return this;
     }
 

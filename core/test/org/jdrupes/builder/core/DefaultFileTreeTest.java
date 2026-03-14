@@ -65,6 +65,28 @@ class DefaultFileTreeTest {
     }
 
     @Test
+    void testMultiIncludes() throws IOException {
+        Path sub = tmpDir.resolve("subdir");
+        Files.createDirectories(sub);
+        Path f1 = sub.resolve("a.txt");
+        Path other = tmpDir.resolve("otherdir");
+        Files.createDirectories(other);
+        Path f2 = other.resolve("b.txt");
+        Path f3 = other.resolve("c.txt");
+        Files.writeString(f1, "a");
+        Files.writeString(f2, "b");
+        Files.writeString(f3, "c");
+
+        FileTree<FileResource> ft = FileTree.of(null, tmpDir,
+            "subdir/a.txt", "otherdir/b.txt");
+        List<String> names = ft.stream().map(fr -> fr.name().orElse(""))
+            .collect(Collectors.toList());
+        assertEquals(2, names.stream().count());
+        assertTrue(names.stream().anyMatch(n -> n.endsWith("a.txt")));
+        assertTrue(names.stream().anyMatch(n -> n.endsWith("b.txt")));
+    }
+
+    @Test
     void testExcludesAndDirectories() throws IOException {
         Path sub = tmpDir.resolve("subdir");
         Files.createDirectories(sub);

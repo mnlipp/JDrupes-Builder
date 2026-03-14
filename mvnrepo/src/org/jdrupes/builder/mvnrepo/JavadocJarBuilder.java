@@ -19,7 +19,6 @@
 package org.jdrupes.builder.mvnrepo;
 
 import java.util.Optional;
-import org.jdrupes.builder.api.FileResource;
 import org.jdrupes.builder.api.FileTree;
 import static org.jdrupes.builder.api.Intent.Supply;
 import org.jdrupes.builder.api.Project;
@@ -52,8 +51,7 @@ public class JavadocJarBuilder extends JarBuilder {
         super(project, JavadocJarFileType);
         var trees = project().resources(
             of(JavadocDirectory.class).using(Supply)).map(
-                d -> FileTree.of(project(), d.path(), "**/*",
-                    FileResource.class));
+                d -> FileTree.of(project(), d.path(), "**/*"));
         addTrees(trees);
         jarName(Optional.ofNullable(project().get(ArtifactId))
             .orElse(project().name()) + "-" + project().get(Version)

@@ -34,12 +34,12 @@ public class DefaultJavaResourceTree
     /// @param type the type
     /// @param project the project
     /// @param root the root
-    /// @param pattern the pattern
+    /// @param patterns the patterns
     ///
     public DefaultJavaResourceTree(
             ResourceType<? extends JavaResourceTree> type, Project project,
-            Path root, String pattern) {
-        super(type, project, root, pattern);
+            Path root, String... patterns) {
+        super(type, project, root, patterns);
     }
 
     @Override

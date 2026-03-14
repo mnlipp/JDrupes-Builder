@@ -29,6 +29,7 @@ import java.nio.file.SimpleFileVisitor;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.time.Instant;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Objects;
@@ -57,7 +58,7 @@ public class DefaultFileTree<T extends FileResource> extends DefaultResources<T>
     private Instant latestChange;
     private final Project project;
     private final Path root;
-    private final String pattern;
+    private final String[] patterns;
     private final List<String> excludes = new ArrayList<>();
     private boolean withDirs;
     private boolean filled;
@@ -74,14 +75,15 @@ public class DefaultFileTree<T extends FileResource> extends DefaultResources<T>
     /// @param type the resource type
     /// @param project the project
     /// @param root the root
-    /// @param pattern the pattern
+    /// @param patterns the patterns
     ///
+    @SuppressWarnings({ "PMD.ArrayIsStoredDirectly", "PMD.UseVarargs" })
     protected DefaultFileTree(ResourceType<?> type, Project project, Path root,
-            String pattern) {
+            String[] patterns) {
         super(type);
         this.project = project;
         this.root = root;
-        this.pattern = pattern;
+        this.patterns = patterns;
     }
 
     @Override
@@ -118,7 +120,7 @@ public class DefaultFileTree<T extends FileResource> extends DefaultResources<T>
             return;
         }
         try {
-            find(root(), pattern);
+            find(root(), patterns);
         } catch (IOException e) {
             logger.atSevere().withCause(e).log("Problem scanning files");
             throw new BuildException().from(project).cause(e);
@@ -132,8 +134,8 @@ public class DefaultFileTree<T extends FileResource> extends DefaultResources<T>
         return Optional.ofNullable(latestChange);
     }
 
-    @SuppressWarnings("PMD.CognitiveComplexity")
-    private void find(Path root, String pattern) throws IOException {
+    @SuppressWarnings({ "PMD.CognitiveComplexity", "PMD.UseVarargs" })
+    private void find(Path root, String[] patterns) throws IOException {
         Files.walkFileTree(root, new SimpleFileVisitor<>() {
 
             @Override
@@ -144,7 +146,7 @@ public class DefaultFileTree<T extends FileResource> extends DefaultResources<T>
 
             private FileVisitResult testAndAdd(Path path) {
                 Path pathInTree = root.relativize(path);
-                if (excludes.parallelStream().filter(ex -> pathMatcher
+                if (excludes.stream().filter(ex -> pathMatcher
                     .isMatch(ex, pathInTree.toString()))
                     .findAny().isPresent()) {
                     if (path.toFile().isDirectory()) {
@@ -152,7 +154,8 @@ public class DefaultFileTree<T extends FileResource> extends DefaultResources<T>
                     }
                     return FileVisitResult.CONTINUE;
                 }
-                if (pathMatcher.isMatch(pattern, pathInTree.toString())) {
+                if (Arrays.stream(patterns).anyMatch(pattern -> pathMatcher
+                    .isMatch(pattern, pathInTree.toString()))) {
                     @SuppressWarnings("unchecked")
                     T resource = (T) ResourceFactory
                         .create(type().containedType(), path);
@@ -243,7 +246,8 @@ public class DefaultFileTree<T extends FileResource> extends DefaultResources<T>
                 @Override
                 public FileVisitResult visitFile(Path path,
                         BasicFileAttributes attrs) throws IOException {
-                    if (pathMatcher.isMatch(pattern, path.toString())) {
+                    if (Arrays.stream(patterns).anyMatch(pattern -> pathMatcher
+                        .isMatch(pattern, path.toString()))) {
                         Files.delete(path);
                     }
                     return FileVisitResult.CONTINUE;
@@ -287,7 +291,7 @@ public class DefaultFileTree<T extends FileResource> extends DefaultResources<T>
         final int prime = 31;
         int result = super.hashCode();
         result
-            = prime * result + Objects.hash(excludes, pattern, root, withDirs);
+            = prime * result + Objects.hash(excludes, patterns, root, withDirs);
         return result;
     }
 
@@ -301,7 +305,7 @@ public class DefaultFileTree<T extends FileResource> extends DefaultResources<T>
         }
         return (obj instanceof DefaultFileTree other)
             && Objects.equals(excludes, other.excludes)
-            && Objects.equals(pattern, other.pattern)
+            && Objects.equals(patterns, other.patterns)
             && Objects.equals(root, other.root) && withDirs == other.withDirs;
     }
 

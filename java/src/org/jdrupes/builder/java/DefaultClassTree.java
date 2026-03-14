@@ -36,7 +36,7 @@ public class DefaultClassTree extends DefaultFileTree<ClassFile>
     ///
     protected DefaultClassTree(ResourceType<? extends ClassTree> type,
             Project project, Path root) {
-        super(type, project, root, "**/*.class");
+        super(type, project, root, new String[] { "**/*.class" });
     }
 
     @Override

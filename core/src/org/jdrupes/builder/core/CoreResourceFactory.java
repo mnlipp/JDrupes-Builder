@@ -184,7 +184,7 @@ public class CoreResourceFactory implements ResourceFactory {
         candidate = createNarrowed(type, FileTree.class,
             () -> new DefaultFileTree<>(
                 (ResourceType<? extends FileTree<?>>) type,
-                project, (Path) args[0], (String) args[1]));
+                project, (Path) args[0], (String[]) args[1]));
         if (candidate.isPresent()) {
             return candidate;
         }

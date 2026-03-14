@@ -31,8 +31,7 @@ import java.util.stream.Stream;
 ///
 /// * [Project] the project
 /// * [Path] the root directory
-/// * [String] the ant-style path pattern
-/// * `boolean` whether to include directories (optional, defaults to `false`)
+/// * [String]\[\] an array of ant-style path patterns
 ///
 /// Implementations of this interface must ensure that the content
 /// of the file tree is not evaluated before a terminal operation
@@ -101,17 +100,17 @@ public interface FileTree<T extends FileResource> extends Resources<T> {
     /// @param project the project
     /// @param directory the root of the file tree relative to the
     /// project's directory (or an absolute path)
-    /// @param pattern the pattern
+    /// @param patterns the patterns
     /// @return the file tree
     ///
     @SuppressWarnings({ "PMD.UseDiamondOperator", "PMD.ShortMethodName" })
     static FileTree<FileResource> of(
-            Project project, Path directory, String pattern) {
+            Project project, Path directory, String... patterns) {
         return ResourceFactory.create(
             new ResourceType<FileTree<FileResource>>() {}, project,
             project != null ? project.directory().resolve(directory)
                 : directory,
-            pattern);
+            (Object) patterns);
     }
 
     /// Creates a new file tree with elements of the given type from the
@@ -121,17 +120,17 @@ public interface FileTree<T extends FileResource> extends Resources<T> {
     /// @param project the project
     /// @param directory the root of the file tree relative to the
     /// project's directory (or an absolute path)
-    /// @param pattern the pattern
+    /// @param patterns the patterns
     /// @param type the type
     /// @return the file tree
     ///
     @SuppressWarnings({ "unchecked", "PMD.ShortMethodName" })
-    static <T extends FileResource> FileTree<T> of(
-            Project project, Path directory, String pattern, Class<T> type) {
+    static <T extends FileResource> FileTree<T> of(Project project,
+            Path directory, Class<T> type, String... patterns) {
         return (FileTree<T>) ResourceFactory.create(
             ResourceType.create(FileTree.class, type), project,
             project != null ? project.directory().resolve(directory)
                 : directory,
-            pattern);
+            (Object) patterns);
     }
 }

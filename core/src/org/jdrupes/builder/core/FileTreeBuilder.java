@@ -34,13 +34,11 @@ import java.util.function.Function;
 import java.util.stream.Stream;
 import org.jdrupes.builder.api.BuildException;
 import org.jdrupes.builder.api.Cleanliness;
-import org.jdrupes.builder.api.FileResource;
 import org.jdrupes.builder.api.FileTree;
 import org.jdrupes.builder.api.Project;
 import org.jdrupes.builder.api.Resource;
 import org.jdrupes.builder.api.ResourceFactory;
 import org.jdrupes.builder.api.ResourceRequest;
-import org.jdrupes.builder.api.ResourceType;
 import static org.jdrupes.builder.api.ResourceType.CleanlinessType;
 
 /// A provider that generates a [FileTree] from existing file trees.
@@ -229,9 +227,7 @@ public class FileTreeBuilder extends AbstractGenerator {
     protected <T extends Resource> Stream<T>
             doProvide(ResourceRequest<T> request) {
         if (request.accepts(CleanlinessType)) {
-            ResourceFactory.create(
-                new ResourceType<FileTree<FileResource>>() {}, project(),
-                destination, "**/*").cleanup();
+            FileTree.of(project(), destination, "**/*").cleanup();
             return Stream.empty();
         }
 
