@@ -259,7 +259,8 @@ public class DefaultFileTree<T extends FileResource> extends DefaultResources<T>
                     if (exc != null) {
                         return FileVisitResult.CONTINUE;
                     }
-                    if (Files.list(dir).findFirst().isEmpty()) {
+                    if (dir.toFile().exists()
+                        && Files.list(dir).findFirst().isEmpty()) {
                         Files.delete(dir);
                     }
                     return FileVisitResult.CONTINUE;
