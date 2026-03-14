@@ -286,6 +286,7 @@ public class NpmExecutor extends AbstractProvider implements Renamable {
         provided.addAll(getProvided.apply(project));
         if (required.asOf().isPresent() && provided.asOf().isPresent()
             && !required.asOf().get().isAfter(provided.asOf().get())) {
+            logger.atFine().log("Output from %s is up to date", this);
             @SuppressWarnings("unchecked")
             var result = (T) ExecResult.of(this,
                 "existing " + provided.stream().map(Resource::toString)

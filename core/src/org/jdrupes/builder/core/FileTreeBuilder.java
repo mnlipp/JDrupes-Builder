@@ -18,6 +18,7 @@
 
 package org.jdrupes.builder.core;
 
+import com.google.common.flogger.FluentLogger;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
@@ -61,7 +62,7 @@ import static org.jdrupes.builder.api.ResourceType.CleanlinessType;
 /// [#into].
 ///
 public class FileTreeBuilder extends AbstractGenerator {
-
+    private static final FluentLogger logger = FluentLogger.forEnclosingClass();
     private final StreamCollector<Source> sources = new StreamCollector<>(true);
     private Path destination;
     private ResourceRequest<?> requestForResult;
@@ -294,6 +295,7 @@ public class FileTreeBuilder extends AbstractGenerator {
         Files.createDirectories(dest.getParent());
         if (dest.toFile().exists() && dest.toFile()
             .lastModified() >= src.toFile().lastModified()) {
+            logger.atFine().log("Output from %s is up to date", this);
             return;
         }
         if (source.filter != null) {

@@ -216,7 +216,7 @@ public class JavaCompiler extends JavaTool {
             classSet.cleanup();
             compile(cpResources, destDir);
         } else {
-            logger.atFiner().log("Classes in %s are up to date", project());
+            logger.atFine().log("Classes in %s are up to date", project());
         }
         classSet.clear();
         @SuppressWarnings("unchecked")
