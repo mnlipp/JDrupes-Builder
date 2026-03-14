@@ -254,7 +254,9 @@ public class FileTreeBuilder extends AbstractGenerator {
 
         // Retrieve the sources
         var required = sources.stream().toList();
-        createInDestination(required);
+        if (!createInDestination(required)) {
+            logger.atFine().log("Output from %s is up to date", this);
+        }
 
         var result = ResourceFactory.create(request.type(), project(),
             destination, "**/*");
@@ -262,20 +264,22 @@ public class FileTreeBuilder extends AbstractGenerator {
     }
 
     @SuppressWarnings("PMD.AvoidInstantiatingObjectsInLoops")
-    private void createInDestination(List<Source> required) {
+    private boolean createInDestination(List<Source> required) {
+        boolean changed = false;
         for (var source : required) {
             var srcTree = source.tree;
-            srcTree.entries().parallel().forEach(entry -> {
+            changed |= srcTree.entries().parallel().map(entry -> {
                 try {
-                    createTarget(source, entry);
+                    return createTarget(source, entry);
                 } catch (IOException e) {
                     throw new BuildException().from(this).cause(e);
                 }
-            });
+            }).reduce(false, (a, b) -> a || b);
         }
+        return changed;
     }
 
-    private void createTarget(Source source, Path entry) throws IOException {
+    private boolean createTarget(Source source, Path entry) throws IOException {
         var src = source.tree.root().resolve(entry);
         var dest = destination.resolve(entry);
         var rename = source.rename;
@@ -289,30 +293,33 @@ public class FileTreeBuilder extends AbstractGenerator {
             }
         }
         if (src.toFile().isDirectory()) {
-            Files.createDirectories(dest);
-            return;
+            if (!src.toFile().exists()) {
+                Files.createDirectories(dest);
+                return true;
+            }
+            return false;
         }
         Files.createDirectories(dest.getParent());
         if (dest.toFile().exists() && dest.toFile()
             .lastModified() >= src.toFile().lastModified()) {
-            logger.atFine().log("Output from %s is up to date", this);
-            return;
+            return false;
         }
         if (source.filter != null) {
             try (var srcStream = Files.newInputStream(src);
                     var destStream = Files.newOutputStream(dest)) {
                 source.filter.accept(srcStream, destStream);
             }
-            return;
+            return true;
         }
         if (source.textFilter != null) {
             try (var reader = Files.newBufferedReader(src, source.charset);
                     var out = new PrintStream(dest.toFile(), source.charset)) {
                 source.textFilter.accept(reader, out);
             }
-            return;
+            return true;
         }
         Files.copy(src, dest, StandardCopyOption.REPLACE_EXISTING);
+        return true;
     }
 
 }
