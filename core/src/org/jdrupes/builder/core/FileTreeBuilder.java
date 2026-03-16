@@ -25,6 +25,7 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.PrintStream;
 import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
@@ -42,6 +43,7 @@ import org.jdrupes.builder.api.ResourceFactory;
 import org.jdrupes.builder.api.ResourceRequest;
 import static org.jdrupes.builder.api.ResourceType.CleanlinessType;
 
+// TODO: Auto-generated Javadoc
 /// A provider that generates a [FileTree] from existing file trees.
 /// In general, copying file trees should be avoided. However, in some
 /// situations a resource provider and a consumer cannot be configured
@@ -131,6 +133,18 @@ public class FileTreeBuilder extends AbstractGenerator {
             this.textFilter = filter;
             this.charset = charset;
             return this;
+        }
+
+        /// Invoke [String#replaceAll] on each line of the file.
+        ///
+        /// @param regex the regex
+        /// @param replacement the replacement
+        /// @return the source
+        ///
+        public Source replaceAll(String regex, String replacement) {
+            return filter((in, out) -> in.lines().map(
+                l -> l.replaceAll(regex, replacement))
+                .forEach(out::println), StandardCharsets.UTF_8);
         }
     }
 
@@ -279,7 +293,8 @@ public class FileTreeBuilder extends AbstractGenerator {
         return changed;
     }
 
-    private boolean createTarget(Source source, Path entry) throws IOException {
+    private boolean createTarget(Source source, Path entry)
+            throws IOException {
         var src = source.tree.root().resolve(entry);
         var dest = destination.resolve(entry);
         var rename = source.rename;
@@ -313,7 +328,8 @@ public class FileTreeBuilder extends AbstractGenerator {
         }
         if (source.textFilter != null) {
             try (var reader = Files.newBufferedReader(src, source.charset);
-                    var out = new PrintStream(dest.toFile(), source.charset)) {
+                    var out
+                        = new PrintStream(dest.toFile(), source.charset)) {
                 source.textFilter.accept(reader, out);
             }
             return true;
