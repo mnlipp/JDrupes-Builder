@@ -67,7 +67,7 @@ So invocations of the build script look like this:
   - Adhere to the existing Java style. Use virtual threads where
     appropriate (as seen in `NpmExecutor`).
   - Line length should not exceed 80 characters.
-- **Architecture:** 
+- **Architecture:**
   - The classes in api/ define a real API. The classes in core/ and startup/
     implement it. This distinction must be preserved. It must be possible
     to implement the API with another approach if desired. 
@@ -76,7 +76,7 @@ So invocations of the build script look like this:
     projects, and only exceptionally as basis for other providers. Therefore,
     they don't keep up a distinction between an API and an implementation.
 - **Testing:** Test projects are located in `test-projects/`. JUnit tests for
-  core components are in `core/test/`.
+  core components are in `core/test/`. The project uses JUnit 5.
 - **Documentation:** Javadoc comments are written in Markdown (see JEP 467).
 
 ## Directory Structure
