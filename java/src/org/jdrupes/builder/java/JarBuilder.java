@@ -331,8 +331,13 @@ public class JarBuilder extends AbstractGenerator {
                         .map(Path::toString).collect(Collectors.joining("/"));
                 @SuppressWarnings("PMD.AvoidInstantiatingObjectsInLoops")
                 JarEntry jarEntry = new JarEntry(entryName);
-                jarEntry.setTime(entry.getValue().stream().findFirst().get()
-                    .asOf().get().toEpochMilli());
+                var ioResource = entry.getValue().stream().findFirst();
+                if (ioResource.isEmpty()) {
+                    logger.atWarning()
+                        .log(jarEntry + " has no associated data");
+                    continue;
+                }
+                jarEntry.setTime(ioResource.get().asOf().get().toEpochMilli());
                 jos.putNextEntry(jarEntry);
                 try (var input = entry.getValue().stream().findFirst().get()
                     .inputStream()) {
