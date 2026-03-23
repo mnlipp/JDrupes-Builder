@@ -375,6 +375,7 @@ public class EclipseConfigurator extends AbstractGenerator {
         project.providers().without(Project.class).resources(
             of(JavaResourceTree.class).using(Consume, Reveal, Supply))
             .map(FileTree::root).filter(p -> p.toFile().canRead())
+            .collect(Collectors.toSet()).stream()
             .map(project::relativize).forEach(p -> {
                 var entry = (Element) classpath
                     .appendChild(doc.createElement("classpathentry"));
