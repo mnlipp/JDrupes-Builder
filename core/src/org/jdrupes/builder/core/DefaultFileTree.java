@@ -181,6 +181,11 @@ public class DefaultFileTree<T extends FileResource> extends DefaultResources<T>
             @Override
             public FileVisitResult postVisitDirectory(Path dir, IOException exc)
                     throws IOException {
+                if (!withDirs) {
+                    return FileVisitResult.CONTINUE;
+                }
+
+                // Directories (and their modification date) included
                 var dirMod = Instant.ofEpochMilli(dir.toFile().lastModified());
                 if (latestChange == null || dirMod.isAfter(latestChange)) {
                     latestChange = dirMod;

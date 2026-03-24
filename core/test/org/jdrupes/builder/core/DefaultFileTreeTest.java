@@ -8,35 +8,14 @@ import java.util.List;
 import java.util.stream.Collectors;
 import org.jdrupes.builder.api.FileResource;
 import org.jdrupes.builder.api.FileTree;
-import org.junit.jupiter.api.AfterEach;
 import static org.junit.jupiter.api.Assertions.*;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.io.TempDir;
 
 class DefaultFileTreeTest {
 
+    @TempDir
     private Path tmpDir;
-
-    @BeforeEach
-    void setUp() throws IOException {
-        tmpDir = Files.createTempDirectory("dft-test-");
-    }
-
-    @AfterEach
-    void tearDown() throws IOException {
-        if (tmpDir != null && Files.exists(tmpDir)) {
-            // recursively delete
-            Files.walk(tmpDir)
-                .sorted((a, b) -> b.compareTo(a))
-                .forEach(p -> {
-                    try {
-                        Files.deleteIfExists(p);
-                    } catch (IOException e) {
-                        // ignore
-                    }
-                });
-        }
-    }
 
     @Test
     void testBasicFileDiscoveryAndEntries() throws IOException {
@@ -167,5 +146,13 @@ class DefaultFileTreeTest {
         ft.clear();
         Instant second = ft.asOf().get();
         assertTrue(second.isAfter(first));
+    }
+
+    @Test
+    void testAsOfForEmptyDirectory() throws IOException {
+        FileTree<FileResource> ft = FileTree.of(null, tmpDir, "**/*.txt");
+        
+        // For an empty directory, asOf() should return Optional.empty()
+        assertFalse(ft.asOf().isPresent());
     }
 }
