@@ -161,8 +161,18 @@ public class FileTreeBuilder extends AbstractGenerator {
     /// @param sources the sources
     /// @return the file tree builder
     ///
-    public FileTreeBuilder source(Stream<Source> sources) {
+    public FileTreeBuilder add(Stream<Source> sources) {
         this.sources.add(sources);
+        return this;
+    }
+
+    /// Adds the given [Source] specification.
+    ///
+    /// @param source the source
+    /// @return the file tree builder
+    ///
+    public FileTreeBuilder add(Source source) {
+        this.sources.add(source);
         return this;
     }
 
