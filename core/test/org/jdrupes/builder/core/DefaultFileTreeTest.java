@@ -155,4 +155,34 @@ class DefaultFileTreeTest {
         // For an empty directory, asOf() should return Optional.empty()
         assertFalse(ft.asOf().isPresent());
     }
+
+    @Test
+    void testEmptyDirectoryHasNoEntries() throws IOException {
+        FileTree<FileResource> ft = FileTree.of(null, tmpDir, "**/*");
+
+        List<Path> entries = ft.entries().collect(Collectors.toList());
+        assertEquals(0, entries.size());
+    }
+
+    @Test
+    void testEmptyDirectoryWithDirectoriesRootExists() throws IOException {
+        // tmpDir exists but is empty
+        FileTree<FileResource> ft = FileTree.of(null, tmpDir, "**/*")
+            .withDirectories();
+
+        // Root directory should be present when it exists
+        var entries = ft.stream().collect(Collectors.toList());
+        assertEquals(1, entries.size());
+    }
+
+    @Test
+    void testNonExistingRootWithDirectoriesNoEntries()
+            throws IOException {
+        Path nonExisting = tmpDir.resolve("nonexistent");
+        FileTree<FileResource> ft = FileTree.of(null, nonExisting, "**/*")
+            .withDirectories();
+
+        List<Path> entries = ft.entries().collect(Collectors.toList());
+        assertEquals(0, entries.size());
+    }
 }
