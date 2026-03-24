@@ -93,10 +93,10 @@ public class FileTreeBuilder extends AbstractGenerator {
             return new Source(tree);
         }
 
-        /// Specifies a function for renaming source files. The receives
-        /// the file's path relative to the source tree's root. It must
-        /// return the file's path relative to the destination set with
-        /// [#into].
+        /// Specifies a function for renaming source files. The method
+        /// receives the file's path relative to the source tree's root.
+        /// It must return the file's path relative to the destination
+        /// set with [#into].
         ///
         /// @param renamer the function for renaming
         /// @return the source
