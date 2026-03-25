@@ -66,6 +66,29 @@ class DefaultFileTreeTest {
     }
 
     @Test
+    void testEmptyPatternReturnsAllFiles() throws IOException {
+        // create files with various extensions and in subdirectories
+        Path f1 = tmpDir.resolve("document.txt");
+        Path f2 = tmpDir.resolve("image.png");
+        Files.writeString(f1, "content1");
+        Files.writeString(f2, "content2");
+
+        // create a subdirectory with files
+        Path subdir = tmpDir.resolve("lib");
+        Files.createDirectories(subdir);
+        Path f3 = subdir.resolve("library.jar");
+        Files.writeString(f3, "jar-content");
+
+        // FileTree.of with no patterns (null patterns) should still discover
+        // all entries
+        FileTree<FileResource> ft = FileTree.of(null, tmpDir);
+        var entries = ft.stream().collect(Collectors.toList());
+
+        // Should discover all files at root and in subdirectories
+        assertEquals(3, entries.size());
+    }
+
+    @Test
     void testExcludesAndDirectories() throws IOException {
         Path sub = tmpDir.resolve("subdir");
         Files.createDirectories(sub);
@@ -151,7 +174,7 @@ class DefaultFileTreeTest {
     @Test
     void testAsOfForEmptyDirectory() throws IOException {
         FileTree<FileResource> ft = FileTree.of(null, tmpDir, "**/*.txt");
-        
+
         // For an empty directory, asOf() should return Optional.empty()
         assertFalse(ft.asOf().isPresent());
     }

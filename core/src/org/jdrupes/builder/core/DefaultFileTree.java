@@ -83,7 +83,11 @@ public class DefaultFileTree<T extends FileResource> extends DefaultResources<T>
         super(type);
         this.project = project;
         this.root = root;
-        this.patterns = patterns;
+        if (patterns.length == 0) {
+            this.patterns = new String[] { "**/*" };
+        } else {
+            this.patterns = patterns;
+        }
     }
 
     @Override

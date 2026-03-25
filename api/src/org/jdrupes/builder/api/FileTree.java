@@ -100,7 +100,8 @@ public interface FileTree<T extends FileResource> extends Resources<T> {
     /// @param project the project
     /// @param directory the root of the file tree relative to the
     /// project's directory (or an absolute path)
-    /// @param patterns the patterns
+    /// @param patterns the patterns. If no patterns are given, the
+    /// default pattern "**/*" is used
     /// @return the file tree
     ///
     @SuppressWarnings({ "PMD.UseDiamondOperator", "PMD.ShortMethodName" })
@@ -120,7 +121,8 @@ public interface FileTree<T extends FileResource> extends Resources<T> {
     /// @param project the project
     /// @param directory the root of the file tree relative to the
     /// project's directory (or an absolute path)
-    /// @param patterns the patterns
+    /// @param patterns the patterns. If no patterns are given, the
+    /// default pattern "**/*" is used
     /// @param type the type
     /// @return the file tree
     ///
