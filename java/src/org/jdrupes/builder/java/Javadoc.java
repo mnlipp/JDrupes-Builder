@@ -205,6 +205,13 @@ public class Javadoc extends JavaTool {
             return Stream.empty();
         }
 
+        // Always evaluate for most special type
+        if (!requested.type().equals(JavadocDirectoryType)) {
+            @SuppressWarnings("unchecked")
+            var result = (Stream<T>) resources(of(JavadocDirectoryType));
+            return result;
+        }
+
         // Generate
         var javadoc = ToolProvider.getSystemDocumentationTool();
         var diagnostics = new DiagnosticCollector<JavaFileObject>();
