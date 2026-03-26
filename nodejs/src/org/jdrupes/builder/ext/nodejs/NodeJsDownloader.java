@@ -18,6 +18,7 @@
 
 package org.jdrupes.builder.ext.nodejs;
 
+import com.google.common.flogger.FluentLogger;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URI;
@@ -29,6 +30,8 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
 import java.util.Locale;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 import org.apache.commons.compress.archivers.tar.TarArchiveEntry;
@@ -41,6 +44,8 @@ import org.jdrupes.builder.api.ResourceProvider;
 ///
 public class NodeJsDownloader {
 
+    private static final FluentLogger logger = FluentLogger.forEnclosingClass();
+    private static Map<Path, Object> installLocks = new ConcurrentHashMap<>();
     private final ResourceProvider provider;
     private final Path baseDir;
     private final Platform platform;
@@ -48,12 +53,13 @@ public class NodeJsDownloader {
     /// Initializes a new node js downloader.
     ///
     /// @param provider the provider
-    /// @param baseDir the base dir
+    /// @param baseDir the cache directory for NodeJs downloads
     ///
     public NodeJsDownloader(ResourceProvider provider, Path baseDir) {
         this.provider = provider;
         this.baseDir = baseDir;
         platform = detectPlatform();
+        logger.atFine().log("%s uses NodeJs Platform: %s", provider, platform);
     }
 
     private Platform detectPlatform() {
@@ -90,25 +96,33 @@ public class NodeJsDownloader {
         }
     }
 
+    @SuppressWarnings("PMD.AvoidSynchronizedStatement")
     private Path downloadAndInstall(String version) {
         Path unpackedIn = baseDir
             .resolve(String.format("node-v%s-%s", version, platform.name));
-        if (Files.exists(unpackedIn)) {
-            return unpackedIn;
-        }
-        try {
-            Files.createDirectories(baseDir);
-            var archive = download(baseDir, version);
-            if (archive.toString().endsWith(".zip")) {
-                unzip(baseDir, archive);
-            } else if (archive.toString().endsWith(".tar.gz")) {
-                untarGz(baseDir, archive);
+        var lock = installLocks.computeIfAbsent(unpackedIn, _ -> new Object());
+        synchronized (lock) {
+            if (Files.exists(unpackedIn)) {
+                logger.atFine().log(
+                    "Using NodeJs %s at %s", version, unpackedIn);
+                return unpackedIn;
             }
-            executable(unpackedIn).toFile().setExecutable(true, false);
-            Files.deleteIfExists(archive);
-            return unpackedIn;
-        } catch (IOException | InterruptedException e) {
-            throw new BuildException().from(provider).cause(e);
+            try {
+                Files.createDirectories(baseDir);
+                var archive = download(baseDir, version);
+                if (archive.toString().endsWith(".zip")) {
+                    unzip(baseDir, archive);
+                } else if (archive.toString().endsWith(".tar.gz")) {
+                    untarGz(baseDir, archive);
+                }
+                executable(unpackedIn).toFile().setExecutable(true, false);
+                Files.deleteIfExists(archive);
+                logger.atFine().log(
+                    "Installed NodeJs %s to %s", version, unpackedIn);
+                return unpackedIn;
+            } catch (IOException | InterruptedException e) {
+                throw new BuildException().from(provider).cause(e);
+            }
         }
     }
 
@@ -120,6 +134,7 @@ public class NodeJsDownloader {
                 platform.name, platform.extension);
             String downloadUrl = String.format("https://nodejs.org/dist/v%s/%s",
                 version, archiveName);
+            logger.atFine().log("Downloading %s", downloadUrl);
             var request = HttpRequest.newBuilder().GET()
                 .uri(URI.create(downloadUrl)).build();
             var target = targetDir.resolve(archiveName);
