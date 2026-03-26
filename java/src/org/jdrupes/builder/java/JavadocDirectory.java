@@ -35,11 +35,14 @@ public interface JavadocDirectory extends DocumentationDirectory {
     /// @param project the project
     /// @param path the path relative to the project's directory (or an
     /// absolute path)
+    /// @param patterns the patterns. If no patterns are given, the
+    /// default pattern "**/*" is used
     /// @return the file resource
     ///
     @SuppressWarnings("PMD.ShortMethodName")
-    static JavadocDirectory of(Project project, Path path) {
+    static JavadocDirectory of(Project project, Path path, String... patterns) {
         return ResourceFactory.create(new ResourceType<>() {},
-            project.directory().resolve(path));
+            project != null ? project.directory().resolve(path) : path,
+            (Object) patterns);
     }
 }

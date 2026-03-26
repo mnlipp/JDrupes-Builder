@@ -51,7 +51,7 @@ public class JavadocJarBuilder extends JarBuilder {
         super(project, JavadocJarFileType);
         var trees = project().resources(
             of(JavadocDirectory.class).using(Supply)).map(
-                d -> FileTree.of(project(), d.path(), "**/*"));
+                d -> FileTree.of(project(), d.root(), "**/*"));
         addTrees(trees);
         jarName(Optional.ofNullable(project().get(ArtifactId))
             .orElse(project().name()) + "-" + project().get(Version)
