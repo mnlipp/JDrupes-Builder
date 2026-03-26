@@ -18,6 +18,7 @@
 
 package org.jdrupes.builder.mvnrepo;
 
+import com.google.common.flogger.FluentLogger;
 import eu.maveniverse.maven.mima.context.Context;
 import eu.maveniverse.maven.mima.context.ContextOverrides;
 import eu.maveniverse.maven.mima.context.Runtime;
@@ -26,6 +27,7 @@ import java.net.URI;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import org.apache.maven.model.DependencyManagement;
 import org.apache.maven.model.Model;
@@ -68,6 +70,7 @@ import static org.jdrupes.builder.mvnrepo.MvnRepoTypes.*;
 @SuppressWarnings("PMD.CouplingBetweenObjects")
 public class MvnRepoLookup extends AbstractProvider {
 
+    private static final FluentLogger logger = FluentLogger.forEnclosingClass();
     private static Context rootContextInstance;
     private final List<String> coordinates = new ArrayList<>();
     private final List<String> boms = new ArrayList<>();
@@ -93,6 +96,10 @@ public class MvnRepoLookup extends AbstractProvider {
             .withUserSettings(true).build();
         Runtime runtime = Runtimes.INSTANCE.getRuntime();
         rootContextInstance = runtime.create(overrides);
+        logger.atFine().log("Using repositories: %s",
+            rootContextInstance.remoteRepositories().stream()
+                .map(RemoteRepository::getUrl)
+                .collect(Collectors.joining(", ")));
         return rootContextInstance;
     }
 
@@ -166,6 +173,7 @@ public class MvnRepoLookup extends AbstractProvider {
     ///
     public MvnRepoLookup probe() {
         probeMode = true;
+        logger.atFine().log("Probe mode enabled for %s", this);
         return this;
     }
 
