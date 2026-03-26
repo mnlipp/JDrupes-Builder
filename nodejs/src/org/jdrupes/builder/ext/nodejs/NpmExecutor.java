@@ -342,4 +342,13 @@ public class NpmExecutor extends AbstractProvider implements Renamable {
             .flatMap(s -> s);
         return generated;
     }
+
+    /// To string.
+    ///
+    /// @return the string
+    ///
+    @Override
+    public String toString() {
+        return super.toString() + "[" + project().name() + "]";
+    }
 }

@@ -54,6 +54,7 @@ public class JavaExecutor extends AbstractProvider
         implements ResourceRetriever, Renamable {
 
     private static final FluentLogger logger = FluentLogger.forEnclosingClass();
+    private final Project project;
     private final StreamCollector<ResourceProvider> providers
         = StreamCollector.cached();
     private String mainClass;
@@ -63,6 +64,7 @@ public class JavaExecutor extends AbstractProvider
     /// @param project the project
     ///
     public JavaExecutor(Project project) {
+        this.project = project;
         rename(JavaExecutor.class.getSimpleName() + " in " + project);
     }
 
@@ -185,5 +187,14 @@ public class JavaExecutor extends AbstractProvider
             } catch (IOException e) { // NOPMD
             }
         });
+    }
+
+    /// To string.
+    ///
+    /// @return the string
+    ///
+    @Override
+    public String toString() {
+        return super.toString() + "[" + project.name() + "]";
     }
 }
