@@ -107,7 +107,7 @@ public class BootstrapProjectLauncher extends AbstractLauncher {
     @SuppressWarnings("PMD.UseVarargs")
     public BuildProjectLauncher buildBuildProjectLauncher(
             Class<? extends RootProject> rootPrjCls, String[] args) {
-        return bootstrapProject.context().call(() -> {
+        return bootstrapProject.context().inScope().call(() -> {
             URL[] cpUrls = buildProjectClasses(bootstrapProject);
             logger.atFine().log("Build project launcher with classpath: %s",
                 Arrays.toString(cpUrls));

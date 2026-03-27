@@ -89,7 +89,7 @@ public abstract class AbstractRootProject extends AbstractProject
             var origThreadName = Thread.currentThread().getName();
             try {
                 Thread.currentThread().setName("Creating " + prjCls);
-                return context.call(() -> createProject(prjCls));
+                return context.inScope().call(() -> createProject(prjCls));
             } finally {
                 Thread.currentThread().setName(origThreadName);
             }

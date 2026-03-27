@@ -26,7 +26,6 @@ import java.util.List;
 import java.util.Spliterators;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
-import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Consumer;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
@@ -55,28 +54,22 @@ public class FutureStream<T extends Resource> {
     private final FutureStreamCache.Key<?> holding;
     private final Future<List<T>> values;
 
-    /// Instantiates a new future resources.
+    /// Instantiates a new future stream of resources.
     ///
     /// @param context the context
-    /// @param scopedBuildContext the scoped build context for re-binding
-    /// @param providerInvocationAllowed scoped provider invocation allowed
-    /// for re-binding
     /// @param provider the provider
     /// @param request the requested
     ///
     public FutureStream(DefaultBuildContext context,
-            ScopedValue<DefaultBuildContext> scopedBuildContext,
-            ScopedValue<AtomicBoolean> providerInvocationAllowed,
             ResourceProvider provider, ResourceRequest<T> request) {
         this.context = context;
         initiallyCalledBy = caller.isBound() ? caller.get() : null;
-        holding = new FutureStreamCache.Key<>(provider, request);
-        logger.atFiner().log("Evaluating %s → %s", holding.request(),
-            lazy(() -> holding.provider() + (initiallyCalledBy != null
+        logger.atFiner().log("Evaluating %s → %s", request,
+            lazy(() -> provider + (initiallyCalledBy != null
                 ? " requested by " + initiallyCalledBy
                 : "")));
         logger.atFinest().log("Call chain: %s", lazy(this::callChain));
-        boolean isAllowed = DefaultBuildContext.isProviderInvocationAllowed();
+        holding = new FutureStreamCache.Key<>(provider, request);
         values = context.executor().submit(() -> {
             var origThreadName = Thread.currentThread().getName();
             try (var _ = context.executingFutureStreams().acquire();
@@ -86,14 +79,10 @@ public class FutureStream<T extends Resource> {
                 // Wait for the build-project to be fully constructed
                 context.buildProject().get();
                 statusLine.update(provider + " evaluating " + request);
-                return ScopedValue
-                    .where(scopedBuildContext, context)
-                    .where(providerInvocationAllowed,
-                        new AtomicBoolean(isAllowed))
-                    .where(caller, this)
-                    .where(FutureStream.statusLine, statusLine)
-                    .call(() -> ((AbstractProvider) provider).toSpi()
-                        .provide(request).toList());
+                return context.inScopeForProviderCall().where(caller, this)
+                    .where(FutureStream.statusLine, statusLine).call(
+                        () -> ((AbstractProvider) provider).toSpi()
+                            .provide(request).toList());
             } finally {
                 Thread.currentThread().setName(origThreadName);
             }

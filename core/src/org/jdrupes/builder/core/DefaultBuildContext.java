@@ -30,7 +30,6 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.function.Supplier;
 import java.util.stream.Stream;
 import org.apache.commons.cli.CommandLine;
 import org.jdrupes.builder.api.BuildContext;
@@ -48,7 +47,6 @@ import org.jdrupes.builder.core.console.SplitConsole;
 
 /// A context for building.
 ///
-@SuppressWarnings("PMD.CouplingBetweenObjects")
 public class DefaultBuildContext implements BuildContext {
 
     @SuppressWarnings("PMD.FieldNamingConventions")
@@ -135,14 +133,23 @@ public class DefaultBuildContext implements BuildContext {
         return Optional.empty();
     }
 
-    /// Call within this context. 
+    /// Return a carrier with this context available from [#context].
     ///
-    /// @param <T> the generic type
-    /// @param supplier the supplier
-    /// @return the t
+    /// @return the carrier
     ///
-    public <T> T call(Supplier<T> supplier) {
-        return ScopedValue.where(scopedBuildContext, this).call(supplier::get);
+    public ScopedValue.Carrier inScope() {
+        return ScopedValue.where(scopedBuildContext, this);
+    }
+
+    /// Return a carrier with this context available from [#context] and
+    /// the provider invocation allowed flag set.
+    ///
+    /// @param carrier the carrier
+    /// @return the augmented carrier
+    ///
+    /* default */ ScopedValue.Carrier inScopeForProviderCall() {
+        return inScope()
+            .where(providerInvocationAllowed, new AtomicBoolean(true));
     }
 
     /* default */ SplitConsole console() {
@@ -195,8 +202,7 @@ public class DefaultBuildContext implements BuildContext {
         }
         if (!requested.type().equals(CleanlinessType)) {
             return cache.computeIfAbsent(new Key<>(provider, req),
-                k -> new FutureStream<T>(this, scopedBuildContext,
-                    providerInvocationAllowed, k.provider(), k.request()))
+                k -> new FutureStream<T>(this, k.provider(), k.request()))
                 .stream();
         }
 
