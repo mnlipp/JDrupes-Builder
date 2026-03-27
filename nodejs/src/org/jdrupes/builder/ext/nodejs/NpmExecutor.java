@@ -276,7 +276,7 @@ public class NpmExecutor extends AbstractProvider implements Renamable {
         if (arguments.isEmpty()) {
             @SuppressWarnings("unchecked")
             var result = (T) ExecResult
-                .of(this, "npm init", 0, Stream.empty())
+                .of(this, "npm install", 0, Stream.empty())
                 .asOf(Instant.ofEpochMilli(dotPackageLock.lastModified()));
             return Stream.of(result);
         }
