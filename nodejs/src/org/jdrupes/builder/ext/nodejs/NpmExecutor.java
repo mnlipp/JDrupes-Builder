@@ -156,7 +156,7 @@ public class NpmExecutor extends AbstractProvider implements Renamable {
     /// @param resources the resources
     /// @return the npm executor
     ///
-    public NpmExecutor required(Stream<Resource> resources) {
+    public NpmExecutor required(Stream<? extends Resource> resources) {
         requiredResources.add(resources);
         return this;
     }
