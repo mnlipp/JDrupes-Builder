@@ -41,7 +41,6 @@ import org.jdrupes.builder.api.Project;
 import org.jdrupes.builder.api.Resource;
 import org.jdrupes.builder.api.ResourceProvider;
 import org.jdrupes.builder.api.ResourceRequest;
-import org.jdrupes.builder.api.ResourceType;
 import static org.jdrupes.builder.api.ResourceType.*;
 import org.jdrupes.builder.api.Resources;
 import org.jdrupes.builder.api.UnavailableException;
@@ -77,7 +76,8 @@ public class Javadoc extends JavaTool {
         = StreamCollector.cached();
     private StreamCollector<Project> projects = StreamCollector.cached();
     private Path destination = Path.of("doc");
-    private final Resources<ClasspathElement> tagletpath;
+    private final StreamCollector<ClasspathElement> tagletpath
+        = StreamCollector.cached();
     private final List<String> taglets = new ArrayList<>();
 
     /// Instantiates a new java compiler.
@@ -87,7 +87,6 @@ public class Javadoc extends JavaTool {
     public Javadoc(Project project) {
         super(project);
         projects.add(project);
-        tagletpath = Resources.of(new ResourceType<>() {});
     }
 
     /// Sets the projects to generate javadoc for.
@@ -172,7 +171,7 @@ public class Javadoc extends JavaTool {
     /// @return the javadoc
     ///
     public Javadoc tagletpath(Stream<ClasspathElement> classpathElements) {
-        tagletpath.addAll(classpathElements);
+        tagletpath.add(classpathElements);
         return this;
     }
 
