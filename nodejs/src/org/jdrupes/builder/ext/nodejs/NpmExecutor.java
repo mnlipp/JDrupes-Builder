@@ -311,14 +311,19 @@ public class NpmExecutor extends AbstractProvider implements Renamable {
             Process process = processBuilder.start();
             copyData(process.getInputStream(), context().out());
             copyData(process.getErrorStream(), context().error());
+            int exitValue = process.waitFor();
+            if (exitValue != 0) {
+                throw new BuildException().from(this)
+                    .message("Npm exited with %d", exitValue);
+            }
             @SuppressWarnings("unchecked")
             var result = (Stream<T>) Stream.of(ExecResult.of(this,
                 "[" + project.name() + "]$ npm "
                     + arguments.stream().collect(Collectors.joining(" ")),
-                process.waitFor(), getProvided.apply(project))
+                exitValue, getProvided.apply(project))
                 .asOf(Instant.now()));
             return result;
-        } catch (IOException | InterruptedException e) {
+        } catch (IOException | InterruptedException e) { // NOPMD
             throw new BuildException().from(this).cause(e);
         }
     }
