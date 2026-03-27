@@ -25,8 +25,10 @@ import java.util.EnumSet;
 import java.util.List;
 import java.util.Optional;
 import java.util.Properties;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Supplier;
 import java.util.stream.Stream;
@@ -46,6 +48,7 @@ import org.jdrupes.builder.core.console.SplitConsole;
 
 /// A context for building.
 ///
+@SuppressWarnings("PMD.CouplingBetweenObjects")
 public class DefaultBuildContext implements BuildContext {
 
     @SuppressWarnings("PMD.FieldNamingConventions")
@@ -63,6 +66,8 @@ public class DefaultBuildContext implements BuildContext {
     @SuppressWarnings("PMD.FieldNamingConventions")
     private static final ScopedValue<
             DefaultBuildContext> scopedBuildContext = ScopedValue.newInstance();
+    private final CompletableFuture<AbstractRootProject> buildProject
+        = new CompletableFuture<>();
 
     /// Instantiates a new default build. By default, the build uses
     /// a virtual thread per task executor.
@@ -226,6 +231,10 @@ public class DefaultBuildContext implements BuildContext {
         console.close();
     }
 
+    /* default */ Future<AbstractRootProject> buildProject() {
+        return buildProject;
+    }
+
     /// Creates and initializes the root project and the sub projects.
     /// Adds the sub projects to the root project automatically. This
     /// method should be used if the launcher detects the sub projects
@@ -252,8 +261,8 @@ public class DefaultBuildContext implements BuildContext {
                         .getConstructor().newInstance();
                     result.unlockProviders();
                     subprojects.forEach(result::project);
+                    scopedBuildContext.get().buildProject.complete(result);
                     return result;
-
                 });
         } catch (SecurityException | NegativeArraySizeException
                 | IllegalArgumentException | ReflectiveOperationException e) {

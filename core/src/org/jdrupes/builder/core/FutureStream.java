@@ -31,6 +31,7 @@ import java.util.function.Consumer;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 import org.jdrupes.builder.api.BuildException;
+import org.jdrupes.builder.api.ConfigurationException;
 import org.jdrupes.builder.api.Resource;
 import org.jdrupes.builder.api.ResourceProvider;
 import org.jdrupes.builder.api.ResourceRequest;
@@ -43,6 +44,7 @@ import org.jdrupes.builder.api.StatusLine;
 public class FutureStream<T extends Resource> {
 
     private static final FluentLogger logger = FluentLogger.forEnclosingClass();
+    private final DefaultBuildContext context;
     @SuppressWarnings("PMD.FieldNamingConventions")
     private static final ScopedValue<FutureStream<?>> caller
         = ScopedValue.newInstance();
@@ -66,6 +68,7 @@ public class FutureStream<T extends Resource> {
             ScopedValue<DefaultBuildContext> scopedBuildContext,
             ScopedValue<AtomicBoolean> providerInvocationAllowed,
             ResourceProvider provider, ResourceRequest<T> request) {
+        this.context = context;
         initiallyCalledBy = caller.isBound() ? caller.get() : null;
         holding = new FutureStreamCache.Key<>(provider, request);
         logger.atFiner().log("Evaluating %s → %s", holding.request(),
@@ -80,6 +83,8 @@ public class FutureStream<T extends Resource> {
                     var statusLine = context.console().statusLine()) {
                 Thread.currentThread().setName(
                     provider + " ← " + request.type());
+                // Wait for the build-project to be fully constructed
+                context.buildProject().get();
                 statusLine.update(provider + " evaluating " + request);
                 return ScopedValue
                     .where(scopedBuildContext, context)
@@ -117,7 +122,14 @@ public class FutureStream<T extends Resource> {
 
                 private Iterator<T> iterator() {
                     if (theIterator == null) {
+                        if (!context.buildProject().isDone()) {
+                            throw new ConfigurationException()
+                                .from(holding.provider())
+                                .message("Attempt to terminate resource stream"
+                                    + " while constructing the build project.");
+                        }
                         try {
+
                             theIterator = values.get().iterator();
                         } catch (InterruptedException | ExecutionException e) {
                             throw new BuildException().from(holding.provider())
