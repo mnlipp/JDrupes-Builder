@@ -43,7 +43,6 @@ import org.jdrupes.builder.api.ResourceFactory;
 import org.jdrupes.builder.api.ResourceRequest;
 import static org.jdrupes.builder.api.ResourceType.CleanlinessType;
 
-// TODO: Auto-generated Javadoc
 /// A provider that generates a [FileTree] from existing file trees.
 /// In general, copying file trees should be avoided. However, in some
 /// situations a resource provider and a consumer cannot be configured
