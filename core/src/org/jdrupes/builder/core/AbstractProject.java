@@ -157,6 +157,10 @@ public abstract class AbstractProject extends AbstractProvider
         "PMD.AvoidDeeplyNestedIfStmts", "PMD.CyclomaticComplexity",
         "PMD.UseLocaleWithCaseConversions", "PMD.CollapsibleIfStatements" })
     protected AbstractProject(NamedParameter<?>... params) {
+        // Evaluate name
+        projectName = NamedParameter.<String> get(params, "name",
+            () -> getClass().getSimpleName());
+
         // Evaluate parent project
         var parentProject = NamedParameter.<
                 Class<? extends Project>> get(params, "parent", null);
@@ -177,9 +181,7 @@ public abstract class AbstractProject extends AbstractProvider
             parent = (AbstractProject) project(parentProject);
         }
 
-        // Set name and directory, add fallback dependency
-        projectName = NamedParameter.<String> get(params, "name",
-            () -> getClass().getSimpleName());
+        // Set directory, add fallback dependency
         var directory = NamedParameter.<Path> get(params, "directory", null);
         if (directory == jdbldDirectory) { // NOPMD
             directory = context().jdbldDirectory();
@@ -427,11 +429,15 @@ public abstract class AbstractProject extends AbstractProvider
 
     @Override
     public String toString() {
-        var relDir = rootProject().directory().relativize(directory());
-        return "Project " + name()
-            + (relDir.toString().isBlank() || relDir.toString().equals(name())
-                ? ""
-                : (" (in " + relDir + ")"));
+        StringBuilder result = new StringBuilder();
+        result.append("Project ").append(name());
+        if (directory() != null) {
+            var relDir = rootProject().directory().relativize(directory());
+            if (!relDir.toString().equals(name())) {
+                result.append(" (in ").append(relDir).append(')');
+            }
+        }
+        return result.toString();
     }
 
 }
