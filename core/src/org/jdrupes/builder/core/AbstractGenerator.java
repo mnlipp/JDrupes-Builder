@@ -87,7 +87,7 @@ public abstract class AbstractGenerator extends AbstractProvider
     ///
     @Override
     public String toString() {
-        return super.toString() + "[" + project().name() + "]";
+        return super.toString() + "[" + project().nameWithDirectory() + "]";
     }
 
 }

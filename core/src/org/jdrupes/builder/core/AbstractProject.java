@@ -429,15 +429,7 @@ public abstract class AbstractProject extends AbstractProvider
 
     @Override
     public String toString() {
-        StringBuilder result = new StringBuilder();
-        result.append("Project ").append(name());
-        if (directory() != null) {
-            var relDir = rootProject().directory().relativize(directory());
-            if (!relDir.toString().equals(name())) {
-                result.append(" (in ").append(relDir).append(')');
-            }
-        }
-        return result.toString();
+        return "Project " + nameWithDirectory();
     }
 
 }

@@ -26,6 +26,7 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.function.Function;
 
+// TODO: Auto-generated Javadoc
 /// [Project]s are used to structure the build configuration. Every build
 /// configuration has a single root project and may contain sub-projects.
 /// The root project serves as the entry point for the build. Resources
@@ -226,6 +227,23 @@ public interface Project extends ResourceProvider {
     ///
     Path directory();
 
+    /// Returns the project's name and its directory in parentheses.
+    /// Appending the directory is omitted if it is the same as the name.
+    ///
+    /// @return the string
+    ///
+    default String nameWithDirectory() {
+        StringBuilder result = new StringBuilder(name());
+        if (directory() != null) {
+            var relDir = rootProject().directory().relativize(directory());
+            if (!relDir.toString().equals(name())) {
+                result.append(" (in ").append(relDir).append(')');
+            }
+        }
+        return result.toString();
+        
+    }
+    
     /// Returns the directory where the project's [Generator]s should
     /// create the artifacts. This is short for 
     /// `directory().resolve((Path) get(Properties.BuildDirectory))`.
