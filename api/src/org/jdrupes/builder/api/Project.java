@@ -236,7 +236,8 @@ public interface Project extends ResourceProvider {
         StringBuilder result = new StringBuilder(name());
         if (directory() != null) {
             var relDir = rootProject().directory().relativize(directory());
-            if (!relDir.toString().equals(name())) {
+            if (!relDir.toString().equals(name())
+                    && !relDir.toString().isEmpty()) {
                 result.append(" (in ").append(relDir).append(')');
             }
         }
