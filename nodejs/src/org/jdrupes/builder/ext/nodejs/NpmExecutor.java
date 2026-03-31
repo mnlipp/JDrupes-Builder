@@ -67,7 +67,7 @@ import org.jdrupes.builder.core.StreamCollector;
 ///     that indicates successful invocation. The date of the result is set
 ///     to the date of `node_modules/.package-lock.json`.
 /// 
-///   * The provider invokes the function configured with [#generated] and
+///   * The provider invokes the function configured with [#output] and
 ///     collects all resources. If the generated resources exist and no
 ///     resource from `required` is newer then the generated resources found,
 ///     the provider returns a result that indicates successful invocation.
@@ -78,7 +78,7 @@ import org.jdrupes.builder.core.StreamCollector;
 ///     `provided` again and adds the result to the [ExecResult] that
 ///     it returns.
 ///
-/// The provider also uses the function set with [#generated] to determine
+/// The provider also uses the function set with [#output] to determine
 /// the resources to be removed when it is invoked with a request for
 /// [Cleanliness].
 /// 
@@ -97,7 +97,7 @@ public class NpmExecutor extends AbstractProvider implements Renamable {
     private final List<String> arguments = new ArrayList<>();
     private final StreamCollector<Resource> requiredResources
         = new StreamCollector<>(false);
-    private Function<Project, Stream<Resource>> getProvided
+    private Function<Project, Stream<Resource>> getOutput
         = _ -> Stream.empty();
     private String nodeJsVersion;
     private NodeJsDownloader nodeJsDownloader;
@@ -193,9 +193,9 @@ public class NpmExecutor extends AbstractProvider implements Renamable {
     /// @param resources the resources
     /// @return the npm executor
     ///
-    public NpmExecutor generated(
+    public NpmExecutor output(
             Function<Project, Stream<Resource>> resources) {
-        this.getProvided = resources;
+        this.getOutput = resources;
         return this;
     }
 
@@ -217,7 +217,7 @@ public class NpmExecutor extends AbstractProvider implements Renamable {
     protected <T extends Resource> Stream<T>
             doProvide(ResourceRequest<T> request) {
         if (request.accepts(CleanlinessType)) {
-            getProvided.apply(project).forEach(Resource::cleanup);
+            getOutput.apply(project).forEach(Resource::cleanup);
             return Stream.empty();
         }
 
@@ -283,7 +283,7 @@ public class NpmExecutor extends AbstractProvider implements Renamable {
 
         // Get (previously) provided and check if up-to-date
         var existing = Resources.of(new ResourceType<Resources<Resource>>() {});
-        existing.addAll(getProvided.apply(project));
+        existing.addAll(getOutput.apply(project));
         if (required.asOf().isPresent() && existing.asOf().isPresent()
             && !required.asOf().get().isAfter(existing.asOf().get())) {
             logger.atFine().log("Output from %s is up to date", this);
@@ -320,7 +320,7 @@ public class NpmExecutor extends AbstractProvider implements Renamable {
             var result = (Stream<T>) Stream.of(ExecResult.of(this,
                 "[" + project.name() + "]$ npm "
                     + arguments.stream().collect(Collectors.joining(" ")),
-                exitValue, getProvided.apply(project))
+                exitValue, getOutput.apply(project))
                 .asOf(Instant.now()));
             return result;
         } catch (IOException | InterruptedException e) { // NOPMD
