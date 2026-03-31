@@ -20,6 +20,7 @@ package org.jdrupes.builder.core;
 
 import io.github.azagniotov.matcher.AntPathMatcher;
 import java.nio.file.Path;
+import java.util.Arrays;
 import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -393,17 +394,24 @@ public abstract class AbstractProject extends AbstractProvider
         }
     }
 
-    /// Provide the projects matching the given ant-style path pattern.
+    /// Provide the projects matching the given ant-style path patterns.
     ///
-    /// @param pattern the pattern
+    /// @param patterns the patterns
+    /// @param without the without
     /// @return the stream
-    /// @see RootProject#projects(String)
+    /// @see RootProject#projects(String[], String[])
     ///
-    public Stream<Project> projects(String pattern) {
+    @SuppressWarnings("PMD.UseVarargs")
+    public Stream<Project> projects(String[] patterns, String[] without) {
         return StreamSupport.stream(new ProjectTreeSpliterator(this), false)
-            .filter(p -> pathMatcher.isMatch(pattern,
-                rootProject().directory().relativize(p.directory())
-                    .toString()));
+            .filter(prj -> Arrays.stream(patterns)
+                .anyMatch(pattern -> pathMatcher.isMatch(pattern,
+                    rootProject().directory().relativize(prj.directory())
+                        .toString())))
+            .filter(prj -> !Arrays.stream(without)
+                .anyMatch(wo -> pathMatcher.isMatch(wo,
+                    rootProject().directory().relativize(prj.directory())
+                        .toString())));
     }
 
     @Override

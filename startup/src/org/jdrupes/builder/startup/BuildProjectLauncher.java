@@ -204,12 +204,14 @@ public class BuildProjectLauncher extends AbstractLauncher {
                     .println("Unknown command: " + resource);
                 throw new UnavailableException().from(rootProject);
             }
-            String pattern = cmdData.pattern();
+            String[] patterns = cmdData.patterns();
+            String[] without = cmdData.without();
             if (parts.length > 1) {
-                pattern = parts[0];
+                patterns = new String[] { parts[0] };
+                without = new String[0];
             }
             for (var req : cmdData.requests()) {
-                if (!resources(rootProject.projects(pattern), req)
+                if (!resources(rootProject.projects(patterns, without), req)
                     // eliminate duplicates
                     .collect(Collectors.toSet()).stream()
                     // output generated resources

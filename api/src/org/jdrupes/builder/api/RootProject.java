@@ -48,15 +48,30 @@ public interface RootProject extends Project, AutoCloseable {
         // Default does nothing
     }
 
-    /// Return the projects matching the pattern. The pattern is a glob
+    /// Return the projects matching the patterns. A pattern is a glob
     /// pattern applied to the project's directory. `""`matches the root
     /// project. `"*"` matches the root project and all immediate
     /// sub project. `"**"` matches all projects.
     ///
-    /// @param pattern the pattern
+    /// @param patterns the patterns
     /// @return the stream
     ///
-    Stream<Project> projects(String pattern);
+    default Stream<Project> projects(String... patterns) {
+        return projects(patterns, new String[0]);
+    }
+
+    /// Return the projects matching the patterns but not matching any
+    /// of the pattern in the `without` parameter. A pattern is a glob
+    /// pattern applied to the project's directory. `""`matches the root
+    /// project. `"*"` matches the root project and all immediate
+    /// sub project. `"**"` matches all projects.
+    ///
+    /// @param patterns the patterns
+    /// @param without patterns to exclude
+    /// @return the stream
+    ///
+    @SuppressWarnings("PMD.UseVarargs")
+    Stream<Project> projects(String[] patterns, String[] without);
 
     /// Define an alias for requesting one or more specific resources.
     ///
@@ -77,12 +92,20 @@ public interface RootProject extends Project, AutoCloseable {
     interface CommandBuilder {
 
         /// Apply the request(s) to the projects selected by the given
-        /// pattern instead of the root project.
+        /// patterns instead of the root project.
         ///
-        /// @param pattern the pattern
+        /// @param patterns the patterns
         /// @return the command builder
         ///
-        CommandBuilder projects(String pattern);
+        CommandBuilder projects(String... patterns);
+
+        /// Do not apply the request(s) to the projects selected by the
+        /// given patterns.
+        ///
+        /// @param patterns the patterns
+        /// @return the command builder
+        ///
+        CommandBuilder without(String... patterns);
 
         /// Apply the request(s) to the root project or the selected
         /// projects. The results from the request are written to the

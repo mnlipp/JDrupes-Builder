@@ -57,6 +57,8 @@ public abstract class AbstractRootProject extends AbstractProject
             .resources(of(Cleanliness.class).using(Supply, Consume));
     }
 
+    /// Close.
+    ///
     @Override
     public void close() {
         if (this instanceof RootProject) {
@@ -64,11 +66,20 @@ public abstract class AbstractRootProject extends AbstractProject
         }
     }
 
+    /// Root project.
+    ///
+    /// @return the root project
+    ///
     @Override
     public RootProject rootProject() {
         return this;
     }
 
+    /// Project.
+    ///
+    /// @param prjCls the prj cls
+    /// @return the project
+    ///
     @Override
     public Project project(Class<? extends Project> prjCls) {
         if (this.getClass().equals(prjCls)) {
@@ -109,6 +120,11 @@ public abstract class AbstractRootProject extends AbstractProject
         }
     }
 
+    /// Command alias.
+    ///
+    /// @param name the name
+    /// @return the root project. command builder
+    ///
     @Override
     public RootProject.CommandBuilder commandAlias(String name) {
         if (!(this instanceof RootProject)) {
@@ -123,7 +139,8 @@ public abstract class AbstractRootProject extends AbstractProject
     public class CommandBuilder implements RootProject.CommandBuilder {
         private final RootProject rootProject;
         private final String name;
-        private String projects = "";
+        private String[] projects = { "" };
+        private String[] without = {};
 
         /// Initializes a new command builder.
         ///
@@ -135,22 +152,20 @@ public abstract class AbstractRootProject extends AbstractProject
             this.name = name;
         }
 
-        /// Projects.
-        ///
-        /// @param projects the projects
-        /// @return the root project. command builder
-        ///
         @Override
-        public RootProject.CommandBuilder projects(String projects) {
+        @SuppressWarnings("PMD.ArrayIsStoredDirectly")
+        public RootProject.CommandBuilder projects(String... projects) {
             this.projects = projects;
             return this;
         }
 
-        /// Resources.
-        ///
-        /// @param requests the requests
-        /// @return the root project
-        ///
+        @Override
+        @SuppressWarnings("PMD.ArrayIsStoredDirectly")
+        public RootProject.CommandBuilder without(String... without) {
+            this.without = without;
+            return this;
+        }
+
         @Override
         public RootProject resources(ResourceRequest<?>... requests) {
             for (int i = 0; i < requests.length; i++) {
@@ -158,17 +173,18 @@ public abstract class AbstractRootProject extends AbstractProject
                     requests[i] = requests[i].usingAll();
                 }
             }
-            commands.put(name, new CommandData(projects, requests));
+            commands.put(name, new CommandData(projects, without, requests));
             return rootProject;
         }
     }
 
     /// The Record CommandData.
     ///
-    /// @param pattern the pattern
+    /// @param patterns the patterns
     /// @param requests the requests
     ///
-    public record CommandData(String pattern, ResourceRequest<?>... requests) {
+    public record CommandData(String[] patterns, String[] without,
+            ResourceRequest<?>[] requests) {
     }
 
     /// Lookup command.
@@ -178,7 +194,8 @@ public abstract class AbstractRootProject extends AbstractProject
     ///
     public CommandData lookupCommand(String name) {
         return commands.getOrDefault(name,
-            new CommandData("", new ResourceRequest[0]));
+            new CommandData(new String[] { "" }, new String[0],
+                new ResourceRequest[0]));
     }
 
 }
