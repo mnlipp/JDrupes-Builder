@@ -18,6 +18,8 @@
 
 package org.jdrupes.builder.api;
 
+import com.google.common.flogger.FluentLogger;
+import static com.google.common.flogger.StackSize.*;
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
 import java.lang.reflect.WildcardType;
@@ -41,6 +43,8 @@ import java.util.stream.Stream;
 /// @param <T> the resource type
 ///
 public class ResourceType<T extends Resource> {
+
+    private static final FluentLogger logger = FluentLogger.forEnclosingClass();
 
     /// Used to request cleanup.
     @SuppressWarnings({ "PMD.FieldNamingConventions",
@@ -89,6 +93,11 @@ public class ResourceType<T extends Resource> {
     @SuppressWarnings({ "unchecked", "PMD.AvoidDuplicateLiterals" })
     public ResourceType(Class<? extends Resource> type,
             ResourceType<?> containedType) {
+        if (Resources.class.isAssignableFrom(type) && containedType == null) {
+            logger.atWarning().withStackTrace(MEDIUM).log("Creating resource"
+                + " type for %s without information about contained type",
+                type);
+        }
         this.type = (Class<T>) type;
         this.containedType = containedType;
     }

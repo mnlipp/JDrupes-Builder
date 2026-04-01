@@ -1,6 +1,6 @@
 package jdbld;
 
-import static org.jdrupes.builder.api.Intent.Expose;
+import static org.jdrupes.builder.api.Intent.*;
 import org.jdrupes.builder.core.AbstractProject;
 import org.jdrupes.builder.java.JavaProject;
 import org.jdrupes.builder.mvnrepo.MvnRepoLookup;
@@ -11,6 +11,8 @@ public class Api extends AbstractProject implements JavaProject {
         super(name("api"));
         dependency(Expose, new MvnRepoLookup()
             .resolve("commons-cli:commons-cli:1.10.0"));
+        dependency(Consume, new MvnRepoLookup()
+            .resolve("com.google.flogger:flogger:0.9"));
     }
 
 }
