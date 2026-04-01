@@ -57,15 +57,12 @@ import static org.jdrupes.builder.mvnrepo.MvnRepoTypes.*;
 
 /// Depending on the request, this provider provides two types of resources.
 /// 
-///  1. The artifacts to be resolved as `Resources<MvnRepoDependency>`.
+///  1. The artifacts to be resolved as resources of type [MvnRepoDependency].
 ///     The artifacts to be resolved are those added with [resolve].
 ///     Note that the result also includes the [MvnRepoBom]s.
 ///
-///  2. The `CompilationResources<LibraryJarFile>` 
-///     or `RuntimeResources<LibraryJarFile>` (depending on the
-///     request) that result from resolving the artifacts to be resolved.
-///     The resources returned implement the additional marker interface
-///     `MvnRepoJarFile`.
+///  2. The resources of type [MvnRepoLibraryJarFile] that result from
+///     resolving the artifacts to be resolved.
 ///
 @SuppressWarnings("PMD.CouplingBetweenObjects")
 public class MvnRepoLookup extends AbstractProvider {
