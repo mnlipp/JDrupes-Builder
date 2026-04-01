@@ -323,7 +323,7 @@ public class NpmExecutor extends AbstractProvider implements Renamable {
                 exitValue, getOutput.apply(project))
                 .asOf(Instant.now()));
             return result;
-        } catch (IOException | InterruptedException e) { // NOPMD
+        } catch (IOException | InterruptedException e) {
             throw new BuildException().from(this).cause(e);
         }
     }
