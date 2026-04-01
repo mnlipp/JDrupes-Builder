@@ -27,6 +27,9 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.lang.ProcessBuilder.Redirect;
+import java.nio.file.Path;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
 import java.util.jar.Attributes;
@@ -36,12 +39,16 @@ import java.util.stream.Stream;
 import org.jdrupes.builder.api.BuildException;
 import org.jdrupes.builder.api.ConfigurationException;
 import org.jdrupes.builder.api.ExecResult;
+import org.jdrupes.builder.api.FileResource;
+import org.jdrupes.builder.api.FileTree;
 import org.jdrupes.builder.api.Project;
 import org.jdrupes.builder.api.Renamable;
+import org.jdrupes.builder.api.RequiredResourceSupport;
 import org.jdrupes.builder.api.Resource;
 import org.jdrupes.builder.api.ResourceProvider;
 import org.jdrupes.builder.api.ResourceRequest;
 import org.jdrupes.builder.api.ResourceRetriever;
+import org.jdrupes.builder.api.ResourceType;
 import static org.jdrupes.builder.api.ResourceType.*;
 import org.jdrupes.builder.api.Resources;
 import org.jdrupes.builder.core.AbstractProvider;
@@ -51,13 +58,16 @@ import static org.jdrupes.builder.java.JavaTypes.*;
 /// A provider for [execution results][ExecResult]s from invoking a JVM.
 ///
 public class JavaExecutor extends AbstractProvider
-        implements ResourceRetriever, Renamable {
+        implements ResourceRetriever, Renamable, RequiredResourceSupport {
 
     private static final FluentLogger logger = FluentLogger.forEnclosingClass();
     private final Project project;
+    private final StreamCollector<Resource> requiredResources
+        = new StreamCollector<>(false);
     private final StreamCollector<ResourceProvider> providers
         = StreamCollector.cached();
     private String mainClass;
+    private final List<String> arguments = new ArrayList<>();
 
     /// Initializes a new java executor.
     ///
@@ -74,8 +84,27 @@ public class JavaExecutor extends AbstractProvider
         return this;
     }
 
-    /// Additionally uses the given providers for obtaining contents for the
-    /// jar.
+    @Override
+    public JavaExecutor required(Stream<? extends Resource> resources) {
+        requiredResources.add(resources);
+        return this;
+    }
+
+    @Override
+    public JavaExecutor required(Path root, String pattern) {
+        requiredResources
+            .add(Stream.of(FileTree.of(project, root, pattern)));
+        return this;
+    }
+
+    @Override
+    public JavaExecutor required(Path root) {
+        requiredResources.add(
+            Stream.of(FileResource.of(project.directory().resolve(root))));
+        return this;
+    }
+
+    /// Additionally uses the given providers for building the classpath.
     ///
     /// @param providers the providers
     /// @return the jar generator
@@ -86,8 +115,7 @@ public class JavaExecutor extends AbstractProvider
         return this;
     }
 
-    /// Additionally uses the given providers for obtaining contents for the
-    /// jar.
+    /// Additionally uses the given providers for building the classpath.
     ///
     /// @param providers the providers
     /// @return the jar generator
@@ -116,6 +144,16 @@ public class JavaExecutor extends AbstractProvider
         return this;
     }
 
+    /// Add the given arguments.
+    ///
+    /// @param args the arguments
+    /// @return the npm executor
+    ///
+    public JavaExecutor args(String... args) {
+        arguments.addAll(Arrays.asList(args));
+        return this;
+    }
+
     @Override
     protected <T extends Resource> Stream<T>
             doProvide(ResourceRequest<T> requested) {
@@ -123,6 +161,10 @@ public class JavaExecutor extends AbstractProvider
             || requested.name().map(n -> !n.equals(name())).orElse(false)) {
             return Stream.empty();
         }
+
+        // Make sure that the required resources are retrieved and exist
+        var required = Resources.of(new ResourceType<Resources<Resource>>() {});
+        required.addAll(requiredResources.stream());
 
         // Collect the classpath and check mainClass.
         var cpResources = Resources.of(ClasspathType)
@@ -141,11 +183,12 @@ public class JavaExecutor extends AbstractProvider
         }
 
         // Build command
-        List<String> command = List.of(
+        List<String> command = new ArrayList<>(List.of(
             System.getProperty("java.home") + "/bin/java",
             "-cp", cpResources.stream().map(e -> e.toPath().toString())
                 .collect(Collectors.joining(File.pathSeparator)),
-            mainClass);
+            mainClass));
+        command.addAll(arguments);
 
         ProcessBuilder processBuilder = new ProcessBuilder(command);
         processBuilder.redirectInput(Redirect.INHERIT);

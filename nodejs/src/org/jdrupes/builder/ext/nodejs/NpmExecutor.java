@@ -40,6 +40,7 @@ import org.jdrupes.builder.api.FileResource;
 import org.jdrupes.builder.api.FileTree;
 import org.jdrupes.builder.api.Project;
 import org.jdrupes.builder.api.Renamable;
+import org.jdrupes.builder.api.RequiredResourceSupport;
 import org.jdrupes.builder.api.Resource;
 import org.jdrupes.builder.api.ResourceProvider;
 import org.jdrupes.builder.api.ResourceRequest;
@@ -90,7 +91,8 @@ import org.jdrupes.builder.core.StreamCollector;
 /// https://img.shields.io/maven-central/v/org.jdrupes/jdbld-ext-nodejs?label=org.jdrupes:jdbld-ext-nodejs%3A)
 /// ](https://mvnrepository.com/artifact/org.jdrupes/jdbld-ext-nodejs)
 ///
-public class NpmExecutor extends AbstractProvider implements Renamable {
+public class NpmExecutor extends AbstractProvider
+        implements Renamable, RequiredResourceSupport {
 
     private static final FluentLogger logger = FluentLogger.forEnclosingClass();
     private final Project project;
@@ -151,36 +153,20 @@ public class NpmExecutor extends AbstractProvider implements Renamable {
         return this;
     }
 
-    /// Add the given [Stream] of resources to the required resources.
-    ///
-    /// @param resources the resources
-    /// @return the npm executor
-    ///
+    @Override
     public NpmExecutor required(Stream<? extends Resource> resources) {
         requiredResources.add(resources);
         return this;
     }
 
-    /// Convenience method to add a [FileTree] to the required resources.
-    /// If `root` is a relative path, it is resolved against the project's
-    /// directory. 
-    ///
-    /// @param root the root
-    /// @param pattern the pattern
-    /// @return the npm executor
-    ///
+    @Override
     public NpmExecutor required(Path root, String pattern) {
         requiredResources
             .add(Stream.of(FileTree.of(project, root, pattern)));
         return this;
     }
 
-    /// Convenience method to add a [FileResource] to the required resources.
-    /// If `path` is relative, it is resolved against the project's directory. 
-    ///
-    /// @param root the root
-    /// @return the npm executor
-    ///
+    @Override
     public NpmExecutor required(Path root) {
         requiredResources.add(
             Stream.of(FileResource.of(project.directory().resolve(root))));
