@@ -68,7 +68,7 @@ public class JavaResourceFactory implements ResourceFactory {
         candidate = createNarrowed(type, JavaResourceTree.class,
             () -> new DefaultJavaResourceTree(
                 (ResourceType<? extends JavaResourceTree>) type,
-                project, (Path) args[0], (String) args[1]));
+                project, (Path) args[0], (String[]) args[1]));
         if (candidate.isPresent()) {
             return candidate;
         }

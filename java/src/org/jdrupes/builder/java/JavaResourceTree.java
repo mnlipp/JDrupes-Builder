@@ -42,6 +42,6 @@ public interface JavaResourceTree
     static JavaResourceTree of(Project project, Path directory,
             String pattern) {
         return ResourceFactory.create(JavaResourceTreeType, project, directory,
-            pattern);
+            new String[] { pattern });
     }
 }

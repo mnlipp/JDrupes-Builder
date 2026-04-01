@@ -282,7 +282,7 @@ public class FileTreeBuilder extends AbstractGenerator {
         }
 
         var result = ResourceFactory.create(request.type(), project(),
-            destination, "**/*");
+            destination, new String[] { "**/*" });
         return Stream.of(result);
     }
 
