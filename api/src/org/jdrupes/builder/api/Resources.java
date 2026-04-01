@@ -104,7 +104,7 @@ public interface Resources<T extends Resource> extends Resource {
     /// @return the resources container
     ///
     static <T extends Resource> Resources<T> with(ResourceType<T> type) {
-        return of(new ResourceType<>(Resources.class, type));
+        return of(ResourceType.resourceType(Resources.class, type));
     }
 
     /// Creates a new resource container with the specified container

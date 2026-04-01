@@ -85,13 +85,34 @@ public class ResourceType<T extends Resource> {
     private final Class<T> type;
     private final ResourceType<?> containedType;
 
-    /// Initializes a new resource type.
+    /// Creates a new resource type from the given type. The common
+    /// usage pattern is to import this method statically.
     ///
+    /// @param <T> the generic type
+    /// @param type the type
+    /// @return the resource type
+    ///
+    public static <T extends Resource> ResourceType<T>
+            resourceType(Class<T> type) {
+        return new ResourceType<>(type);
+    }
+
+    /// Creates a new resources type from the given values. The common
+    /// usage pattern is to import this method statically.
+    ///
+    /// @param <T> the generic type
     /// @param type the type
     /// @param containedType the contained type
+    /// @return the resource type
     ///
+    public static <T extends Resource> ResourceType<T> resourceType(
+            @SuppressWarnings("rawtypes") Class<? extends Resources> type,
+            ResourceType<?> containedType) {
+        return new ResourceType<>(type, containedType);
+    }
+
     @SuppressWarnings({ "unchecked", "PMD.AvoidDuplicateLiterals" })
-    public ResourceType(Class<? extends Resource> type,
+    private ResourceType(Class<? extends Resource> type,
             ResourceType<?> containedType) {
         if (Resources.class.isAssignableFrom(type) && containedType == null) {
             logger.atWarning().withStackTrace(MEDIUM).log("Creating resource"
@@ -115,18 +136,6 @@ public class ResourceType<T extends Resource> {
     public static <C extends Resources<E>, E extends Resource> ResourceType<C>
             create(Class<C> type, Class<E> elementType) {
         return new ResourceType<>(type, resourceType(elementType));
-    }
-
-    /// Creates a new resource type from the given type. The common
-    /// usage pattern is to import this method statically.
-    ///
-    /// @param <T> the generic type
-    /// @param type the type
-    /// @return the resource type
-    ///
-    public static <T extends Resource> ResourceType<T>
-            resourceType(Class<T> type) {
-        return new ResourceType<>(type, null);
     }
 
     @SuppressWarnings("unchecked")
@@ -159,6 +168,10 @@ public class ResourceType<T extends Resource> {
         // If type is not a parameterized type, its super or one of its
         // interfaces may be.
         this.type = (Class<T>) type;
+        if (!Resources.class.isAssignableFrom(this.type)) {
+            this.containedType = null;
+            return;
+        }
         this.containedType = Stream.concat(
             Optional.ofNullable(((Class<?>) type).getGenericSuperclass())
                 .stream(),
@@ -169,7 +182,8 @@ public class ResourceType<T extends Resource> {
             .map(t -> (ParameterizedType) t).findFirst()
             .map(t -> new ResourceType<>(Resources.class,
                 new ResourceType<>(t).containedType()))
-            .orElseGet(() -> new ResourceType<>(Resources.class, null))
+            .orElseGet(() -> new ResourceType<>(Resources.class,
+                resourceType(Resource.class)))
             .containedType();
     }
 

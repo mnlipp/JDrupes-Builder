@@ -73,6 +73,6 @@ public interface ResourceProvider {
     ///
     @SuppressWarnings("PMD.ShortMethodName")
     default <T extends Resource> ResourceRequest<T> of(Class<T> requested) {
-        return of(new ResourceType<>(requested, null));
+        return of(ResourceType.resourceType(requested));
     }
 }

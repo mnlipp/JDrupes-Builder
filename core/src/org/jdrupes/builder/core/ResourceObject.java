@@ -35,7 +35,7 @@ public abstract class ResourceObject implements Resource, Proxyable {
     /// Create a new instance.
     ///
     protected ResourceObject() {
-        this.type = new ResourceType<>(getClass(), null);
+        this.type = ResourceType.resourceType(getClass());
     }
 
     /// Create a new instance.
