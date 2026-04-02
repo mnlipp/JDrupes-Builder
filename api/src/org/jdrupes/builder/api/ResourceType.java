@@ -82,6 +82,11 @@ public class ResourceType<T extends Resource> {
     public static final ResourceType<ExecResult<?>> ExecResultType
         = new ResourceType<>() {};
 
+    /// The resource type for [ExecResult].
+    @SuppressWarnings("PMD.FieldNamingConventions")
+    public static final ResourceType<Resource> BaseResourceType
+        = new ResourceType<>() {};
+
     private final Class<T> type;
     private final ResourceType<?> containedType;
 
@@ -165,13 +170,17 @@ public class ResourceType<T extends Resource> {
             type = pType.getRawType();
         }
 
-        // If type is not a parameterized type, its super or one of its
-        // interfaces may be.
+        // If it isn't a container, we're done.
         this.type = (Class<T>) type;
         if (!Resources.class.isAssignableFrom(this.type)) {
             this.containedType = null;
             return;
         }
+
+        // If type is not a parameterized type, its super or one of its
+        // interfaces may be.
+        @SuppressWarnings("rawtypes")
+        final var rawBaseResourceType = (ResourceType) BaseResourceType;
         this.containedType = Stream.concat(
             Optional.ofNullable(((Class<?>) type).getGenericSuperclass())
                 .stream(),
@@ -180,11 +189,8 @@ public class ResourceType<T extends Resource> {
             .filter(t -> t instanceof ParameterizedType pType && Resources.class
                 .isAssignableFrom((Class<?>) pType.getRawType()))
             .map(t -> (ParameterizedType) t).findFirst()
-            .map(t -> new ResourceType<>(Resources.class,
-                new ResourceType<>(t).containedType()))
-            .orElseGet(() -> new ResourceType<>(Resources.class,
-                resourceType(Resource.class)))
-            .containedType();
+            .map(t -> new ResourceType<>(t).containedType())
+            .orElse(rawBaseResourceType);
     }
 
     /// Gets all interfaces that the given class implements,
