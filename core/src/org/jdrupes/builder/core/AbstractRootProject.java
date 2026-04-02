@@ -24,12 +24,12 @@ import java.util.Map;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 import org.jdrupes.builder.api.BuildException;
-import org.jdrupes.builder.api.Cleanliness;
 import org.jdrupes.builder.api.ConfigurationException;
 import static org.jdrupes.builder.api.Intent.*;
 import org.jdrupes.builder.api.NamedParameter;
 import org.jdrupes.builder.api.Project;
 import org.jdrupes.builder.api.ResourceRequest;
+import static org.jdrupes.builder.api.ResourceType.*;
 import org.jdrupes.builder.api.RootProject;
 
 /// The Class AbstractRootProject.
@@ -54,7 +54,7 @@ public abstract class AbstractRootProject extends AbstractProject
         projects = Collections.synchronizedMap(new HashMap<>());
         commands = new HashMap<>();
         commandAlias("clean").projects("**")
-            .resources(of(Cleanliness.class).using(Supply, Consume));
+            .resources(of(CleanlinessType).using(Supply, Consume));
     }
 
     /// Close.

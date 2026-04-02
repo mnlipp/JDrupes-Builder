@@ -22,6 +22,7 @@ import com.google.common.flogger.FluentLogger;
 import static com.google.common.flogger.StackSize.*;
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
+import java.lang.reflect.TypeVariable;
 import java.lang.reflect.WildcardType;
 import java.util.Arrays;
 import java.util.Objects;
@@ -46,9 +47,14 @@ public class ResourceType<T extends Resource> {
 
     private static final FluentLogger logger = FluentLogger.forEnclosingClass();
 
-    /// Used to request cleanup.
+    /// The resource type for [ExecResult].
     @SuppressWarnings({ "PMD.FieldNamingConventions",
         "PMD.AvoidDuplicateLiterals" })
+    public static final ResourceType<Resource> BaseResourceType
+        = new ResourceType<>() {};
+
+    /// Used to request cleanup.
+    @SuppressWarnings({ "PMD.FieldNamingConventions" })
     public static final ResourceType<
             Cleanliness> CleanlinessType = new ResourceType<>() {};
 
@@ -60,6 +66,11 @@ public class ResourceType<T extends Resource> {
     /// The resource type for [FileResource].
     @SuppressWarnings("PMD.FieldNamingConventions")
     public static final ResourceType<FileResource> FileResourceType
+        = new ResourceType<>() {};
+
+    /// The resource type for [FileTree]&lt;[FileResource]&gt;.
+    @SuppressWarnings("PMD.FieldNamingConventions")
+    public static final ResourceType<FileTree<FileResource>> BaseFileTreeType
         = new ResourceType<>() {};
 
     /// The resource type for [IOResource].
@@ -82,11 +93,6 @@ public class ResourceType<T extends Resource> {
     public static final ResourceType<ExecResult<?>> ExecResultType
         = new ResourceType<>() {};
 
-    /// The resource type for [ExecResult].
-    @SuppressWarnings("PMD.FieldNamingConventions")
-    public static final ResourceType<Resource> BaseResourceType
-        = new ResourceType<>() {};
-
     private final Class<T> type;
     private final ResourceType<?> containedType;
 
@@ -99,6 +105,10 @@ public class ResourceType<T extends Resource> {
     ///
     public static <T extends Resource> ResourceType<T>
             resourceType(Class<T> type) {
+        if (Resources.class.isAssignableFrom(type)) {
+            throw new IllegalArgumentException("Method resourceType may"
+                + " not be called with container type " + type);
+        }
         return new ResourceType<>(type);
     }
 
@@ -159,6 +169,12 @@ public class ResourceType<T extends Resource> {
                 containedType = new ResourceType<>(pArgType);
             } else {
                 var subType = pType.getActualTypeArguments()[0];
+                if (subType instanceof TypeVariable) {
+                    logger.atWarning().withStackTrace(MEDIUM).log(
+                        "Type contained in %s is unknown", type);
+                    containedType = BaseResourceType;
+                    return;
+                }
                 containedType = new ResourceType<>(subType);
             }
             return;
@@ -170,7 +186,6 @@ public class ResourceType<T extends Resource> {
             type = pType.getRawType();
         }
 
-        // If it isn't a container, we're done.
         this.type = (Class<T>) type;
         if (!Resources.class.isAssignableFrom(this.type)) {
             this.containedType = null;

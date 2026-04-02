@@ -101,7 +101,7 @@ when invoking the JDrupes Builder. This is illustrated by the following sample p
 code:
 ```java
         // Command arguments
-        commandAlias("build", of(AppJarFile.class).usingAll());
+        commandAlias("build", of(new ResourceType<AppJarFile>() {}).usingAll());
 ```
  
 Note that the command argument "`clean`" is predefined and can always

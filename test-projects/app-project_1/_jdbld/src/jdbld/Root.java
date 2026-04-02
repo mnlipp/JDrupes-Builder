@@ -6,17 +6,17 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
-
 import org.jdrupes.builder.api.BuildException;
 import org.jdrupes.builder.api.Project;
+import org.jdrupes.builder.api.ResourceType;
 import org.jdrupes.builder.api.RootProject;
 import org.jdrupes.builder.core.AbstractRootProject;
 import org.jdrupes.builder.eclipse.EclipseConfiguration;
 import org.jdrupes.builder.eclipse.EclipseConfigurator;
-import org.jdrupes.builder.java.JarFile;
 import org.jdrupes.builder.java.JavaCompiler;
 import org.jdrupes.builder.java.JavaProject;
 import org.jdrupes.builder.java.JavaResourceCollector;
+import static org.jdrupes.builder.java.JavaTypes.*;
 import org.jdrupes.builder.java.LibraryBuilder;
 
 public class Root extends AbstractRootProject {
@@ -29,8 +29,9 @@ public class Root extends AbstractRootProject {
 
     public Root() {
         super(name("app-project_1"));
-        commandAlias("build").resources(of(JarFile.class));
-        commandAlias("eclipse").resources(of(EclipseConfiguration.class));
+        commandAlias("build").resources(of(JarFileType));
+        commandAlias("eclipse")
+            .resources(of(new ResourceType<EclipseConfiguration>() {}));
     }
 
     private static void setupCommonGenerators(Project project) {

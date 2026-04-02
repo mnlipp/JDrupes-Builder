@@ -18,9 +18,10 @@ import org.jdrupes.builder.api.BuildException;
 import static org.jdrupes.builder.api.Intent.*;
 import org.jdrupes.builder.api.MergedTestProject;
 import org.jdrupes.builder.api.Project;
+import org.jdrupes.builder.api.ResourceType;
 import static org.jdrupes.builder.api.Project.Properties.Version;
+import static org.jdrupes.builder.api.ResourceType.*;
 import org.jdrupes.builder.api.RootProject;
-import org.jdrupes.builder.api.TestResult;
 import org.jdrupes.builder.core.AbstractRootProject;
 import org.jdrupes.builder.eclipse.EclipseConfiguration;
 import org.jdrupes.builder.eclipse.EclipseConfigurator;
@@ -29,19 +30,14 @@ import org.jdrupes.builder.java.JavaProject;
 import org.jdrupes.builder.java.JavaResourceCollector;
 import static org.jdrupes.builder.java.JavaTypes.*;
 import org.jdrupes.builder.java.Javadoc;
-import org.jdrupes.builder.java.JavadocDirectory;
-import org.jdrupes.builder.java.JavadocJarFile;
-import org.jdrupes.builder.java.LibraryJarFile;
-import org.jdrupes.builder.java.SourcesJarFile;
 import org.jdrupes.builder.junit.JUnitTestRunner;
 import org.jdrupes.builder.mvnrepo.JavadocJarBuilder;
 import static org.jdrupes.builder.mvnrepo.MvnProperties.*;
-import org.jdrupes.builder.mvnrepo.MvnPublication;
 import org.jdrupes.builder.mvnrepo.MvnPublisher;
 import org.jdrupes.builder.mvnrepo.MvnRepoLookup;
-import org.jdrupes.builder.mvnrepo.PomFile;
 import org.jdrupes.builder.mvnrepo.PomFileGenerator;
 import org.jdrupes.builder.mvnrepo.SourcesJarGenerator;
+import static org.jdrupes.builder.mvnrepo.MvnRepoTypes.*;
 import org.jdrupes.builder.uberjar.UberJarBuilder;
 import org.jdrupes.builder.vscode.VscodeConfiguration;
 import org.jdrupes.builder.vscode.VscodeConfigurator;
@@ -91,7 +87,7 @@ public class Root extends AbstractRootProject {
                 "org.slf4j:slf4j-api:2.0.17",
                 "org.slf4j:slf4j-jdk14:2.0.17"))
             .mainClass("org.jdrupes.builder.startup.BootstrapProjectLauncher")
-            .addEntries(resources(of(PomFile.class).using(Supply))
+            .addEntries(resources(of(PomFileType).using(Supply))
                 .map(pomFile -> Map.entry(Path.of("META-INF/maven")
                     .resolve((String) get(GroupId)).resolve(name())
                     .resolve("pom.xml"), pomFile)))
@@ -140,16 +136,18 @@ public class Root extends AbstractRootProject {
         generator(MvnPublisher::new);
 
         // Commands
-        commandAlias("build").resources(of(LibraryJarFile.class)
+        commandAlias("build").resources(of(LibraryJarFileType)
             .using(Supply, Forward), of(JavadocDirectoryType));
-        commandAlias("test").resources(of(TestResult.class));
-        commandAlias("sourcesJar").resources(of(SourcesJarFile.class));
-        commandAlias("javadoc").resources(of(JavadocDirectory.class));
-        commandAlias("javadocJar").resources(of(JavadocJarFile.class));
-        commandAlias("eclipse").resources(of(EclipseConfiguration.class));
-        commandAlias("vscode").resources(of(VscodeConfiguration.class));
-        commandAlias("pomFile").resources(of(PomFile.class));
-        commandAlias("mavenPublication").resources(of(MvnPublication.class));
+        commandAlias("test").resources(of(TestResultType));
+        commandAlias("sourcesJar").resources(of(SourcesJarFileType));
+        commandAlias("javadoc").resources(of(JavadocDirectoryType));
+        commandAlias("javadocJar").resources(of(JavadocJarFileType));
+        commandAlias("eclipse")
+            .resources(of(new ResourceType<EclipseConfiguration>() {}));
+        commandAlias("vscode")
+            .resources(of(new ResourceType<VscodeConfiguration>() {}));
+        commandAlias("pomFile").resources(of(PomFileType));
+        commandAlias("mavenPublication").resources(of(MvnPublicationType));
     }
 
     public static Consumer<Model> addCommonPomInfo() {

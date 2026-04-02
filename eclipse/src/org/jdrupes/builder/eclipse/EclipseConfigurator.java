@@ -49,7 +49,6 @@ import org.jdrupes.builder.core.AbstractGenerator;
 import org.jdrupes.builder.java.ClasspathElement;
 import org.jdrupes.builder.java.JavaCompiler;
 import org.jdrupes.builder.java.JavaProject;
-import org.jdrupes.builder.java.JavaResourceTree;
 import static org.jdrupes.builder.java.JavaTypes.*;
 import org.jdrupes.builder.java.LibraryJarFile;
 import org.w3c.dom.Document;
@@ -291,7 +290,8 @@ public class EclipseConfigurator extends AbstractGenerator {
                     .appendChild(doc.createElement("classpathentry"));
                 entry.setAttribute("kind", "src");
                 var referenced = p.resources(
-                    of(EclipseConfiguration.class).using(Supply, Expose))
+                    of(new ResourceType<EclipseConfiguration>() {})
+                        .using(Supply, Expose))
                     .filter(c -> c.projectName().equals(p.name())).findFirst()
                     .map(EclipseConfiguration::eclipseAlias).orElse(p.name());
                 entry.setAttribute("path", "/" + referenced);
@@ -304,13 +304,13 @@ public class EclipseConfigurator extends AbstractGenerator {
                     .appendChild(doc.createElement("attribute"));
                 attribute.setAttribute("without_test_code", "true");
                 providedByProject.addAll(
-                    p.resources(of(ClasspathElement.class)).toList());
+                    p.resources(of(ClasspathElementType)).toList());
             });
 
         // Add jars
         final Set<ClasspathElement> exposedByProject = new HashSet<>();
         exposedByProject.addAll(project()
-            .resources(of(ClasspathElement.class).using(Expose))
+            .resources(of(ClasspathElementType).using(Expose))
             .toList());
         project().resources(of(LibraryJarFileType)
             .using(Consume, Reveal, Expose))
@@ -373,7 +373,7 @@ public class EclipseConfigurator extends AbstractGenerator {
 
         // Add resources
         project.providers().without(Project.class).resources(
-            of(JavaResourceTree.class).using(Consume, Reveal, Supply))
+            of(JavaResourceTreeType).using(Consume, Reveal, Supply))
             .map(FileTree::root).filter(p -> p.toFile().canRead())
             .collect(Collectors.toSet()).stream()
             .map(project::relativize).forEach(p -> {
@@ -431,8 +431,8 @@ public class EclipseConfigurator extends AbstractGenerator {
         if (project instanceof MergedTestProject) {
             project.providers().without(project.parentProject().get()).filter(
                 p -> javaCompiler.map(jc -> !p.equals(jc)).orElse(true))
-                .resources(of(
-                    LibraryJarFile.class).using(Consume, Reveal, Expose))
+                .resources(
+                    of(LibraryJarFileType).using(Consume, Reveal, Expose))
                 .forEach(jf -> {
                     addJarFileEntry(doc, classpath, jf, false, true);
                 });

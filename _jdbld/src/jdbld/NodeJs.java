@@ -2,6 +2,7 @@ package jdbld;
 
 import static org.jdrupes.builder.api.Intent.*;
 import static org.jdrupes.builder.mvnrepo.MvnProperties.*;
+import static org.jdrupes.builder.mvnrepo.MvnRepoTypes.*;
 import java.nio.file.Path;
 import java.util.Map;
 import static org.jdrupes.builder.api.Project.Properties.Version;
@@ -13,7 +14,6 @@ import org.jdrupes.builder.java.LibraryBuilder;
 import org.jdrupes.builder.mvnrepo.JavadocJarBuilder;
 import org.jdrupes.builder.mvnrepo.MvnPublisher;
 import org.jdrupes.builder.mvnrepo.MvnRepoLookup;
-import org.jdrupes.builder.mvnrepo.PomFile;
 import org.jdrupes.builder.mvnrepo.PomFileGenerator;
 import org.jdrupes.builder.mvnrepo.SourcesJarGenerator;
 
@@ -27,7 +27,7 @@ public class NodeJs extends AbstractProject
         generator(PomFileGenerator::new).adaptPom(Root.addCommonPomInfo());
         generator(LibraryBuilder::new)
             .addFrom(providers().select(Supply))
-            .addEntries(resources(of(PomFile.class).using(Supply))
+            .addEntries(resources(of(PomFileType).using(Supply))
                 .map(pomFile -> Map.entry(Path.of("META-INF/maven")
                     .resolve((String) get(GroupId)).resolve(name())
                     .resolve("pom.xml"), pomFile)))

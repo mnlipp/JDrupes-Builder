@@ -255,7 +255,7 @@ public class Javadoc extends JavaTool {
 
         // Handle classpath
         var cpResources = Resources.of(ClasspathType).addAll(projects.stream()
-            .flatMap(p -> p.resources(of(ClasspathElement.class)
+            .flatMap(p -> p.resources(of(ClasspathElementType)
                 .using(Consume, Reveal, Expose))));
         logger.atFinest().log("Generating in %s with classpath %s", project(),
             lazy(() -> cpResources.stream().map(Resource::toString).toList()));

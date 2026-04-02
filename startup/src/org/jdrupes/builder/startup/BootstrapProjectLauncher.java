@@ -42,9 +42,9 @@ import org.jdrupes.builder.api.Project;
 import org.jdrupes.builder.api.RootProject;
 import org.jdrupes.builder.core.AbstractRootProject;
 import org.jdrupes.builder.core.DefaultBuildContext;
-import org.jdrupes.builder.java.ClasspathElement;
 import org.jdrupes.builder.java.ClasspathScanner;
 import org.jdrupes.builder.java.JavaCompiler;
+import static org.jdrupes.builder.java.JavaTypes.*;
 import org.jdrupes.builder.mvnrepo.MvnRepoLookup;
 
 /// An implementation of a [Launcher] that bootstraps the build.
@@ -137,7 +137,7 @@ public class BootstrapProjectLauncher extends AbstractLauncher {
                 .dependency(Expose, ClasspathScanner::new).path(extCp);
         }
         return rootProject.resources(rootProject
-            .of(ClasspathElement.class).using(Supply, Expose)).map(cpe -> {
+            .of(ClasspathElementType).using(Supply, Expose)).map(cpe -> {
                 try {
                     if (cpe instanceof FileTree tree) {
                         return tree.root().toFile().toURI().toURL();

@@ -64,15 +64,4 @@ public interface ResourceProvider {
     ///
     @SuppressWarnings("PMD.ShortMethodName")
     <T extends Resource> ResourceRequest<T> of(ResourceType<? extends T> type);
-
-    /// Create a new request for the given resource type.
-    ///
-    /// @param <T> the resource type
-    /// @param requested the requested
-    /// @return the resource request
-    ///
-    @SuppressWarnings("PMD.ShortMethodName")
-    default <T extends Resource> ResourceRequest<T> of(Class<T> requested) {
-        return of(ResourceType.resourceType(requested));
-    }
 }

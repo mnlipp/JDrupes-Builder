@@ -26,7 +26,7 @@ public class SimpleApp extends AbstractRootProject {
             .select(Supply)).mainClass("jdbld.demo.simpleapp.App");
 
         // Command arguments
-        commandAlias("build").resources(of(AppJarFile.class));
+        commandAlias("build").resources(of(new ResourceType<AppJarFile>() {})));
     }
 }
 ```

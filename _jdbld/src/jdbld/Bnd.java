@@ -15,7 +15,7 @@ import org.jdrupes.builder.java.LibraryBuilder;
 import org.jdrupes.builder.mvnrepo.JavadocJarBuilder;
 import org.jdrupes.builder.mvnrepo.MvnPublisher;
 import org.jdrupes.builder.mvnrepo.MvnRepoLookup;
-import org.jdrupes.builder.mvnrepo.PomFile;
+import static org.jdrupes.builder.mvnrepo.MvnRepoTypes.*;
 import org.jdrupes.builder.mvnrepo.PomFileGenerator;
 import org.jdrupes.builder.mvnrepo.SourcesJarGenerator;
 
@@ -29,7 +29,7 @@ public class Bnd extends AbstractProject
         generator(PomFileGenerator::new).adaptPom(Root.addCommonPomInfo());
         generator(LibraryBuilder::new)
             .addFrom(providers().select(Supply))
-            .addEntries(resources(of(PomFile.class).using(Supply))
+            .addEntries(resources(of(PomFileType).using(Supply))
                 .map(pomFile -> Map.entry(Path.of("META-INF/maven")
                     .resolve((String) get(GroupId)).resolve(name())
                     .resolve("pom.xml"), pomFile)))

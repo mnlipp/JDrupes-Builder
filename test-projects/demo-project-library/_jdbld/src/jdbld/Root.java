@@ -29,27 +29,25 @@ import org.apache.maven.model.Scm;
 import org.jdrupes.builder.api.BuildException;
 import org.jdrupes.builder.api.MergedTestProject;
 import org.jdrupes.builder.api.Project;
+import org.jdrupes.builder.api.ResourceType;
+import static org.jdrupes.builder.api.ResourceType.*;
 import org.jdrupes.builder.api.RootProject;
-import org.jdrupes.builder.api.TestResult;
 import org.jdrupes.builder.ext.bnd.BndAnalyzer;
 import org.jdrupes.builder.ext.bnd.BndBaselineEvaluation;
 import org.jdrupes.builder.core.AbstractRootProject;
 import org.jdrupes.builder.eclipse.EclipseConfiguration;
 import org.jdrupes.builder.eclipse.EclipseConfigurator;
-import org.jdrupes.builder.java.JarFile;
 import org.jdrupes.builder.java.JavaCompiler;
 import org.jdrupes.builder.java.JavaLibraryProject;
 import org.jdrupes.builder.java.JavaProject;
 import org.jdrupes.builder.java.JavaResourceCollector;
+import static org.jdrupes.builder.java.JavaTypes.*;
 import org.jdrupes.builder.java.LibraryBuilder;
-import org.jdrupes.builder.java.ManifestAttributes;
 import org.jdrupes.builder.junit.JUnitTestRunner;
 import org.jdrupes.builder.mvnrepo.MvnRepoLookup;
-import org.jdrupes.builder.mvnrepo.PomFile;
 import org.jdrupes.builder.mvnrepo.PomFileGenerator;
-
 import static org.jdrupes.builder.mvnrepo.MvnProperties.*;
-
+import static org.jdrupes.builder.mvnrepo.MvnRepoTypes.*;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -71,11 +69,13 @@ public class Root extends AbstractRootProject {
 
         // Commands
         commandAlias("build")
-            .resources(of(JarFile.class).using(Forward, Supply, Expose));
-        commandAlias("test").resources(of(TestResult.class));
-        commandAlias("pomFile").resources(of(PomFile.class));
-        commandAlias("eclipse").resources(of(EclipseConfiguration.class));
-        commandAlias("baseline").resources(of(BndBaselineEvaluation.class));
+            .resources(of(JarFileType).using(Forward, Supply, Expose));
+        commandAlias("test").resources(of(TestResultType));
+        commandAlias("pomFile").resources(of(PomFileType));
+        commandAlias("eclipse")
+            .resources(of(new ResourceType<EclipseConfiguration>() {}));
+        commandAlias("baseline")
+            .resources(of(new ResourceType<BndBaselineEvaluation>() {}));
     }
 
     private static void setupCommonGenerators(Project project) {
@@ -117,9 +117,9 @@ public class Root extends AbstractRootProject {
                     IMPLEMENTATION_VENDOR, "Michael N. Lipp (mnl@mnl.de)")
                     .entrySet().stream())
                 .addManifestAttributes(project.resources(
-                    project.of(ManifestAttributes.class).using(Consume)))
+                    project.of(ManifestAttributesType).using(Consume)))
                 .addEntries(project.resources(project
-                    .of(PomFile.class).using(Supply))
+                    .of(PomFileType).using(Supply))
                     .map(pomFile -> Map.entry(Path.of("META-INF/maven")
                         .resolve((String) project.get(GroupId))
                         .resolve(project.name())

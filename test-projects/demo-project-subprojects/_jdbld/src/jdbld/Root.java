@@ -27,15 +27,16 @@ import java.nio.file.StandardCopyOption;
 import org.jdrupes.builder.api.BuildException;
 import org.jdrupes.builder.api.MergedTestProject;
 import org.jdrupes.builder.api.Project;
+import org.jdrupes.builder.api.ResourceType;
 import org.jdrupes.builder.api.RootProject;
-import org.jdrupes.builder.api.TestResult;
+import static org.jdrupes.builder.api.ResourceType.*;
 import org.jdrupes.builder.core.AbstractRootProject;
 import org.jdrupes.builder.eclipse.EclipseConfiguration;
 import org.jdrupes.builder.eclipse.EclipseConfigurator;
-import org.jdrupes.builder.java.JarFile;
 import org.jdrupes.builder.java.JavaCompiler;
 import org.jdrupes.builder.java.JavaProject;
 import org.jdrupes.builder.java.JavaResourceCollector;
+import static org.jdrupes.builder.java.JavaTypes.*;
 import org.jdrupes.builder.junit.JUnitTestRunner;
 import org.jdrupes.builder.mvnrepo.MvnRepoLookup;
 import org.jdrupes.builder.uberjar.UberJarBuilder;
@@ -66,10 +67,12 @@ public class Root extends AbstractRootProject {
             .destination(buildDirectory().resolve(Path.of("app"))));
 
         // Define commands
-        commandAlias("build").resources(of(JarFile.class));
-        commandAlias("test").resources(of(TestResult.class));
-        commandAlias("eclipse").resources(of(EclipseConfiguration.class));
-        commandAlias("vscode").resources(of(VscodeConfiguration.class));
+        commandAlias("build").resources(of(JarFileType));
+        commandAlias("test").resources(of(TestResultType));
+        commandAlias("eclipse")
+            .resources(of(new ResourceType<EclipseConfiguration>() {}));
+        commandAlias("vscode")
+            .resources(of(new ResourceType<VscodeConfiguration>() {}));
     }
 
     public static void setupCommonGenerators(Project project) {

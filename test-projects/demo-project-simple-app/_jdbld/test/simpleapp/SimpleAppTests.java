@@ -9,13 +9,11 @@ import java.util.List;
 import java.util.jar.Attributes;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
-import org.jdrupes.builder.api.Cleanliness;
-import org.jdrupes.builder.api.ExecResult;
-
 import static org.jdrupes.builder.api.Intent.*;
+import static org.jdrupes.builder.api.ResourceType.*;
 import org.jdrupes.builder.api.Launcher;
-import org.jdrupes.builder.java.AppJarFile;
 import org.jdrupes.builder.java.JarFile;
+import static org.jdrupes.builder.java.JavaTypes.*;
 import org.jdrupes.builder.startup.BuildProjectLauncher;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
@@ -33,7 +31,7 @@ class SimpleAppTests {
             Thread.currentThread().getContextClassLoader(), buildRoot,
             new String[0]);
         launcher.resources(launcher.rootProject().projects("**"),
-            launcher.rootProject().of(Cleanliness.class).usingAll());
+            launcher.rootProject().of(CleanlinessType).usingAll());
     }
 
     @AfterAll
@@ -44,7 +42,7 @@ class SimpleAppTests {
     @Test
     public void testAppJar() throws IOException {
         var jars = launcher.resources(Stream.of(launcher.rootProject()),
-            launcher.rootProject().of(AppJarFile.class).using(Supply, Expose))
+            launcher.rootProject().of(AppJarFileType).using(Supply, Expose))
             .collect(Collectors.toSet());
         var paths = jars.stream().map(JarFile::path).toList();
         assertEquals(1, paths.stream().filter(p -> p.toString()
@@ -66,7 +64,7 @@ class SimpleAppTests {
     @Test
     public void testExec() {
         var execResults = launcher.resources(Stream.of(launcher.rootProject()),
-            launcher.rootProject().of(ExecResult.class).usingAll()).toList();
+            launcher.rootProject().of(ExecResultType).usingAll()).toList();
         assertEquals(1, execResults.size());
         var execResult = execResults.get(0);
         assertEquals(0, execResult.exitValue());

@@ -21,13 +21,13 @@ package jdbld;
 import static org.jdrupes.builder.api.Intent.*;
 
 import java.nio.file.Path;
-
-import org.jdrupes.builder.api.ExecResult;
+import org.jdrupes.builder.api.ResourceType;
+import static org.jdrupes.builder.api.ResourceType.*;
 import org.jdrupes.builder.core.AbstractRootProject;
 import org.jdrupes.builder.eclipse.EclipseConfiguration;
-import org.jdrupes.builder.java.AppJarFile;
 import org.jdrupes.builder.java.JavaCompiler;
 import org.jdrupes.builder.java.JavaExecutor;
+import static org.jdrupes.builder.java.JavaTypes.*;
 import org.jdrupes.builder.uberjar.UberJarBuilder;
 
 public class SimpleApp extends AbstractRootProject {
@@ -42,8 +42,9 @@ public class SimpleApp extends AbstractRootProject {
                 .select(Supply));
 
         // Command arguments
-        commandAlias("build").resources(of(AppJarFile.class));
-        commandAlias("run").resources(of(ExecResult.class));
-        commandAlias("eclipse").resources(of(EclipseConfiguration.class));
+        commandAlias("build").resources(of(AppJarFileType));
+        commandAlias("run").resources(of(ExecResultType));
+        commandAlias("eclipse")
+            .resources(of(new ResourceType<EclipseConfiguration>() {}));
     }
 }

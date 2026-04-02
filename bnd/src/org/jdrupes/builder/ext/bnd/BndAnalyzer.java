@@ -144,7 +144,7 @@ public class BndAnalyzer extends AbstractBndGenerator {
                 var jar = new aQute.bnd.osgi.Jar("dot")) {
             // Assemble bundle content
             var content = Resources.of(ClassTreesType).addAll(project()
-                .providers().resources(of(ClassTree.class).using(Supply)));
+                .providers().resources(of(ClassTreeType).using(Supply)));
             // A bnd ("better never document") Jar can actually be a
             // classfile tree, and several such "Jar"s can be merged.
             // IOException will be throw (.get()) and handled in the outer try

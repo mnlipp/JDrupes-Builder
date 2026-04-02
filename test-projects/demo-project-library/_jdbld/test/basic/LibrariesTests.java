@@ -13,10 +13,12 @@ import java.util.stream.Stream;
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
-import org.jdrupes.builder.api.Cleanliness;
 import org.jdrupes.builder.api.Launcher;
+import static org.jdrupes.builder.api.ResourceType.*;
 import org.jdrupes.builder.java.JarFile;
+import static org.jdrupes.builder.java.JavaTypes.*;
 import org.jdrupes.builder.mvnrepo.PomFile;
+import static org.jdrupes.builder.mvnrepo.MvnRepoTypes.*;
 import static org.junit.jupiter.api.Assertions.*;
 import org.jdrupes.builder.startup.BuildProjectLauncher;
 import org.junit.jupiter.api.AfterAll;
@@ -38,7 +40,7 @@ class LibrariesTests {
             Thread.currentThread().getContextClassLoader(), buildRoot,
             new String[0]);
         launcher.resources(launcher.rootProject().projects("**"),
-            launcher.rootProject().of(Cleanliness.class).usingAll());
+            launcher.rootProject().of(CleanlinessType).usingAll());
     }
 
     @AfterAll
@@ -49,7 +51,7 @@ class LibrariesTests {
     @Test
     public void testLibraries() throws IOException {
         var jars = launcher.resources(Stream.of(launcher.rootProject()),
-            launcher.rootProject().of(JarFile.class).usingAll())
+            launcher.rootProject().of(JarFileType).usingAll())
             .collect(Collectors.toSet());
         var paths = jars.stream().map(JarFile::path).toList();
         var apiLib = paths.stream().filter(p -> p.toString()
@@ -91,7 +93,7 @@ class LibrariesTests {
             throws IOException, ParserConfigurationException, SAXException {
         // Request POMs
         var poms = launcher.resources(Stream.of(launcher.rootProject()),
-            launcher.rootProject().of(PomFile.class).usingAll())
+            launcher.rootProject().of(PomFileType).usingAll())
             .collect(Collectors.toSet());
         var implPom = poms.stream().map(PomFile::path)
             .filter(p -> p.toString().contains("impl-pom.xml")).findAny();

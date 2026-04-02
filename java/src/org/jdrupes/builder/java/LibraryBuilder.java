@@ -138,10 +138,10 @@ public class LibraryBuilder extends JarBuilder
     protected void collectFromProviders(
             Map<Path, Resources<IOResource>> contents) {
         contentProviders().stream().map(
-            p -> p.resources(of(ClassTree.class).using(Supply)))
+            p -> p.resources(of(ClassTreeType).using(Supply)))
             .flatMap(s -> s).parallel().forEach(t -> collect(contents, t));
         contentProviders().stream().map(p -> p.resources(
-            of(JavaResourceTree.class).using(Supply)))
+            of(JavaResourceTreeType).using(Supply)))
             .flatMap(s -> s).parallel().forEach(t -> collect(contents, t));
     }
 

@@ -155,7 +155,7 @@ public class JUnitTestRunner extends AbstractGenerator {
                 .using(Consume, Reveal, Expose, Supply)));
         if (project() instanceof MergedTestProject) {
             cpResources.addAll(project().parentProject().get()
-                .resources(of(ClasspathElement.class).using(Consume,
+                .resources(of(ClasspathElementType).using(Consume,
                     Reveal, Expose, Supply)));
         }
         logger.atFiner().log("Testing in %s with classpath %s", project(),
