@@ -84,6 +84,10 @@ public class FutureStream<T extends Resource> {
                         () -> ((AbstractProvider) provider).toSpi()
                             .provide(request).toList());
             } finally {
+                logger.atFiner().log("Evaluated %s → %s", request,
+                    lazy(() -> provider + (initiallyCalledBy != null
+                        ? " requested by " + initiallyCalledBy
+                        : "")));
                 Thread.currentThread().setName(origThreadName);
             }
         });
