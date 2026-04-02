@@ -55,6 +55,8 @@ import org.jdrupes.builder.core.StreamCollector;
 /// [ExecResult] where the request's [ResourceRequest#name()] matches
 /// this [provider's name][ResourceProvider#name()].
 /// 
+///   * The working directory is the project directory.
+/// 
 ///   * The provider first checks if a file `package.json` exists, else it
 ///     fails. If no directory `node_modules` exists or `package.json`
 ///     is newer than `node_modules/.package-lock.json` it invokes `npm init`.

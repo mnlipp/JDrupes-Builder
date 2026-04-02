@@ -56,6 +56,8 @@ import org.jdrupes.builder.core.StreamCollector;
 import static org.jdrupes.builder.java.JavaTypes.*;
 
 /// A provider for [execution results][ExecResult]s from invoking a JVM.
+/// 
+/// The working directory is the project directory.
 ///
 public class JavaExecutor extends AbstractProvider
         implements ResourceRetriever, Renamable, RequiredResourceSupport {
@@ -189,9 +191,12 @@ public class JavaExecutor extends AbstractProvider
                 .collect(Collectors.joining(File.pathSeparator)),
             mainClass));
         command.addAll(arguments);
+        logger.atInfo().log("Executing %s",
+            command.stream().collect(Collectors.joining(" ")));
 
-        ProcessBuilder processBuilder = new ProcessBuilder(command);
-        processBuilder.redirectInput(Redirect.INHERIT);
+        ProcessBuilder processBuilder = new ProcessBuilder(command)
+            .directory(project.directory().toFile())
+            .redirectInput(Redirect.INHERIT);
         try {
             Process process = processBuilder.start();
             copyData(process.getInputStream(), context().out());
