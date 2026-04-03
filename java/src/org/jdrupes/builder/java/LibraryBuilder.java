@@ -166,9 +166,9 @@ public class LibraryBuilder extends JarBuilder
             return (Stream<T>) context()
                 .resources(this, project().of(AppJarFileType));
         }
-        if (mainClass() == null && !request.type().equals(JarFileType)) {
+        if (mainClass() == null && !request.type().equals(LibraryJarFileType)) {
             return (Stream<T>) context()
-                .resources(this, project().of(JarFileType));
+                .resources(this, project().of(LibraryJarFileType));
         }
 
         // Make sure mainClass is set for app jar
