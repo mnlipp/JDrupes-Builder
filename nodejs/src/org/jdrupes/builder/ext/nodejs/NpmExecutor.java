@@ -200,8 +200,7 @@ public class NpmExecutor extends AbstractProvider
     }
 
     @Override
-    @SuppressWarnings({ "PMD.CyclomaticComplexity", "PMD.CognitiveComplexity",
-        "PMD.NcssCount" })
+    @SuppressWarnings({ "PMD.CyclomaticComplexity" })
     protected <T extends Resource> Stream<T>
             doProvide(ResourceRequest<T> request) {
         if (request.accepts(CleanlinessType)) {
@@ -215,12 +214,8 @@ public class NpmExecutor extends AbstractProvider
             && (requestForGenerated.name().isEmpty()
                 || Objects.equals(requestForGenerated.name().get(),
                     request.name().orElse(null)))) {
-            // Always evaluate for most special type
-            if (!request.equals(requestForGenerated)) {
-                @SuppressWarnings({ "unchecked", "PMD.AvoidDuplicateLiterals" })
-                var result = (Stream<T>) resources(requestForGenerated);
-                return result;
-            }
+            // No need to evaluate for most special type because
+            // everything is derived from the exec result
             return provideGenerated();
         }
 
@@ -229,9 +224,9 @@ public class NpmExecutor extends AbstractProvider
             || !name().equals(request.name().orElse(null))) {
             return Stream.empty();
         }
-        // Always evaluate for most special type
+        // Always evaluate for the most special type
         if (!request.type().equals(ExecResultType)) {
-            @SuppressWarnings("unchecked")
+            @SuppressWarnings({ "unchecked", "PMD.AvoidDuplicateLiterals" })
             var result = (Stream<T>) resources(of(ExecResultType)
                 .withName(name()));
             return result;
