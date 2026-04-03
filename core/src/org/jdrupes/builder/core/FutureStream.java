@@ -28,6 +28,7 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Consumer;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 import org.jdrupes.builder.api.BuildException;
@@ -69,11 +70,13 @@ public class FutureStream<T extends Resource> {
         this.context = context;
         holding = new FutureStreamCache.Key<>(provider, request);
         initiallyCalledBy = caller.isBound() ? caller.get() : null;
-        logger.atFiner().log("%s starting (← %s)", this,
-            lazy(() -> provider + (initiallyCalledBy != null
-                ? " requested by " + initiallyCalledBy
-                : "")));
-        logger.atFinest().log("Call chain: %s", lazy(this::callChain));
+        logger.atFiner().log("%s starting (≪ %s)", this,
+            lazy(() -> initiallyCalledBy != null
+                ? "FutureStream#" + initiallyCalledBy.id
+                : "(unknown)"));
+        logger.atFinest().log("Call chain: %s", lazy(() -> callChain()
+            .stream().map(FutureStream::toString)
+            .collect(Collectors.joining(" ≪ "))));
         values = context.executor().submit(() -> {
             var origThreadName = Thread.currentThread().getName();
             try (var _ = context.executingFutureStreams().acquire();
@@ -98,7 +101,7 @@ public class FutureStream<T extends Resource> {
         List<FutureStream<?>> result = new LinkedList<>();
         FutureStream<?> cur = this;
         do {
-            result.add(0, cur);
+            result.add(cur);
             cur = cur.initiallyCalledBy;
         } while (cur != null);
         return result;
