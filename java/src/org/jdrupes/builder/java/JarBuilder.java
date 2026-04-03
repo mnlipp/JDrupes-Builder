@@ -417,6 +417,17 @@ public class JarBuilder extends AbstractGenerator {
             return Stream.empty();
         }
 
+        // Maybe only delete
+        if (requested.accepts(CleanlinessType)) {
+            destination().resolve(jarName()).toFile().delete();
+            return Stream.empty();
+        }
+
+        // Upgrade to most specific type to avoid duplicate generation
+        if (!requested.type().equals(jarType)) {
+            return (Stream<T>) context().resources(this, project().of(jarType));
+        }
+
         // Prepare jar file
         var destDir = destination();
         if (!destDir.toFile().exists()) {
@@ -426,17 +437,6 @@ public class JarBuilder extends AbstractGenerator {
             }
         }
         var jarResource = JarFile.of(jarType, destDir.resolve(jarName()));
-
-        // Maybe only delete
-        if (requested.accepts(CleanlinessType)) {
-            jarResource.cleanup();
-            return Stream.empty();
-        }
-
-        // Upgrade to most specific type to avoid duplicate generation
-        if (!requested.type().equals(jarType)) {
-            return (Stream<T>) context().resources(this, project().of(jarType));
-        }
 
         buildJar(jarResource);
         return Stream.of((T) jarResource);
