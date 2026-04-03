@@ -26,6 +26,7 @@ import java.util.List;
 import java.util.Spliterators;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Consumer;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
@@ -43,6 +44,8 @@ import org.jdrupes.builder.api.StatusLine;
 public class FutureStream<T extends Resource> {
 
     private static final FluentLogger logger = FluentLogger.forEnclosingClass();
+    @SuppressWarnings("PMD.FieldNamingConventions")
+    private static final AtomicInteger futureCount = new AtomicInteger(0);
     private final DefaultBuildContext context;
     @SuppressWarnings("PMD.FieldNamingConventions")
     private static final ScopedValue<FutureStream<?>> caller
@@ -53,6 +56,7 @@ public class FutureStream<T extends Resource> {
     private final FutureStream<?> initiallyCalledBy;
     private final FutureStreamCache.Key<?> holding;
     private final Future<List<T>> values;
+    private final int id = futureCount.getAndIncrement();
 
     /// Instantiates a new future stream of resources.
     ///
@@ -63,13 +67,13 @@ public class FutureStream<T extends Resource> {
     public FutureStream(DefaultBuildContext context,
             ResourceProvider provider, ResourceRequest<T> request) {
         this.context = context;
+        holding = new FutureStreamCache.Key<>(provider, request);
         initiallyCalledBy = caller.isBound() ? caller.get() : null;
-        logger.atFiner().log("Evaluating %s → %s", request,
+        logger.atFiner().log("%s evaluating %s (← %s)", this, request,
             lazy(() -> provider + (initiallyCalledBy != null
                 ? " requested by " + initiallyCalledBy
                 : "")));
         logger.atFinest().log("Call chain: %s", lazy(this::callChain));
-        holding = new FutureStreamCache.Key<>(provider, request);
         values = context.executor().submit(() -> {
             var origThreadName = Thread.currentThread().getName();
             try (var _ = context.executingFutureStreams().acquire();
@@ -84,7 +88,7 @@ public class FutureStream<T extends Resource> {
                         () -> ((AbstractProvider) provider).toSpi()
                             .provide(request).toList());
             } finally {
-                logger.atFiner().log("Evaluated %s → %s", request,
+                logger.atFiner().log("%s evaluated %s (← %s)", this, request,
                     lazy(() -> provider + (initiallyCalledBy != null
                         ? " requested by " + initiallyCalledBy
                         : "")));
@@ -151,7 +155,7 @@ public class FutureStream<T extends Resource> {
 
     @Override
     public String toString() {
-        return "FutureStream [" + holding.request() + " → "
+        return "FutureStream#" + id + " [" + holding.request() + " → "
             + holding.provider() + "]";
     }
 
