@@ -69,7 +69,7 @@ public class FutureStream<T extends Resource> {
         this.context = context;
         holding = new FutureStreamCache.Key<>(provider, request);
         initiallyCalledBy = caller.isBound() ? caller.get() : null;
-        logger.atFiner().log("%s evaluating %s (← %s)", this, request,
+        logger.atFiner().log("%s starting (← %s)", this,
             lazy(() -> provider + (initiallyCalledBy != null
                 ? " requested by " + initiallyCalledBy
                 : "")));
@@ -88,10 +88,7 @@ public class FutureStream<T extends Resource> {
                         () -> ((AbstractProvider) provider).toSpi()
                             .provide(request).toList());
             } finally {
-                logger.atFiner().log("%s evaluated %s (← %s)", this, request,
-                    lazy(() -> provider + (initiallyCalledBy != null
-                        ? " requested by " + initiallyCalledBy
-                        : "")));
+                logger.atFiner().log("%s terminated", this);
                 Thread.currentThread().setName(origThreadName);
             }
         });
@@ -155,8 +152,8 @@ public class FutureStream<T extends Resource> {
 
     @Override
     public String toString() {
-        return "FutureStream#" + id + " [" + holding.request() + " → "
-            + holding.provider() + "]";
+        return "FutureStream#" + id + " [" + holding.provider() + " ← "
+            + holding.request() + "]";
     }
 
 }
