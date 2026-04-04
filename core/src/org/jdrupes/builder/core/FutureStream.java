@@ -26,6 +26,8 @@ import java.util.List;
 import java.util.Spliterators;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
@@ -126,8 +128,7 @@ public class FutureStream<T extends Resource> {
                                     + " while constructing the build project.");
                         }
                         try {
-
-                            theIterator = values.get().iterator();
+                            theIterator = supervisedGet().iterator();
                         } catch (InterruptedException | ExecutionException e) {
                             throw new BuildException().from(holding.provider())
                                 .cause(e);
@@ -151,6 +152,18 @@ public class FutureStream<T extends Resource> {
                 }
 
             }, false);
+    }
+
+    private List<T> supervisedGet()
+            throws InterruptedException, ExecutionException {
+        while (true) {
+            try {
+                return values.get(15, TimeUnit.SECONDS);
+            } catch (TimeoutException e) {
+                logger.atFine().log("Still evaluating: %s ← %s",
+                    holding.provider(), holding.request());
+            }
+        }
     }
 
     @Override
