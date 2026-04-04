@@ -160,8 +160,7 @@ public class FutureStream<T extends Resource> {
             try {
                 return values.get(15, TimeUnit.SECONDS);
             } catch (TimeoutException e) {
-                logger.atFine().log("Still evaluating: %s ← %s",
-                    holding.provider(), holding.request());
+                logger.atFine().log("Still evaluating: %s", this);
             }
         }
     }
