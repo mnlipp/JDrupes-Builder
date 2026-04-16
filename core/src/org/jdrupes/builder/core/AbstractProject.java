@@ -299,7 +299,7 @@ public abstract class AbstractProject extends AbstractProvider
         if (!providersUnlocked) {
             throw new BuildException().message(
                 "Attempt to access dependencies of %s while"
-                    + " executing its constructor.",
+                    + " invocation its constructor.",
                 this);
         }
         return providers.entrySet().stream()
