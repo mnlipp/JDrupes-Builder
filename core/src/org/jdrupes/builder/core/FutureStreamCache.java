@@ -23,25 +23,13 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Function;
 import org.jdrupes.builder.api.Resource;
 import org.jdrupes.builder.api.ResourceProvider;
-import org.jdrupes.builder.api.ResourceRequest;
 
 /// An implementation of a cache for [FutureStream]s.
 ///
 public class FutureStreamCache {
 
-    private final Map<Key<? extends Resource>,
+    private final Map<ProviderInvocation<? extends Resource>,
             FutureStream<? extends Resource>> cache = new ConcurrentHashMap<>();
-
-    /// Provided resources are identified by the [ResourceProvider]
-    /// and the requested [Resource].
-    ///
-    /// @param <T> the generic type
-    /// @param provider the provider
-    /// @param request the requested resources
-    ///
-    public record Key<T extends Resource>(ResourceProvider provider,
-            ResourceRequest<T> request) {
-    }
 
     /// Instantiates a new future stream cache.
     ///
@@ -57,12 +45,12 @@ public class FutureStreamCache {
     /// @return the future stream
     ///
     @SuppressWarnings("unchecked")
-    public <T extends Resource> FutureStream<T> computeIfAbsent(Key<T> key,
-            Function<Key<T>, FutureStream<T>> supplier) {
+    public <T extends Resource> FutureStream<T> computeIfAbsent(ProviderInvocation<T> key,
+            Function<ProviderInvocation<T>, FutureStream<T>> supplier) {
         // This is actually type-safe, because the methods for entering
         // key value pairs allow only values typed according to the casts
         return (FutureStream<T>) cache.computeIfAbsent(key,
-            (Function<Key<? extends Resource>,
+            (Function<ProviderInvocation<? extends Resource>,
                     FutureStream<? extends Resource>>) (Object) supplier);
     }
 

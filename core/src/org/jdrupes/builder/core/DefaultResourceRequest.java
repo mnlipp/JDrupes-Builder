@@ -18,14 +18,12 @@
 
 package org.jdrupes.builder.core;
 
-import java.util.Arrays;
 import java.util.EnumSet;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 import org.jdrupes.builder.api.Intent;
-import org.jdrupes.builder.api.Project;
 import org.jdrupes.builder.api.Resource;
 import org.jdrupes.builder.api.ResourceRequest;
 import org.jdrupes.builder.api.ResourceType;
@@ -38,7 +36,6 @@ public class DefaultResourceRequest<T extends Resource>
         implements ResourceRequest<T> {
 
     private final ResourceType<? extends T> type;
-    private Project[] queried;
     private Set<Intent> uses;
     private String name;
 
@@ -49,7 +46,6 @@ public class DefaultResourceRequest<T extends Resource>
     /* default */ DefaultResourceRequest(ResourceType<? extends T> type) {
         this.type = Objects.requireNonNull(type);
         uses = EnumSet.noneOf(Intent.class);
-        queried = new Project[0];
     }
 
     @Override
@@ -102,19 +98,6 @@ public class DefaultResourceRequest<T extends Resource>
         return type.isAssignableFrom(this.type);
     }
 
-    @SuppressWarnings("PMD.MethodReturnsInternalArray")
-    /* default */ Project[] queried() {
-        return queried;
-    }
-
-    /* default */ DefaultResourceRequest<T> queried(Project project) {
-        var newQueried = Arrays.copyOf(queried, queried.length + 1);
-        newQueried[newQueried.length - 1] = Objects.requireNonNull(project);
-        var result = clone();
-        result.queried = newQueried;
-        return result;
-    }
-
     @Override
     public int hashCode() {
         return Objects.hash(type, name, uses);
@@ -135,6 +118,21 @@ public class DefaultResourceRequest<T extends Resource>
         return Objects.equals(type, other.type)
             && Objects.equals(name, other.name)
             && Objects.equals(uses, other.uses);
+    }
+
+    /// Short version of [toString], returns the requested resource type
+    /// with usage intents.
+    ///
+    /// @return the string
+    ///
+    public String toRequestedString() {
+        StringBuilder result = new StringBuilder(20);
+        result.append(type).append(name().map(n -> ":" + n).orElse(""));
+        if (!uses().isEmpty()) {
+            result.append(" [").append(uses().stream().map(Intent::toString)
+                .collect(Collectors.joining(", "))).append(']');
+        }
+        return result.toString();
     }
 
     @Override

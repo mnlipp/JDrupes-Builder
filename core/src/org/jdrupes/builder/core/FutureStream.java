@@ -21,13 +21,10 @@ package org.jdrupes.builder.core;
 import com.google.common.flogger.FluentLogger;
 import static com.google.common.flogger.LazyArgs.*;
 import java.util.Iterator;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.Spliterators;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
@@ -36,8 +33,6 @@ import java.util.stream.StreamSupport;
 import org.jdrupes.builder.api.BuildException;
 import org.jdrupes.builder.api.ConfigurationException;
 import org.jdrupes.builder.api.Resource;
-import org.jdrupes.builder.api.ResourceProvider;
-import org.jdrupes.builder.api.ResourceRequest;
 import org.jdrupes.builder.api.StatusLine;
 
 /// Evaluate the stream from a provider asynchronously.
@@ -56,30 +51,33 @@ public class FutureStream<T extends Resource> {
     /* default */@SuppressWarnings("PMD.FieldNamingConventions")
     static final ScopedValue<StatusLine> statusLine
         = ScopedValue.newInstance(); // <T>
-    private final FutureStream<?> initiallyCalledBy;
-    private final FutureStreamCache.Key<?> holding;
+    private final ProviderInvocation<?> requestedBy;
+    private final ProviderInvocation<?> invocation;
     private final Future<List<T>> values;
     private final int id = futureCount.getAndIncrement();
+
+    static {
+        ScopedValueInheritance.add(statusLine);
+    }
 
     /// Instantiates a new future stream of resources.
     ///
     /// @param context the context
-    /// @param provider the provider
-    /// @param request the requested
+    /// @param invocation the invocation
     ///
-    public FutureStream(DefaultBuildContext context,
-            ResourceProvider provider, ResourceRequest<T> request) {
+    public FutureStream(
+            DefaultBuildContext context, ProviderInvocation<T> invocation) {
         this.context = context;
-        holding = new FutureStreamCache.Key<>(provider, request);
-        initiallyCalledBy = caller.isBound() ? caller.get() : null;
+        this.invocation = invocation;
+        requestedBy = context.callChainEnd().previous().invocation();
         logger.atFiner().log("%s starting (≪ %s)", this,
-            lazy(() -> initiallyCalledBy != null
-                ? "FutureStream#" + initiallyCalledBy.id
-                : "(unknown)"));
-        logger.atFinest().log("Call chain: %s", lazy(() -> callChain()
-            .stream().map(FutureStream::toString)
+            lazy(() -> requestedBy != null ? requestedBy : "(unknown)"));
+        logger.atFinest().log("Call chain: %s", lazy(() -> context.callChain()
+            .stream().map(ProviderInvocation::toString)
             .collect(Collectors.joining(" ≪ "))));
-        values = context.executor().submit(() -> {
+        final var provider = invocation.provider();
+        final var request = invocation.request();
+        values = ScopedValueInheritance.submitTo(context.executor(), () -> {
             var origThreadName = Thread.currentThread().getName();
             try (var _ = context.executingFutureStreams().acquire();
                     var statusLine = context.console().statusLine()) {
@@ -88,7 +86,8 @@ public class FutureStream<T extends Resource> {
                 // Wait for the build-project to be fully constructed
                 context.buildProject().get();
                 statusLine.update(provider + " evaluating " + request);
-                return context.inScopeForProviderCall().where(caller, this)
+                return context.inScopeForProviderCall()
+                    .where(caller, this)
                     .where(FutureStream.statusLine, statusLine).call(
                         () -> ((AbstractProvider) provider).toSpi()
                             .provide(request).toList());
@@ -97,16 +96,6 @@ public class FutureStream<T extends Resource> {
                 Thread.currentThread().setName(origThreadName);
             }
         });
-    }
-
-    private List<FutureStream<?>> callChain() {
-        List<FutureStream<?>> result = new LinkedList<>();
-        FutureStream<?> cur = this;
-        do {
-            result.add(cur);
-            cur = cur.initiallyCalledBy;
-        } while (cur != null);
-        return result;
     }
 
     /// Returns the lazily evaluated stream of resources.
@@ -123,14 +112,15 @@ public class FutureStream<T extends Resource> {
                     if (theIterator == null) {
                         if (!context.buildProject().isDone()) {
                             throw new ConfigurationException()
-                                .from(holding.provider())
+                                .from(invocation.provider())
                                 .message("Attempt to terminate resource stream"
                                     + " while constructing the build project.");
                         }
                         try {
-                            theIterator = supervisedGet().iterator();
+                            theIterator = values.get().iterator();
                         } catch (InterruptedException | ExecutionException e) {
-                            throw new BuildException().from(holding.provider())
+                            throw new BuildException()
+                                .from(invocation.provider())
                                 .cause(e);
                         }
                     }
@@ -154,21 +144,10 @@ public class FutureStream<T extends Resource> {
             }, false);
     }
 
-    private List<T> supervisedGet()
-            throws InterruptedException, ExecutionException {
-        while (true) {
-            try {
-                return values.get(15, TimeUnit.SECONDS);
-            } catch (TimeoutException e) {
-                logger.atFine().log("Still evaluating: %s", this);
-            }
-        }
-    }
-
     @Override
     public String toString() {
-        return "FutureStream#" + id + " [" + holding.provider() + " ← "
-            + holding.request() + "]";
+        return "FutureStream#" + id + " [" + invocation.provider() + " ← "
+            + invocation.request() + "]";
     }
 
 }

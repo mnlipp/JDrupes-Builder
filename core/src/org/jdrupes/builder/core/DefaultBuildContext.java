@@ -20,16 +20,19 @@ package org.jdrupes.builder.core;
 
 import java.io.PrintStream;
 import java.nio.file.Path;
-import java.util.Arrays;
 import java.util.EnumSet;
+import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.Properties;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import org.apache.commons.cli.CommandLine;
 import org.jdrupes.builder.api.BuildContext;
@@ -42,11 +45,11 @@ import org.jdrupes.builder.api.ResourceRequest;
 import static org.jdrupes.builder.api.ResourceType.CleanlinessType;
 import org.jdrupes.builder.api.RootProject;
 import org.jdrupes.builder.api.StatusLine;
-import org.jdrupes.builder.core.FutureStreamCache.Key;
 import org.jdrupes.builder.core.console.SplitConsole;
 
 /// A context for building.
 ///
+@SuppressWarnings({ "PMD.CouplingBetweenObjects", "PMD.TooManyMethods" })
 public class DefaultBuildContext implements BuildContext {
 
     @SuppressWarnings("PMD.FieldNamingConventions")
@@ -66,6 +69,24 @@ public class DefaultBuildContext implements BuildContext {
             DefaultBuildContext> scopedBuildContext = ScopedValue.newInstance();
     private final CompletableFuture<AbstractRootProject> buildProject
         = new CompletableFuture<>();
+    @SuppressWarnings("PMD.FieldNamingConventions")
+    private static final ScopedValue<CallChainLink> callChainEnd
+        = ScopedValue.newInstance();
+    private final Map<ProviderInvocation<?>, CallChainLink> callChains
+        = new ConcurrentHashMap<>();
+
+    static {
+        ScopedValueInheritance.add(callChainEnd);
+    }
+
+    /// A link in the call chain.
+    ///
+    /// @param previous the previous
+    /// @param invocation the invocation
+    ///
+    public record CallChainLink(CallChainLink previous,
+            ProviderInvocation<?> invocation) {
+    }
 
     /// Instantiates a new default build. By default, the build uses
     /// a virtual thread per task executor.
@@ -173,37 +194,46 @@ public class DefaultBuildContext implements BuildContext {
 
     @Override
     public <T extends Resource> Stream<T> resources(ResourceProvider provider,
-            ResourceRequest<T> requested) {
+            ResourceRequest<T> request) {
+        // Normalize request, non-project providers don't get intends
+        var invocation = new ProviderInvocation<>(provider,
+            provider instanceof Project || request.uses().isEmpty() ? request
+                : request.using(EnumSet.noneOf(Intent.class)));
         return ScopedValue.where(scopedBuildContext, this)
             .where(providerInvocationAllowed, new AtomicBoolean(true))
-            .call(() -> inResourcesContext(provider, requested));
+            .where(callChainEnd, new CallChainLink(
+                callChainEnd.isBound() ? callChainEnd.get()
+                    : new CallChainLink(null, ProviderInvocation.LAUNCH),
+                invocation))
+            .call(() -> inResourcesContext(invocation));
     }
 
-    @SuppressWarnings("PMD.AvoidSynchronizedStatement")
+    @SuppressWarnings({ "PMD.AvoidSynchronizedStatement",
+        "PMD.AvoidInstantiatingObjectsInLoops" })
     private <T extends Resource> Stream<T> inResourcesContext(
-            ResourceProvider provider, ResourceRequest<T> requested) {
-        if (provider instanceof Project project) {
-            var defReq = (DefaultResourceRequest<T>) requested;
-            if (Arrays.asList(defReq.queried()).contains(provider)) {
-                return Stream.empty();
+            ProviderInvocation<T> invocation) {
+        var prev = callChainEnd.get().previous;
+        while (prev != null) {
+            if (invocation.equals(prev.invocation())) {
+                throw new BuildException().message("Request loop: %s",
+                    callChain().stream().map(ProviderInvocation::toString)
+                        .collect(Collectors.joining(" ≪ ")));
             }
-            // Log invocation with request
-            var req = defReq.queried(project);
+            prev = prev.previous;
+        }
+        callChains.put(invocation, callChainEnd.get());
+        if (invocation.provider() instanceof Project) {
             // As a project's provide only delegates to other providers
             // it is inefficient to invoke it asynchronously. Besides, it
             // leads to recursive invocations of the project's deploy
             // method too easily and results in a loop detection without
             // there really being a loop.
-            return ((AbstractProvider) provider).toSpi().provide(req);
+            return ((AbstractProvider) invocation.provider()).toSpi()
+                .provide(invocation.request());
         }
-        var req = requested;
-        if (!req.uses().isEmpty()) {
-            req = requested.using(EnumSet.noneOf(Intent.class));
-        }
-        if (!requested.type().equals(CleanlinessType)) {
-            return cache.computeIfAbsent(new Key<>(provider, req),
-                k -> new FutureStream<T>(this, k.provider(), k.request()))
-                .stream();
+        if (!invocation.request().type().equals(CleanlinessType)) {
+            return cache.computeIfAbsent(
+                invocation, k -> new FutureStream<T>(this, k)).stream();
         }
 
         // Special handling for cleanliness. Clean one by one...
@@ -215,9 +245,39 @@ public class DefaultBuildContext implements BuildContext {
                 throw new BuildException().cause(e);
             }
         }
-        var result = ((AbstractProvider) provider).toSpi().provide(requested);
+        var result = ((AbstractProvider) invocation.provider()).toSpi()
+            .provide(invocation.request());
         // Purge cached results from provider
-        cache.purge(provider);
+        cache.purge(invocation.provider());
+        return result;
+    }
+
+    /// Returns the end of the current call chain.
+    ///
+    /// @return the call chain link
+    ///
+    /* default */ CallChainLink callChainEnd() {
+        return callChainEnd.isBound() ? callChainEnd.get() : null;
+    }
+
+    /* default */ List<ProviderInvocation<?>> callChain() {
+        var cur = callChainEnd();
+        List<ProviderInvocation<?>> result = new LinkedList<>();
+        while (cur != null) {
+            result.add(cur.invocation);
+            cur = cur.previous;
+        }
+        return result;
+    }
+
+    /* default */ List<ProviderInvocation<?>>
+            callChain(ProviderInvocation<?> running) {
+        var cur = callChains.get(running);
+        List<ProviderInvocation<?>> result = new LinkedList<>();
+        while (cur != null) {
+            result.add(cur.invocation);
+            cur = cur.previous;
+        }
         return result;
     }
 
