@@ -248,7 +248,7 @@ public class JUnitTestRunner extends AbstractGenerator {
             return;
         }
 
-        // Find initial exception
+        // Find INITIAL exception
         Throwable thrown = result.getThrowable().get();
         while (thrown.getCause() != null) {
             thrown = thrown.getCause();
