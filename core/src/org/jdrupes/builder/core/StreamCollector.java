@@ -54,14 +54,19 @@ public class StreamCollector<T> {
     /// @param sources the sources
     /// @return the stream collector
     ///
-    @SuppressWarnings("unchecked")
+    @SuppressWarnings({ "unchecked", "PMD.AvoidSynchronizedStatement",
+        "PMD.CloseResource" })
     @SafeVarargs
     public final StreamCollector<T> add(Stream<? extends T>... sources) {
-        if (this.sources == null) {
-            throw new IllegalStateException(
-                "Cannot add sources after stream() has been called.");
+        synchronized (this) {
+            if (this.sources == null) {
+                throw new IllegalStateException(
+                    "Cannot add sources after stream() has been called.");
+            }
+            for (var src : sources) {
+                this.sources.add((Stream<T>) src);
+            }
         }
-        this.sources.addAll((List<Stream<T>>) (Object) Arrays.asList(sources));
         return this;
     }
 
@@ -72,11 +77,7 @@ public class StreamCollector<T> {
     ///
     @SafeVarargs
     public final StreamCollector<T> add(T... items) {
-        if (sources == null) {
-            throw new IllegalStateException(
-                "Cannot add sources after stream() has been called.");
-        }
-        sources.add(Arrays.stream(items));
+        add(Arrays.stream(items));
         return this;
     }
 
@@ -86,6 +87,9 @@ public class StreamCollector<T> {
     ///
     @SuppressWarnings("PMD.AvoidSynchronizedStatement")
     public Stream<T> stream() {
+        if (cache != null) {
+            return cache.stream();
+        }
         synchronized (this) {
             if (cache != null) {
                 return cache.stream();
