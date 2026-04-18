@@ -24,6 +24,7 @@ import java.io.IOException;
 import java.nio.file.AccessDeniedException;
 import java.nio.file.FileVisitResult;
 import java.nio.file.Files;
+import java.nio.file.NoSuchFileException;
 import java.nio.file.Path;
 import java.nio.file.SimpleFileVisitor;
 import java.nio.file.attribute.BasicFileAttributes;
@@ -140,6 +141,9 @@ public class DefaultFileTree<T extends FileResource> extends DefaultResources<T>
 
     @SuppressWarnings({ "PMD.CognitiveComplexity", "PMD.UseVarargs" })
     private void find(Path root, String[] patterns) throws IOException {
+        if (!root.toFile().exists()) {
+            return;
+        }
         Files.walkFileTree(root, new SimpleFileVisitor<>() {
 
             @Override
@@ -150,9 +154,8 @@ public class DefaultFileTree<T extends FileResource> extends DefaultResources<T>
 
             private FileVisitResult testAndAdd(Path path) {
                 Path pathInTree = root.relativize(path);
-                if (excludes.stream().filter(ex -> pathMatcher
-                    .isMatch(ex, pathInTree.toString()))
-                    .findAny().isPresent()) {
+                if (excludes.stream().anyMatch(ex -> pathMatcher
+                    .isMatch(ex, pathInTree.toString()))) {
                     if (path.toFile().isDirectory()) {
                         return FileVisitResult.SKIP_SUBTREE;
                     }
@@ -168,7 +171,6 @@ public class DefaultFileTree<T extends FileResource> extends DefaultResources<T>
                         || resource.asOf().get().isAfter(latestChange))) {
                         latestChange = resource.asOf().get();
                     }
-                    return FileVisitResult.CONTINUE;
                 }
                 return FileVisitResult.CONTINUE;
             }
@@ -249,46 +251,75 @@ public class DefaultFileTree<T extends FileResource> extends DefaultResources<T>
     @Override
     public void cleanup() {
         try {
-            var root = root();
-            Files.walkFileTree(root, new SimpleFileVisitor<>() {
-
-                @Override
-                public FileVisitResult visitFile(Path path,
-                        BasicFileAttributes attrs) throws IOException {
-                    if (Arrays.stream(patterns).anyMatch(pattern -> pathMatcher
-                        .isMatch(pattern, path.toString()))) {
-                        Files.delete(path);
-                    }
-                    return FileVisitResult.CONTINUE;
-                }
-
-                @Override
-                public FileVisitResult postVisitDirectory(Path dir,
-                        IOException exc) throws IOException {
-                    if (exc != null) {
-                        return FileVisitResult.CONTINUE;
-                    }
-                    if (dir.toFile().exists()
-                        && Files.list(dir).findFirst().isEmpty()) {
-                        Files.delete(dir);
-                    }
-                    return FileVisitResult.CONTINUE;
-                }
-
-                @Override
-                public FileVisitResult visitFileFailed(Path file,
-                        IOException exc) throws IOException {
-                    if (exc instanceof AccessDeniedException) {
-                        return FileVisitResult.SKIP_SUBTREE;
-                    }
-                    return FileVisitResult.CONTINUE;
-                }
-            });
+            deleteFiles(root());
         } catch (IOException e) {
             logger.atSevere().withCause(e).log("Problem scanning files");
             throw new BuildException().from(project).cause(e);
         }
         filled = false;
+    }
+
+    @SuppressWarnings("PMD.CognitiveComplexity")
+    private void deleteFiles(Path root) throws IOException {
+        if (!root.toFile().exists()) {
+            return;
+        }
+        Files.walkFileTree(root, new SimpleFileVisitor<>() {
+
+            @Override
+            public FileVisitResult visitFile(Path path,
+                    BasicFileAttributes attrs) throws IOException {
+                return testAndDelete(path);
+            }
+
+            private FileVisitResult testAndDelete(Path path)
+                    throws IOException {
+                Path pathInTree = root.relativize(path);
+                if (excludes.stream().anyMatch(ex -> pathMatcher
+                    .isMatch(ex, pathInTree.toString()))) {
+                    if (path.toFile().isDirectory()) {
+                        return FileVisitResult.SKIP_SUBTREE;
+                    }
+                    return FileVisitResult.CONTINUE;
+                }
+                if (Arrays.stream(patterns).anyMatch(pattern -> pathMatcher
+                    .isMatch(pattern, pathInTree.toString()))) {
+                    try {
+                        Files.delete(path);
+                    } catch (NoSuchFileException e) { // NOPMD
+                        // We can have concurrent cleanups
+                    }
+                }
+                return FileVisitResult.CONTINUE;
+            }
+
+            @Override
+            public FileVisitResult postVisitDirectory(Path dir,
+                    IOException exc) throws IOException {
+                if (exc != null) {
+                    return FileVisitResult.CONTINUE;
+                }
+                if (dir.toFile().exists()) {
+                    try {
+                        if (Files.list(dir).findFirst().isEmpty()) {
+                            Files.delete(dir);
+                        }
+                    } catch (NoSuchFileException e) { // NOPMD
+                        // We can have concurrent cleanups
+                    }
+                }
+                return FileVisitResult.CONTINUE;
+            }
+
+            @Override
+            public FileVisitResult visitFileFailed(Path file,
+                    IOException exc) throws IOException {
+                if (exc instanceof AccessDeniedException) {
+                    return FileVisitResult.SKIP_SUBTREE;
+                }
+                return FileVisitResult.CONTINUE;
+            }
+        });
     }
 
     @Override
