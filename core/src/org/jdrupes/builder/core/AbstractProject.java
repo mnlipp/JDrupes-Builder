@@ -280,14 +280,6 @@ public abstract class AbstractProject extends AbstractProvider
         providersUnlocked = true;
     }
 
-    /// Returns true if providers are unlocked.
-    ///
-    /// @return true, if unlocked
-    ///
-    /* default */ boolean providersUnlocked() {
-        return providersUnlocked;
-    }
-
     /* default */ Stream<ResourceProvider> dependencies(Set<Intent> intents) {
         // Ordered evaluation
         return List.of(Consume, Reveal, Supply, Expose, Forward).stream()

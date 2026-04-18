@@ -111,12 +111,6 @@ public class DefaultProviderSelection implements ProviderSelection {
             }
             return project.context().resources(p, request);
         });
-        if (project.providersUnlocked()) {
-            // If accessing providers is allowed, get the providers
-            // eagerly to trigger evaluation. Resources are still
-            // obtained lazily.
-            providerStream = providerStream.toList().stream();
-        }
         return providerStream.flatMap(s -> s);
     }
 
