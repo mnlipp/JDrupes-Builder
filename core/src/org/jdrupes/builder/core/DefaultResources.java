@@ -63,7 +63,7 @@ public class DefaultResources<T extends Resource> extends ResourceObject
     @SuppressWarnings({ "PMD.AvoidSynchronizedStatement", "unchecked" })
     public Stream<T> stream() {
         synchronized (content) {
-            return (Stream<T>) Stream.of(content.toArray());
+            return (Stream<T>) (Object) Stream.of(content.toArray());
         }
     }
 
