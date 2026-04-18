@@ -137,13 +137,15 @@ public class Root extends AbstractRootProject {
 
         // Commands
         commandAlias("build").resources(of(LibraryJarFileType)
-            .using(Supply, Forward), of(JavadocDirectoryType));
-        commandAlias("test").resources(of(TestResultType));
+            .using(Supply, Forward), of(JavadocDirectoryType).using(Supply));
+        commandAlias("test").projects("**")
+            .resources(of(TestResultType).using(Supply));
         commandAlias("sourcesJar").resources(of(SourcesJarFileType));
-        commandAlias("javadoc").resources(of(JavadocDirectoryType));
+        commandAlias("javadoc")
+            .resources(of(JavadocDirectoryType).using(Supply));
         commandAlias("javadocJar").resources(of(JavadocJarFileType));
-        commandAlias("eclipse")
-            .resources(of(new ResourceType<EclipseConfiguration>() {}));
+        commandAlias("eclipse").projects("**").resources(
+            of(new ResourceType<EclipseConfiguration>() {}).using(Supply));
         commandAlias("vscode")
             .resources(of(new ResourceType<VscodeConfiguration>() {}));
         commandAlias("pomFile").resources(of(PomFileType));
