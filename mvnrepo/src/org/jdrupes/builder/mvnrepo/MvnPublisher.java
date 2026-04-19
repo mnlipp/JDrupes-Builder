@@ -498,8 +498,9 @@ public class MvnPublisher extends AbstractGenerator {
         var keyId = Optional.ofNullable(signingKeyId)
             .orElse(project().context().property("signing.keyId", null));
         var passphrase = Optional.ofNullable(signingPassword)
-            .orElse(project().context().property("signing.password", null))
-            .toCharArray();
+            .or(() -> Optional.ofNullable(
+                project().context().property("signing.password", null)))
+            .map(String::toCharArray).orElse(null);
         if (keyRingFileName == null || keyId == null || passphrase == null) {
             logger.atWarning()
                 .log("Cannot sign artifacts: properties not set.");
