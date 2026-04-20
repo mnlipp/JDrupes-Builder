@@ -76,7 +76,7 @@ public class DefaultBuildContext implements BuildContext {
         = new ConcurrentHashMap<>();
 
     static {
-        ScopedValueInheritance.add(callChainEnd);
+        ScopedValueInheritance.add(scopedBuildContext, callChainEnd);
     }
 
     /// A link in the call chain.
@@ -212,7 +212,7 @@ public class DefaultBuildContext implements BuildContext {
         "PMD.AvoidInstantiatingObjectsInLoops" })
     private <T extends Resource> Stream<T> inResourcesContext(
             ProviderInvocation<T> invocation) {
-        var prev = callChainEnd.get().previous;
+        var prev = callChainEnd().previous;
         while (prev != null) {
             if (invocation.equals(prev.invocation())) {
                 throw new BuildException().message("Request loop: %s",
@@ -221,7 +221,7 @@ public class DefaultBuildContext implements BuildContext {
             }
             prev = prev.previous;
         }
-        callChains.put(invocation, callChainEnd.get());
+        callChains.put(invocation, callChainEnd());
         if (invocation.provider() instanceof Project) {
             // As a project's provide only delegates to other providers
             // it is inefficient to invoke it asynchronously. Besides, it
@@ -257,7 +257,8 @@ public class DefaultBuildContext implements BuildContext {
     /// @return the call chain link
     ///
     /* default */ CallChainLink callChainEnd() {
-        return callChainEnd.isBound() ? callChainEnd.get() : null;
+        return callChainEnd
+            .orElseThrow(() -> new IllegalStateException("No call chain"));
     }
 
     /* default */ List<ProviderInvocation<?>> callChain() {
