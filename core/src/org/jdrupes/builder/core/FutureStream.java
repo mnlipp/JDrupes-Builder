@@ -45,9 +45,6 @@ public class FutureStream<T extends Resource> {
     @SuppressWarnings("PMD.FieldNamingConventions")
     private static final AtomicInteger futureCount = new AtomicInteger(0);
     private final DefaultBuildContext context;
-    @SuppressWarnings("PMD.FieldNamingConventions")
-    private static final ScopedValue<FutureStream<?>> caller
-        = ScopedValue.newInstance();
     /* default */@SuppressWarnings("PMD.FieldNamingConventions")
     static final ScopedValue<StatusLine> statusLine
         = ScopedValue.newInstance(); // <T>
@@ -87,10 +84,9 @@ public class FutureStream<T extends Resource> {
                 context.buildProject().get();
                 statusLine.update(provider + " evaluating " + request);
                 return context.inScopeForProviderCall()
-                    .where(caller, this)
-                    .where(FutureStream.statusLine, statusLine).call(
-                        () -> ((AbstractProvider) provider).toSpi()
-                            .provide(request).toList());
+                    .where(FutureStream.statusLine, statusLine)
+                    .call(() -> ((AbstractProvider) provider).toSpi()
+                        .provide(request).toList());
             } finally {
                 logger.atFiner().log("%s terminated", this);
                 Thread.currentThread().setName(origThreadName);
@@ -120,8 +116,7 @@ public class FutureStream<T extends Resource> {
                             theIterator = values.get().iterator();
                         } catch (InterruptedException | ExecutionException e) {
                             throw new BuildException()
-                                .from(invocation.provider())
-                                .cause(e);
+                                .from(invocation.provider()).cause(e);
                         }
                     }
                     return theIterator;
