@@ -149,7 +149,8 @@ public class Root extends AbstractRootProject {
         commandAlias("vscode")
             .resources(of(new ResourceType<VscodeConfiguration>() {}));
         commandAlias("pomFile").resources(of(PomFileType));
-        commandAlias("mavenPublication").resources(of(MvnPublicationType));
+        commandAlias("mavenPublication").projects("**").resources(
+            of(MvnPublicationType).using(Supply));
     }
 
     public static Consumer<Model> addCommonPomInfo() {
