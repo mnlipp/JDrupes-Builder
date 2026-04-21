@@ -18,10 +18,12 @@
 
 package org.jdrupes.builder.java;
 
+import com.google.common.flogger.FluentLogger;
 import java.nio.file.Path;
 import java.util.Map;
 import java.util.Objects;
 import java.util.jar.Attributes;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import org.jdrupes.builder.api.BuildException;
 import org.jdrupes.builder.api.ConfigurationException;
@@ -54,16 +56,20 @@ import static org.jdrupes.builder.java.JavaTypes.*;
 /// In addition to explicitly adding resources, this generator supports
 /// resource retrieval from added providers. The resources of type [ClassTree]
 /// and [JavaResourceTree] that the providers supply will be used in
-/// addition to the explicitly added resources.
+/// addition to the explicitly added resources. To make adding providers
+/// easier, the [LibraryBuilder] itself is automatically filtered from the
+/// added providers. This makes it possible to add a project as provider
+/// even if this includes the [LibraryBuilder].
 ///
-/// The standard pattern for creating a library is simply:
+/// The standard pattern for creating a library is:
 /// ```java
-/// generator(LibraryGenerator::new).from(this);
+/// generator(LibraryGenerator::new).addFrom(providers().select(Supply));
 /// ```
 ///
 public class LibraryBuilder extends JarBuilder
         implements ResourceRetriever {
 
+    private static final FluentLogger logger = FluentLogger.forEnclosingClass();
     private final StreamCollector<ResourceProvider> providers
         = StreamCollector.cached();
     private String mainClass;
@@ -137,12 +143,18 @@ public class LibraryBuilder extends JarBuilder
     ///
     protected void collectFromProviders(
             Map<Path, Resources<IOResource>> contents) {
-        contentProviders().stream().map(
-            p -> p.resources(of(ClassTreeType).using(Supply)))
-            .flatMap(s -> s).parallel().forEach(t -> collect(contents, t));
-        contentProviders().stream().map(p -> p.resources(
-            of(JavaResourceTreeType).using(Supply)))
-            .flatMap(s -> s).parallel().forEach(t -> collect(contents, t));
+        // First get providers, then the resources, else we can get deadlocks.
+        var providers
+            = contentProviders().stream().filter(p -> !p.equals(this)).toList();
+        logger.atFinest().log("%s collecting from %s", this,
+            providers.stream().map(ResourceProvider::toString)
+                .collect(Collectors.joining(", ")));
+        providers.stream()
+            .map(p -> p.resources(of(ClassTreeType).using(Supply)))
+            .flatMap(s -> s).forEach(t -> collect(contents, t));
+        providers.stream()
+            .map(p -> p.resources(of(JavaResourceTreeType).using(Supply)))
+            .flatMap(s -> s).forEach(t -> collect(contents, t));
     }
 
     @Override
