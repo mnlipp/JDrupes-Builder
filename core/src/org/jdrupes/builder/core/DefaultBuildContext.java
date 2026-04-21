@@ -18,16 +18,16 @@
 
 package org.jdrupes.builder.core;
 
+import com.google.common.flogger.FluentLogger;
+import static com.google.common.flogger.LazyArgs.lazy;
 import java.io.PrintStream;
 import java.nio.file.Path;
 import java.util.EnumSet;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
 import java.util.Properties;
 import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
@@ -49,9 +49,10 @@ import org.jdrupes.builder.core.console.SplitConsole;
 
 /// A context for building.
 ///
-@SuppressWarnings({ "PMD.CouplingBetweenObjects", "PMD.TooManyMethods" })
+@SuppressWarnings({ "PMD.CouplingBetweenObjects" })
 public class DefaultBuildContext implements BuildContext {
 
+    private static final FluentLogger logger = FluentLogger.forEnclosingClass();
     @SuppressWarnings("PMD.FieldNamingConventions")
     private static final ScopedValue<AtomicBoolean> providerInvocationAllowed
         = ScopedValue.newInstance();
@@ -70,13 +71,11 @@ public class DefaultBuildContext implements BuildContext {
     private final CompletableFuture<AbstractRootProject> buildProject
         = new CompletableFuture<>();
     @SuppressWarnings("PMD.FieldNamingConventions")
-    private static final ScopedValue<CallChainLink> callChainEnd
+    private static final ScopedValue<RequestChainLink> requestChainEnd
         = ScopedValue.newInstance();
-    private final Map<ProviderInvocation<?>, CallChainLink> callChains
-        = new ConcurrentHashMap<>();
 
     static {
-        ScopedValueInheritance.add(scopedBuildContext, callChainEnd);
+        ScopedValueContext.add(scopedBuildContext, requestChainEnd);
     }
 
     /// A link in the call chain.
@@ -84,7 +83,7 @@ public class DefaultBuildContext implements BuildContext {
     /// @param previous the previous
     /// @param invocation the invocation
     ///
-    public record CallChainLink(CallChainLink previous,
+    public record RequestChainLink(RequestChainLink previous,
             ProviderInvocation<?> invocation) {
     }
 
@@ -132,11 +131,21 @@ public class DefaultBuildContext implements BuildContext {
         return buildRoot;
     }
 
+    /// Command line.
+    ///
+    /// @return the command line
+    ///
     @Override
     public CommandLine commandLine() {
         return commandLine;
     }
 
+    /// Property.
+    ///
+    /// @param name the name
+    /// @param defaultValue the default value
+    /// @return the string
+    ///
     @Override
     public String property(String name, String defaultValue) {
         return jdbldProperties.getProperty(name,
@@ -177,21 +186,40 @@ public class DefaultBuildContext implements BuildContext {
         return console;
     }
 
+    /// Status line.
+    ///
+    /// @return the status line
+    ///
     @Override
     public StatusLine statusLine() {
         return FutureStream.statusLine.orElse(SplitConsole.nullStatusLine());
     }
 
+    /// Out.
+    ///
+    /// @return the prints the stream
+    ///
     @Override
     public PrintStream out() {
         return console().out();
     }
 
+    /// Error.
+    ///
+    /// @return the prints the stream
+    ///
     @Override
     public PrintStream error() {
         return console().err();
     }
 
+    /// Resources.
+    ///
+    /// @param <T> the generic type
+    /// @param provider the provider
+    /// @param request the request
+    /// @return the stream
+    ///
     @Override
     public <T extends Resource> Stream<T> resources(ResourceProvider provider,
             ResourceRequest<T> request) {
@@ -201,35 +229,19 @@ public class DefaultBuildContext implements BuildContext {
                 : request.using(EnumSet.noneOf(Intent.class)));
         return ScopedValue.where(scopedBuildContext, this)
             .where(providerInvocationAllowed, new AtomicBoolean(true))
-            .where(callChainEnd, new CallChainLink(
-                callChainEnd.isBound() ? callChainEnd.get()
-                    : new CallChainLink(null, ProviderInvocation.LAUNCH),
-                invocation))
             .call(() -> inResourcesContext(invocation));
     }
 
-    @SuppressWarnings({ "PMD.AvoidSynchronizedStatement",
-        "PMD.AvoidInstantiatingObjectsInLoops" })
+    @SuppressWarnings({ "PMD.AvoidSynchronizedStatement" })
     private <T extends Resource> Stream<T> inResourcesContext(
             ProviderInvocation<T> invocation) {
-        var prev = callChainEnd().previous;
-        while (prev != null) {
-            if (invocation.equals(prev.invocation())) {
-                throw new BuildException().message("Request loop: %s",
-                    callChain().stream().map(ProviderInvocation::toString)
-                        .collect(Collectors.joining(" ≪ ")));
-            }
-            prev = prev.previous;
-        }
-        callChains.put(invocation, callChainEnd());
         if (invocation.provider() instanceof Project) {
             // As a project's provide only delegates to other providers
             // it is inefficient to invoke it asynchronously. Besides, it
             // leads to recursive invocations of the project's deploy
             // method too easily and results in a loop detection without
             // there really being a loop.
-            return ((AbstractProvider) invocation.provider()).toSpi()
-                .provide(invocation.request());
+            return invokeSpi(invocation);
         }
         if (!invocation.request().type().equals(CleanlinessType)) {
             return cache.computeIfAbsent(
@@ -245,35 +257,42 @@ public class DefaultBuildContext implements BuildContext {
                 throw new BuildException().cause(e);
             }
         }
-        var result = ((AbstractProvider) invocation.provider()).toSpi()
-            .provide(invocation.request());
+        var result = invokeSpi(invocation);
         // Purge cached results from provider
         cache.purge(invocation.provider());
         return result;
     }
 
-    /// Returns the end of the current call chain.
-    ///
-    /// @return the call chain link
-    ///
-    /* default */ CallChainLink callChainEnd() {
-        return callChainEnd
-            .orElseThrow(() -> new IllegalStateException("No call chain"));
+    @SuppressWarnings("PMD.AvoidInstantiatingObjectsInLoops")
+    private <T extends Resource> Stream<T>
+            invokeSpi(ProviderInvocation<T> invocation) {
+        return ScopedValue
+            .where(requestChainEnd, new RequestChainLink(
+                requestChainEnd.isBound() ? requestChainEnd.get()
+                    : new RequestChainLink(null, ProviderInvocation.LAUNCH),
+                invocation))
+            .call(() -> {
+                logger.atFinest().log("Request chain: %s",
+                    lazy(() -> requestChain()
+                        .stream().map(ProviderInvocation::toString)
+                        .collect(Collectors.joining(" ≪ "))));
+                var prev = requestChainEnd.get().previous;
+                while (prev != null) {
+                    if (invocation.equals(prev.invocation())) {
+                        throw new BuildException().message("Request loop: %s",
+                            requestChain().stream()
+                                .map(ProviderInvocation::toString)
+                                .collect(Collectors.joining(" ≪ ")));
+                    }
+                    prev = prev.previous;
+                }
+                return ((AbstractProvider) invocation.provider()).toSpi()
+                    .provide(invocation.request());
+            });
     }
 
-    /* default */ List<ProviderInvocation<?>> callChain() {
-        var cur = callChainEnd();
-        List<ProviderInvocation<?>> result = new LinkedList<>();
-        while (cur != null) {
-            result.add(cur.invocation);
-            cur = cur.previous;
-        }
-        return result;
-    }
-
-    /* default */ List<ProviderInvocation<?>>
-            callChain(ProviderInvocation<?> running) {
-        var cur = callChains.get(running);
+    /* default */ List<ProviderInvocation<?>> requestChain() {
+        var cur = requestChainEnd.isBound() ? requestChainEnd.get() : null;
         List<ProviderInvocation<?>> result = new LinkedList<>();
         while (cur != null) {
             result.add(cur.invocation);

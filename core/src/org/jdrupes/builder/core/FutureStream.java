@@ -19,7 +19,6 @@
 package org.jdrupes.builder.core;
 
 import com.google.common.flogger.FluentLogger;
-import static com.google.common.flogger.LazyArgs.*;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Spliterators;
@@ -27,7 +26,6 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Consumer;
-import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 import org.jdrupes.builder.api.BuildException;
@@ -47,14 +45,13 @@ public class FutureStream<T extends Resource> {
     private final DefaultBuildContext context;
     /* default */@SuppressWarnings("PMD.FieldNamingConventions")
     static final ScopedValue<StatusLine> statusLine
-        = ScopedValue.newInstance(); // <T>
-    private final ProviderInvocation<?> requestedBy;
+        = ScopedValue.newInstance();
     private final ProviderInvocation<?> invocation;
     private final Future<List<T>> values;
     private final int id = futureCount.getAndIncrement();
 
     static {
-        ScopedValueInheritance.add(statusLine);
+        ScopedValueContext.add(statusLine);
     }
 
     /// Instantiates a new future stream of resources.
@@ -66,15 +63,10 @@ public class FutureStream<T extends Resource> {
             DefaultBuildContext context, ProviderInvocation<T> invocation) {
         this.context = context;
         this.invocation = invocation;
-        requestedBy = context.callChainEnd().previous().invocation();
-        logger.atFiner().log("%s starting (≪ %s)", this,
-            lazy(() -> requestedBy != null ? requestedBy : "(unknown)"));
-        logger.atFinest().log("Call chain: %s", lazy(() -> context.callChain()
-            .stream().map(ProviderInvocation::toString)
-            .collect(Collectors.joining(" ≪ "))));
         final var provider = invocation.provider();
         final var request = invocation.request();
-        values = ScopedValueInheritance.submitTo(context.executor(), () -> {
+        values = ScopedValueContext.submitTo(context.executor(), () -> {
+            logger.atFiner().log("%s starting", this);
             var origThreadName = Thread.currentThread().getName();
             try (var _ = context.executingFutureStreams().acquire();
                     var statusLine = context.console().statusLine()) {

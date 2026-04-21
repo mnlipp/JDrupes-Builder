@@ -101,15 +101,17 @@ public class DefaultProviderSelection implements ProviderSelection {
             resources(ResourceRequest<T> request) {
         AtomicReference<ResourceRequest<T>> projectRequest
             = new AtomicReference<>();
+        final var snapshot = ScopedValueContext.snapshot();
         var providerStream = select(request.uses()).map(p -> {
             if (p instanceof Project) {
                 logger.atFinest()
                     .log("%s forwards % to %s", project, request, p);
-                return project.context().resources(p,
+                return snapshot.withGet(() -> project.context().resources(p,
                     projectRequest.updateAndGet(
-                        r -> r != null ? r : forwardedRequest(request)));
+                        r -> r != null ? r : forwardedRequest(request))));
             }
-            return project.context().resources(p, request);
+            return snapshot
+                .withGet(() -> project.context().resources(p, request));
         });
         return providerStream.flatMap(s -> s);
     }

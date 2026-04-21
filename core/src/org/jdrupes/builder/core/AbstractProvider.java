@@ -76,6 +76,7 @@ public abstract class AbstractProvider implements ResourceProvider {
     }
 
     /* default */ ResourceProviderSpi toSpi() {
+        final var snapshot = ScopedValueContext.snapshot();
         return new ResourceProviderSpi() {
             @Override
             public <T extends Resource> Stream<T>
@@ -84,7 +85,7 @@ public abstract class AbstractProvider implements ResourceProvider {
                     logger.atWarning().withStackTrace(MEDIUM)
                         .log("Direct invocation of %s is not allowed", this);
                 }
-                return doProvide(requested);
+                return snapshot.withGet(() -> doProvide(requested));
             }
         };
     }

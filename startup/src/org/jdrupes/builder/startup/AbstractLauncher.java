@@ -53,6 +53,7 @@ import org.jdrupes.builder.api.RootProject;
 import org.jdrupes.builder.core.BuildExceptionFormatter;
 import org.jdrupes.builder.core.DefaultBuildContext;
 import org.jdrupes.builder.core.DefaultBuildExceptionFormatter;
+import org.jdrupes.builder.core.ScopedValueContext;
 import org.jdrupes.builder.java.ClassTree;
 import static org.jdrupes.builder.java.JavaTypes.*;
 
@@ -232,8 +233,10 @@ public abstract class AbstractLauncher implements Launcher {
     @Override
     public <T extends Resource> Stream<T> resources(Stream<Project> projects,
             ResourceRequest<T> request) {
+        var snapshot = ScopedValueContext.snapshot();
         var result = reportBuildException(() -> projects.parallel()
-            .map(p -> rootProject().context().resources(p, request))
+            .map(p -> snapshot
+                .withGet(() -> rootProject().context().resources(p, request)))
             .flatMap(r -> r).toList().stream());
         if (request.isFor(CleanlinessType)) {
             regenerateRootProject();
