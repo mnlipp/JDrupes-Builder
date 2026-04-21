@@ -200,7 +200,7 @@ public class JavaCompiler extends JavaTool {
         var cpResources = Resources.of(ClasspathType).addAll(
             project().providers(Consume, Reveal, Expose).without(this)
                 .resources(of(ClasspathElementType)));
-        logger.atFiner().log("Compiling in %s with classpath %s", project(),
+        logger.atFiner().log("%s compiling with classpath %s", this,
             lazy(() -> cpResources.stream().map(e -> e.toPath().toString())
                 .collect(Collectors.joining(File.pathSeparator))));
 
@@ -216,7 +216,7 @@ public class JavaCompiler extends JavaTool {
             classSet.cleanup();
             compile(cpResources, destDir);
         } else {
-            logger.atFine().log("Classes in %s are up to date", project());
+            logger.atFine().log("%s found classes to be up to date", this);
         }
         classSet.clear();
         @SuppressWarnings("unchecked")
@@ -261,6 +261,7 @@ public class JavaCompiler extends JavaTool {
             throw new BuildException().from(this).cause(e);
         } finally {
             logDiagnostics(diagnostics);
+            logger.atFine().log("%s finished compilation", this);
         }
     }
 }
