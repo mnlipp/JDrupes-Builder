@@ -18,6 +18,8 @@
 
 package org.jdrupes.builder.core;
 
+import java.util.Collection;
+import java.util.Collections;
 import java.util.stream.Stream;
 import org.jdrupes.builder.api.Project;
 import org.jdrupes.builder.api.Resource;
@@ -80,12 +82,12 @@ public class ResourceCollector<T extends Resource> extends AbstractGenerator {
 
     @Override
     @SuppressWarnings("unchecked")
-    protected <R extends Resource> Stream<R>
+    protected <R extends Resource> Collection<R>
             doProvide(ResourceRequest<R> requested) {
         if (!requested.accepts(type)) {
-            return Stream.empty();
+            return Collections.emptyList();
         }
-        return (Stream<R>) resources.stream();
+        return (Collection<R>) resources.get();
     }
 
 }

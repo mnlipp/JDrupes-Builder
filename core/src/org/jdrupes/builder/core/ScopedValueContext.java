@@ -22,6 +22,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Optional;
 import java.util.concurrent.Callable;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.ExecutorService;
@@ -71,6 +72,20 @@ public final class ScopedValueContext {
                     valuesIterator.next());
             }
             return carriers;
+        }
+
+        /// Appends the scoped value and value to the carriers representing
+        /// the snapshot and returns the result.
+        ///
+        /// @param <T> the generic type
+        /// @param key the key
+        /// @param value the value
+        /// @return the scoped value. carrier
+        ///
+        public <T> ScopedValue.Carrier where(ScopedValue<T> key, T value) {
+            return Optional.ofNullable(carriers()).map(c -> c.where(key, value))
+                .orElseGet(() -> ScopedValue.where(key, value));
+
         }
 
         /// Get the value from the given supplier after restoring the

@@ -25,12 +25,14 @@ import static com.google.common.flogger.LazyArgs.lazy;
 import io.vavr.control.Try;
 import java.io.File;
 import java.nio.file.Path;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.jar.Attributes;
 import java.util.jar.Manifest;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 import org.jdrupes.builder.api.BuildException;
 import org.jdrupes.builder.api.ConfigurationException;
 import org.jdrupes.builder.api.Generator;
@@ -135,10 +137,10 @@ public class BndAnalyzer extends AbstractBndGenerator {
 
     @Override
     @SuppressWarnings("PMD.AvoidCatchingGenericException")
-    protected <T extends Resource> Stream<T>
+    protected <T extends Resource> Collection<T>
             doProvide(ResourceRequest<T> requested) {
         if (!requested.accepts(ManifestAttributesType)) {
-            return Stream.empty();
+            return Collections.emptyList();
         }
         try (var analyzer = new Analyzer();
                 var jar = new aQute.bnd.osgi.Jar("dot")) {
@@ -173,7 +175,7 @@ public class BndAnalyzer extends AbstractBndGenerator {
             asResource.putAll(manifest.getMainAttributes());
             @SuppressWarnings("unchecked")
             var result = (T) asResource;
-            return Stream.of(result);
+            return List.of(result);
         } catch (Exception e) {
             throw new BuildException().from(this).cause(e);
         }

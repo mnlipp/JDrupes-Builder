@@ -22,6 +22,7 @@ import com.google.common.flogger.FluentLogger;
 import static com.google.common.flogger.LazyArgs.lazy;
 import java.io.PrintStream;
 import java.nio.file.Path;
+import java.util.Collection;
 import java.util.EnumSet;
 import java.util.LinkedList;
 import java.util.List;
@@ -227,25 +228,32 @@ public class DefaultBuildContext implements BuildContext {
         var invocation = new ProviderInvocation<>(provider,
             provider instanceof Project || request.uses().isEmpty() ? request
                 : request.using(EnumSet.noneOf(Intent.class)));
-        return ScopedValue.where(scopedBuildContext, this)
-            .where(providerInvocationAllowed, new AtomicBoolean(true))
+        return inScopeForProviderCall()
             .call(() -> inResourcesContext(invocation));
     }
 
-    @SuppressWarnings({ "PMD.AvoidSynchronizedStatement" })
+    @SuppressWarnings({ "PMD.AvoidSynchronizedStatement",
+        "PMD.AvoidCatchingGenericException" })
     private <T extends Resource> Stream<T> inResourcesContext(
             ProviderInvocation<T> invocation) {
         if (invocation.provider() instanceof Project) {
             // As a project's provide only delegates to other providers
-            // it is inefficient to invoke it asynchronously. Besides, it
-            // leads to recursive invocations of the project's deploy
-            // method too easily and results in a loop detection without
-            // there really being a loop.
-            return invokeSpi(invocation);
+            // it is inefficient to invoke it asynchronously. Nevertheless,
+            // SPI must be invoked lazily.
+            var snapshot = ScopedValueContext.snapshot();
+            return Stream.generate(() -> {
+                try {
+                    return snapshot.where(providerInvocationAllowed,
+                        new AtomicBoolean(true))
+                        .call(() -> invokeSpi(invocation));
+                } catch (Exception e) {
+                    throw new BuildException().cause(e);
+                }
+            }).limit(1).flatMap(Collection::stream);
         }
         if (!invocation.request().type().equals(CleanlinessType)) {
-            return cache.computeIfAbsent(
-                invocation, k -> new FutureStream<T>(this, k)).stream();
+            return cache.computeIfAbsent(invocation,
+                k -> new FutureStream<T>(k)).stream();
         }
 
         // Special handling for cleanliness. Clean one by one...
@@ -257,14 +265,14 @@ public class DefaultBuildContext implements BuildContext {
                 throw new BuildException().cause(e);
             }
         }
-        var result = invokeSpi(invocation);
+        var result = invokeSpi(invocation).stream();
         // Purge cached results from provider
         cache.purge(invocation.provider());
         return result;
     }
 
     @SuppressWarnings("PMD.AvoidInstantiatingObjectsInLoops")
-    private <T extends Resource> Stream<T>
+    private <T extends Resource> Collection<T>
             invokeSpi(ProviderInvocation<T> invocation) {
         return ScopedValue
             .where(requestChainEnd, new RequestChainLink(

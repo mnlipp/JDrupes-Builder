@@ -21,8 +21,8 @@ package org.jdrupes.builder.core;
 import java.util.Collections;
 import java.util.LinkedHashSet;
 import java.util.Objects;
+import java.util.SequencedSet;
 import java.util.Set;
-import java.util.stream.Stream;
 import org.jdrupes.builder.api.Resource;
 import org.jdrupes.builder.api.ResourceType;
 import org.jdrupes.builder.api.Resources;
@@ -60,10 +60,10 @@ public class DefaultResources<T extends Resource> extends ResourceObject
     }
 
     @Override
-    @SuppressWarnings({ "PMD.AvoidSynchronizedStatement", "unchecked" })
-    public Stream<T> stream() {
+    @SuppressWarnings({ "PMD.AvoidSynchronizedStatement" })
+    public SequencedSet<T> get() {
         synchronized (content) {
-            return (Stream<T>) (Object) Stream.of(content.toArray());
+            return new LinkedHashSet<>(content);
         }
     }
 

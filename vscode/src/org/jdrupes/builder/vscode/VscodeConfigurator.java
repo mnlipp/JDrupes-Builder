@@ -23,11 +23,12 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Consumer;
-import java.util.stream.Stream;
 import org.jdrupes.builder.api.BuildException;
 import org.jdrupes.builder.api.Project;
 import org.jdrupes.builder.api.Resource;
@@ -94,10 +95,10 @@ public class VscodeConfigurator extends AbstractGenerator {
     }
 
     @Override
-    protected <T extends Resource> Stream<T>
+    protected <T extends Resource> Collection<T>
             doProvide(ResourceRequest<T> requested) {
         if (!requested.accepts(resourceType(VscodeConfiguration.class))) {
-            return Stream.empty();
+            return Collections.emptyList();
         }
 
         Path vscodeDir = project().directory().resolve(".vscode");
@@ -115,7 +116,7 @@ public class VscodeConfigurator extends AbstractGenerator {
 
         // Return a result
         @SuppressWarnings({ "unchecked" })
-        var result = (Stream<T>) Stream.of(VscodeConfiguration.of(project()));
+        var result = (Collection<T>) List.of(VscodeConfiguration.of(project()));
         return result;
     }
 

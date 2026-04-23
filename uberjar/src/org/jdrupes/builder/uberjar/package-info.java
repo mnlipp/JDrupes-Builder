@@ -18,5 +18,5 @@
 
 /// A provider for
 /// [UberJar](https://support.sonatype.com/hc/en-us/articles/28958118202131-What-is-an-uber-jar)s.
-/// 
+
 package org.jdrupes.builder.uberjar;

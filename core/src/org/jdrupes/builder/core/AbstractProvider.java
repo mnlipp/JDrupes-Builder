@@ -20,7 +20,7 @@ package org.jdrupes.builder.core;
 
 import com.google.common.flogger.FluentLogger;
 import static com.google.common.flogger.StackSize.*;
-import java.util.stream.Stream;
+import java.util.Collection;
 import org.jdrupes.builder.api.Renamable;
 import org.jdrupes.builder.api.Resource;
 import org.jdrupes.builder.api.ResourceProvider;
@@ -79,7 +79,7 @@ public abstract class AbstractProvider implements ResourceProvider {
         final var snapshot = ScopedValueContext.snapshot();
         return new ResourceProviderSpi() {
             @Override
-            public <T extends Resource> Stream<T>
+            public <T extends Resource> Collection<T>
                     provide(ResourceRequest<T> requested) {
                 if (!DefaultBuildContext.isProviderInvocationAllowed()) {
                     logger.atWarning().withStackTrace(MEDIUM)
@@ -97,7 +97,7 @@ public abstract class AbstractProvider implements ResourceProvider {
     /// @param request the request for resources
     /// @return the stream
     ///
-    protected abstract <T extends Resource> Stream<T>
+    protected abstract <T extends Resource> Collection<T>
             doProvide(ResourceRequest<T> request);
 
     @Override

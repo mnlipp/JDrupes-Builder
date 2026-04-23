@@ -30,6 +30,8 @@ import java.lang.ProcessBuilder.Redirect;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 import java.util.jar.Attributes;
@@ -157,11 +159,11 @@ public class JavaExecutor extends AbstractProvider
     }
 
     @Override
-    protected <T extends Resource> Stream<T>
+    protected <T extends Resource> Collection<T>
             doProvide(ResourceRequest<T> requested) {
         if (!requested.accepts(ExecResultType)
             || requested.name().map(n -> !n.equals(name())).orElse(false)) {
-            return Stream.empty();
+            return Collections.emptyList();
         }
 
         // Make sure that the required resources are retrieved and exist
@@ -207,7 +209,7 @@ public class JavaExecutor extends AbstractProvider
                 execResult.setFaulty();
             }
             @SuppressWarnings("unchecked")
-            var result = (Stream<T>) Stream.of(execResult);
+            var result = (Collection<T>) List.of(execResult);
             return result;
         } catch (IOException | InterruptedException e) {
             throw new BuildException().from(this).cause(e);

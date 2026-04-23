@@ -24,6 +24,7 @@ import java.io.File;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -165,17 +166,17 @@ public class JavaCompiler extends JavaTool {
     }
 
     @Override
-    protected <T extends Resource> Stream<T>
+    protected <T extends Resource> Collection<T>
             doProvide(ResourceRequest<T> requested) {
         if (requested.accepts(JavaSourceTreeType)) {
             @SuppressWarnings({ "unchecked" })
-            var result = (Stream<T>) sources.stream();
+            var result = (Collection<T>) sources.get();
             return result;
         }
 
         if (!requested.accepts(ClassTreeType)
             && !requested.accepts(CleanlinessType)) {
-            return Stream.empty();
+            return Collections.emptyList();
         }
 
         // Get this project's previously generated classes for checking
@@ -184,14 +185,14 @@ public class JavaCompiler extends JavaTool {
         final var classSet = ClassTree.of(project(), destDir);
         if (requested.accepts(CleanlinessType)) {
             classSet.cleanup();
-            return Stream.empty();
+            return Collections.emptyList();
         }
 
         // Evaluate for most special type
         if (requested.accepts(ClassTreeType)
             && !requested.type().equals(ClassTreeType)) {
             @SuppressWarnings("unchecked")
-            var result = (Stream<T>) resources(of(ClassTreeType));
+            var result = (Collection<T>) resources(of(ClassTreeType)).toList();
             return result;
         }
 
@@ -220,7 +221,7 @@ public class JavaCompiler extends JavaTool {
         }
         classSet.clear();
         @SuppressWarnings("unchecked")
-        var result = (Stream<T>) Stream.of(classSet);
+        var result = (Collection<T>) List.of(classSet);
         return result;
     }
 

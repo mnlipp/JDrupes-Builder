@@ -22,7 +22,10 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.Collection;
+import java.util.Collections;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Optional;
 import java.util.Properties;
 import java.util.Set;
@@ -30,7 +33,6 @@ import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
 import javax.xml.transform.OutputKeys;
@@ -178,15 +180,15 @@ public class EclipseConfigurator extends AbstractGenerator {
     /// @return the stream
     ///
     @Override
-    protected <T extends Resource> Stream<T>
+    protected <T extends Resource> Collection<T>
             doProvide(ResourceRequest<T> requested) {
         if (!requested.accepts(new ResourceType<EclipseConfiguration>() {})) {
-            return Stream.empty();
+            return Collections.emptyList();
         }
 
         // Generate nothing for test projects.
         if (project() instanceof MergedTestProject) {
-            return Stream.empty();
+            return Collections.emptyList();
         }
 
         // Make sure that the directories exist.
@@ -212,7 +214,7 @@ public class EclipseConfigurator extends AbstractGenerator {
 
         // Create result
         @SuppressWarnings({ "unchecked" })
-        var result = (Stream<T>) Stream.of(
+        var result = (Collection<T>) List.of(
             EclipseConfiguration.of(project(), eclipseAlias()));
         return result;
     }

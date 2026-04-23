@@ -42,6 +42,8 @@ import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.security.Security;
 import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.ExecutorService;
@@ -280,20 +282,20 @@ public class MvnPublisher extends AbstractGenerator {
     }
 
     @Override
-    protected <T extends Resource> Stream<T>
+    protected <T extends Resource> Collection<T>
             doProvide(ResourceRequest<T> requested) {
         if (!requested.accepts(MvnPublicationType)) {
-            return Stream.empty();
+            return Collections.emptyList();
         }
         PomFile pomResource = resourceCheck(project()
             .resources(of(PomFileType).using(Supply)), "POM file");
         if (pomResource == null) {
-            return Stream.empty();
+            return Collections.emptyList();
         }
         var jarResource = resourceCheck(project()
             .resources(of(LibraryJarFileType).using(Supply)), "jar file");
         if (jarResource == null) {
-            return Stream.empty();
+            return Collections.emptyList();
         }
         var srcsIter = project()
             .resources(of(SourcesJarFileType).using(Supply)).iterator();
@@ -303,7 +305,7 @@ public class MvnPublisher extends AbstractGenerator {
             if (srcsIter.hasNext()) {
                 logger.atSevere()
                     .log("More than one sources jar resources found.");
-                return Stream.empty();
+                return Collections.emptyList();
             }
         }
         var jdIter = project().resources(of(JavadocJarFileType).using(Supply))
@@ -314,13 +316,13 @@ public class MvnPublisher extends AbstractGenerator {
             if (jdIter.hasNext()) {
                 logger.atSevere()
                     .log("More than one javadoc jar resources found.");
-                return Stream.empty();
+                return Collections.emptyList();
             }
         }
 
         // Deploy what we've found
         @SuppressWarnings("unchecked")
-        var result = (Stream<T>) deploy(pomResource, jarResource, srcsFile,
+        var result = (Collection<T>) deploy(pomResource, jarResource, srcsFile,
             jdFile);
         return result;
     }
@@ -344,8 +346,9 @@ public class MvnPublisher extends AbstractGenerator {
     }
 
     @SuppressWarnings("PMD.AvoidDuplicateLiterals")
-    private Stream<?> deploy(PomFile pomResource, LibraryJarFile jarResource,
-            SourcesJarFile srcsJar, JavadocJarFile javadocJar) {
+    private Collection<?> deploy(PomFile pomResource,
+            LibraryJarFile jarResource, SourcesJarFile srcsJar,
+            JavadocJarFile javadocJar) {
         Artifact mainArtifact;
         try {
             mainArtifact = mainArtifact(pomResource);
@@ -384,7 +387,7 @@ public class MvnPublisher extends AbstractGenerator {
                 });
             }
         }
-        return Stream.of(MvnPublication.of(String.format("%s:%s:%s",
+        return List.of(MvnPublication.of(String.format("%s:%s:%s",
             mainArtifact.getGroupId(), mainArtifact.getArtifactId(),
             mainArtifact.getVersion())));
     }

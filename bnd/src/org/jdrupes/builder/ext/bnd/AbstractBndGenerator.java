@@ -32,7 +32,6 @@ import org.jdrupes.builder.api.ConfigurationException;
 import org.jdrupes.builder.api.Project;
 import org.jdrupes.builder.core.AbstractGenerator;
 
-// TODO: Auto-generated Javadoc
 /// A base class for providers using bndlib.
 ///
 public abstract class AbstractBndGenerator extends AbstractGenerator {

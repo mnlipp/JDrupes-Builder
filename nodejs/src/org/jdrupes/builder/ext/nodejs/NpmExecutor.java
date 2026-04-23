@@ -28,6 +28,8 @@ import java.nio.file.Path;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 import java.util.function.Function;
@@ -201,11 +203,11 @@ public class NpmExecutor extends AbstractProvider
 
     @Override
     @SuppressWarnings({ "PMD.CyclomaticComplexity" })
-    protected <T extends Resource> Stream<T>
+    protected <T extends Resource> Collection<T>
             doProvide(ResourceRequest<T> request) {
         if (request.accepts(CleanlinessType)) {
             getOutput.apply(project).forEach(Resource::cleanup);
-            return Stream.empty();
+            return Collections.emptyList();
         }
 
         // Handle request for generated resources
@@ -222,13 +224,13 @@ public class NpmExecutor extends AbstractProvider
         // Check for and handle request for execution result
         if (!request.accepts(ExecResultType)
             || !name().equals(request.name().orElse(null))) {
-            return Stream.empty();
+            return Collections.emptyList();
         }
         // Always evaluate for the most special type
         if (!request.type().equals(ExecResultType)) {
             @SuppressWarnings({ "unchecked", "PMD.AvoidDuplicateLiterals" })
-            var result = (Stream<T>) resources(of(ExecResultType)
-                .withName(name()));
+            var result = (Collection<T>) resources(of(ExecResultType)
+                .withName(name())).toList();
             return result;
         }
 
@@ -261,7 +263,7 @@ public class NpmExecutor extends AbstractProvider
             var result = (T) ExecResult
                 .of(this, "npm install", 0, Stream.empty())
                 .asOf(Instant.ofEpochMilli(dotPackageLock.lastModified()));
-            return Stream.of(result);
+            return List.of(result);
         }
 
         // Get (previously) provided and check if up-to-date
@@ -275,12 +277,12 @@ public class NpmExecutor extends AbstractProvider
                 "existing " + existing.stream().map(Resource::toString)
                     .collect(Collectors.joining(", ")),
                 0, existing.stream()).asOf(existing.asOf().get());
-            return Stream.of(result);
+            return List.of(result);
         }
         return runNpm(project, arguments);
     }
 
-    private <T extends Resource> Stream<T> runNpm(
+    private <T extends Resource> Collection<T> runNpm(
             Project project, List<String> arguments) {
         var nodeJsExecutable = nodeJsDownloader.npmExecutable(nodeJsVersion);
         logger.atFine().log("Running %s with %s", this, nodeJsExecutable);
@@ -300,7 +302,7 @@ public class NpmExecutor extends AbstractProvider
                     .message("Npm exited with %d", exitValue);
             }
             @SuppressWarnings("unchecked")
-            var result = (Stream<T>) Stream.of(ExecResult.of(this,
+            var result = (Collection<T>) List.of(ExecResult.of(this,
                 "[" + project.name() + "]$ npm "
                     + arguments.stream().collect(Collectors.joining(" ")),
                 exitValue, getOutput.apply(project))
@@ -320,14 +322,14 @@ public class NpmExecutor extends AbstractProvider
         });
     }
 
-    private <T extends Resource> Stream<T> provideGenerated() {
+    private <T extends Resource> Collection<T> provideGenerated() {
         // Request execution result
         var execResult = resources(of(ExecResultType).withName(name()));
         @SuppressWarnings("unchecked")
 
         // Extract generated
         var generated = execResult.map(r -> (Stream<T>) r.resources())
-            .flatMap(s -> s);
+            .flatMap(s -> s).toList();
         return generated;
     }
 

@@ -19,8 +19,8 @@
 package org.jdrupes.builder.core;
 
 import com.google.common.flogger.FluentLogger;
+import java.util.Collection;
 import java.util.Iterator;
-import java.util.List;
 import java.util.Spliterators;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
@@ -47,7 +47,7 @@ public class FutureStream<T extends Resource> {
     static final ScopedValue<StatusLine> statusLine
         = ScopedValue.newInstance();
     private final ProviderInvocation<?> invocation;
-    private final Future<List<T>> values;
+    private final Future<Collection<T>> values;
     private final int id = futureCount.getAndIncrement();
 
     static {
@@ -56,12 +56,10 @@ public class FutureStream<T extends Resource> {
 
     /// Instantiates a new future stream of resources.
     ///
-    /// @param context the context
     /// @param invocation the invocation
     ///
-    public FutureStream(
-            DefaultBuildContext context, ProviderInvocation<T> invocation) {
-        this.context = context;
+    public FutureStream(ProviderInvocation<T> invocation) {
+        context = DefaultBuildContext.context().get();
         this.invocation = invocation;
         final var provider = invocation.provider();
         final var request = invocation.request();
@@ -78,7 +76,7 @@ public class FutureStream<T extends Resource> {
                 return context.inScopeForProviderCall()
                     .where(FutureStream.statusLine, statusLine)
                     .call(() -> ((AbstractProvider) provider).toSpi()
-                        .provide(request).toList());
+                        .provide(request));
             } finally {
                 logger.atFiner().log("%s terminated", this);
                 Thread.currentThread().setName(origThreadName);
@@ -105,7 +103,8 @@ public class FutureStream<T extends Resource> {
                                     + " while constructing the build project.");
                         }
                         try {
-                            theIterator = values.get().iterator();
+                            var vals = values.get();
+                            theIterator = vals.iterator();
                         } catch (InterruptedException | ExecutionException e) {
                             throw new BuildException()
                                 .from(invocation.provider()).cause(e);

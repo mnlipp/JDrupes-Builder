@@ -18,7 +18,7 @@
 
 package org.jdrupes.builder.api;
 
-import java.util.stream.Stream;
+import java.util.Collection;
 
 /// This interface must be made available to the [BuildContext]
 /// by implementations of resource providers.
@@ -48,11 +48,12 @@ public interface ResourceProviderSpi {
     /// mechanism is unaware of relationships between resource types.
     /// Requests for A and B are therefore forwarded independently.
     /// To avoid duplicate evaluation, the provider must map a request
-    /// for A to a request for B (via [ResourceProvider#resources]).   
+    /// for A to a request for B (via [ResourceProvider#resources]).
     ///
     /// @param <T> the type of the requested (and provided) resource
     /// @param request the request for resources
-    /// @return the provided resource(s) as stream
+    /// @return the provided resources as collection. The collection
+    /// will be cached and must support repeated invocations of `stream`.
     ///
-    <T extends Resource> Stream<T> provide(ResourceRequest<T> request);
+    <T extends Resource> Collection<T> provide(ResourceRequest<T> request);
 }

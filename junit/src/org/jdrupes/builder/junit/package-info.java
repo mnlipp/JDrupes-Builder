@@ -17,4 +17,5 @@
  */
 
 /// Support for building and running [JUnit](https://junit.org/) tests.
+
 package org.jdrupes.builder.junit;

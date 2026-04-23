@@ -21,6 +21,7 @@ package org.jdrupes.builder.core;
 import io.github.azagniotov.matcher.AntPathMatcher;
 import java.nio.file.Path;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -291,7 +292,7 @@ public abstract class AbstractProject extends AbstractProvider
         if (!providersUnlocked) {
             throw new BuildException().message(
                 "Attempt to access dependencies of %s while"
-                    + " invocation its constructor.",
+                    + " invoking its constructor.",
                 this);
         }
         return providers.entrySet().stream()
@@ -331,9 +332,9 @@ public abstract class AbstractProject extends AbstractProvider
     }
 
     @Override
-    protected <T extends Resource> Stream<T>
+    protected <T extends Resource> Collection<T>
             doProvide(ResourceRequest<T> request) {
-        return providers().resources(request);
+        return providers().resources(request).toList();
     }
 
     @SuppressWarnings("PMD.CommentRequired")

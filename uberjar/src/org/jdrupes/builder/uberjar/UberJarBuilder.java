@@ -24,13 +24,14 @@ import java.io.IOException;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Predicate;
 import java.util.jar.JarEntry;
-import java.util.stream.Stream;
 import org.jdrupes.builder.api.BuildException;
 import org.jdrupes.builder.api.ConfigurationException;
 import org.jdrupes.builder.api.FileTree;
@@ -283,17 +284,17 @@ public class UberJarBuilder extends LibraryBuilder {
     @SuppressWarnings({ "PMD.CollapsibleIfStatements", "unchecked",
         "PMD.CloseResource", "PMD.UseTryWithResources",
         "PMD.CognitiveComplexity", "PMD.CyclomaticComplexity" })
-    protected <T extends Resource> Stream<T>
+    protected <T extends Resource> Collection<T>
             doProvide(ResourceRequest<T> request) {
         if (!request.accepts(AppJarFileType)
             && !request.accepts(CleanlinessType)) {
-            return Stream.empty();
+            return Collections.emptyList();
         }
 
         // Maybe only delete
         if (request.accepts(CleanlinessType)) {
             destination().resolve(jarName()).toFile().delete();
-            return Stream.empty();
+            return Collections.emptyList();
         }
 
         // Make sure mainClass is set for app jar
@@ -304,12 +305,12 @@ public class UberJarBuilder extends LibraryBuilder {
 
         // Upgrade to most specific type to avoid duplicate generation
         if (mainClass() != null && !request.type().equals(AppJarFileType)) {
-            return (Stream<T>) context()
-                .resources(this, project().of(AppJarFileType));
+            return (Collection<T>) context()
+                .resources(this, project().of(AppJarFileType)).toList();
         }
         if (mainClass() == null && !request.type().equals(JarFileType)) {
-            return (Stream<T>) context()
-                .resources(this, project().of(JarFileType));
+            return (Collection<T>) context()
+                .resources(this, project().of(JarFileType)).toList();
         }
 
         // Prepare jar file
@@ -336,6 +337,6 @@ public class UberJarBuilder extends LibraryBuilder {
                 }
             }
         }
-        return Stream.of((T) jarResource);
+        return List.of((T) jarResource);
     }
 }

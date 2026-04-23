@@ -17,4 +17,5 @@
  */
 
 /// Support for building OSGi bundles using [Bnd](https://bnd.bndtools.org/).
+
 package org.jdrupes.builder.ext.bnd;

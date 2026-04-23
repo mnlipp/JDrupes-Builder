@@ -20,10 +20,12 @@ package org.jdrupes.builder.java;
 
 import com.google.common.flogger.FluentLogger;
 import java.nio.file.Path;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.jar.Attributes;
-import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import org.jdrupes.builder.api.BuildException;
 import org.jdrupes.builder.api.ConfigurationException;
@@ -69,6 +71,7 @@ import static org.jdrupes.builder.java.JavaTypes.*;
 public class LibraryBuilder extends JarBuilder
         implements ResourceRetriever {
 
+    @SuppressWarnings({ "unused" })
     private static final FluentLogger logger = FluentLogger.forEnclosingClass();
     private final StreamCollector<ResourceProvider> providers
         = StreamCollector.cached();
@@ -143,44 +146,38 @@ public class LibraryBuilder extends JarBuilder
     ///
     protected void collectFromProviders(
             Map<Path, Resources<IOResource>> contents) {
-        // First get providers, then the resources, else we can get deadlocks.
-        var providers
-            = contentProviders().stream().filter(p -> !p.equals(this)).toList();
-        logger.atFinest().log("%s collecting from %s", this,
-            providers.stream().map(ResourceProvider::toString)
-                .collect(Collectors.joining(", ")));
-        providers.stream()
-            .map(p -> p.resources(of(ClassTreeType).using(Supply)))
-            .flatMap(s -> s).forEach(t -> collect(contents, t));
-        providers.stream()
-            .map(p -> p.resources(of(JavaResourceTreeType).using(Supply)))
-            .flatMap(s -> s).forEach(t -> collect(contents, t));
+        contentProviders().stream().map(p -> p.resources(
+            of(ClassTreeType).using(Supply))).flatMap(s -> s)
+            .forEach(t -> collect(contents, t));
+        contentProviders().stream().map(p -> p.resources(
+            of(JavaResourceTreeType).using(Supply))).flatMap(s -> s)
+            .forEach(t -> collect(contents, t));
     }
 
     @Override
     @SuppressWarnings({ "PMD.CollapsibleIfStatements", "unchecked",
         "PMD.CyclomaticComplexity" })
-    protected <T extends Resource> Stream<T>
+    protected <T extends Resource> Collection<T>
             doProvide(ResourceRequest<T> request) {
         if (!request.accepts(LibraryJarFileType)
             && !request.accepts(CleanlinessType)) {
-            return Stream.empty();
+            return Collections.emptyList();
         }
 
         // Maybe only delete
         if (request.accepts(CleanlinessType)) {
             destination().resolve(jarName()).toFile().delete();
-            return Stream.empty();
+            return Collections.emptyList();
         }
 
         // Upgrade to most specific type to avoid duplicate generation
         if (mainClass() != null && !request.type().equals(AppJarFileType)) {
-            return (Stream<T>) context()
-                .resources(this, project().of(AppJarFileType));
+            return (Collection<T>) context()
+                .resources(this, project().of(AppJarFileType)).toList();
         }
         if (mainClass() == null && !request.type().equals(LibraryJarFileType)) {
-            return (Stream<T>) context()
-                .resources(this, project().of(LibraryJarFileType));
+            return (Collection<T>) context()
+                .resources(this, project().of(LibraryJarFileType)).toList();
         }
 
         // Make sure mainClass is set for app jar
@@ -202,6 +199,6 @@ public class LibraryBuilder extends JarBuilder
             : LibraryJarFile.of(destDir.resolve(jarName()));
 
         buildJar(jarResource);
-        return Stream.of((T) jarResource);
+        return List.of((T) jarResource);
     }
 }

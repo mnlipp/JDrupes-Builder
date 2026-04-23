@@ -26,6 +26,8 @@ import eu.maveniverse.maven.mima.context.Runtimes;
 import java.net.URI;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -201,18 +203,18 @@ public class MvnRepoLookup extends AbstractProvider {
     /// @return the stream
     ///
     @Override
-    protected <T extends Resource> Stream<T>
+    protected <T extends Resource> Collection<T>
             doProvide(ResourceRequest<T> request) {
         if (request.accepts(MvnRepoDependencyType)) {
             return provideMvnDeps();
         }
         if (!request.accepts(MvnRepoLibraryJarFileType)) {
-            return Stream.empty();
+            return Collections.emptyList();
         }
         if (!request.isFor(MvnRepoLibraryJarFileType)) {
             @SuppressWarnings({ "unchecked", "PMD.AvoidDuplicateLiterals" })
-            var result = (Stream<T>) context()
-                .resources(this, of(MvnRepoLibraryJarFileType));
+            var result = (Collection<T>) context()
+                .resources(this, of(MvnRepoLibraryJarFileType)).toList();
             return result;
         }
         try {
@@ -221,23 +223,23 @@ public class MvnRepoLookup extends AbstractProvider {
             throw new BuildException().from(this).cause(e);
         } catch (DependencyResolutionException e) {
             if (probeMode) {
-                return Stream.empty();
+                return Collections.emptyList();
             }
             throw new BuildException().from(this).cause(e);
         }
     }
 
-    private <T extends Resource> Stream<T> provideMvnDeps() {
+    private <T extends Resource> Collection<T> provideMvnDeps() {
         @SuppressWarnings("unchecked")
         var boms = (Stream<T>) this.boms.stream()
             .map(MvnRepoBom::of);
         @SuppressWarnings("unchecked")
         var deps = (Stream<T>) coordinates.stream()
             .map(MvnRepoDependency::of);
-        return Stream.concat(boms, deps);
+        return Stream.concat(boms, deps).toList();
     }
 
-    private <T extends Resource> Stream<T> provideJars()
+    private <T extends Resource> Collection<T> provideJars()
             throws DependencyResolutionException, ModelBuildingException {
         var repoSystem = rootContext().repositorySystem();
         var repoSession = rootContext().repositorySystemSession();
@@ -274,7 +276,7 @@ public class MvnRepoLookup extends AbstractProvider {
         rootNode.accept(nlg);
         List<DependencyNode> dependencyNodes = nlg.getNodes();
         @SuppressWarnings("unchecked")
-        var result = (Stream<T>) dependencyNodes.stream()
+        var result = (Collection<T>) dependencyNodes.stream()
             .filter(d -> d.getArtifact() != null)
             .map(DependencyNode::getArtifact)
             .map(a -> {
@@ -286,7 +288,8 @@ public class MvnRepoLookup extends AbstractProvider {
                 }
                 return a;
             }).map(a -> a.getFile().toPath())
-            .map(p -> ResourceFactory.create(MvnRepoLibraryJarFileType, p));
+            .map(p -> ResourceFactory.create(MvnRepoLibraryJarFileType, p))
+            .toList();
         return result;
     }
 

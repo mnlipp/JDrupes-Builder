@@ -26,7 +26,10 @@ import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLClassLoader;
 import java.nio.file.Path;
+import java.util.Collection;
+import java.util.Collections;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -143,10 +146,10 @@ public class JUnitTestRunner extends AbstractGenerator {
 
     @Override
     @SuppressWarnings({ "PMD.AvoidSynchronizedStatement", "PMD.NcssCount" })
-    protected <T extends Resource> Stream<T>
+    protected <T extends Resource> Collection<T>
             doProvide(ResourceRequest<T> requested) {
         if (!requested.accepts(new ResourceType<TestResult>() {})) {
-            return Stream.empty();
+            return Collections.emptyList();
         }
 
         // Collect the classpath.
@@ -213,8 +216,8 @@ public class JUnitTestRunner extends AbstractGenerator {
                 result.setFaulty();
             }
             @SuppressWarnings("unchecked")
-            var asStream = Stream.of((T) result);
-            return asStream;
+            var asList = List.of((T) result);
+            return asList;
         } catch (IOException e) {
             logger.atWarning().withCause(e).log("Failed to close classloader");
         } finally {
@@ -222,7 +225,7 @@ public class JUnitTestRunner extends AbstractGenerator {
         }
 
         // Return result
-        return Stream.empty();
+        return Collections.emptyList();
     }
 
     @SuppressWarnings("PMD.AvoidLiteralsInIfCondition")

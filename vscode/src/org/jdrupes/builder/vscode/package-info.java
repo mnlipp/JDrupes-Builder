@@ -18,5 +18,5 @@
 
 /// Generate configuration files for
 /// [Visual Studio Code](https://code.visualstudio.com/)
-///
+
 package org.jdrupes.builder.vscode;

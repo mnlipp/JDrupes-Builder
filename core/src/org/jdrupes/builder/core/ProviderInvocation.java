@@ -18,14 +18,13 @@
 
 package org.jdrupes.builder.core;
 
-import java.util.stream.Stream;
+import java.util.Collection;
 import org.jdrupes.builder.api.Renamable;
 import org.jdrupes.builder.api.Resource;
 import org.jdrupes.builder.api.ResourceProvider;
 import org.jdrupes.builder.api.ResourceRequest;
 import org.jdrupes.builder.api.ResourceType;
 
-// TODO: Auto-generated Javadoc
 /// Provided resources are identified by the [ResourceProvider]
 /// and the requested [Resource].
 ///
@@ -48,7 +47,7 @@ public record ProviderInvocation<T extends Resource>(ResourceProvider provider,
             return this;
         }
 
-        protected <T extends Resource> Stream<T>
+        protected <T extends Resource> Collection<T>
                 doProvide(ResourceRequest<T> request) {
             throw new UnsupportedOperationException();
         }
@@ -59,10 +58,6 @@ public record ProviderInvocation<T extends Resource>(ResourceProvider provider,
         = new ProviderInvocation<>(new Launcher(),
             new DefaultResourceRequest<>(new ResourceType<Resource>() {}));
 
-    /// To string.
-    ///
-    /// @return the string
-    ///
     @Override
     public String toString() {
         if (provider.equals(LAUNCH.provider)) {

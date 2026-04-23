@@ -29,6 +29,8 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
+import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 import java.util.function.BiConsumer;
@@ -248,11 +250,11 @@ public class FileTreeBuilder extends AbstractGenerator {
     }
 
     @Override
-    protected <T extends Resource> Stream<T>
+    protected <T extends Resource> Collection<T>
             doProvide(ResourceRequest<T> request) {
         if (request.accepts(CleanlinessType)) {
             FileTree.of(project(), destination, "**/*").cleanup();
-            return Stream.empty();
+            return Collections.emptyList();
         }
 
         // Check if request matches
@@ -261,13 +263,13 @@ public class FileTreeBuilder extends AbstractGenerator {
             || (!requestForResult.name().isEmpty()
                 && !Objects.equals(requestForResult.name().get(),
                     request.name().orElse(null)))) {
-            return Stream.empty();
+            return Collections.emptyList();
         }
 
         // Always evaluate for most special type
         if (!request.equals(requestForResult)) {
             @SuppressWarnings({ "unchecked" })
-            var result = (Stream<T>) resources(requestForResult);
+            var result = (Collection<T>) resources(requestForResult).toList();
             return result;
         }
 
@@ -283,7 +285,7 @@ public class FileTreeBuilder extends AbstractGenerator {
 
         var result = ResourceFactory.create(request.type(), project(),
             destination, new String[] { "**/*" });
-        return Stream.of(result);
+        return List.of(result);
     }
 
     @SuppressWarnings("PMD.AvoidInstantiatingObjectsInLoops")

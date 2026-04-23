@@ -20,6 +20,8 @@ package org.jdrupes.builder.java;
 
 import java.io.File;
 import java.nio.file.Path;
+import java.util.Collection;
+import java.util.Collections;
 import java.util.stream.Stream;
 import org.jdrupes.builder.api.FileTree;
 import org.jdrupes.builder.api.Project;
@@ -65,22 +67,22 @@ public class ClasspathScanner extends AbstractGenerator {
     /// @return the stream
     ///
     @Override
-    protected <T extends Resource> Stream<T>
+    protected <T extends Resource> Collection<T>
             doProvide(ResourceRequest<T> requested) {
         // This supports requests for classpath elements only.
         if (!requested.accepts(ClasspathElementType)) {
-            return Stream.empty();
+            return Collections.emptyList();
         }
 
         @SuppressWarnings("unchecked")
-        var result = (Stream<T>) Stream.of(path.split(File.pathSeparator))
+        var result = (Collection<T>) Stream.of(path.split(File.pathSeparator))
             .map(Path::of).map(p -> project().directory().resolve(p)).map(p -> {
                 if (p.toFile().isDirectory()) {
                     return ClassTree.of(project(), p.toAbsolutePath());
                 } else {
                     return LibraryJarFile.of(p.toAbsolutePath());
                 }
-            }).filter(e -> requested.accepts(e.type()));
+            }).filter(e -> requested.accepts(e.type())).toList();
         return result;
     }
 

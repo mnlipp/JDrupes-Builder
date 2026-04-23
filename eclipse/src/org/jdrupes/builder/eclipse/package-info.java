@@ -18,4 +18,5 @@
 
 /// Generate configuration files for Eclipse 
 ///
+
 package org.jdrupes.builder.eclipse;

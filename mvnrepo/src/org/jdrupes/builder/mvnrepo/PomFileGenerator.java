@@ -25,10 +25,12 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
 import java.util.Optional;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
-import java.util.stream.Stream;
 import org.apache.maven.model.Dependency;
 import org.apache.maven.model.DependencyManagement;
 import org.apache.maven.model.Model;
@@ -150,24 +152,24 @@ public class PomFileGenerator extends AbstractGenerator {
     }
 
     @Override
-    protected <T extends Resource> Stream<T>
+    protected <T extends Resource> Collection<T>
             doProvide(ResourceRequest<T> requested) {
         var pomPath = destination().resolve(Optional.ofNullable(
             project().get(ArtifactId)).orElse(project().name()) + "-pom.xml");
         if (cleanup(requested, pomPath)) {
-            return Stream.empty();
+            return Collections.emptyList();
         }
         if (requested.accepts(MvnRepoDependencyType)) {
             return generateRepoDependency(requested);
         }
         if (!requested.accepts(PomFileType)) {
-            return Stream.empty();
+            return Collections.emptyList();
         }
 
         // Always provide special type
         if (!requested.type().equals(PomFileType)) {
             @SuppressWarnings("unchecked")
-            var result = (Stream<T>) resources(of(PomFileType));
+            var result = (Collection<T>) resources(of(PomFileType)).toList();
             return result;
         }
 
@@ -203,7 +205,7 @@ public class PomFileGenerator extends AbstractGenerator {
         }
 
         @SuppressWarnings("unchecked")
-        var result = (Stream<T>) Stream.of(PomFile.of(pomPath));
+        var result = (Collection<T>) List.of(PomFile.of(pomPath));
         return result;
     }
 
@@ -275,12 +277,12 @@ public class PomFileGenerator extends AbstractGenerator {
     }
 
     @SuppressWarnings("unchecked")
-    private <T extends Resource> Stream<T>
+    private <T extends Resource> Collection<T>
             generateRepoDependency(ResourceRequest<T> requested) {
         if (requested.accepts(MvnRepoDependenciesType)) {
-            return Stream.empty();
+            return Collections.emptyList();
         }
-        return Stream.of((T) MvnRepoDependency.of(String.format("%s:%s:%s",
+        return List.of((T) MvnRepoDependency.of(String.format("%s:%s:%s",
             project().<String> get(GroupId), Optional.ofNullable(project()
                 .<String> get(ArtifactId)).orElse(project().name()),
             project().get(Version))));

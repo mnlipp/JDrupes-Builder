@@ -20,6 +20,7 @@ package org.jdrupes.builder.api;
 
 import java.time.Instant;
 import java.util.Optional;
+import java.util.SequencedSet;
 import java.util.stream.Stream;
 
 /// Defines a container for a collection of resources. Implementations
@@ -74,11 +75,19 @@ public interface Resources<T extends Resource> extends Resource {
     ///
     boolean isEmpty();
 
+    /// Returns the resources as a [SequencedSet]. 
+    ///
+    /// @return the sequenced set
+    ///
+    SequencedSet<T> get();
+
     /// Retrieves the resources as a stream.
     ///
     /// @return the stream
     ///
-    Stream<T> stream();
+    default Stream<T> stream() {
+        return get().stream();
+    }
 
     /// Clears the contained resources.
     ///

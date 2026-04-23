@@ -26,7 +26,10 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import static java.nio.file.StandardOpenOption.*;
 import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
 import java.util.Comparator;
+import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.concurrent.ConcurrentHashMap;
@@ -410,22 +413,23 @@ public class JarBuilder extends AbstractGenerator {
 
     @Override
     @SuppressWarnings({ "PMD.CollapsibleIfStatements", "unchecked" })
-    protected <T extends Resource> Stream<T>
+    protected <T extends Resource> Collection<T>
             doProvide(ResourceRequest<T> requested) {
         if (!requested.accepts(jarType)
             && !requested.accepts(CleanlinessType)) {
-            return Stream.empty();
+            return Collections.emptyList();
         }
 
         // Maybe only delete
         if (requested.accepts(CleanlinessType)) {
             destination().resolve(jarName()).toFile().delete();
-            return Stream.empty();
+            return Collections.emptyList();
         }
 
         // Upgrade to most specific type to avoid duplicate generation
         if (!requested.type().equals(jarType)) {
-            return (Stream<T>) context().resources(this, project().of(jarType));
+            return (Collection<T>) context()
+                .resources(this, project().of(jarType)).toList();
         }
 
         // Prepare jar file
@@ -439,6 +443,6 @@ public class JarBuilder extends AbstractGenerator {
         var jarResource = JarFile.of(jarType, destDir.resolve(jarName()));
 
         buildJar(jarResource);
-        return Stream.of((T) jarResource);
+        return List.of((T) jarResource);
     }
 }

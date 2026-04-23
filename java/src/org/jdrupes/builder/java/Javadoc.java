@@ -25,6 +25,7 @@ import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -188,11 +189,11 @@ public class Javadoc extends JavaTool {
     @Override
     @SuppressWarnings({ "PMD.AvoidCatchingGenericException",
         "PMD.ExceptionAsFlowControl" })
-    protected <T extends Resource> Stream<T>
+    protected <T extends Resource> Collection<T>
             doProvide(ResourceRequest<T> requested) {
         if (!requested.accepts(JavadocDirectoryType)
             && !requested.accepts(CleanlinessType)) {
-            return Stream.empty();
+            return Collections.emptyList();
         }
 
         // Get destination and check if we only have to cleanup.
@@ -201,13 +202,14 @@ public class Javadoc extends JavaTool {
         if (requested.accepts(CleanlinessType)) {
             generated.cleanup();
             destDir.toFile().delete();
-            return Stream.empty();
+            return Collections.emptyList();
         }
 
         // Always evaluate for most special type
         if (!requested.type().equals(JavadocDirectoryType)) {
             @SuppressWarnings("unchecked")
-            var result = (Stream<T>) resources(of(JavadocDirectoryType));
+            var result
+                = (Collection<T>) resources(of(JavadocDirectoryType)).toList();
             return result;
         }
 
@@ -240,7 +242,7 @@ public class Javadoc extends JavaTool {
             logDiagnostics(diagnostics);
         }
         @SuppressWarnings("unchecked")
-        var result = (Stream<T>) Stream.of(
+        var result = (Collection<T>) List.of(
             JavadocDirectory.of(project(), destDir));
         return result;
     }

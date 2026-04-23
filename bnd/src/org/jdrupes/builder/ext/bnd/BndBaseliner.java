@@ -29,6 +29,8 @@ import aQute.bnd.service.diff.Diff;
 import com.google.common.flogger.FluentLogger;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.Collection;
+import java.util.Collections;
 import java.util.Comparator;
 import java.util.Formatter;
 import java.util.List;
@@ -36,7 +38,6 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
-import java.util.stream.Stream;
 import org.jdrupes.builder.api.BuildException;
 import org.jdrupes.builder.api.Generator;
 import static org.jdrupes.builder.api.Intent.Supply;
@@ -134,10 +135,10 @@ public class BndBaseliner extends AbstractBndGenerator {
 
     @Override
     @SuppressWarnings("PMD.AvoidLiteralsInIfCondition")
-    protected <T extends Resource> Stream<T>
+    protected <T extends Resource> Collection<T>
             doProvide(ResourceRequest<T> requested) {
         if (!requested.accepts(BndBaselineEvaluationType)) {
-            return Stream.empty();
+            return Collections.emptyList();
         }
 
         // Get libraries
@@ -150,8 +151,8 @@ public class BndBaseliner extends AbstractBndGenerator {
                 + " baselining can only success for one.", project());
         }
         @SuppressWarnings("unchecked")
-        var result = (Stream<T>) libraries.stream().map(this::baseline)
-            .filter(Optional::isPresent).map(Optional::get);
+        var result = (Collection<T>) libraries.stream().map(this::baseline)
+            .filter(Optional::isPresent).map(Optional::get).toList();
         return result;
     }
 
