@@ -36,7 +36,7 @@ public interface ResourceRetriever {
     }
 
     /// Adds the given providers as sources for resources. The stream
-    /// must not be terminated before the generators' provide method
+    /// must not be consumed before the generators' provide method
     /// is invoked.
     ///
     /// @param providers the providers to retrieve resources from

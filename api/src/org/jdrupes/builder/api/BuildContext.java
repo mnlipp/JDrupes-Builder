@@ -75,7 +75,7 @@ public interface BuildContext extends AutoCloseable {
     /// Obtains the stream of resources of the given type from the
     /// given provider. The result from invoking the provider is
     /// evaluated asynchronously and cached. Only when the returned
-    /// stream is terminated will the invocation block until the
+    /// stream is consumed will the invocation block until the
     /// result from the provider becomes available.
     /// 
     /// To avoid duplicate invocations of a non-project provider,

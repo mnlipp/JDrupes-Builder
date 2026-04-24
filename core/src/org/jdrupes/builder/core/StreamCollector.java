@@ -24,7 +24,7 @@ import java.util.List;
 import java.util.stream.Stream;
 
 /// A [StreamCollector] allows the user to combine several [Stream]s
-/// into one. The collected streams are terminated when
+/// into one. The collected streams are only consumed when
 /// [#stream] is called. If the collector is cached, [#stream] can
 /// be invoked several times and each invocation returns a new Stream
 /// with the collected content.

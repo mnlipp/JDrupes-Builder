@@ -56,7 +56,7 @@ final class StreamCollectorTest {
         var collector = StreamCollector.uncached();
         List<Integer> items = Arrays.asList(1, 2, 3);
         collector.add(items.stream());
-        collector.stream(); // Terminates collection
+        collector.stream(); // Consumes collection
 
         assertThrows(IllegalStateException.class, () -> {
             collector.add(4, 5, 6);
