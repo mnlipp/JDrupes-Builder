@@ -111,4 +111,11 @@ public interface ResourceRequest<T extends Resource> extends Cloneable {
     /// @return true, if successful
     ///
     boolean isFor(ResourceType<?> type);
+
+    /// Returns a short version of `toString` with only the requested
+    /// resource type and usage intents.
+    ///
+    /// @return the string
+    ///
+    String toRequestedString();
 }
