@@ -1,6 +1,6 @@
 /*
  * JDrupes Builder
- * Copyright (C) 2025 Michael N. Lipp
+ * Copyright (C) 2025, 2026 Michael N. Lipp
  * 
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as
@@ -232,8 +232,7 @@ public class DefaultBuildContext implements BuildContext {
             .call(() -> inResourcesContext(invocation));
     }
 
-    @SuppressWarnings({ "PMD.AvoidSynchronizedStatement",
-        "PMD.AvoidCatchingGenericException" })
+    @SuppressWarnings({ "PMD.AvoidSynchronizedStatement" })
     private <T extends Resource> Stream<T> inResourcesContext(
             ProviderInvocation<T> invocation) {
         if (invocation.provider() instanceof Project) {
@@ -241,15 +240,9 @@ public class DefaultBuildContext implements BuildContext {
             // it is inefficient to invoke it asynchronously. Nevertheless,
             // SPI must be invoked lazily.
             var snapshot = ScopedValueContext.snapshot();
-            return Stream.generate(() -> {
-                try {
-                    return snapshot.where(providerInvocationAllowed,
-                        new AtomicBoolean(true))
-                        .call(() -> invokeSpi(invocation));
-                } catch (Exception e) {
-                    throw new BuildException().cause(e);
-                }
-            }).limit(1).flatMap(Collection::stream);
+            return LazyCollectionStream.of(
+                () -> snapshot.where(providerInvocationAllowed,
+                    new AtomicBoolean(true)).call(() -> invokeSpi(invocation)));
         }
         if (!invocation.request().type().equals(CleanlinessType)) {
             return cache.computeIfAbsent(invocation,

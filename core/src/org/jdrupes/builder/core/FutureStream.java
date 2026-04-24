@@ -19,15 +19,13 @@
 package org.jdrupes.builder.core;
 
 import com.google.common.flogger.FluentLogger;
+import static com.google.common.flogger.LazyArgs.lazy;
 import java.util.Collection;
-import java.util.Iterator;
-import java.util.Spliterators;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 import java.util.concurrent.atomic.AtomicInteger;
-import java.util.function.Consumer;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
-import java.util.stream.StreamSupport;
 import org.jdrupes.builder.api.BuildException;
 import org.jdrupes.builder.api.ConfigurationException;
 import org.jdrupes.builder.api.Resource;
@@ -64,12 +62,13 @@ public class FutureStream<T extends Resource> {
         final var provider = invocation.provider();
         final var request = invocation.request();
         values = ScopedValueContext.submitTo(context.executor(), () -> {
-            logger.atFiner().log("%s starting", this);
             var origThreadName = Thread.currentThread().getName();
             try (var _ = context.executingFutureStreams().acquire();
                     var statusLine = context.console().statusLine()) {
                 Thread.currentThread().setName(
                     provider + " ← " + request.type());
+                logger.atFiner().log(
+                    "Task [%s] evaluating", Thread.currentThread().getName());
                 // Wait for the build-project to be fully constructed
                 context.buildProject().get();
                 statusLine.update(provider + " evaluating " + request);
@@ -78,7 +77,8 @@ public class FutureStream<T extends Resource> {
                     .call(() -> ((AbstractProvider) provider).toSpi()
                         .provide(request));
             } finally {
-                logger.atFiner().log("%s terminated", this);
+                logger.atFiner().log(
+                    "Task [%s] terminated", Thread.currentThread().getName());
                 Thread.currentThread().setName(origThreadName);
             }
         });
@@ -89,51 +89,31 @@ public class FutureStream<T extends Resource> {
     /// @return the stream
     ///
     public Stream<T> stream() {
-        return StreamSupport.stream(
-            new Spliterators.AbstractSpliterator<>(Long.MAX_VALUE, 0) {
-
-                private Iterator<T> theIterator;
-
-                private Iterator<T> iterator() {
-                    if (theIterator == null) {
-                        if (!context.buildProject().isDone()) {
-                            throw new ConfigurationException()
-                                .from(invocation.provider())
-                                .message("Attempt to terminate resource stream"
-                                    + " while constructing the build project.");
-                        }
-                        try {
-                            var vals = values.get();
-                            theIterator = vals.iterator();
-                        } catch (InterruptedException | ExecutionException e) {
-                            throw new BuildException()
-                                .from(invocation.provider()).cause(e);
-                        }
-                    }
-                    return theIterator;
-                }
-
-                @Override
-                public void forEachRemaining(Consumer<? super T> action) {
-                    iterator().forEachRemaining(action);
-                }
-
-                @Override
-                public boolean tryAdvance(Consumer<? super T> action) {
-                    if (!iterator().hasNext()) {
-                        return false;
-                    }
-                    action.accept(iterator().next());
-                    return true;
-                }
-
-            }, false);
+        return LazyCollectionStream.of(() -> {
+            if (!context.buildProject().isDone()) {
+                throw new ConfigurationException().from(invocation.provider())
+                    .message("Attempt to consume resource stream"
+                        + " while constructing the build project.");
+            }
+            try {
+                logger.atFiner().log("%s awaiting result, request chain: %s",
+                    this, lazy(() -> context.requestChain().stream()
+                        .map(ProviderInvocation::toString)
+                        .collect(Collectors.joining(" ≪ "))));
+                return values.get();
+            } catch (InterruptedException | ExecutionException e) {
+                throw new BuildException()
+                    .from(invocation.provider()).cause(e);
+            } finally {
+                logger.atFiner().log("%s is done", this);
+            }
+        });
     }
 
     @Override
     public String toString() {
         return "FutureStream#" + id + " [" + invocation.provider() + " ← "
-            + invocation.request() + "]";
+            + invocation.request().toRequestedString() + "]";
     }
 
 }
