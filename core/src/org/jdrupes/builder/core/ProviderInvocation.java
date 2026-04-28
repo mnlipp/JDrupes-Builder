@@ -18,8 +18,7 @@
 
 package org.jdrupes.builder.core;
 
-import java.util.Collection;
-import org.jdrupes.builder.api.Renamable;
+import org.jdrupes.builder.api.BuildContext;
 import org.jdrupes.builder.api.Resource;
 import org.jdrupes.builder.api.ResourceProvider;
 import org.jdrupes.builder.api.ResourceRequest;
@@ -35,21 +34,29 @@ import org.jdrupes.builder.api.ResourceType;
 public record ProviderInvocation<T extends Resource>(ResourceProvider provider,
         ResourceRequest<T> request) {
 
-    private static class Launcher extends AbstractProvider
-            implements Renamable {
+    private static class Launcher implements ResourceProvider {
         private Launcher() {
-            name("Launcher");
         }
 
         @Override
-        public Renamable name(String name) {
-            super.rename(name);
-            return this;
+        public String name() {
+            return "Launcher";
         }
 
-        protected <T extends Resource> Collection<T>
-                doProvide(ResourceRequest<T> request) {
+        @Override
+        public BuildContext context() {
             throw new UnsupportedOperationException();
+        }
+
+        @Override
+        public <T extends Resource> ResourceRequest<T>
+                of(ResourceType<? extends T> type) {
+            throw new UnsupportedOperationException();
+        }
+
+        @Override
+        public String toString() {
+            return name();
         }
     }
 
