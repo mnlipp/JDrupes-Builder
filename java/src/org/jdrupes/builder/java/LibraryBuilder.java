@@ -146,14 +146,18 @@ public class LibraryBuilder extends JarBuilder
     ///
     protected void collectFromProviders(
             Map<Path, Resources<IOResource>> contents) {
-        // Not using the intermediate toList.parallelStream causes this
-        // to hang. Not sure why.
-        contentProviders().stream().map(p -> p.resources(
-            of(ClassTreeType).using(Supply))).flatMap(s -> s)
-            .toList().parallelStream().forEach(t -> collect(contents, t));
-        contentProviders().stream().map(p -> p.resources(
-            of(JavaResourceTreeType).using(Supply))).flatMap(s -> s)
-            .toList().parallelStream().forEach(t -> collect(contents, t));
+        contentProviders().stream()
+            .map(p -> p.resources(of(ClassTreeType).using(Supply)))
+            // Terminate to trigger all future stream evaluations before
+            // starting to process the results. Then collect in parallel.
+            .toList().stream().flatMap(s -> s).toList().parallelStream()
+            .forEach(t -> collect(contents, t));
+        contentProviders().stream()
+            .map(p -> p.resources(of(JavaResourceTreeType).using(Supply)))
+            // Terminate to trigger all future stream evaluations before
+            // starting to process the results. Then collect in parallel.
+            .toList().stream().flatMap(s -> s).toList().parallelStream()
+            .forEach(t -> collect(contents, t));
     }
 
     @Override

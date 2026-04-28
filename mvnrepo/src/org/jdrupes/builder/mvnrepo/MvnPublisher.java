@@ -559,12 +559,14 @@ public class MvnPublisher extends AbstractGenerator {
             context.repositorySystemSession());
         var startMsgLogged = new AtomicBoolean(false);
         var deployedCount = new AtomicInteger(0);
+        @SuppressWarnings("PMD.CloseResource")
+        var buildContext = context();
         session.setRepositoryListener(new AbstractRepositoryListener() {
             @Override
             public void artifactDeploying(RepositoryEvent event) {
                 if (!startMsgLogged.getAndSet(true)) {
                     logger.atInfo().log("Start deploying artifacts...");
-                    context().statusLine().update(
+                    buildContext.statusLine().update(
                         MvnPublisher.this + " starts deploying artifacts");
                 }
             }
@@ -575,7 +577,7 @@ public class MvnPublisher extends AbstractGenerator {
                     return;
                 }
                 logger.atInfo().log("Deployed: %s", event.getArtifact());
-                context().statusLine().update(
+                buildContext.statusLine().update(
                     "%s deployed %d/%d", MvnPublisher.this,
                     deployedCount.incrementAndGet(), toDeploy.size());
             }
@@ -583,7 +585,7 @@ public class MvnPublisher extends AbstractGenerator {
             @Override
             public void metadataDeployed(RepositoryEvent event) {
                 logger.atInfo().log("Deployed: %s", event.getMetadata());
-                context().statusLine().update(
+                buildContext.statusLine().update(
                     "%s deployed %d/%d", MvnPublisher.this,
                     deployedCount.incrementAndGet(), toDeploy.size());
             }

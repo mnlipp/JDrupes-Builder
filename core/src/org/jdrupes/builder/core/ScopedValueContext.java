@@ -18,6 +18,7 @@
 
 package org.jdrupes.builder.core;
 
+import java.lang.ScopedValue.CallableOp;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.LinkedList;
@@ -27,7 +28,7 @@ import java.util.concurrent.Callable;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
-import java.util.function.Supplier;
+import java.util.function.Function;
 
 /// Supports using scoped values in another context.
 /// 
@@ -38,6 +39,7 @@ import java.util.function.Supplier;
 public final class ScopedValueContext {
 
     private static List<ScopedValue<?>> registry = new CopyOnWriteArrayList<>();
+    private static final ScopedValue<Boolean> DUMMY = ScopedValue.newInstance();
 
     /// A snapshot of the the values of the registered scoped value instances.
     ///
@@ -57,7 +59,7 @@ public final class ScopedValueContext {
         }
 
         @SuppressWarnings("unchecked")
-        private ScopedValue.Carrier carriers() {
+        private ScopedValue.Carrier carrierList() {
             var scopedIterator = scoped.iterator();
             var valuesIterator = values.iterator();
             ScopedValue.Carrier carriers = null;
@@ -74,6 +76,15 @@ public final class ScopedValueContext {
             return carriers;
         }
 
+        /// Returns the carriers for the values in the snapshot.
+        ///
+        /// @return the scoped value. carrier
+        ///
+        public ScopedValue.Carrier carriers() {
+            return Optional.ofNullable(carrierList())
+                .orElseGet(() -> ScopedValue.where(DUMMY, Boolean.TRUE));
+        }
+
         /// Appends the scoped value and value to the carriers representing
         /// the snapshot and returns the result.
         ///
@@ -83,41 +94,52 @@ public final class ScopedValueContext {
         /// @return the scoped value. carrier
         ///
         public <T> ScopedValue.Carrier where(ScopedValue<T> key, T value) {
-            return Optional.ofNullable(carriers()).map(c -> c.where(key, value))
+            return Optional.ofNullable(carrierList())
+                .map(c -> c.where(key, value))
                 .orElseGet(() -> ScopedValue.where(key, value));
-
         }
 
-        /// Get the value from the given supplier after restoring the
-        /// values of the registered scoped value instances.
+        /// Invokes the appender for adding scoped values to the snapshot
+        /// and returns the result.
         ///
         /// @param <T> the generic type
-        /// @param action the action
-        /// @return the result
+        /// @param appender the appender
+        /// @return the scoped value. carrier
         ///
-        public <T> T withGet(Supplier<T> action) {
-            ScopedValue.Carrier carriers = carriers();
-            if (carriers == null) {
-                return action.get();
-            }
-            return carriers.call(action::get);
+        public <T> ScopedValue.Carrier where(
+                Function<ScopedValue.Carrier, ScopedValue.Carrier> appender) {
+            return appender.apply(carriers());
         }
 
-        /// Execute the given task after restoring the values of the
-        /// registered scoped value instances.
+        /// Short for `carriers().call(op)`.
         ///
-        /// @param <T> the generic type
-        /// @param task the action
-        /// @return the result
-        /// @throws Exception forwarded exception from task
+        /// @param <R> the generic type
+        /// @param <X> the generic type
+        /// @param op the op
+        /// @return the r
+        /// @throws X the x
         ///
-        @SuppressWarnings("PMD.SignatureDeclareThrowsException")
-        public <T> T withCall(Callable<T> task) throws Exception {
-            ScopedValue.Carrier carriers = carriers();
+        @SuppressWarnings("PMD.ShortVariable")
+        public <R, X extends Throwable> R call(CallableOp<? extends R, X> op)
+                throws X {
+            var carriers = carrierList();
             if (carriers == null) {
-                return task.call();
+                return op.call();
             }
-            return carriers.call(task::call);
+            return carriers.call(op);
+        }
+
+        /// Short for `carriers().run(task)`.
+        ///
+        /// @param task the task
+        ///
+        public void run(Runnable task) {
+            var carriers = carrierList();
+            if (carriers == null) {
+                task.run();
+            } else {
+                carriers.run(task);
+            }
         }
     }
 
@@ -154,7 +176,7 @@ public final class ScopedValueContext {
         // Capture values
         Snapshot snapshot = snapshot();
         return executor.submit(() -> {
-            return snapshot.withCall(task);
+            return snapshot.call(task::call);
         });
     }
 }

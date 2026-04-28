@@ -40,6 +40,7 @@ public abstract class AbstractRootProject extends AbstractProject
     /* default */ @SuppressWarnings("PMD.FieldNamingConventions")
     static final ScopedValue<
             AbstractRootProject> scopedRootProject = ScopedValue.newInstance();
+    private final DefaultBuildContext context;
     private final Map<String, CommandData> commands;
     private final Map<Class<? extends Project>, Future<Project>> projects;
 
@@ -49,12 +50,19 @@ public abstract class AbstractRootProject extends AbstractProject
     ///
     @SuppressWarnings("PMD.ConstructorCallsOverridableMethod")
     public AbstractRootProject(NamedParameter<?>... params) {
+        context = LauncherBase.context();
         super(params);
+
         // ConcurrentHashMap does not support null values.
         projects = Collections.synchronizedMap(new HashMap<>());
         commands = new HashMap<>();
         commandAlias("clean").projects("**")
             .resources(of(CleanlinessType).using(Supply, Consume));
+    }
+
+    @Override
+    public DefaultBuildContext context() {
+        return context;
     }
 
     /// Close.
@@ -86,21 +94,19 @@ public abstract class AbstractRootProject extends AbstractProject
             return this;
         }
         try {
-            return projects.computeIfAbsent(prjCls, this::futureProject)
-                .get();
+            return projects.computeIfAbsent(prjCls, this::futureProject).get();
         } catch (InterruptedException | ExecutionException e) {
             throw new BuildException().from(this).cause(e);
         }
     }
 
     private Future<Project> futureProject(Class<? extends Project> prjCls) {
-        @SuppressWarnings("PMD.CloseResource")
-        final DefaultBuildContext context = context();
+        var snapshot = ScopedValueContext.snapshot();
         return context().executor().submit(() -> {
             var origThreadName = Thread.currentThread().getName();
             try {
                 Thread.currentThread().setName("Creating " + prjCls);
-                return context.inScope().call(() -> createProject(prjCls));
+                return snapshot.call(() -> createProject(prjCls));
             } finally {
                 Thread.currentThread().setName(origThreadName);
             }

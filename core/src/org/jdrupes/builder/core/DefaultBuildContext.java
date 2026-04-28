@@ -26,31 +26,28 @@ import java.util.Collection;
 import java.util.EnumSet;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.Optional;
 import java.util.Properties;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-import java.util.concurrent.Future;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import org.apache.commons.cli.CommandLine;
 import org.jdrupes.builder.api.BuildContext;
 import org.jdrupes.builder.api.BuildException;
+import org.jdrupes.builder.api.ConfigurationException;
 import org.jdrupes.builder.api.Intent;
 import org.jdrupes.builder.api.Project;
 import org.jdrupes.builder.api.Resource;
 import org.jdrupes.builder.api.ResourceProvider;
 import org.jdrupes.builder.api.ResourceRequest;
 import static org.jdrupes.builder.api.ResourceType.CleanlinessType;
-import org.jdrupes.builder.api.RootProject;
 import org.jdrupes.builder.api.StatusLine;
 import org.jdrupes.builder.core.console.SplitConsole;
 
 /// A context for building.
 ///
-@SuppressWarnings({ "PMD.CouplingBetweenObjects" })
 public class DefaultBuildContext implements BuildContext {
 
     private static final FluentLogger logger = FluentLogger.forEnclosingClass();
@@ -66,9 +63,6 @@ public class DefaultBuildContext implements BuildContext {
     private final AwaitableCounter executingFutureStreams
         = new AwaitableCounter();
     private final SplitConsole console;
-    @SuppressWarnings("PMD.FieldNamingConventions")
-    private static final ScopedValue<
-            DefaultBuildContext> scopedBuildContext = ScopedValue.newInstance();
     private final CompletableFuture<AbstractRootProject> buildProject
         = new CompletableFuture<>();
     @SuppressWarnings("PMD.FieldNamingConventions")
@@ -76,7 +70,7 @@ public class DefaultBuildContext implements BuildContext {
         = ScopedValue.newInstance();
 
     static {
-        ScopedValueContext.add(scopedBuildContext, requestChainEnd);
+        ScopedValueContext.add(requestChainEnd);
     }
 
     /// A link in the call chain.
@@ -132,44 +126,29 @@ public class DefaultBuildContext implements BuildContext {
         return buildRoot;
     }
 
-    /// Command line.
-    ///
-    /// @return the command line
-    ///
     @Override
     public CommandLine commandLine() {
         return commandLine;
     }
 
-    /// Property.
-    ///
-    /// @param name the name
-    /// @param defaultValue the default value
-    /// @return the string
-    ///
     @Override
     public String property(String name, String defaultValue) {
         return jdbldProperties.getProperty(name,
             defaultValue);
     }
 
-    /// Returns the context.
+    /// Start request chain.
     ///
-    /// @return the optional
+    /// @param carriers the carriers
+    /// @return the scoped value. carrier
     ///
-    public static Optional<DefaultBuildContext> context() {
-        if (scopedBuildContext.isBound()) {
-            return Optional.of(scopedBuildContext.get());
+    public ScopedValue.Carrier startRequestChain(ScopedValue.Carrier carriers) {
+        if (requestChainEnd.isBound()) {
+            throw new ConfigurationException()
+                .message("Request chain is already bound.");
         }
-        return Optional.empty();
-    }
-
-    /// Return a carrier with this context available from [#context].
-    ///
-    /// @return the carrier
-    ///
-    public ScopedValue.Carrier inScope() {
-        return ScopedValue.where(scopedBuildContext, this);
+        return carriers.where(requestChainEnd,
+            new RequestChainLink(null, ProviderInvocation.LAUNCH));
     }
 
     /// Return a carrier with this context available from [#context] and
@@ -179,7 +158,7 @@ public class DefaultBuildContext implements BuildContext {
     /// @return the augmented carrier
     ///
     /* default */ ScopedValue.Carrier inScopeForProviderCall() {
-        return inScope()
+        return ScopedValue
             .where(providerInvocationAllowed, new AtomicBoolean(true));
     }
 
@@ -187,40 +166,21 @@ public class DefaultBuildContext implements BuildContext {
         return console;
     }
 
-    /// Status line.
-    ///
-    /// @return the status line
-    ///
     @Override
     public StatusLine statusLine() {
         return FutureStream.statusLine.orElse(SplitConsole.nullStatusLine());
     }
 
-    /// Out.
-    ///
-    /// @return the prints the stream
-    ///
     @Override
     public PrintStream out() {
         return console().out();
     }
 
-    /// Error.
-    ///
-    /// @return the prints the stream
-    ///
     @Override
     public PrintStream error() {
         return console().err();
     }
 
-    /// Resources.
-    ///
-    /// @param <T> the generic type
-    /// @param provider the provider
-    /// @param request the request
-    /// @return the stream
-    ///
     @Override
     public <T extends Resource> Stream<T> resources(ResourceProvider provider,
             ResourceRequest<T> request) {
@@ -267,12 +227,11 @@ public class DefaultBuildContext implements BuildContext {
     @SuppressWarnings("PMD.AvoidInstantiatingObjectsInLoops")
     private <T extends Resource> Collection<T>
             invokeSpi(ProviderInvocation<T> invocation) {
-        return ScopedValue
-            .where(requestChainEnd, new RequestChainLink(
-                requestChainEnd.isBound() ? requestChainEnd.get()
-                    : new RequestChainLink(null, ProviderInvocation.LAUNCH),
-                invocation))
-            .call(() -> {
+        return ScopedValue.where(requestChainEnd, new RequestChainLink(
+            requestChainEnd.orElseThrow(() -> new ConfigurationException()
+                .cause(new IllegalStateException())
+                .message("No request chain end")),
+            invocation)).call(() -> {
                 logger.atFinest().log("Request chain: %s",
                     lazy(() -> requestChain()
                         .stream().map(ProviderInvocation::toString)
@@ -318,42 +277,7 @@ public class DefaultBuildContext implements BuildContext {
         console.close();
     }
 
-    /* default */ Future<AbstractRootProject> buildProject() {
+    /* default */ CompletableFuture<AbstractRootProject> buildProject() {
         return buildProject;
-    }
-
-    /// Creates and initializes the root project and the sub projects.
-    /// Adds the sub projects to the root project automatically. This
-    /// method should be used if the launcher detects the sub projects
-    /// e.g. by reflection and the root project does not add its sub
-    /// projects itself.
-    ///
-    /// @param buildRoot the build root
-    /// @param rootProject the root project
-    /// @param subprojects the sub projects
-    /// @param jdbldProps the builder properties
-    /// @param commandLine the command line
-    /// @return the root project
-    ///
-    public static AbstractRootProject createProjects(
-            Path buildRoot, Class<? extends RootProject> rootProject,
-            List<Class<? extends Project>> subprojects,
-            Properties jdbldProps, CommandLine commandLine) {
-        try {
-            return ScopedValue
-                .where(scopedBuildContext,
-                    new DefaultBuildContext(buildRoot, jdbldProps, commandLine))
-                .call(() -> {
-                    var result = (AbstractRootProject) rootProject
-                        .getConstructor().newInstance();
-                    result.unlockProviders();
-                    subprojects.forEach(result::project);
-                    scopedBuildContext.get().buildProject.complete(result);
-                    return result;
-                });
-        } catch (SecurityException | NegativeArraySizeException
-                | IllegalArgumentException | ReflectiveOperationException e) {
-            throw new IllegalArgumentException(e);
-        }
     }
 }

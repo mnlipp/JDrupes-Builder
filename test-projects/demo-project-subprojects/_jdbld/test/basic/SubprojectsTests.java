@@ -15,7 +15,7 @@ import org.jdrupes.builder.api.Project;
 import static org.jdrupes.builder.api.ResourceType.*;
 import org.jdrupes.builder.java.JarFile;
 import static org.jdrupes.builder.java.JavaTypes.*;
-import org.jdrupes.builder.startup.BuildProjectLauncher;
+import org.jdrupes.builder.startup.TestLauncher;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
@@ -28,7 +28,7 @@ class SubprojectsTests {
         var buildRoot = Path.of(SubprojectsTests.class.getProtectionDomain()
             .getCodeSource().getLocation().toURI())
             .getParent().getParent().getParent();
-        launcher = new BuildProjectLauncher(
+        launcher = new TestLauncher(
             Thread.currentThread().getContextClassLoader(), buildRoot,
             new String[0]);
         launcher.resources(launcher.rootProject().projects("**"),

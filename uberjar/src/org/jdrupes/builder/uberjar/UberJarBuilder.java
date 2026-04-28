@@ -169,7 +169,9 @@ public class UberJarBuilder extends LibraryBuilder {
         contentProviders().stream().filter(p -> !p.equals(this))
             .map(p -> p.resources(
                 of(ClasspathElementType).using(Supply, Expose)))
-            .flatMap(s -> s).parallel()
+            // Terminate to trigger all future stream evaluations before
+            // starting to process the results. Then collect in parallel
+            .toList().stream().flatMap(s -> s).toList().parallelStream()
             .filter(resourceFilter::test).forEach(cpe -> {
                 if (cpe instanceof FileTree<?> fileTree) {
                     collect(contents, fileTree);

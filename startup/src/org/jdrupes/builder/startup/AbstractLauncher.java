@@ -53,6 +53,7 @@ import org.jdrupes.builder.api.RootProject;
 import org.jdrupes.builder.core.BuildExceptionFormatter;
 import org.jdrupes.builder.core.DefaultBuildContext;
 import org.jdrupes.builder.core.DefaultBuildExceptionFormatter;
+import org.jdrupes.builder.core.LauncherBase;
 import org.jdrupes.builder.core.ScopedValueContext;
 import org.jdrupes.builder.java.ClassTree;
 import static org.jdrupes.builder.java.JavaTypes.*;
@@ -60,7 +61,8 @@ import static org.jdrupes.builder.java.JavaTypes.*;
 /// A default implementation of a [Launcher].
 ///
 @SuppressWarnings("PMD.AvoidInstantiatingObjectsInLoops")
-public abstract class AbstractLauncher implements Launcher {
+public abstract class AbstractLauncher extends LauncherBase
+        implements Launcher {
 
     /// The log.
     private static final FluentLogger logger = FluentLogger.forEnclosingClass();
@@ -233,10 +235,17 @@ public abstract class AbstractLauncher implements Launcher {
     @Override
     public <T extends Resource> Stream<T> resources(Stream<Project> projects,
             ResourceRequest<T> request) {
+        if (scopedBuildContext.isBound()) {
+            throw new ConfigurationException().cause(new IllegalStateException(
+                "Scoped build context is already bound"));
+        }
         var snapshot = ScopedValueContext.snapshot();
+        @SuppressWarnings("PMD.CloseResource")
+        var context = (DefaultBuildContext) rootProject().context();
         var result = reportBuildException(() -> projects.parallel()
-            .map(p -> snapshot
-                .withGet(() -> rootProject().context().resources(p, request)))
+            .map(p -> snapshot.where(context::startRequestChain)
+                .where(scopedBuildContext, context)
+                .call(() -> context.resources(p, request)))
             .flatMap(r -> r).toList().stream());
         if (request.isFor(CleanlinessType)) {
             regenerateRootProject();

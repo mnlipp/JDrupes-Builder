@@ -41,7 +41,7 @@ import org.jdrupes.builder.api.Launcher;
 import org.jdrupes.builder.api.Project;
 import org.jdrupes.builder.api.RootProject;
 import org.jdrupes.builder.core.AbstractRootProject;
-import org.jdrupes.builder.core.DefaultBuildContext;
+import org.jdrupes.builder.core.ScopedValueContext;
 import org.jdrupes.builder.java.ClasspathScanner;
 import org.jdrupes.builder.java.JavaCompiler;
 import static org.jdrupes.builder.java.JavaTypes.*;
@@ -88,7 +88,7 @@ public class BootstrapProjectLauncher extends AbstractLauncher {
         addCliProperties(jdbldProps, commandLine);
         configureLogging(buildRootDirectory, jdbldProps);
 
-        bootstrapProject = DefaultBuildContext.createProjects(
+        bootstrapProject = createProjects(
             buildRootDirectory, rootPrjCls, Collections.emptyList(), jdbldProps,
             commandLine);
     }
@@ -107,14 +107,16 @@ public class BootstrapProjectLauncher extends AbstractLauncher {
     @SuppressWarnings("PMD.UseVarargs")
     public BuildProjectLauncher buildBuildProjectLauncher(
             Class<? extends RootProject> rootPrjCls, String[] args) {
-        return bootstrapProject.context().inScope().call(() -> {
-            URL[] cpUrls = buildProjectClasses(bootstrapProject);
-            logger.atFine().log("Build project launcher with classpath: %s",
-                Arrays.toString(cpUrls));
-            return new BuildProjectLauncher(
-                new URLClassLoader(cpUrls, getClass().getClassLoader()),
-                buildRootDirectory, args);
-        });
+        return ScopedValueContext.snapshot()
+            .where(bootstrapProject.context()::startRequestChain)
+            .where(scopedBuildContext, bootstrapProject.context()).call(() -> {
+                URL[] cpUrls = buildProjectClasses(bootstrapProject);
+                logger.atFine().log("Build project launcher with classpath: %s",
+                    Arrays.toString(cpUrls));
+                return new BuildProjectLauncher(
+                    new URLClassLoader(cpUrls, getClass().getClassLoader()),
+                    buildRootDirectory, args);
+            });
     }
 
     private URL[] buildProjectClasses(RootProject rootProject) {

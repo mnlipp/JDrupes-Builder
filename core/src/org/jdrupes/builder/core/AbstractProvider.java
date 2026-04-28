@@ -34,18 +34,13 @@ import org.jdrupes.builder.api.Resources;
 public abstract class AbstractProvider implements ResourceProvider {
 
     private static final FluentLogger logger = FluentLogger.forEnclosingClass();
-    private final DefaultBuildContext context;
     private String name;
 
     /// Initializes a new abstract provider.
     ///
     public AbstractProvider() {
-        if (DefaultBuildContext.context().isEmpty()) {
-            throw new IllegalStateException(
-                "Creating a provider outside of a project constructor"
-                    + " or a provider invocation");
-        }
-        context = DefaultBuildContext.context().get();
+        // Check that context is available
+        LauncherBase.context();
         // Default name
         name = getClass().getSimpleName();
         if (name.isBlank()) {
@@ -84,8 +79,7 @@ public abstract class AbstractProvider implements ResourceProvider {
                     logger.atWarning().withStackTrace(MEDIUM)
                         .log("Direct invocation of %s is not allowed", this);
                 }
-                var snapshot = ScopedValueContext.snapshot();
-                return snapshot.withGet(() -> doProvide(requested));
+                return doProvide(requested);
             }
         };
     }
@@ -109,7 +103,7 @@ public abstract class AbstractProvider implements ResourceProvider {
 
     @Override
     public DefaultBuildContext context() {
-        return context;
+        return LauncherBase.context();
     }
 
     /// Retrieves the resources as a Vavr stream.

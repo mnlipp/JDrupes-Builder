@@ -57,14 +57,14 @@ public class FutureStream<T extends Resource> {
     /// @param invocation the invocation
     ///
     public FutureStream(ProviderInvocation<T> invocation) {
-        context = DefaultBuildContext.context().get();
+        context = LauncherBase.context();
         this.invocation = invocation;
-        final var provider = invocation.provider();
-        final var request = invocation.request();
         values = ScopedValueContext.submitTo(context.executor(), () -> {
             var origThreadName = Thread.currentThread().getName();
             try (var _ = context.executingFutureStreams().acquire();
                     var statusLine = context.console().statusLine()) {
+                final var provider = invocation.provider();
+                final var request = invocation.request();
                 Thread.currentThread().setName(
                     provider + " ← " + request.type());
                 logger.atFiner().log(

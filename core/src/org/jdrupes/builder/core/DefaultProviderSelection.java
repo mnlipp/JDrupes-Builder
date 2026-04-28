@@ -102,18 +102,20 @@ public class DefaultProviderSelection implements ProviderSelection {
         AtomicReference<ResourceRequest<T>> projectRequest
             = new AtomicReference<>();
         final var snapshot = ScopedValueContext.snapshot();
-        var providerStream = select(request.uses()).map(p -> {
+        // Refrain from making this a parallel stream. Project.resoures
+        // simply forwards and other ResourceProvider.resoures will
+        // return a FutureStream. Making this a parallel stream should
+        // gain little or nothing but may result in deadlocks.
+        return select(request.uses()).map(p -> {
             if (p instanceof Project) {
                 logger.atFinest()
                     .log("%s forwards % to %s", project, request, p);
-                return snapshot.withGet(() -> project.context().resources(p,
+                return snapshot.call(() -> project.context().resources(p,
                     projectRequest.updateAndGet(
                         r -> r != null ? r : forwardedRequest(request))));
             }
-            return snapshot
-                .withGet(() -> project.context().resources(p, request));
-        });
-        return providerStream.flatMap(s -> s);
+            return snapshot.call(() -> project.context().resources(p, request));
+        }).flatMap(s -> s);
     }
 
     private <T extends Resource> ResourceRequest<T>

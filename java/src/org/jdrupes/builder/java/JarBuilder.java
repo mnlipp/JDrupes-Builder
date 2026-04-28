@@ -56,6 +56,7 @@ import org.jdrupes.builder.api.ResourceType;
 import static org.jdrupes.builder.api.ResourceType.*;
 import org.jdrupes.builder.api.Resources;
 import org.jdrupes.builder.core.AbstractGenerator;
+import org.jdrupes.builder.core.ScopedValueContext;
 import org.jdrupes.builder.core.StreamCollector;
 
 /// A general purpose generator for jars. All contents must be added
@@ -366,8 +367,9 @@ public class JarBuilder extends AbstractGenerator {
                 _ -> Resources.with(IOResource.class))
                 .add(entry.getValue());
         });
+        var snapshot = ScopedValueContext.snapshot();
         fileTrees.stream().parallel()
-            .forEach(t -> collect(contents, t));
+            .forEach(t -> snapshot.run(() -> collect(contents, t)));
     }
 
     /// Adds the resources from the given file tree to the given contents.

@@ -53,7 +53,6 @@ import org.jdrupes.builder.api.ResourceFactory;
 import org.jdrupes.builder.api.RootProject;
 import org.jdrupes.builder.api.UnavailableException;
 import org.jdrupes.builder.core.AbstractRootProject;
-import org.jdrupes.builder.core.DefaultBuildContext;
 import org.jdrupes.builder.java.JarFile;
 import static org.jdrupes.builder.java.JavaTypes.*;
 
@@ -109,7 +108,7 @@ public class BuildProjectLauncher extends AbstractLauncher {
         var subprojects = new ArrayList<Class<? extends Project>>();
         findProjects(extClsLdr, rootProjects, subprojects);
         @SuppressWarnings("PMD.CloseResource")
-        var newRootProject = DefaultBuildContext.createProjects(buildRoot,
+        var newRootProject = createProjects(buildRoot,
             rootProjects.get(0), subprojects, jdbldProps, commandLine);
         if (rootProject != null) {
             rootProject.close();

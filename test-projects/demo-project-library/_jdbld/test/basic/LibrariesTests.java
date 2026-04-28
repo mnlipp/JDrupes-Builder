@@ -20,7 +20,7 @@ import static org.jdrupes.builder.java.JavaTypes.*;
 import org.jdrupes.builder.mvnrepo.PomFile;
 import static org.jdrupes.builder.mvnrepo.MvnRepoTypes.*;
 import static org.junit.jupiter.api.Assertions.*;
-import org.jdrupes.builder.startup.BuildProjectLauncher;
+import org.jdrupes.builder.startup.TestLauncher;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
@@ -36,7 +36,7 @@ class LibrariesTests {
         var buildRoot = Path.of(LibrariesTests.class.getProtectionDomain()
             .getCodeSource().getLocation().toURI())
             .getParent().getParent().getParent();
-        launcher = new BuildProjectLauncher(
+        launcher = new TestLauncher(
             Thread.currentThread().getContextClassLoader(), buildRoot,
             new String[0]);
         launcher.resources(launcher.rootProject().projects("**"),
