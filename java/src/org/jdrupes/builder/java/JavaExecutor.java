@@ -174,7 +174,9 @@ public class JavaExecutor extends AbstractProvider
         var cpResources = Resources.of(ClasspathType)
             .addAll(providers.stream()
                 .map(p -> p.resources(of(ClasspathElementType).usingAll()))
-                .flatMap(s -> s));
+                // Terminate to trigger all future stream evaluations before
+                // starting to process the results.
+                .toList().stream().flatMap(s -> s));
         logger.atFiner().log("Executing with classpath %s",
             lazy(() -> cpResources.stream().map(e -> e.toPath().toString())
                 .collect(Collectors.joining(File.pathSeparator))));
