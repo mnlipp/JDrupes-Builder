@@ -306,9 +306,9 @@ public class EclipseConfigurator extends AbstractGenerator {
         final Set<Project> exposed = project().providers().select(Expose)
             .filter(p -> p instanceof Project).map(Project.class::cast)
             .collect(Collectors.toSet());
-        project().providers().select(Consume, Reveal, Expose, Forward)
-            .filter(p -> p instanceof Project)
-            .map(Project.class::cast).forEach(p -> {
+        project().providers().filter(p -> p instanceof Project)
+            .select(Consume, Reveal, Expose, Forward)
+            .toList().stream().map(Project.class::cast).forEach(p -> {
                 if (p instanceof MergedTestProject) {
                     if (p.parentProject().get().equals(project())) {
                         // Test projects contribute their resources to the

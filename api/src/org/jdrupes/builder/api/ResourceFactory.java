@@ -42,8 +42,9 @@ public interface ResourceFactory {
     ///
     static <T extends Resource> T create(ResourceType<T> type,
             Project project, Object... args) {
+        // Using parallel causes hangs.
         return StreamSupport.stream(
-            ServiceLoader.load(ResourceFactory.class).spliterator(), true)
+            ServiceLoader.load(ResourceFactory.class).spliterator(), false)
             .map(f -> f.newResource(type, project, args))
             .filter(Optional::isPresent).map(Optional::get).findFirst()
             .orElseThrow(() -> new ConfigurationException()
