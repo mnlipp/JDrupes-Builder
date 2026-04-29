@@ -18,6 +18,7 @@
 
 package org.jdrupes.builder.api;
 
+import java.util.List;
 import java.util.Optional;
 import java.util.ServiceLoader;
 import java.util.stream.StreamSupport;
@@ -27,6 +28,11 @@ import java.util.stream.StreamSupport;
 ///
 @SuppressWarnings("PMD.ImplicitFunctionalInterface")
 public interface ResourceFactory {
+
+    /// The factories as found by the [ServiceLoader].
+    List<ResourceFactory> FACTORIES = StreamSupport.stream(
+        ServiceLoader.load(ResourceFactory.class).spliterator(), false)
+        .toList();
 
     /// Returns a new resource with the given type, passing the given
     /// arguments to the constructor of the resource. The implementation
@@ -42,10 +48,7 @@ public interface ResourceFactory {
     ///
     static <T extends Resource> T create(ResourceType<T> type,
             Project project, Object... args) {
-        // Using parallel causes hangs.
-        return StreamSupport.stream(
-            ServiceLoader.load(ResourceFactory.class).spliterator(), false)
-            .map(f -> f.newResource(type, project, args))
+        return FACTORIES.stream().map(f -> f.newResource(type, project, args))
             .filter(Optional::isPresent).map(Optional::get).findFirst()
             .orElseThrow(() -> new ConfigurationException()
                 .message("No resource factory for %s", type));
