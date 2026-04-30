@@ -69,11 +69,15 @@ public interface Resources<T extends Resource> extends Resource {
             .map(Resource::asOf).orElse(Optional.empty());
     }
 
-    /// Checks if is empty.
+    /// Checks if is empty. The default implementation returns
+    /// `get().isEmpty()`. Implementing classes should provide a more
+    /// efficient implementation.
     ///
     /// @return true, if is empty
     ///
-    boolean isEmpty();
+    default boolean isEmpty() {
+        return get().isEmpty();
+    }
 
     /// Returns the resources as a [SequencedSet]. 
     ///
