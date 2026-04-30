@@ -237,7 +237,7 @@ public class JarBuilder extends AbstractGenerator {
     /// @return the jar builder
     ///
     public JarBuilder add(Path prefix, FileTree<?> tree) {
-        entryStreams.add(tree.entries().map(e -> Map.entry(prefix.resolve(e),
+        entryStreams.add(tree.paths().map(e -> Map.entry(prefix.resolve(e),
             FileResource.of(tree.root().resolve(e)))));
         return this;
     }
@@ -250,7 +250,7 @@ public class JarBuilder extends AbstractGenerator {
     ///
     public JarBuilder add(Path prefix, Stream<? extends FileTree<?>> trees) {
         entryStreams.add(
-            trees.flatMap(t -> t.entries().map(e -> Map.entry(prefix.resolve(e),
+            trees.flatMap(t -> t.paths().map(e -> Map.entry(prefix.resolve(e),
                 FileResource.of(t.root().resolve(e))))));
         return this;
     }

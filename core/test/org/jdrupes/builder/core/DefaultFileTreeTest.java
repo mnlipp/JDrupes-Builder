@@ -37,7 +37,7 @@ class DefaultFileTreeTest {
         assertTrue(names.stream().anyMatch(n -> n.endsWith("r2.txt")));
 
         // entries should be relative paths
-        List<Path> entries = ft.entries().collect(Collectors.toList());
+        List<Path> entries = ft.paths().collect(Collectors.toList());
         assertEquals(2, entries.size());
         assertTrue(entries.stream()
             .anyMatch(p -> p.getFileName().toString().equals("r1.txt")));
@@ -183,7 +183,7 @@ class DefaultFileTreeTest {
     void testEmptyDirectoryHasNoEntries() throws IOException {
         FileTree<FileResource> ft = FileTree.of(null, tmpDir, "**/*");
 
-        List<Path> entries = ft.entries().collect(Collectors.toList());
+        List<Path> entries = ft.paths().collect(Collectors.toList());
         assertEquals(0, entries.size());
     }
 
@@ -205,7 +205,7 @@ class DefaultFileTreeTest {
         FileTree<FileResource> ft = FileTree.of(null, nonExisting, "**/*")
             .withDirectories();
 
-        List<Path> entries = ft.entries().collect(Collectors.toList());
+        List<Path> entries = ft.paths().collect(Collectors.toList());
         assertEquals(0, entries.size());
     }
 }

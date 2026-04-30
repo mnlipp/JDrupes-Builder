@@ -204,7 +204,7 @@ public abstract class AbstractLauncher extends LauncherBase
     private void searchTree(ClassLoader clsLoader,
             Map<Path, List<Class<? extends RootProject>>> rootProjects,
             List<Class<? extends Project>> subprojects, ClassTree tree) {
-        tree.entries().map(Path::toString)
+        tree.paths().map(Path::toString)
             .map(p -> p.substring(0, p.length() - 6).replace('/', '.'))
             .map(cn -> {
                 try {

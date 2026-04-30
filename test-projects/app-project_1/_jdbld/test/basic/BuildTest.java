@@ -81,7 +81,7 @@ class BuildTest {
         var copiedTree = resTrees.stream()
             .filter(t -> t.root().toString().contains("copied")).findFirst();
         assertTrue(copiedTree.isPresent());
-        assertTrue(copiedTree.get().entries().filter(p -> p.toString()
+        assertTrue(copiedTree.get().paths().filter(p -> p.toString()
             .contains("test-copy.properties")).findFirst().isPresent());
     }
 }

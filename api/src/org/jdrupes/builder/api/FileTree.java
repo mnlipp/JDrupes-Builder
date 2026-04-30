@@ -34,14 +34,14 @@ import java.util.stream.Stream;
 /// * [String]\[\] an array of ant-style path patterns
 ///
 /// Implementations of this interface must ensure that the content
-/// of the file tree is not evaluated before a terminal operation
-/// is performed on the [Stream] returned by [#entries]. The delayed
+/// of the file tree is not evaluated before a consuming operation
+/// is performed on the [Stream] returned by [#paths]. The delayed
 /// evaluation includes resolving a relative path for root against
 /// the project's directory.
 ///
 /// @param <T> the contained type
 ///
-public interface FileTree<T extends FileResource> extends Resources<T> {
+public interface FileTree<T extends FileResource> extends InputTree<T> {
 
     /// Includes directories in the file tree if they match the pattern
     /// used when creating the file tree, and are not excluded (i.e. don't 
@@ -50,13 +50,6 @@ public interface FileTree<T extends FileResource> extends Resources<T> {
     /// @return the file tree
     ///
     FileTree<T> withDirectories();
-
-    /// Add a ant-style path pattern to exclude from the tree.
-    ///
-    /// @param pattern the pattern
-    /// @return the file tree
-    ///
-    FileTree<T> exclude(String pattern);
 
     /// Returns the root of the file tree containing the files.
     ///
@@ -80,7 +73,8 @@ public interface FileTree<T extends FileResource> extends Resources<T> {
     ///
     /// @return the stream
     ///
-    Stream<Path> entries();
+    @Override
+    Stream<Path> paths();
 
     /// Re-scans the file tree for changes.
     ///
