@@ -22,6 +22,7 @@ import com.google.common.flogger.FluentLogger;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.io.PrintStream;
 import java.nio.charset.Charset;
@@ -39,6 +40,7 @@ import java.util.stream.Stream;
 import org.jdrupes.builder.api.BuildException;
 import org.jdrupes.builder.api.Cleanliness;
 import org.jdrupes.builder.api.FileTree;
+import org.jdrupes.builder.api.InputTree;
 import org.jdrupes.builder.api.Project;
 import org.jdrupes.builder.api.Resource;
 import org.jdrupes.builder.api.ResourceFactory;
@@ -74,7 +76,7 @@ public class FileTreeBuilder extends AbstractGenerator {
     /// tree.
     ///
     public static final class Source {
-        private final FileTree<?> tree;
+        private final InputTree<?> tree;
         private Function<Path, Path> rename;
         private BiConsumer<InputStream, OutputStream> filter;
         private BiConsumer<BufferedReader, PrintStream> textFilter;
@@ -288,29 +290,26 @@ public class FileTreeBuilder extends AbstractGenerator {
         return List.of(result);
     }
 
-    @SuppressWarnings("PMD.AvoidInstantiatingObjectsInLoops")
     private boolean createInDestination(List<Source> required) {
-        boolean changed = false;
-        for (var source : required) {
+        // Handle sources in parallel, but each source in sequentially.
+        return required.parallelStream().map(source -> {
             var srcTree = source.tree;
-            changed |= srcTree.entries().parallel().map(entry -> {
+            return srcTree.entries().map(entry -> {
                 try {
                     return createTarget(source, entry);
                 } catch (IOException e) {
                     throw new BuildException().from(this).cause(e);
                 }
             }).reduce(false, (a, b) -> a || b);
-        }
-        return changed;
+        }).reduce(false, (a, b) -> a || b);
     }
 
-    private boolean createTarget(Source source, Path entry)
+    private boolean createTarget(Source source, InputTree.Entry<?> entry)
             throws IOException {
-        var src = source.tree.root().resolve(entry);
-        var dest = destination.resolve(entry);
+        var dest = destination.resolve(entry.path());
         var rename = source.rename;
         if (rename != null) {
-            dest = destination.resolve(rename.apply(entry));
+            dest = destination.resolve(rename.apply(entry.path()));
             if (!dest.normalize().startsWith(destination)) {
                 throw new BuildException().from(this).message(
                     "Rename function returns \"%s\" which is outside the"
@@ -318,34 +317,29 @@ public class FileTreeBuilder extends AbstractGenerator {
                     dest, destination);
             }
         }
-        if (src.toFile().isDirectory()) {
-            if (!src.toFile().exists()) {
-                Files.createDirectories(dest);
-                return true;
-            }
-            return false;
-        }
         Files.createDirectories(dest.getParent());
         if (dest.toFile().exists() && dest.toFile()
-            .lastModified() >= src.toFile().lastModified()) {
+            .lastModified() >= entry.resource().asOf().get().toEpochMilli()) {
             return false;
         }
         if (source.filter != null) {
-            try (var srcStream = Files.newInputStream(src);
+            try (var srcStream = entry.resource().inputStream();
                     var destStream = Files.newOutputStream(dest)) {
                 source.filter.accept(srcStream, destStream);
             }
             return true;
         }
         if (source.textFilter != null) {
-            try (var reader = Files.newBufferedReader(src, source.charset);
+            try (var reader = new BufferedReader(new InputStreamReader(
+                entry.resource().inputStream(), source.charset));
                     var out
                         = new PrintStream(dest.toFile(), source.charset)) {
                 source.textFilter.accept(reader, out);
             }
             return true;
         }
-        Files.copy(src, dest, StandardCopyOption.REPLACE_EXISTING);
+        Files.copy(entry.resource().inputStream(), dest,
+            StandardCopyOption.REPLACE_EXISTING);
         return true;
     }
 
