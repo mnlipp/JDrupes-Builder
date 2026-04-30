@@ -1,6 +1,6 @@
 /*
  * JDrupes Builder
- * Copyright (C) 2025, 2026 Michael N. Lipp
+ * Copyright (C) 2026 Michael N. Lipp
  * 
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as
@@ -19,17 +19,29 @@
 package org.jdrupes.builder.api;
 
 import java.io.IOException;
-import java.io.OutputStream;
+import java.io.InputStream;
+import java.time.Instant;
 
-/// Represents a resource that has readable (or writable) contents.
+/// Represents a resource that has readable contents.
 ///
-public interface IOResource extends InputResource {
+public interface InputResource extends Resource {
 
-    /// Returns the output stream.
+    /// Returns the input stream.
     ///
-    /// @return the output stream
+    /// @return the input stream
     /// @throws IOException Signals that an I/O exception has occurred.
     ///
-    OutputStream outputStream() throws IOException;
+    InputStream inputStream() throws IOException;
 
+    /// Creates a new input resource.
+    ///
+    /// @param asOf the modification date
+    /// @param data the data
+    /// @return the file resource
+    ///
+    @SuppressWarnings({ "PMD.UseDiamondOperator", "PMD.ShortMethodName" })
+    static InputResource of(Instant asOf, InputStream data) {
+        return ResourceFactory.create(new ResourceType<InputResource>() {},
+            asOf, data);
+    }
 }

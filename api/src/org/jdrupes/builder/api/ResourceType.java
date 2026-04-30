@@ -73,6 +73,11 @@ public class ResourceType<T extends Resource> {
     public static final ResourceType<FileTree<FileResource>> BaseFileTreeType
         = new ResourceType<>() {};
 
+    /// The resource type for [InputTree]&lt;[InputResource]&gt;.
+    @SuppressWarnings("PMD.FieldNamingConventions")
+    public static final ResourceType<InputTree<InputResource>> BaseInputTreeType
+        = new ResourceType<>() {};
+
     /// The resource type for [IOResource].
     @SuppressWarnings("PMD.FieldNamingConventions")
     public static final ResourceType<
