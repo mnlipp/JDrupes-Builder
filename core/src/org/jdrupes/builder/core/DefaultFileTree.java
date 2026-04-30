@@ -31,14 +31,10 @@ import java.nio.file.attribute.BasicFileAttributes;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
-import java.util.Spliterators;
-import java.util.function.Consumer;
 import java.util.stream.Stream;
-import java.util.stream.StreamSupport;
 import org.jdrupes.builder.api.BuildException;
 import org.jdrupes.builder.api.FileResource;
 import org.jdrupes.builder.api.FileTree;
@@ -211,33 +207,10 @@ public class DefaultFileTree<T extends FileResource> extends DefaultResources<T>
 
     @Override
     public Stream<T> stream() {
-        return StreamSupport
-            .stream(new Spliterators.AbstractSpliterator<>(Long.MAX_VALUE, 0) {
-
-                private Iterator<T> theIterator;
-
-                private Iterator<T> iterator() {
-                    if (theIterator == null) {
-                        fill();
-                        theIterator = DefaultFileTree.super.stream().iterator();
-                    }
-                    return theIterator;
-                }
-
-                @Override
-                public void forEachRemaining(Consumer<? super T> action) {
-                    iterator().forEachRemaining(action);
-                }
-
-                @Override
-                public boolean tryAdvance(Consumer<? super T> action) {
-                    if (!iterator().hasNext()) {
-                        return false;
-                    }
-                    action.accept(iterator().next());
-                    return true;
-                }
-            }, false);
+        return LazyCollectionStream.of(() -> {
+            fill();
+            return get();
+        });
     }
 
     @Override
@@ -322,8 +295,16 @@ public class DefaultFileTree<T extends FileResource> extends DefaultResources<T>
     }
 
     @Override
-    public Stream<Path> entries() {
+    public Stream<Path> paths() {
         return stream().map(fr -> root().relativize(fr.path()));
+    }
+
+    @SuppressWarnings("unchecked")
+    @Override
+    public Stream<Entry<T>> entries() {
+        return paths().map(path -> new Entry<T>(path,
+            ResourceFactory.create((ResourceType<T>) type().containedType(),
+                root().resolve(path))));
     }
 
     @Override
