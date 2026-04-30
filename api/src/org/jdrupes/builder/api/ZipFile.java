@@ -16,19 +16,15 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package org.jdrupes.builder.java;
+package org.jdrupes.builder.api;
 
 import java.nio.file.Path;
-import org.jdrupes.builder.api.FileResource;
-import org.jdrupes.builder.api.ResourceFactory;
-import org.jdrupes.builder.api.ResourceType;
-import org.jdrupes.builder.api.ZipFile;
 
-/// A [FileResource] that represents a Java jar file].
+/// A [FileResource] that represents a ZIP file].
 ///
-public interface JarFile extends ZipFile {
+public interface ZipFile extends FileResource {
 
-    /// Creates a jar file resource from the given values.
+    /// Creates a ZIP file resource from the given values.
     ///
     /// @param <T> the generic type
     /// @param jarType the jar type
@@ -36,7 +32,7 @@ public interface JarFile extends ZipFile {
     /// @return the t
     ///
     @SuppressWarnings("PMD.ShortMethodName")
-    static <T extends JarFile> T of(ResourceType<T> jarType, Path path) {
+    static <T extends ZipFile> T of(ResourceType<T> jarType, Path path) {
         return ResourceFactory.create(jarType, path);
     }
 
