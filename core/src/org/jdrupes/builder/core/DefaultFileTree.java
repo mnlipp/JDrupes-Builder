@@ -71,12 +71,11 @@ public class DefaultFileTree<T extends FileResource> extends DefaultResources<T>
     /// 
     /// if `project` is `null`, and `root` is a relative path,
     /// `root` is resolved against the current working directory.
-    /// `pattern`
     ///
     /// @param type the resource type
     /// @param project the project
     /// @param root the root
-    /// @param patterns the patterns
+    /// @param patterns the include patterns
     ///
     @SuppressWarnings({ "PMD.ArrayIsStoredDirectly", "PMD.UseVarargs" })
     protected DefaultFileTree(ResourceType<?> type, Project project, Path root,
