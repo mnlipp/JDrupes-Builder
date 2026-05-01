@@ -71,7 +71,8 @@ public class FutureStream<T extends Resource> {
                     "Task [%s] evaluating", Thread.currentThread().getName());
                 // Wait for the build-project to be fully constructed
                 context.buildProject().get();
-                statusLine.update(provider + " evaluating " + request);
+                statusLine.update(
+                    provider + " providing " + request.toRequestedString());
                 return context.inScopeForProviderCall()
                     .where(FutureStream.statusLine, statusLine)
                     .call(() -> ((AbstractProvider) provider).toSpi()
