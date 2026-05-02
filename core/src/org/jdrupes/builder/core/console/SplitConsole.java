@@ -25,6 +25,7 @@ import java.io.PrintStream;
 import java.io.PrintWriter;
 import java.io.Writer;
 import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -35,6 +36,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.IntStream;
 import org.jdrupes.builder.api.StatusLine;
+import org.jline.utils.AttributedString;
 
 /// Provides a split console using ANSI escape sequences.
 ///
@@ -282,23 +284,24 @@ public final class SplitConsole implements AutoCloseable {
             }
 
             // Write line(s)
-            realOut.print(Ansi.cursorToSol() + Ansi.clearLine());
             int end = offset + length;
             for (int i = offset; i < end; i++) {
                 if (text[i] == '\n') {
+                    @SuppressWarnings("PMD.AvoidInstantiatingObjectsInLoops")
+                    int columns = AttributedString.fromAnsi(new String(
+                        text, offset, i - offset + 1, StandardCharsets.UTF_8))
+                        .columnLength();
+                    int rows = (columns + term.columns() - 1) / term.columns();
+                    for (int j = 0; j < rows; j++) {
+                        realOut.print(
+                            Ansi.cursorToSol() + Ansi.clearLine() + "\n");
+                    }
+                    realOut.print(Ansi.cursorToSol() + Ansi.clearLine()
+                        + Ansi.cursorUp(rows));
                     // Write line including newline, moves cursor to next line
                     writeMarkedup(realOut, text, offset, i - offset + 1,
                         markup);
                     offset = i + 1;
-                    // Clear left over text from status line
-                    realOut.print(Ansi.clearLine());
-                }
-                if (i - offset >= term.columns()) {
-                    // Write line up to here
-                    writeMarkedup(realOut, text, offset, i - offset, markup);
-                    offset = i;
-                    // Write newline an clear left over text from status line
-                    realOut.print("\n" + Ansi.clearLine());
                 }
             }
             incompleteLine = new byte[end - offset];
