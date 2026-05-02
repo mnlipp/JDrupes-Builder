@@ -2,7 +2,6 @@ package org.jdrupes.builder.core;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
-import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.time.Instant;
@@ -30,12 +29,12 @@ class DefaultResourcesTest {
         }
 
         @Override
-        public InputStream inputStream() throws IOException {
+        public InputStream inputStream() {
             return new ByteArrayInputStream(data);
         }
 
         @Override
-        public OutputStream outputStream() throws IOException {
+        public OutputStream outputStream() {
             return new ByteArrayOutputStream();
         }
 

@@ -82,7 +82,7 @@ public class FileTreeBuilder extends AbstractGenerator {
         private BiConsumer<BufferedReader, PrintStream> textFilter;
         private Charset charset;
 
-        private Source(FileTree<?> tree) {
+        private Source(InputTree<?> tree) {
             this.tree = tree;
         }
 
@@ -92,7 +92,7 @@ public class FileTreeBuilder extends AbstractGenerator {
         /// @return the source
         ///
         @SuppressWarnings("PMD.ShortMethodName")
-        public static Source of(FileTree<?> tree) {
+        public static Source of(InputTree<?> tree) {
             return new Source(tree);
         }
 

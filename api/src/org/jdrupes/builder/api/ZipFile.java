@@ -27,13 +27,14 @@ public interface ZipFile extends FileResource {
     /// Creates a ZIP file resource from the given values.
     ///
     /// @param <T> the generic type
-    /// @param jarType the jar type
+    /// @param zipFileType the requested type
     /// @param path the path
-    /// @return the t
+    /// @return the ZIP file
     ///
     @SuppressWarnings("PMD.ShortMethodName")
-    static <T extends ZipFile> T of(ResourceType<T> jarType, Path path) {
-        return ResourceFactory.create(jarType, path);
+    static <T extends InputResource> T of(ResourceType<T> zipFileType,
+            Path path) {
+        return ResourceFactory.create(zipFileType, path);
     }
 
 }

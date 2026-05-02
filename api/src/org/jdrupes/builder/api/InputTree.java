@@ -71,19 +71,18 @@ public interface InputTree<T extends InputResource> extends Resources<T> {
     ///
     Stream<Entry<T>> entries();
 
-    /// Creates a new general file tree from the given project and path.
+    /// Creates a new input file tree from the given backing input resources.
     ///
-    /// @param project the project
-    /// @param source the source
+    /// @param backing the source
     /// @param patterns the patterns. If no patterns are given, the
     /// default pattern "**" is used
     /// @return the file tree
     ///
     @SuppressWarnings({ "PMD.UseDiamondOperator", "PMD.ShortMethodName" })
-    static InputTree<InputResource> of(
-            Project project, InputResource source, String... patterns) {
+    static InputTree<InputResource> of(InputResource backing,
+            String... patterns) {
         return ResourceFactory.create(
-            new ResourceType<InputTree<InputResource>>() {}, project, source,
+            new ResourceType<InputTree<InputResource>>() {}, null, backing,
             (Object) patterns);
     }
 }

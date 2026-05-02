@@ -26,6 +26,7 @@ import java.nio.file.Path;
 import java.time.Instant;
 import java.util.Objects;
 import java.util.Optional;
+import org.jdrupes.builder.api.BuildException;
 import org.jdrupes.builder.api.ConfigurationException;
 import org.jdrupes.builder.api.FileResource;
 import org.jdrupes.builder.api.ResourceType;
@@ -73,13 +74,21 @@ public class DefaultFileResource extends ResourceObject
     }
 
     @Override
-    public InputStream inputStream() throws IOException {
-        return Files.newInputStream(path);
+    public InputStream inputStream() {
+        try {
+            return Files.newInputStream(path);
+        } catch (IOException e) {
+            throw new BuildException().cause(e);
+        }
     }
 
     @Override
-    public OutputStream outputStream() throws IOException {
-        return Files.newOutputStream(path);
+    public OutputStream outputStream() {
+        try {
+            return Files.newOutputStream(path);
+        } catch (IOException e) {
+            throw new BuildException().cause(e);
+        }
     }
 
     @Override

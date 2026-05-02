@@ -26,6 +26,7 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
+import org.jdrupes.builder.api.BuildException;
 import org.jdrupes.builder.api.IOResource;
 import org.jdrupes.builder.core.ResourceObject;
 
@@ -53,12 +54,16 @@ public class JarFileEntry extends ResourceObject implements IOResource {
     }
 
     @Override
-    public InputStream inputStream() throws IOException {
-        return jarFile.getInputStream(entry);
+    public InputStream inputStream() {
+        try {
+            return jarFile.getInputStream(entry);
+        } catch (IOException e) {
+            throw new BuildException().cause(e);
+        }
     }
 
     @Override
-    public OutputStream outputStream() throws IOException {
+    public OutputStream outputStream() {
         throw new UnsupportedOperationException();
     }
 

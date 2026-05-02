@@ -69,13 +69,13 @@ public class ServicesEntryResource extends ResourceObject
     }
 
     @Override
-    public InputStream inputStream() throws IOException {
+    public InputStream inputStream() {
         return new ByteArrayInputStream(
             content.toString().getBytes(StandardCharsets.UTF_8));
     }
 
     @Override
-    public OutputStream outputStream() throws IOException {
+    public OutputStream outputStream() {
         throw new UnsupportedOperationException();
     }
 

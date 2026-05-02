@@ -18,7 +18,6 @@
 
 package org.jdrupes.builder.api;
 
-import java.io.IOException;
 import java.io.OutputStream;
 
 /// Represents a resource that has readable (or writable) contents.
@@ -28,8 +27,7 @@ public interface IOResource extends InputResource {
     /// Returns the output stream.
     ///
     /// @return the output stream
-    /// @throws IOException Signals that an I/O exception has occurred.
     ///
-    OutputStream outputStream() throws IOException;
+    OutputStream outputStream();
 
 }

@@ -18,30 +18,35 @@
 
 package org.jdrupes.builder.api;
 
-import java.io.IOException;
 import java.io.InputStream;
 import java.time.Instant;
 
 /// Represents a resource that has readable contents.
+/// 
+/// Implementations of this interface must provide a [ResourceFactory]
+/// that supports the invocation of [ResourceFactory#create] with
+/// arguments
+///
+/// * [Instant] the modification time
+/// * [InputStream] the input stream
 ///
 public interface InputResource extends Resource {
 
     /// Returns the input stream.
     ///
     /// @return the input stream
-    /// @throws IOException Signals that an I/O exception has occurred.
     ///
-    InputStream inputStream() throws IOException;
+    InputStream inputStream();
 
     /// Creates a new input resource.
     ///
     /// @param asOf the modification date
-    /// @param data the data
+    /// @param inputData the data
     /// @return the file resource
     ///
     @SuppressWarnings({ "PMD.UseDiamondOperator", "PMD.ShortMethodName" })
-    static InputResource of(Instant asOf, InputStream data) {
+    static InputResource of(Instant asOf, InputStream inputData) {
         return ResourceFactory.create(new ResourceType<InputResource>() {},
-            asOf, data);
+            asOf, inputData);
     }
 }

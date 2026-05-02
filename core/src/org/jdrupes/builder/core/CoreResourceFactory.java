@@ -18,10 +18,12 @@
 
 package org.jdrupes.builder.core;
 
+import java.io.InputStream;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.lang.reflect.Proxy;
 import java.nio.file.Path;
+import java.time.Instant;
 import java.util.Arrays;
 import java.util.Optional;
 import static java.util.function.Predicate.not;
@@ -31,6 +33,8 @@ import java.util.stream.Stream;
 import org.jdrupes.builder.api.ExecResult;
 import org.jdrupes.builder.api.FileResource;
 import org.jdrupes.builder.api.FileTree;
+import org.jdrupes.builder.api.InputResource;
+import org.jdrupes.builder.api.InputTree;
 import org.jdrupes.builder.api.Project;
 import org.jdrupes.builder.api.Proxyable;
 import org.jdrupes.builder.api.Resource;
@@ -40,6 +44,7 @@ import org.jdrupes.builder.api.ResourceType;
 import org.jdrupes.builder.api.Resources;
 import org.jdrupes.builder.api.TestResult;
 import org.jdrupes.builder.api.VirtualResource;
+import org.jdrupes.builder.api.ZipFile;
 
 /// A factory for creating the Core resource objects.
 ///
@@ -185,6 +190,26 @@ public class CoreResourceFactory implements ResourceFactory {
             () -> new DefaultFileTree<>(
                 (ResourceType<? extends FileTree<?>>) type,
                 project, (Path) args[0], (String[]) args[1]));
+        if (candidate.isPresent()) {
+            return candidate;
+        }
+
+        // ? extends InputTree
+        if (args.length > 0 && args[0] instanceof ZipFile) {
+            candidate = createNarrowed(type, InputTree.class,
+                () -> new ZipFileInputTree<>(
+                    (ResourceType<? extends InputTree<?>>) type,
+                    (ZipFile) args[0], (String[]) args[1]));
+            if (candidate.isPresent()) {
+                return candidate;
+            }
+        }
+
+        // ? extends InputResource
+        candidate = createNarrowed(type, InputResource.class,
+            () -> new DefaultInputResource(
+                (ResourceType<? extends InputResource>) type, (Instant) args[0],
+                (InputStream) args[1]));
         if (candidate.isPresent()) {
             return candidate;
         }
