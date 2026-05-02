@@ -295,7 +295,9 @@ public class NpmExecutor extends AbstractProvider
         try {
             Process process = processBuilder.start();
             copyData(process.getInputStream(), context().out());
-            copyData(process.getErrorStream(), context().error());
+            // npm uses stderr for progress information that we don't
+            // want to marked as error.
+            copyData(process.getErrorStream(), context().out());
             int exitValue = process.waitFor();
             if (exitValue != 0) {
                 throw new BuildException().from(this)
