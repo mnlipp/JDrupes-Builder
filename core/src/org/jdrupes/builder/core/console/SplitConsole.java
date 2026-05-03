@@ -35,8 +35,14 @@ import java.util.Optional;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.IntStream;
+import org.jdrupes.builder.api.BuildException;
 import org.jdrupes.builder.api.StatusLine;
+import org.jline.terminal.Terminal;
+import org.jline.terminal.TerminalBuilder;
 import org.jline.utils.AttributedString;
+import org.jline.utils.AttributedStringBuilder;
+import org.jline.utils.AttributedStyle;
+import org.jline.utils.InfoCmp.Capability;
 
 /// Provides a split console using ANSI escape sequences.
 ///
@@ -63,13 +69,14 @@ public final class SplitConsole implements AutoCloseable {
     };
     private static AtomicInteger openCount = new AtomicInteger();
     private static SplitConsole instance;
-    private final TerminalInfo term;
+    private final Terminal terminal;
     private final List<ManagedLine> managedLines = new ArrayList<>();
     @SuppressWarnings("PMD.UseConcurrentHashMap")
     // Guarded by managedLines
     private final Map<Thread, String> offScreenLines = new LinkedHashMap<>();
-    // Used to synchronize output to terminal
     private final PrintStream realOut;
+    // Used to synchronize output to terminal
+    private final PrintStream terminalOut;
     private final PrintStream splitOut;
     private final PrintStream splitErr;
     private byte[] incompleteLine = new byte[0];
@@ -113,33 +120,48 @@ public final class SplitConsole implements AutoCloseable {
     private SplitConsole() {
         logger.atFine().log("Initializing split console");
         realOut = System.out;
-
-        this.term = new TerminalInfo();
-        if (!term.supportsAnsi()) {
-            logger.atFine().log("No ANSI terminal support, using plain output");
+        try {
+            terminal = TerminalBuilder.builder().system(true).build();
+        } catch (IOException e) {
+            throw new BuildException().cause(e);
+        }
+        var required = List.of(Capability.cursor_up, Capability.cursor_down,
+            Capability.parm_up_cursor, Capability.parm_down_cursor,
+            Capability.cursor_visible, Capability.cursor_invisible,
+            Capability.carriage_return, Capability.clr_eol);
+        if (required.stream().map(c -> terminal.getStringCapability(c) == null)
+            .filter(b -> b).findAny().isPresent()) {
+            logger.atFine().log(
+                "Insufficient terminal control support, using plain output");
             redrawer = null;
-            splitOut = realOut;
-            splitErr = realOut;
+            terminalOut = System.out;
+            splitOut = System.out;
+            splitErr = System.err;
             return;
         }
 
-        logger.atFine().log("Using ANSI terminal support for split console");
+        logger.atFine().log("Using terminal control support for split console");
+        terminalOut = new PrintStream(terminal.output(), true,
+            Charset.defaultCharset());
         synchronized (managedLines) {
-            recomputeLayout(term.lines() * 1 / 3);
-            synchronized (realOut) {
+            recomputeLayout(terminal.getHeight() * 1 / 3);
+            synchronized (terminalOut) {
                 for (int i = 0; i < managedLines.size(); i++) {
-                    realOut.println();
+                    terminalOut.println();
                 }
-                realOut.print(Ansi.cursorUp(managedLines.size()));
-                realOut.flush();
+                for (int i = 0; i < managedLines.size(); i++) {
+                    terminal.puts(Capability.cursor_up);
+                }
+                terminal.flush();
             }
         }
         redrawer = new Redrawer();
         redrawStatus();
         splitOut = new PrintStream(new StreamWrapper(null), true,
             Charset.defaultCharset());
-        splitErr = new PrintStream(new StreamWrapper(Ansi.Color.Red), true,
-            Charset.defaultCharset());
+        splitErr = new PrintStream(new StreamWrapper(
+            AttributedStyle.DEFAULT.foreground(AttributedStyle.RED)),
+            true, Charset.defaultCharset());
         System.setOut(splitOut);
         System.setErr(splitErr);
     }
@@ -147,8 +169,7 @@ public final class SplitConsole implements AutoCloseable {
     private Optional<ManagedLine> managedLine(Thread thread) {
         Objects.nonNull(thread);
         return managedLines.stream()
-            .filter(l -> Objects.equals(l.thread, thread))
-            .findFirst();
+            .filter(l -> Objects.equals(l.thread, thread)).findFirst();
     }
 
     /// Allocate a line for outputs from the current thread. 
@@ -269,8 +290,9 @@ public final class SplitConsole implements AutoCloseable {
     /// @param text the text
     ///
     @SuppressWarnings({ "PMD.AvoidLiteralsInIfCondition" })
-    private void write(byte[] text, int offset, int length, byte[] markup) {
-        synchronized (realOut) {
+    private void write(byte[] text, int offset, int length,
+            AttributedStyle style) throws IOException {
+        synchronized (terminalOut) {
             if (incompleteLine.length > 0) {
                 // Prepend left over text and try again
                 byte[] prepended = new byte[incompleteLine.length + length];
@@ -279,58 +301,64 @@ public final class SplitConsole implements AutoCloseable {
                 System.arraycopy(
                     text, offset, prepended, incompleteLine.length, length);
                 incompleteLine = new byte[0];
-                write(prepended, markup);
+                write(prepended, style);
                 return;
             }
 
             // Write line(s)
             int end = offset + length;
             for (int i = offset; i < end; i++) {
-                if (text[i] == '\n') {
-                    @SuppressWarnings("PMD.AvoidInstantiatingObjectsInLoops")
-                    int columns = AttributedString.fromAnsi(new String(
-                        text, offset, i - offset + 1, StandardCharsets.UTF_8))
-                        .columnLength();
-                    int rows = (columns + term.columns() - 1) / term.columns();
-                    for (int j = 0; j < rows; j++) {
-                        realOut.print(
-                            Ansi.cursorToSol() + Ansi.clearLine() + "\n");
-                    }
-                    realOut.print(Ansi.cursorToSol() + Ansi.clearLine()
-                        + Ansi.cursorUp(rows));
-                    // Write line including newline, moves cursor to next line
-                    writeMarkedup(realOut, text, offset, i - offset + 1,
-                        markup);
-                    offset = i + 1;
+                if (text[i] != '\n') {
+                    continue;
                 }
+                @SuppressWarnings("PMD.AvoidInstantiatingObjectsInLoops")
+                int columns = AttributedString.fromAnsi(new String(
+                    text, offset, i - offset + 1, StandardCharsets.UTF_8))
+                    .columnLength();
+                int rows = (columns + terminal.getWidth() - 1)
+                    / terminal.getWidth();
+                for (int j = 0; j < rows; j++) {
+                    terminal.puts(Capability.carriage_return);
+                    terminal.puts(Capability.clr_eol);
+                    terminal.puts(Capability.newline);
+                }
+                terminal.puts(Capability.carriage_return);
+                terminal.puts(Capability.clr_eol);
+                terminal.puts(Capability.parm_up_cursor, rows);
+                terminal.flush();
+                // Write line including newline, moves cursor to next line
+                writeStyled(terminalOut, text, offset, i - offset + 1, style);
+                offset = i + 1;
             }
             incompleteLine = new byte[end - offset];
             System.arraycopy(text, offset, incompleteLine, 0, end - offset);
             if (incompleteLine.length > 0) {
                 // Show incomplete line, will be overwritten by next write
-                realOut.write(incompleteLine, 0, incompleteLine.length);
+                terminalOut.write(incompleteLine, 0, incompleteLine.length);
             }
-            realOut.flush();
+            terminalOut.flush();
         }
         redrawStatus(true);
     }
 
-    private void write(byte[] text, byte[] markup) {
-        write(text, 0, text.length, markup);
+    private void write(byte[] text, AttributedStyle style) throws IOException {
+        write(text, 0, text.length, style);
     }
 
-    @SuppressWarnings("PMD.RelianceOnDefaultCharset")
-    private void writeMarkedup(PrintStream out, byte[] chars, int off, int len,
-            byte[] markup) {
+    private void writeStyled(PrintStream out, byte[] chars, int off, int len,
+            AttributedStyle style) throws IOException {
         // Only called by write, already synchronized
-        if (markup == null) {
+        if (style == null) {
             out.write(chars, off, len);
             return;
         }
-        out.write(markup, 0, markup.length);
-        out.write(chars, off, len);
-        out.write(Ansi.resetAttributes().getBytes(), 0,
-            Ansi.resetAttributes().length());
+        AttributedStringBuilder builder = new AttributedStringBuilder();
+        builder.style(style);
+        builder.ansiAppend(new String(chars, off, len, StandardCharsets.UTF_8));
+        builder.style(AttributedStyle.DEFAULT);
+        builder.append("");
+        AttributedString result = builder.toAttributedString();
+        out.print(result.toAnsi());
     }
 
     private void redrawStatus() {
@@ -338,9 +366,6 @@ public final class SplitConsole implements AutoCloseable {
     }
 
     private void redrawStatus(boolean force) {
-        if (!term.supportsAnsi()) {
-            return;
-        }
         if (redrawer != null) {
             redrawer.triggerRedraw(force);
         }
@@ -410,28 +435,33 @@ public final class SplitConsole implements AutoCloseable {
     @SuppressWarnings({ "PMD.ForLoopCanBeForeach" })
     private void doRedraw(boolean force) {
         synchronized (managedLines) {
-            synchronized (realOut) {
-                realOut.print(Ansi.hideCursor());
+            synchronized (terminalOut) {
+                terminal.puts(Capability.cursor_invisible);
                 for (int i = 0; i < managedLines.size(); i++) {
-                    realOut.println();
+                    terminal.puts(Capability.newline);
                     ManagedLine line = managedLines.get(i);
                     if (!force
                         && Objects.equals(line.text, line.lastRendered)) {
                         continue;
                     }
-                    realOut.print(Ansi.cursorToSol() + Ansi.clearLine());
+                    terminal.puts(Capability.carriage_return);
+                    terminal.puts(Capability.clr_eol);
+                    terminal.flush();
                     if (openCount.get() > 0) {
-                        realOut.print("> " + line.text.substring(0,
-                            Math.min(line.text.length(), term.columns() - 2)));
+                        terminalOut.print("> " + line.text.substring(0,
+                            Math.min(line.text.length(),
+                                terminal.getWidth() - 2)));
                     }
                     line.lastRendered = line.text;
                 }
-                realOut.print(Ansi.cursorUp(managedLines.size())
-                    + Ansi.cursorToSol() + Ansi.showCursor());
+                terminal.puts(Capability.parm_up_cursor, managedLines.size());
+                terminal.puts(Capability.carriage_return);
+                terminal.puts(Capability.cursor_visible);
+                terminal.flush();
                 if (incompleteLine.length > 0) {
-                    realOut.write(incompleteLine, 0, incompleteLine.length);
+                    terminalOut.write(incompleteLine, 0, incompleteLine.length);
+                    terminalOut.flush();
                 }
-                realOut.flush();
             }
         }
     }
@@ -569,11 +599,10 @@ public final class SplitConsole implements AutoCloseable {
     ///
     public final class StreamWrapper extends OutputStream {
 
-        private final byte[] markup;
+        private final AttributedStyle style;
 
-        private StreamWrapper(Ansi.Color color) {
-            markup = Optional.ofNullable(color).map(Ansi::color)
-                .map(String::getBytes).orElse(null);
+        private StreamWrapper(AttributedStyle style) {
+            this.style = style;
         }
 
         /// Write.
@@ -584,7 +613,7 @@ public final class SplitConsole implements AutoCloseable {
         @Override
         @SuppressWarnings("PMD.ShortVariable")
         public void write(int ch) throws IOException {
-            SplitConsole.this.write(new byte[] { (byte) ch }, 0, 1, markup);
+            SplitConsole.this.write(new byte[] { (byte) ch }, 0, 1, style);
         }
 
         /// Write.
@@ -597,7 +626,7 @@ public final class SplitConsole implements AutoCloseable {
         @Override
         @SuppressWarnings("PMD.ShortVariable")
         public void write(byte[] ch, int off, int len) throws IOException {
-            SplitConsole.this.write(ch, off, len, markup);
+            SplitConsole.this.write(ch, off, len, style);
         }
 
         @Override
