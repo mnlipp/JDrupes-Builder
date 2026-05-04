@@ -42,14 +42,14 @@ The project uses its own `jdbld` script for build operations.
 
 ### Key Commands
 
-- **Build Project:** `./jdbld build` (Builds all modules and the application jar
-  in `build/app/`).
-- **Run Tests:** `./jdbld test`.
+- **Build Project:** `./jdbld -B-x "test-projects/*project*" build`
+  (Builds all modules and the application jar in `build/app/`).
+- **Run Tests:** `./jdbld -B-x "test-projects/*project*" test`.
 - **Generate IDE Config:**
-    - Eclipse: `./jdbld eclipse`.
-    - VS Code: `./jdbld vscode`.
-- **Generate Documentation:** `./jdbld javadoc`.
-- **Clean Build:** `./jdbld clean`.
+    - Eclipse: `./jdbld -B-x "test-projects/*project*" eclipse`.
+    - VS Code: `./jdbld -B-x "test-projects/*project*" vscode`.
+- **Generate Documentation:** `./jdbld -B-x "test-projects/*project*" javadoc`.
+- **Clean Build:** `./jdbld -B-x "test-projects/*project*" clean`.
 
 Note: To build the builder using the version under development, you must
 specify the jar created by `./jdbld build` as follows:
@@ -57,7 +57,7 @@ specify the jar created by `./jdbld build` as follows:
 To avoid confusion with the test projects in `test-projects/`, these
 must be excluded from the build with the option `-B-x "test-projects/*project*"`.
 So invocations of the build script look like this:
-`JDBLD_JAR=build/app/jdrupes-builder-current.jar ./jdbld -B-x "test-projects/*project*" -B-x "test-projects/*project*" ...`.
+`JDBLD_JAR=build/app/jdrupes-builder-current.jar ./jdbld -B-x "test-projects/*project*" ...`.
 
 ## Development Conventions
 
