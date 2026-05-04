@@ -30,8 +30,6 @@ final class ZipFileInputTreeTest {
             zos.putNextEntry(new ZipEntry("file.txt"));
             zos.write("Hello".getBytes());
             zos.closeEntry();
-        }
-        try (var zos = new ZipOutputStream(Files.newOutputStream(zipPath))) {
             zos.putNextEntry(new ZipEntry("sub/file.txt"));
             zos.write("Hello sub".getBytes());
             zos.closeEntry();
@@ -50,5 +48,56 @@ final class ZipFileInputTreeTest {
         assertTrue(inStream.isPresent());
         var content = new String(inStream.get().readAllBytes(), "utf-8");
         assertEquals("Hello sub", content);
+    }
+
+    @Test
+    void testEmptyTree() throws IOException {
+        var emptyZipPath = tmpDir.resolve("empty.zip");
+        try (var zos
+            = new ZipOutputStream(Files.newOutputStream(emptyZipPath))) {
+            zos.closeEntry();
+        }
+        var emptyZipFile
+            = ZipFile.of(new ResourceType<ZipFile>() {}, emptyZipPath);
+        var tree = InputTree.of(emptyZipFile, "**/*");
+        assertTrue(tree.entries().findFirst().isEmpty());
+        assertTrue(tree.isEmpty());
+    }
+
+    @Test
+    void testExcludePattern() throws IOException {
+        var tree = InputTree.of(zipFile, "**/*").exclude("file.txt");
+        var entries = tree.entries().toList();
+        assertEquals(1, entries.size());
+        assertEquals(Path.of("sub/file.txt"), entries.get(0).path());
+    }
+
+    @Test
+    void testSpecificPattern() throws IOException {
+        var tree = InputTree.of(zipFile, "sub/*");
+        var entries = tree.entries().toList();
+        assertEquals(1, entries.size());
+        assertEquals(Path.of("sub/file.txt"), entries.get(0).path());
+    }
+
+    @Test
+    void testPaths() throws IOException {
+        var tree = InputTree.of(zipFile, "**");
+        var paths = tree.paths().toList();
+        assertTrue(paths.contains(Path.of("file.txt")));
+        assertTrue(paths.contains(Path.of("sub/file.txt")));
+    }
+
+    @Test
+    void testStream() throws IOException {
+        var tree = InputTree.of(zipFile, "**/*");
+        var resources = tree.stream().toList();
+        assertEquals(2, resources.size());
+    }
+
+    @Test
+    void testIsEmpty() throws IOException {
+        var tree = InputTree.of(zipFile, "**/*");
+        assertFalse(tree.isEmpty());
     }
 }
