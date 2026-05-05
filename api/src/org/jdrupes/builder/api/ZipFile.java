@@ -20,7 +20,7 @@ package org.jdrupes.builder.api;
 
 import java.nio.file.Path;
 
-/// A [FileResource] that represents a ZIP file].
+/// A [FileResource] that represents a ZIP file.
 ///
 public interface ZipFile extends FileResource {
 
