@@ -10,6 +10,7 @@ layout: jdbld
 (E) indicates that the provider is made available be an
 [extension](invocation.html).
 
+  * [ApplicationBuilder](javadoc/org/jdrupes/builder/java/ApplicationBuilder.html)
   * [BndAnalyzer](javadoc/org/jdrupes/builder/ext/bnd/BndAnalyzer.html) (E)
   * [BndBaseliner](javadoc/org/jdrupes/builder/ext/bnd/BndBaseliner.html) (E)
   * [ClasspathScanner](javadoc/org/jdrupes/builder/java/ClasspathScanner.html)

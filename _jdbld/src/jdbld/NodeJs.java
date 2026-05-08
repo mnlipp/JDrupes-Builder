@@ -13,7 +13,6 @@ import static org.jdrupes.builder.java.JavaTypes.*;
 import org.jdrupes.builder.java.LibraryBuilder;
 import org.jdrupes.builder.mvnrepo.JavadocJarBuilder;
 import org.jdrupes.builder.mvnrepo.MvnPublisher;
-import org.jdrupes.builder.mvnrepo.MvnRepoLookup;
 import org.jdrupes.builder.mvnrepo.PomFileGenerator;
 import org.jdrupes.builder.mvnrepo.SourcesJarGenerator;
 
@@ -32,8 +31,6 @@ public class NodeJs extends AbstractProject
                     .resolve((String) get(GroupId)).resolve(name())
                     .resolve("pom.xml"), pomFile)))
             .jarName((String) get(ArtifactId) + "-" + get(Version) + ".jar");
-        dependency(Reveal, new MvnRepoLookup()
-            .resolve("org.apache.commons:commons-compress:1.28.0"));
 
         // Publication
         generator(SourcesJarGenerator::new).addTrees(

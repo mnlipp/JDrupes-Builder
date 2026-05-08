@@ -40,7 +40,7 @@ public abstract class AbstractRootProject extends AbstractProject
     /* default */ @SuppressWarnings("PMD.FieldNamingConventions")
     static final ScopedValue<
             AbstractRootProject> scopedRootProject = ScopedValue.newInstance();
-    private final DefaultBuildContext context;
+    private DefaultBuildContext context;
     private final Map<String, CommandData> commands;
     private final Map<Class<? extends Project>, Future<Project>> projects;
 
@@ -50,8 +50,8 @@ public abstract class AbstractRootProject extends AbstractProject
     ///
     @SuppressWarnings("PMD.ConstructorCallsOverridableMethod")
     public AbstractRootProject(NamedParameter<?>... params) {
-        context = LauncherBase.context();
         super(params);
+        context = LauncherBase.context();
 
         // ConcurrentHashMap does not support null values.
         projects = Collections.synchronizedMap(new HashMap<>());
@@ -62,6 +62,10 @@ public abstract class AbstractRootProject extends AbstractProject
 
     @Override
     public DefaultBuildContext context() {
+        // In case super() calls context() before we set it
+        if (context == null) {
+            context = LauncherBase.context();
+        }
         return context;
     }
 

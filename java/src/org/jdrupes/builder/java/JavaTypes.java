@@ -92,4 +92,13 @@ public final class JavaTypes {
     /// The javadoc jar file.
     public static final ResourceType<JavadocJarFile> JavadocJarFileType
         = new ResourceType<>() {};
+
+    /// The resource type for [ApplicationZipFile].
+    public static final ResourceType<ApplicationZipFile> ApplicationZipFileType
+        = new ResourceType<>() {};
+
+    /// The resource type for [ApplicationTarFile].
+    public static final ResourceType<ApplicationTarFile> ApplicationTarFileType
+        = new ResourceType<>() {};
+
 }

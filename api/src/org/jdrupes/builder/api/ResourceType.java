@@ -98,6 +98,21 @@ public class ResourceType<T extends Resource> {
     public static final ResourceType<ExecResult<?>> ExecResultType
         = new ResourceType<>() {};
 
+    /// The resource type for [ZipFile].
+    @SuppressWarnings("PMD.FieldNamingConventions")
+    public static final ResourceType<ZipFile> ZipFileType
+        = new ResourceType<>() {};
+
+    /// The resource type for [TarFile].
+    @SuppressWarnings("PMD.FieldNamingConventions")
+    public static final ResourceType<TarFile> TarFileType
+        = new ResourceType<>() {};
+
+    /// The resource type for [ZipFile].
+    @SuppressWarnings("PMD.FieldNamingConventions")
+    public static final ResourceType<TarGzFile> TarGzFileType
+        = new ResourceType<>() {};
+
     private final Class<T> type;
     private final ResourceType<?> containedType;
 

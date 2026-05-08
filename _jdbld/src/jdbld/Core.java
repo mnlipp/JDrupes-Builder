@@ -14,9 +14,11 @@ public class Core extends AbstractProject implements JavaProject {
         dependency(Expose, new MvnRepoLookup().resolve(
             "io.github.azagniotov:ant-style-path-matcher:1.0.0",
             "com.google.flogger:flogger:0.9",
-            "io.vavr:vavr:0.11.0"));
-        dependency(Reveal, new MvnRepoLookup().resolve(
-            "org.jline:jline:4.0.14"));
+            "io.vavr:vavr:0.11.0",
+            "org.apache.commons:commons-compress:1.28.0",
+            "org.freemarker:freemarker:2.3.34"));
+        dependency(Reveal,
+            new MvnRepoLookup().resolve("org.jline:jline:4.0.14"));
     }
 
     public static class CoreTest extends AbstractProject
