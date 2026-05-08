@@ -126,11 +126,6 @@ public class NpmExecutor extends AbstractProvider
         return project;
     }
 
-    /// Name.
-    ///
-    /// @param name the name
-    /// @return the npm executor
-    ///
     @Override
     public NpmExecutor name(String name) {
         rename(name);
@@ -335,10 +330,6 @@ public class NpmExecutor extends AbstractProvider
         return generated;
     }
 
-    /// To string.
-    ///
-    /// @return the string
-    ///
     @Override
     public String toString() {
         return super.toString() + "[" + project().name() + "]";
