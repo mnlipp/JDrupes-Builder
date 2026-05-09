@@ -1,13 +1,13 @@
 package jdbld;
 
-import static org.jdrupes.builder.api.Intent.Consume;
-
+import static org.jdrupes.builder.api.Intent.*;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
 import org.jdrupes.builder.api.BuildException;
 import org.jdrupes.builder.api.Project;
+import static org.jdrupes.builder.api.ResourceType.*;
 import org.jdrupes.builder.api.ResourceType;
 import org.jdrupes.builder.api.RootProject;
 import org.jdrupes.builder.core.AbstractRootProject;
@@ -32,6 +32,8 @@ public class Root extends AbstractRootProject {
         commandAlias("build").resources(of(JarFileType));
         commandAlias("eclipse")
             .resources(of(new ResourceType<EclipseConfiguration>() {}));
+        commandAlias("exec1").projects("**")
+            .resources(of(ExecResultType).withName("exec1").using(Supply));
     }
 
     private static void setupCommonGenerators(Project project) {

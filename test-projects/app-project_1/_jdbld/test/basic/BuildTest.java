@@ -84,4 +84,19 @@ class BuildTest {
         assertTrue(copiedTree.get().paths().filter(p -> p.toString()
             .contains("test-copy.properties")).findFirst().isPresent());
     }
+
+    @Test
+    public void testScript() throws IOException {
+        var prjs = launcher.rootProject().projects("base1")
+            .collect(Collectors.toSet());
+        assertEquals(1, prjs.size());
+        Project base1 = prjs.iterator().next();
+        var resTrees = base1.resources(base1.of(JavaResourceTreeType)
+            .usingAll()).collect(Collectors.toSet());
+        var scriptTree = resTrees.stream().filter(t -> t.root().toString()
+            .contains("fromScript")).findFirst();
+        assertTrue(scriptTree.isPresent());
+        assertTrue(scriptTree.get().paths().filter(p -> p.toString()
+            .contains("more.properties")).findFirst().isPresent());
+    }
 }
