@@ -102,7 +102,7 @@ public class NpmExecutor extends AbstractProvider
     private final Project project;
     private final List<String> arguments = new ArrayList<>();
     private final StreamCollector<Resource> requiredResources
-        = new StreamCollector<>(false);
+        = new StreamCollector<>(true);
     private Function<Project, Stream<Resource>> getOutput
         = _ -> Stream.empty();
     private String nodeJsVersion;
