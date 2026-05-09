@@ -166,9 +166,9 @@ public class NpmExecutor extends AbstractProvider
     }
 
     @Override
-    public NpmExecutor required(Path root) {
+    public NpmExecutor required(Path file) {
         requiredResources.add(
-            Stream.of(FileResource.of(project.directory().resolve(root))));
+            Stream.of(FileResource.of(project.directory().resolve(file))));
         return this;
     }
 
