@@ -186,7 +186,7 @@ public class DefaultFileTree<T extends FileResource> extends DefaultResources<T>
                     return FileVisitResult.CONTINUE;
                 }
 
-                // Directories (and their modification date) included
+                // Directories (and their modification time) included
                 var dirMod = Instant.ofEpochMilli(dir.toFile().lastModified());
                 if (latestChange == null || dirMod.isAfter(latestChange)) {
                     latestChange = dirMod;

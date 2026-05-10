@@ -61,7 +61,7 @@ import static org.jdrupes.builder.java.JavaTypes.*;
 /// to the constructor. In some cases – such as generating a shared
 /// Javadoc for multiple projects – this behavior is not desired. In
 /// these cases, the project(s) for which Javadoc is generated can be
-/// configured via [#projects].
+/// configured via [#projects(Stream)].
 ///
 /// By default, the processed sources are the project's [JavaSourceFile]s,
 /// i.e. the resources obtained by invoking

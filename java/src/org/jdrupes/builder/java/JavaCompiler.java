@@ -128,7 +128,7 @@ public class JavaCompiler extends JavaTool {
     ///
     /// @param directory the directory
     /// @param pattern the pattern
-    /// @return the resources collector
+    /// @return the java compiler
     ///
     public final JavaCompiler addSources(Path directory, String pattern) {
         addSources(FileTree.of(
@@ -147,7 +147,7 @@ public class JavaCompiler extends JavaTool {
         return this;
     }
 
-    /// Return the source trees configured for the compiler.
+    /// Returns the source trees configured for the compiler.
     ///
     /// @return the resources
     ///
@@ -155,7 +155,7 @@ public class JavaCompiler extends JavaTool {
         return sources;
     }
 
-    /// Source paths.
+    /// Returns the source paths.
     ///
     /// @return the collection
     ///

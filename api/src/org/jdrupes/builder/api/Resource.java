@@ -85,7 +85,7 @@ public interface Resource {
     default String asOfLocalized() {
         var asOf = asOf();
         if (asOf.isEmpty()) {
-            return "non-existant";
+            return "non-existent";
         }
         return DateTimeFormatter.ofLocalizedDateTime(FormatStyle.SHORT)
             .format(asOf.get().atZone(ZoneId.systemDefault()));

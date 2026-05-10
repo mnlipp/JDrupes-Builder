@@ -151,7 +151,7 @@ public class JavaExecutor extends AbstractProvider
     /// Add the given arguments.
     ///
     /// @param args the arguments
-    /// @return the npm executor
+    /// @return the java executor
     ///
     public JavaExecutor args(String... args) {
         arguments.addAll(Arrays.asList(args));

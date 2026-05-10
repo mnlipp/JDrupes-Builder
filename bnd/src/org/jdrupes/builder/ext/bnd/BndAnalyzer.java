@@ -149,7 +149,7 @@ public class BndAnalyzer extends AbstractBndGenerator {
                 .providers().resources(of(ClassTreeType).using(Supply)));
             // A bnd ("better never document") Jar can actually be a
             // classfile tree, and several such "Jar"s can be merged.
-            // IOException will be throw (.get()) and handled in the outer try
+            // IOException will be thrown (.get()) and handled in the outer try
             vavrStream(content).find(_ -> true).peek(t -> Try.of(() -> jar
                 .addAll(new aQute.bnd.osgi.Jar(t.root().toFile()))).get());
             analyzer.setJar(jar);

@@ -27,8 +27,8 @@ package org.jdrupes.builder.api;
 /// cleaned resources would have to be removed from these caches, which
 /// cannot be done reliably.
 /// 
-/// Therefore, the build project should be discarded after [Cleanliness]
-/// has been requested and re-generated. 
+/// Therefore, the build project should be discarded and re-generated
+/// after [Cleanliness] has been requested. 
 ///
 public interface Cleanliness extends Resource {
 }

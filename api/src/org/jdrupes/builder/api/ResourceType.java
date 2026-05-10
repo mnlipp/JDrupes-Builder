@@ -132,7 +132,7 @@ public class ResourceType<T extends Resource> {
         return new ResourceType<>(type);
     }
 
-    /// Creates a new resources type from the given values. The common
+    /// Creates a new [Resources] type from the given values. The common
     /// usage pattern is to import this method statically.
     ///
     /// @param <T> the generic type

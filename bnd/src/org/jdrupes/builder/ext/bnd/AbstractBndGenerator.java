@@ -50,7 +50,7 @@ public abstract class AbstractBndGenerator extends AbstractGenerator {
     ///
     /// @param key the key
     /// @param value the value
-    /// @return the bnd analyzer
+    /// @return the bnd generator
     ///
     public AbstractBndGenerator instruction(String key, String value) {
         instructions.add(Tuple.of(key, value));

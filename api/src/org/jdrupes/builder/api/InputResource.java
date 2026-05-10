@@ -25,10 +25,10 @@ import java.time.Instant;
 /// 
 /// Implementations of this interface must provide a [ResourceFactory]
 /// that supports the invocation of [ResourceFactory#create] with
-/// arguments
+/// arguments of type
 ///
-/// * [Instant] the modification time
-/// * [InputStream] the input stream
+/// * [Instant] the modification time, and
+/// * [InputStream] the input stream.
 ///
 public interface InputResource extends Resource {
 
@@ -40,7 +40,7 @@ public interface InputResource extends Resource {
 
     /// Creates a new input resource.
     ///
-    /// @param asOf the modification date
+    /// @param asOf the modification time
     /// @param inputData the data
     /// @return the file resource
     ///

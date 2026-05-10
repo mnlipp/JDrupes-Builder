@@ -58,10 +58,6 @@ public interface Resources<T extends Resource> extends Resource {
         return this;
     }
 
-    /// As of.
-    ///
-    /// @return the instant
-    ///
     @Override
     default Optional<Instant> asOf() {
         return stream()

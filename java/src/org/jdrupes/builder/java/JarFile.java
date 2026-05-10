@@ -24,7 +24,7 @@ import org.jdrupes.builder.api.ResourceFactory;
 import org.jdrupes.builder.api.ResourceType;
 import org.jdrupes.builder.api.ZipFile;
 
-/// A [FileResource] that represents a Java jar file].
+/// A [FileResource] that represents a Java jar file.
 ///
 public interface JarFile extends ZipFile {
 
