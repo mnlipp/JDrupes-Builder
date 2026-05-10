@@ -345,8 +345,8 @@ public class ScriptExecutor extends AbstractProvider
             }
             @SuppressWarnings("unchecked")
             var result = (Collection<T>) List.of(ExecResult.of(this,
-                "[" + project.name() + "]$ "
-                    + command.stream().collect(Collectors.joining(" ")),
+                "[" + project.name() + "]$ ... "
+                    + arguments.stream().collect(Collectors.joining(" ")),
                 exitValue, getOutput.apply(project))
                 .asOf(Instant.now()));
             return result;
