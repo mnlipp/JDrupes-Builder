@@ -82,13 +82,14 @@ import org.jdrupes.builder.core.StreamCollector;
 ///   * Else, the provider invokes npm, calls the function set with
 ///     `provided` again and adds the result to the [ExecResult] that
 ///     it returns.
+/// 
+/// The generated resources can also be provided directly (i.e. not as part
+/// of an [ExecResult]) in response to a configurable resource request, see
+/// [#provideResources(ResourceRequest, Function)].
 ///
 /// The provider also uses the function set with [#output] to determine
 /// the resources to be removed when it is invoked with a request for
 /// [Cleanliness].
-/// 
-/// The generated resources can also be provided directly in response
-/// to a request, see [#provideResources(ResourceRequest)].
 /// 
 /// This provider is made available as an extension.
 /// [![org.jdrupes:jdbld-ext-nodejs:](
@@ -184,16 +185,19 @@ public class NpmExecutor extends AbstractProvider
         return this;
     }
 
-    /// Provide the generated resources in response to a request like
-    /// the given one.
+    /// Provide the generated resources directly in response to a requests
+    /// like the given prototype request. Invoking this method implies a
+    /// call to [#output(Function)] with `resources`.
     ///
-    /// @param proto defines the kind of request that the npm executor
+    /// @param proto defines the kind of request that the script executor
     /// should respond to with the generated resources
-    /// @return the npm executor
+    /// @param resources the function that provides the results as resources
+    /// @return the script executor
     ///
-    public NpmExecutor provideResources(ResourceRequest<?> proto) {
+    public NpmExecutor provideResources(ResourceRequest<?> proto,
+            Function<Project, Stream<Resource>> resources) {
         requestForGenerated = proto;
-        return this;
+        return output(resources);
     }
 
     @Override

@@ -58,10 +58,10 @@ import static org.jdrupes.builder.api.ResourceType.CleanlinessType;
 /// because the specification of [Source]s supports transformations
 /// beyond simply copying.   
 /// 
-/// The provider generates the [FileTree] in response to a request that
-/// matches the one set with [#requestForResult]. The content of the
-/// generated file tree is returned using the type specified in the
-/// request.
+/// The provider generates the [FileTree] in response requests that
+/// match the prototype set with [#provideResources(ResourceRequest)]. The
+/// content of the generated file tree is returned using the type specified
+/// in the request.
 /// 
 /// A request for [Cleanliness] deletes the directory specified with
 /// [#into].

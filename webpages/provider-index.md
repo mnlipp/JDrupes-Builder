@@ -27,6 +27,7 @@ layout: jdbld
   * [MvnPublisher](javadoc/org/jdrupes/builder/mvnrepo/MvnPublisher.html)
   * [NpmExecutor](javadoc/org/jdrupes/builder/ext/nodejs/NpmExecutor.html) (E)
   * [PomFileGenerator](javadoc/org/jdrupes/builder/mvnrepo/PomFileGenerator.html)
+  * [ScriptExecutor](javadoc/org/jdrupes/builder/core/ScriptExecutor.html)
   * [SourcesJarGenerator](javadoc/org/jdrupes/builder/mvnrepo/SourcesJarGenerator.html)
   * [UberJarGenerator](javadoc/org/jdrupes/builder/uberjar/UberJarGenerator.html)
   * [VscodeConfigurator](javadoc/org/jdrupes/builder/vscode/VscodeConfigurator.html)

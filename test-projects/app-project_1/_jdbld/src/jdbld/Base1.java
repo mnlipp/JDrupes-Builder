@@ -29,8 +29,8 @@ public class Base1 extends AbstractProject implements JavaProject {
                     """)
             .args(buildDirectory().resolve(
                 "generated/fromScript/more.properties").toString())
-            .output(p -> Stream.of(JavaResourceTree.of(p,
-                p.buildDirectory().resolve("generated/fromScript"), "**")))
-            .provideResources(of(JavaResourceTreeType));
+            .provideResources(of(JavaResourceTreeType),
+                p -> Stream.of(JavaResourceTree.of(p,
+                    p.buildDirectory().resolve("generated/fromScript"), "**")));
     }
 }
