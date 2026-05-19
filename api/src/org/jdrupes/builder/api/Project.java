@@ -226,8 +226,9 @@ public interface Project extends ResourceProvider {
     ///
     Path directory();
 
-    /// Returns the project's name and its directory in parentheses.
-    /// Appending the directory is omitted if it is the same as the name.
+    /// Returns the project's name and its directory appended in parentheses.
+    /// Appending the directory is omitted if it's name equals the
+    /// project's name.
     ///
     /// @return the string
     ///
@@ -368,7 +369,7 @@ public interface Project extends ResourceProvider {
 
     /// Sets the given property to the given value.
     /// 
-    /// Regrettably, there is no way to enforce at compile time that the
+    /// Note that there is no way to enforce at compile time that the
     /// type of the value passed to `set` matches the type of the property.
     /// An implementation must check this at runtime by verifying that the
     /// given value is assignable to the default value. 

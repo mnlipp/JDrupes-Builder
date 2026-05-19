@@ -118,7 +118,7 @@ public interface BuildContext extends AutoCloseable {
 
     /// Returns the [PrintStream] for the standard output.
     ///
-    /// @return the prints the stream
+    /// @return the print stream
     ///
     PrintStream out();
 
@@ -126,7 +126,7 @@ public interface BuildContext extends AutoCloseable {
     /// standard output stream as with [#out], but it is marked,
     /// typically in red, to indicate an error.
     ///
-    /// @return the prints the stream
+    /// @return the print stream
     ///
     PrintStream error();
 

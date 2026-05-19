@@ -31,7 +31,7 @@ import java.util.stream.Stream;
 
 /// A special kind of type token for representing a resource type.
 /// The method [rawType()] returns the type as [Class]. If this class
-/// if derived from [Resources], [containedType()] returns the
+/// is derived from [Resources], [containedType()] returns the
 /// [ResourceType] of the contained elements.
 ///
 /// Beware of automatic inference of type arguments. The inferred

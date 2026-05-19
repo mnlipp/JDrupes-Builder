@@ -31,7 +31,7 @@ public interface Resource {
 
     /// The instant at which this resource was created or last modified.
     ///
-    /// @return the instant
+    /// @return the instant, if available
     ///
     default Optional<Instant> asOf() {
         return Optional.empty();
@@ -64,7 +64,7 @@ public interface Resource {
 
     /// Returns the name of this resource if set.
     ///
-    /// @return the optional
+    /// @return the name, if set
     ///
     Optional<String> name();
 
