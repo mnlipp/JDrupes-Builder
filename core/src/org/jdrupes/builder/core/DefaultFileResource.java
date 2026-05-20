@@ -38,10 +38,10 @@ public class DefaultFileResource extends ResourceObject
 
     private final Path path;
 
-    /// Instantiates a new file resource.
+    /// Initializes a new file resource.
     ///
     /// @param type the type
-    /// @param path the path
+    /// @param path the absolute path of the file
     ///
     @SuppressWarnings("PMD.ConstructorCallsOverridableMethod")
     protected DefaultFileResource(ResourceType<? extends FileResource> type,

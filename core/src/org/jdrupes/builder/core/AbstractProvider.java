@@ -106,7 +106,7 @@ public abstract class AbstractProvider implements ResourceProvider {
         return LauncherBase.context();
     }
 
-    /// Retrieves the resources as a Vavr stream.
+    /// Provides the resources as a Vavr stream.
     ///
     /// @param <T> the resource type
     /// @param resources the resources

@@ -60,7 +60,7 @@ public class AwaitableCounter {
         return count;
     }
 
-    /// Create an increment.
+    /// Create an [Increment].
     ///
     /// @return the count
     ///

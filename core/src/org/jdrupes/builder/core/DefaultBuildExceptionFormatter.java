@@ -21,7 +21,7 @@ package org.jdrupes.builder.core;
 import org.jdrupes.builder.api.BuildException;
 import org.jdrupes.builder.api.BuildException.Reason;
 
-/// The Class BuildExceptionFormatter.
+/// The class BuildExceptionFormatter.
 ///
 public class DefaultBuildExceptionFormatter implements BuildExceptionFormatter {
 

@@ -39,7 +39,7 @@ public class DefaultResources<T extends Resource> extends ResourceObject
 
     private final Set<T> content;
 
-    /// Instantiates a new resource set.
+    /// Initializes a new resource set.
     ///
     /// @param type the type of this instance as resource
     ///
