@@ -114,10 +114,12 @@ public abstract class AbstractProject extends AbstractProvider
         return new NamedParameter<>("directory", directory);
     }
 
-    /// Hack to pass `context().jdbldDirectory()` as named parameter
-    /// for the directory to the constructor. This is required because
-    /// you cannot "refer to an instance method while explicitly invoking
-    /// a constructor". 
+    /// Creates an instance of [NamedParameter] with name "directory"
+    /// and value `context().jdbldDirectory()`.
+    /// 
+    /// Simply using `directory(context().jdbldDirectory())` is not possible
+    /// because referring to an instance method while explicitly invoking
+    /// a constructor is not possible. 
     ///
     /// @return the named parameter
     ///

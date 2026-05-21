@@ -16,6 +16,6 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-/// Povides the core classes for the JDrupes Builder.
+/// Provides the core classes for the JDrupes Builder.
 
 package org.jdrupes.builder.core;
