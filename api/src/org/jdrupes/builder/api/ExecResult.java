@@ -23,7 +23,7 @@ import java.util.stream.Stream;
 
 /// Provides the results from executing a process. The type of resource
 /// related to the execution depends on the provider. It is recommended
-/// to this as a base interface for defining execution results with
+/// to use this as a base interface for defining execution results with
 /// the resource type bound to a specific type.
 ///
 /// @param <T> the resource type

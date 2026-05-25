@@ -20,6 +20,8 @@ package org.jdrupes.builder.api;
 
 /// Attributes the relationship between a [Project] ("this project")
 /// and an associated [ResourceProvider].
+/// 
+/// @see Project
 ///
 @SuppressWarnings("PMD.FieldNamingConventions")
 public enum Intent {

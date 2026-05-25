@@ -35,7 +35,7 @@ import java.util.stream.Stream;
 /// [ResourceType] of the contained elements.
 ///
 /// Beware of automatic inference of type arguments. The inferred
-/// type arguments will usually be super classes of what you expect.
+/// type arguments will usually be superclasses of what you expect.
 ///
 /// An alternative to using an anonymous class to create a type token
 /// is to statically import the `resourceType` methods. Using these

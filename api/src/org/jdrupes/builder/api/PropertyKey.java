@@ -55,7 +55,7 @@ public interface PropertyKey {
         return null;
     }
 
-    /// The property's default value. This value should either not be
+    /// The property's default value. This value should not be
     /// `null` or [propertyType] should return a non-`null` class.
     ///
     /// @param <T> the generic type
