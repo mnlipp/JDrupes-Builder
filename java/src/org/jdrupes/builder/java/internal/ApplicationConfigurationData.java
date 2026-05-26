@@ -21,7 +21,7 @@ package org.jdrupes.builder.java.internal;
 import java.util.ArrayList;
 import java.util.List;
 
-/// The Class DistributionConfigurationData.
+/// Represents the configuration data for an application.
 ///
 @SuppressWarnings("PMD.DataClass")
 public class ApplicationConfigurationData {

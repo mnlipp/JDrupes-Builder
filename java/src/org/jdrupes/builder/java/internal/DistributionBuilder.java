@@ -34,7 +34,7 @@ import java.util.Map;
 import java.util.stream.Collectors;
 import org.jdrupes.builder.api.BuildException;
 
-/// The Class DistributionBuilder.
+/// A base class for distribution builders.
 ///
 public class DistributionBuilder {
 

@@ -29,7 +29,7 @@ import org.jdrupes.builder.core.DefaultFileTree;
 public class DefaultJavaResourceTree
         extends DefaultFileTree<ResourceFile> implements JavaResourceTree {
 
-    /// Instantiates a new java resource tree.
+    /// Initializes a new java resource tree.
     ///
     /// @param type the type
     /// @param project the project

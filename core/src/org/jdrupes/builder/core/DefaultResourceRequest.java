@@ -52,7 +52,7 @@ public class DefaultResourceRequest<T extends Resource>
     @SuppressWarnings("unchecked")
     public DefaultResourceRequest<T> clone() {
         try {
-            // This class is immutable
+            // No special handling of attributes required
             return (DefaultResourceRequest<T>) super.clone();
         } catch (CloneNotSupportedException e) {
             throw new IllegalStateException(e);

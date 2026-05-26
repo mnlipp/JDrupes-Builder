@@ -102,8 +102,8 @@ public class DefaultProviderSelection implements ProviderSelection {
         AtomicReference<ResourceRequest<T>> projectRequest
             = new AtomicReference<>();
         final var snapshot = ScopedValueContext.snapshot();
-        // Refrain from making this a parallel stream. Project.resoures
-        // simply forwards and other ResourceProvider.resoures will
+        // Refrain from making this a parallel stream. Project.resources
+        // simply forwards and other ResourceProvider.resources will
         // return a FutureStream. Making this a parallel stream should
         // gain little or nothing but may result in deadlocks.
         return select(request.uses()).map(p -> {

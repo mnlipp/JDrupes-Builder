@@ -18,7 +18,7 @@
 
 package org.jdrupes.builder.java;
 
-/// Defines a jar file with sources.
+/// A JAR file containing source code.
 ///
 public interface SourcesJarFile extends JarFile {
 

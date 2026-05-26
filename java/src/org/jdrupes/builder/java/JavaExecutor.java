@@ -111,7 +111,7 @@ public class JavaExecutor extends AbstractProvider
     /// Additionally uses the given providers for building the classpath.
     ///
     /// @param providers the providers
-    /// @return the jar generator
+    /// @return the java executor
     ///
     @Override
     public JavaExecutor addFrom(ResourceProvider... providers) {
@@ -122,7 +122,7 @@ public class JavaExecutor extends AbstractProvider
     /// Additionally uses the given providers for building the classpath.
     ///
     /// @param providers the providers
-    /// @return the jar generator
+    /// @return the java executor
     ///
     @Override
     public JavaExecutor addFrom(Stream<ResourceProvider> providers) {

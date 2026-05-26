@@ -50,7 +50,7 @@ public abstract class JavaTool extends AbstractGenerator {
     /// Adds the given options.
     ///
     /// @param options the options
-    /// @return the javadoc
+    /// @return the java tool
     ///
     public JavaTool options(Stream<String> options) {
         this.options.addAll(options.toList());
@@ -60,7 +60,7 @@ public abstract class JavaTool extends AbstractGenerator {
     /// Adds the given options.
     ///
     /// @param options the options
-    /// @return the javadoc
+    /// @return the java tool
     ///
     public JavaTool options(String... options) {
         this.options.addAll(Arrays.asList(options));

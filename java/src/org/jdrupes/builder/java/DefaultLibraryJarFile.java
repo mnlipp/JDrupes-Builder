@@ -22,7 +22,7 @@ import java.nio.file.Path;
 import org.jdrupes.builder.api.FileResource;
 import org.jdrupes.builder.api.ResourceType;
 
-/// A [FileResource] that represents a Java library jar.
+/// A [FileResource] that represents a Java library JAR.
 ///
 public class DefaultLibraryJarFile extends DefaultJarFile
         implements LibraryJarFile {

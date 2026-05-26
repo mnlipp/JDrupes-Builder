@@ -79,10 +79,10 @@ public class JarBuilder extends AbstractGenerator {
     private final StreamCollector<FileTree<?>> fileTrees
         = StreamCollector.cached();
 
-    /// Initializes a new library generator.
+    /// Initializes a new JAR file generator.
     ///
     /// @param project the project
-    /// @param jarType the type of jar that the generator generates
+    /// @param jarType the type of JAR that the generator generates
     ///
     public JarBuilder(Project project,
             ResourceType<? extends JarFile> jarType) {
@@ -110,7 +110,7 @@ public class JarBuilder extends AbstractGenerator {
     /// the project's build directory (see [Project#buildDirectory]).
     ///
     /// @param destination the new destination
-    /// @return the jar generator
+    /// @return the JAR builder
     ///
     public JarBuilder destination(Path destination) {
         this.destination
@@ -121,14 +121,14 @@ public class JarBuilder extends AbstractGenerator {
     /// Sets the destination directory.
     ///
     /// @param destination the new destination
-    /// @return the jar generator
+    /// @return the JAR builder
     ///
     public JarBuilder destination(Supplier<Path> destination) {
         this.destination = destination;
         return this;
     }
 
-    /// Returns the name of the generated jar file. Defaults to
+    /// Returns the name of the generated JAR file. Defaults to
     /// the project's name followed by its version and `.jar`.
     ///
     /// @return the string
@@ -137,21 +137,21 @@ public class JarBuilder extends AbstractGenerator {
         return jarName.get();
     }
 
-    /// Sets the supplier for obtaining the name of the generated jar file
+    /// Sets the supplier for obtaining the name of the generated JAR file
     /// in [ResourceProviderSpi#provide].
     ///
-    /// @param jarName the jar name
-    /// @return the jar generator
+    /// @param jarName the JAR name
+    /// @return the JAR builder
     ///
     public JarBuilder jarName(Supplier<String> jarName) {
         this.jarName = jarName;
         return this;
     }
 
-    /// Sets the name of the generated jar file.
+    /// Sets the name of the generated JAR file.
     ///
-    /// @param jarName the jar name
-    /// @return the jar generator
+    /// @param jarName the JAR name
+    /// @return the JAR builder
     ///
     public JarBuilder jarName(String jarName) {
         return jarName(() -> jarName);
@@ -160,7 +160,7 @@ public class JarBuilder extends AbstractGenerator {
     /// Add the given attributes to the manifest.
     ///
     /// @param attributes the attributes
-    /// @return the library generator
+    /// @return the JAR builder
     ///
     public JarBuilder addAttributeValues(
             Stream<Map.Entry<Attributes.Name, String>> attributes) {
@@ -171,7 +171,7 @@ public class JarBuilder extends AbstractGenerator {
     /// Add the given attributes to the manifest.
     ///
     /// @param attributes the attributes
-    /// @return the library generator
+    /// @return the JAR builder
     ///
     @SuppressWarnings("PMD.LooseCoupling")
     public JarBuilder
@@ -186,7 +186,7 @@ public class JarBuilder extends AbstractGenerator {
     /// Add the given attributes to the manifest.
     ///
     /// @param attributes the attributes
-    /// @return the library generator
+    /// @return the JAR builder
     ///
     @SafeVarargs
     public final JarBuilder
@@ -196,12 +196,12 @@ public class JarBuilder extends AbstractGenerator {
     }
 
     /// Adds single resources to the jar. Each entry is added to the
-    /// jar as entry with the name passed in the key attribute of the
+    /// JAR as entry with the name passed in the key attribute of the
     /// `Map.Entry` with the content from the [IOResource] in the
     /// value attribute.
     ///
     /// @param entries the entries
-    /// @return the jar generator
+    /// @return the JAR builder
     ///
     public JarBuilder addEntries(
             Stream<? extends Map.Entry<Path, ? extends IOResource>> entries) {
@@ -213,7 +213,7 @@ public class JarBuilder extends AbstractGenerator {
     /// as an entry using its relative path in the tree as name.  
     ///
     /// @param trees the trees
-    /// @return the jar generator
+    /// @return the JAR builder
     ///
     public JarBuilder addTrees(Stream<? extends FileTree<?>> trees) {
         fileTrees.add(trees);
@@ -223,7 +223,7 @@ public class JarBuilder extends AbstractGenerator {
     /// Convenience method for adding entries, see [#addTrees(Stream)].
     ///
     /// @param trees the trees
-    /// @return the jar generator
+    /// @return the JAR builder
     ///
     public JarBuilder add(FileTree<?>... trees) {
         addTrees(Arrays.stream(trees));
@@ -234,7 +234,7 @@ public class JarBuilder extends AbstractGenerator {
     ///
     /// @param prefix the prefix
     /// @param tree the tree
-    /// @return the jar builder
+    /// @return the JAR builder
     ///
     public JarBuilder add(Path prefix, FileTree<?> tree) {
         entryStreams.add(tree.paths().map(e -> Map.entry(prefix.resolve(e),
@@ -246,7 +246,7 @@ public class JarBuilder extends AbstractGenerator {
     ///
     /// @param prefix the prefix
     /// @param trees the trees
-    /// @return the jar builder
+    /// @return the JAR builder
     ///
     public JarBuilder add(Path prefix, Stream<? extends FileTree<?>> trees) {
         entryStreams.add(
@@ -259,7 +259,7 @@ public class JarBuilder extends AbstractGenerator {
     ///
     /// @param path the path
     /// @param resource the resource
-    /// @return the jar generator
+    /// @return the JAR builder
     ///
     public JarBuilder add(Path path, IOResource resource) {
         addEntries(Map.of(path, resource).entrySet().stream());
@@ -268,11 +268,11 @@ public class JarBuilder extends AbstractGenerator {
 
     /// Builds the jar.
     ///
-    /// @param jarResource the jar resource
+    /// @param jarResource the JAR resource
     ///
     @SuppressWarnings("PMD.ConfusingTernary")
     protected void buildJar(JarFile jarResource) {
-        // Collect entries for jar from all sources
+        // Collect entries for JAR from all sources
         var contents = new ConcurrentHashMap<Path, Resources<IOResource>>();
         collectContents(contents);
         resolveDuplicates(contents);
@@ -317,10 +317,10 @@ public class JarBuilder extends AbstractGenerator {
 
     private void writeJar(JarFile jarResource,
             Map<Path, Resources<IOResource>> contents, Manifest manifest) {
-        // Write jar file
+        // Write JAR file
         logger.atInfo().log("Building %s in %s", jarName(), project().name());
         try {
-            // Allow continued use of existing jar if open (POSIX only)
+            // Allow continued use of existing JAR if open (POSIX only)
             Files.deleteIfExists(jarResource.path());
         } catch (IOException e) { // NOPMD
         }
@@ -357,7 +357,7 @@ public class JarBuilder extends AbstractGenerator {
     /// Add the contents from the added streams as preliminary jar
     /// entries. Must be overridden by derived classes that define
     /// additional ways to provide contents. The overriding method
-    /// must invoke `super.collectEntries(...)`.
+    /// must invoke `super.collectContents(...)`.
     ///
     /// @param contents the preliminary contents
     ///
@@ -434,7 +434,7 @@ public class JarBuilder extends AbstractGenerator {
                 .resources(this, project().of(jarType)).toList();
         }
 
-        // Prepare jar file
+        // Prepare JAR file
         var destDir = destination();
         if (!destDir.toFile().exists()) {
             if (!destDir.toFile().mkdirs()) {

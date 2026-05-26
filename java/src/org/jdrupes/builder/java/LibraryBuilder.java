@@ -102,7 +102,7 @@ public class LibraryBuilder extends JarBuilder
     /// Sets the main class.
     ///
     /// @param mainClass the new main class
-    /// @return the jar generator for method chaining
+    /// @return the library builder for method chaining
     ///
     public LibraryBuilder mainClass(String mainClass) {
         this.mainClass = Objects.requireNonNull(mainClass);
@@ -123,7 +123,7 @@ public class LibraryBuilder extends JarBuilder
 
     /// return the cached providers.
     ///
-    /// @return the cached stream
+    /// @return the content providers
     ///
     protected StreamCollector<ResourceProvider> contentProviders() {
         return providers;

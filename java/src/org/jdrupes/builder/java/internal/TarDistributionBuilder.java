@@ -36,7 +36,7 @@ import org.jdrupes.builder.java.ApplicationTarFile;
 import org.jdrupes.builder.java.ClasspathElement;
 import static org.jdrupes.builder.java.JavaTypes.JarFileType;
 
-/// The Class TarDistributionBuilder.
+/// A distribution builder that builds a TAR file.
 ///
 public class TarDistributionBuilder extends DistributionBuilder {
     private static final FluentLogger logger = FluentLogger.forEnclosingClass();

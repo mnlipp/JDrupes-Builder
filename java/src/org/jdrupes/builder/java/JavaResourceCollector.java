@@ -40,7 +40,7 @@ public class JavaResourceCollector
 
     /// Adds the files from the given directory matching the given pattern.
     /// Short for
-    /// `add(project().newFileTree(JavaResourceTreeType, directory, pattern))`.
+    /// `add(JavaResourceTree.of(project(), directory, pattern))`.
     ///
     /// @param directory the directory
     /// @param pattern the pattern

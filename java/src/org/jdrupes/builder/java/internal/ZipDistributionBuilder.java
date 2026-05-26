@@ -35,7 +35,7 @@ import org.jdrupes.builder.java.ApplicationZipFile;
 import org.jdrupes.builder.java.ClasspathElement;
 import static org.jdrupes.builder.java.JavaTypes.JarFileType;
 
-/// The Class ZipDistributionBuilder.
+/// A distribution builder that builds a ZIP file.
 ///
 public class ZipDistributionBuilder extends DistributionBuilder {
     private static final FluentLogger logger = FluentLogger.forEnclosingClass();

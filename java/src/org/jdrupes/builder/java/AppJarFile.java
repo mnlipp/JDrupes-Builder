@@ -30,7 +30,7 @@ public interface AppJarFile extends LibraryJarFile {
     /// Creates an application library jar file from the given path.
     ///
     /// @param path the path
-    /// @return the library jar file
+    /// @return the application library jar file
     ///
     @SuppressWarnings("PMD.ShortMethodName")
     static AppJarFile of(Path path) {

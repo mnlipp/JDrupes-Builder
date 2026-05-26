@@ -64,7 +64,7 @@ public class ClasspathScanner extends AbstractGenerator {
     ///
     /// @param <T> the requested type
     /// @param requested the requested resources
-    /// @return the stream
+    /// @return the provided resources
     ///
     @Override
     protected <T extends Resource> Collection<T>

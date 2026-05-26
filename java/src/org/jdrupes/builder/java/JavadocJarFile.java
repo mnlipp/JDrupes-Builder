@@ -18,7 +18,7 @@
 
 package org.jdrupes.builder.java;
 
-/// Defines a jar file with javadoc.
+/// A JAR file containing generated javadoc.
 ///
 public interface JavadocJarFile extends JarFile {
 }

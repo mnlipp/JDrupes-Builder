@@ -55,7 +55,7 @@ public class ServicesEntryResource extends ResourceObject
     /// entry from a jar.
     ///
     /// @param resource the resource
-    /// @throws IOException Signals that an I/O exception has occurred.
+    /// @throws IOException if an I/O error occurs
     ///
     public void add(IOResource resource) throws IOException {
         try (InputStream toRead = resource.inputStream()) {

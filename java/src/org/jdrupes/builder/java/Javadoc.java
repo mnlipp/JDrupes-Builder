@@ -113,7 +113,7 @@ public class Javadoc extends JavaTool {
     /// the project's build directory (see [Project#buildDirectory]).
     ///
     /// @param destination the new destination
-    /// @return the java compiler
+    /// @return the javadoc generator
     ///
     public Javadoc destination(Path destination) {
         this.destination = destination;
@@ -123,7 +123,7 @@ public class Javadoc extends JavaTool {
     /// Adds the source tree.
     ///
     /// @param sources the sources
-    /// @return the java compiler
+    /// @return the javadoc generator
     ///
     @SafeVarargs
     public final Javadoc addSources(FileTree<JavaSourceFile>... sources) {
@@ -137,7 +137,7 @@ public class Javadoc extends JavaTool {
     ///
     /// @param directory the directory
     /// @param pattern the pattern
-    /// @return the resources collector
+    /// @return the javadoc generator
     /// 
     public final Javadoc addSources(Path directory, String pattern) {
         addSources(FileTree.of(

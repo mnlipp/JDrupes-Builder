@@ -131,7 +131,7 @@ public class ApplicationBuilder extends AbstractGenerator {
     /// the project's build directory (see [Project#buildDirectory]).
     ///
     /// @param destination the new destination
-    /// @return the jar generator
+    /// @return the application builder
     ///
     public ApplicationBuilder destination(Path destination) {
         this.destination
@@ -163,7 +163,7 @@ public class ApplicationBuilder extends AbstractGenerator {
     /// ZIP or TAR file's base name in [ResourceProviderSpi#provide].
     ///
     /// @param distributionBaseName the distribution base name
-    /// @return the jar generator
+    /// @return the application builder
     ///
     public ApplicationBuilder
             distributionBaseName(Supplier<String> distributionBaseName) {
