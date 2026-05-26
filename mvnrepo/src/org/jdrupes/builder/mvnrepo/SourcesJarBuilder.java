@@ -41,14 +41,14 @@ import static org.jdrupes.builder.mvnrepo.MvnProperties.*;
 ///     `<version>` is the value of the project's property
 ///     [Project.Properties#Version].
 ///
-public class SourcesJarGenerator extends JarBuilder {
+public class SourcesJarBuilder extends JarBuilder {
 
-    /// Initializes a new sources jar generator.
+    /// Initializes a new sources JAR builder.
     ///
     /// @param project the project
     ///
     @SuppressWarnings("PMD.ConstructorCallsOverridableMethod")
-    public SourcesJarGenerator(Project project) {
+    public SourcesJarBuilder(Project project) {
         super(project, SourcesJarFileType);
         addTrees(project().resources(of(
             new ResourceType<FileTree<JavaSourceFile>>() {}).using(Supply)));

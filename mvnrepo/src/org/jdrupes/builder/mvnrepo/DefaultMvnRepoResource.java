@@ -22,7 +22,7 @@ import java.util.Objects;
 import org.jdrupes.builder.api.ResourceType;
 import org.jdrupes.builder.core.ResourceObject;
 
-/// Represents an artifact in a maven repository.
+/// Represents an artifact in a Maven repository.
 ///
 public class DefaultMvnRepoResource extends ResourceObject
         implements MvnRepoResource {
@@ -33,8 +33,8 @@ public class DefaultMvnRepoResource extends ResourceObject
     private String mvnType = "";
     private String version;
 
-    /// Instantiates a new default mvn repo dependency. The coordinate is
-    /// parsed into its component parts following the schema
+    /// Instantiates a new default Maven repository dependency. The
+    /// coordinate is parsed into its component parts following the schema
     /// `groupId:artifactId[[:classifier]:type]:version`.
     ///
     /// @param type the type
@@ -66,19 +66,11 @@ public class DefaultMvnRepoResource extends ResourceObject
         name(coordinates());
     }
 
-    /// Group id.
-    ///
-    /// @return the string
-    ///
     @Override
     public String groupId() {
         return groupId;
     }
 
-    /// Artifact id.
-    ///
-    /// @return the string
-    ///
     @Override
     public String artifactId() {
         return artifactId;
@@ -94,10 +86,6 @@ public class DefaultMvnRepoResource extends ResourceObject
         return mvnType;
     }
 
-    /// Version.
-    ///
-    /// @return the string (defaults to "")
-    ///
     @Override
     public String version() {
         return version;

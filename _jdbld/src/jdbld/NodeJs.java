@@ -14,7 +14,7 @@ import org.jdrupes.builder.java.LibraryBuilder;
 import org.jdrupes.builder.mvnrepo.JavadocJarBuilder;
 import org.jdrupes.builder.mvnrepo.MvnPublisher;
 import org.jdrupes.builder.mvnrepo.PomFileGenerator;
-import org.jdrupes.builder.mvnrepo.SourcesJarGenerator;
+import org.jdrupes.builder.mvnrepo.SourcesJarBuilder;
 
 public class NodeJs extends AbstractProject
         implements JavaProject, JdbldExtension {
@@ -33,7 +33,7 @@ public class NodeJs extends AbstractProject
             .jarName((String) get(ArtifactId) + "-" + get(Version) + ".jar");
 
         // Publication
-        generator(SourcesJarGenerator::new).addTrees(
+        generator(SourcesJarBuilder::new).addTrees(
             resources(of(JavaSourceTreeType).using(Supply, Expose)));
         generator(Javadoc::new).options("-quiet");
         generator(JavadocJarBuilder::new);

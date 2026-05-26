@@ -28,7 +28,7 @@ public interface MvnRepoBom extends MvnRepoPom {
     /// Creates a BOM from a coordinate.
     ///
     /// @param coordinate the coordinate
-    /// @return the mvn repo dependency
+    /// @return the Maven repository BOM
     ///
     @SuppressWarnings("PMD.ShortMethodName")
     static MvnRepoBom of(String coordinate) {

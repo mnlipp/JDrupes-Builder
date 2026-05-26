@@ -28,13 +28,13 @@ import static org.jdrupes.builder.java.JavaTypes.*;
 import org.jdrupes.builder.java.JavadocDirectory;
 import static org.jdrupes.builder.mvnrepo.MvnProperties.*;
 
-/// A special [JarBuilder] that generates a jar with javadoc.
+/// A special [JarBuilder] that generates a JAR with javadoc.
 ///
-///   * The content of the jar is obtained by requesting resources of
+///   * The content of the JAR is obtained by requesting resources of
 ///     type [JavadocDirectory] from the project's suppliers and using
-///     each as root for a [FileTree], which is then added to the jar.
+///     each as root for a [FileTree], which is then added to the JAR.
 ///
-///   * The name of the jar is set to `<artifactId>-<version>-javadoc.jar`,
+///   * The name of the JAR is set to `<artifactId>-<version>-javadoc.jar`,
 ///     where `<artifactId>` is the value of the project's property 
 ///     [MvnProperties#ArtifactId] with a fallback to the project's name.
 ///     `<version>` is the value of the project's property
@@ -42,7 +42,7 @@ import static org.jdrupes.builder.mvnrepo.MvnProperties.*;
 ///
 public class JavadocJarBuilder extends JarBuilder {
 
-    /// Initializes a new sources jar generator.
+    /// Initializes a new javadoc JAR generator.
     ///
     /// @param project the project
     ///

@@ -25,11 +25,11 @@ import org.jdrupes.builder.api.ResourceFactory;
 import org.jdrupes.builder.api.ResourceType;
 import static org.jdrupes.builder.core.CoreResourceFactory.createNarrowed;
 
-/// A factory for creating Java related resource objects.
+/// A factory for creating Maven repository related resource objects.
 ///
 public class MvnRepoResourceFactory implements ResourceFactory {
 
-    /// Instantiates a new java resource factory.
+    /// Instantiates a new Maven repository resource factory.
     ///
     public MvnRepoResourceFactory() {
         // Make javadoc happy

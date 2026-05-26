@@ -49,13 +49,13 @@ public interface MvnRepoResource extends Resource {
     ///
     String mvnType();
 
-    /// Version.
+    /// Returns the version.
     ///
-    /// @return the string
+    /// @return the string or "" if no version was specified.
     ///
     String version();
 
-    /// Return the maven coordinates as "groudId:artifactId:version".
+    /// Return the maven coordinates as "groupId:artifactId:version".
     ///
     /// @return the string
     ///

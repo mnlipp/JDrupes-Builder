@@ -101,7 +101,7 @@ public final class DependencyConverter {
                 .collect(Collectors.toList()));
     }
 
-    /// Convert a maven model dependency to an aether dependency.
+    /// Convert a Maven repository dependency resource to an aether dependency.
     ///
     /// @param mvnResource the maven resource
     /// @param scope the scope of aether dependency

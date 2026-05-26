@@ -21,7 +21,7 @@ package org.jdrupes.builder.mvnrepo;
 import org.jdrupes.builder.api.ResourceFactory;
 import static org.jdrupes.builder.mvnrepo.MvnRepoTypes.MvnPublicationType;
 
-/// Represents an artifact created in a maven repository.
+/// Represents an artifact to be published in a Maven repository.
 ///
 public interface MvnPublication extends MvnRepoResource {
 

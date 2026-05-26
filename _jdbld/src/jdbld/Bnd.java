@@ -2,10 +2,8 @@ package jdbld;
 
 import static org.jdrupes.builder.api.Intent.*;
 import static org.jdrupes.builder.mvnrepo.MvnProperties.*;
-
 import java.nio.file.Path;
 import java.util.Map;
-
 import static org.jdrupes.builder.api.Project.Properties.Version;
 import org.jdrupes.builder.core.AbstractProject;
 import org.jdrupes.builder.java.JavaProject;
@@ -17,7 +15,7 @@ import org.jdrupes.builder.mvnrepo.MvnPublisher;
 import org.jdrupes.builder.mvnrepo.MvnRepoLookup;
 import static org.jdrupes.builder.mvnrepo.MvnRepoTypes.*;
 import org.jdrupes.builder.mvnrepo.PomFileGenerator;
-import org.jdrupes.builder.mvnrepo.SourcesJarGenerator;
+import org.jdrupes.builder.mvnrepo.SourcesJarBuilder;
 
 public class Bnd extends AbstractProject
         implements JavaProject, JdbldExtension {
@@ -38,7 +36,7 @@ public class Bnd extends AbstractProject
             .resolve("biz.aQute.bnd:biz.aQute.bnd.maven:7.2.1"));
 
         // Publication
-        generator(SourcesJarGenerator::new).addTrees(
+        generator(SourcesJarBuilder::new).addTrees(
             resources(of(JavaSourceTreeType).using(Supply, Expose)));
         generator(Javadoc::new).options("-quiet");
         generator(JavadocJarBuilder::new);

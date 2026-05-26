@@ -78,13 +78,14 @@ public class MvnRepoLookup extends AbstractProvider {
     private URI snapshotUri;
     private boolean probeMode;
 
-    /// Instantiates a new mvn repo lookup.
+    /// Initializes a new Maven repository lookup.
     ///
     public MvnRepoLookup() {
         // Make javadoc happy.
     }
 
     /// Lazily creates the root context.
+    /// 
     /// @return the context
     ///
     /* default */ static Context rootContext() {
@@ -115,7 +116,7 @@ public class MvnRepoLookup extends AbstractProvider {
     /// Returns the snapshot repository. Defaults to
     /// `https://central.sonatype.com/repository/maven-snapshots/`.
     ///
-    /// @return the uri
+    /// @return the snapshot repository
     ///
     public URI snapshotRepository() {
         return snapshotUri;
@@ -162,7 +163,7 @@ public class MvnRepoLookup extends AbstractProvider {
 
     /// Failing to resolve the dependencies normally results in a
     /// [BuildException], because the requested artifacts are assumed
-    /// to be required for the built.
+    /// to be required for the build.
     /// 
     /// By invoking this method the provider enters probe mode
     /// and returns an empty result stream instead of throwing an

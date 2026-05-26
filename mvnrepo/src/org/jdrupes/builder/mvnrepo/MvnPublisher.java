@@ -136,7 +136,7 @@ public class MvnPublisher extends AbstractGenerator {
     private boolean keepSubArtifacts;
     private boolean publishAutomatically;
 
-    /// Creates a new Maven publication generator.
+    /// Initializes a new Maven publication generator.
     ///
     /// @param project the project
     ///
@@ -151,7 +151,7 @@ public class MvnPublisher extends AbstractGenerator {
     /// Sets the upload URI.
     ///
     /// @param uri the repository URI
-    /// @return the maven publication generator
+    /// @return the Maven publisher
     ///
     public MvnPublisher uploadUri(URI uri) {
         this.uploadUri = uri;
@@ -170,7 +170,7 @@ public class MvnPublisher extends AbstractGenerator {
     /// Sets the Maven snapshot repository URI.
     ///
     /// @param uri the snapshot repository URI
-    /// @return the maven publication generator
+    /// @return the Maven publisher
     ///
     public MvnPublisher snapshotRepository(URI uri) {
         this.snapshotUri = uri;

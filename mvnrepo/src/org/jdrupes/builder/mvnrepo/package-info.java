@@ -16,7 +16,7 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-/// Provide resources from a Maven repository 
+/// Provides resources from a Maven repository 
 ///
 
 package org.jdrupes.builder.mvnrepo;

@@ -133,7 +133,7 @@ public class PomFileGenerator extends AbstractGenerator {
     /// the project's build directory (see [Project#buildDirectory]).
     ///
     /// @param destination the new destination
-    /// @return the jar generator
+    /// @return the POM file generator
     ///
     public PomFileGenerator destination(Path destination) {
         this.destination
@@ -144,7 +144,7 @@ public class PomFileGenerator extends AbstractGenerator {
     /// Sets the destination directory.
     ///
     /// @param destination the new destination
-    /// @return the jar generator
+    /// @return the POM file generator
     ///
     public PomFileGenerator destination(Supplier<Path> destination) {
         this.destination = destination;

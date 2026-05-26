@@ -36,7 +36,7 @@ import static org.jdrupes.builder.mvnrepo.MvnProperties.*;
 import org.jdrupes.builder.mvnrepo.MvnPublisher;
 import org.jdrupes.builder.mvnrepo.MvnRepoLookup;
 import org.jdrupes.builder.mvnrepo.PomFileGenerator;
-import org.jdrupes.builder.mvnrepo.SourcesJarGenerator;
+import org.jdrupes.builder.mvnrepo.SourcesJarBuilder;
 import static org.jdrupes.builder.mvnrepo.MvnRepoTypes.*;
 import org.jdrupes.builder.uberjar.UberJarBuilder;
 import org.jdrupes.builder.vscode.VscodeConfiguration;
@@ -125,7 +125,7 @@ public class Root extends AbstractRootProject {
             .options("-quiet");
 
         // Supply sources jar
-        generator(SourcesJarGenerator::new).addTrees(resources(
+        generator(SourcesJarBuilder::new).addTrees(resources(
             of(JavaSourceTreeType).using(Supply, Expose)));
 
         // Supply javadoc jar
