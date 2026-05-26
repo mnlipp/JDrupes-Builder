@@ -32,13 +32,13 @@ public abstract class ResourceObject implements Resource, Proxyable {
     private String name;
     private boolean isLocked;
 
-    /// Create a new instance.
+    /// Create a new instance with its type derived from the invoking class.
     ///
     protected ResourceObject() {
         this.type = ResourceType.resourceType(getClass());
     }
 
-    /// Create a new instance.
+    /// Create a new instance with the given type.
     ///
     /// @param type the type
     ///

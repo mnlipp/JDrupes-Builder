@@ -109,7 +109,7 @@ public class StreamCollector<T> {
     /// Create a cached collector.
     ///
     /// @param <T> the generic type
-    /// @return the cached stream
+    /// @return the stream collector
     ///
     public static <T> StreamCollector<T> cached() {
         return new StreamCollector<>(true);
@@ -119,7 +119,7 @@ public class StreamCollector<T> {
     ///
     /// @param <T> the generic type
     /// @param source the source
-    /// @return the cached stream
+    /// @return the stream collector
     ///
     public static <T> StreamCollector<T> cached(Stream<T> source) {
         var result = new StreamCollector<T>(true);
@@ -130,7 +130,7 @@ public class StreamCollector<T> {
     /// Create an un-cached collector.
     ///
     /// @param <T> the generic type
-    /// @return the cached stream
+    /// @return the stream collector
     ///
     public static <T> StreamCollector<T> uncached() {
         return new StreamCollector<>(false);
@@ -141,7 +141,7 @@ public class StreamCollector<T> {
     ///
     /// @param <T> the generic type
     /// @param source the source
-    /// @return the cached stream
+    /// @return the stream collector
     ///
     public static <T> StreamCollector<T> uncached(Stream<T> source) {
         var result = new StreamCollector<T>(false);

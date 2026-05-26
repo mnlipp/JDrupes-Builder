@@ -109,8 +109,8 @@ public class FileTreeBuilder extends AbstractGenerator {
             return this;
         }
 
-        /// Specifies a function for copying the content of the source
-        /// file to the destination file. If set, this function
+        /// Specifies a function for generating the content of the
+        /// destination file from the source file. If set, this function
         /// is invoked for each file instead of simply copying the file
         /// content.
         ///
@@ -122,8 +122,8 @@ public class FileTreeBuilder extends AbstractGenerator {
             return this;
         }
 
-        /// Specifies a function for copying the content of the source
-        /// text file to the destination text file. If set, this function
+        /// Specifies a function for generating the content of the
+        /// destination file from the source file. If set, this function
         /// is invoked for each file instead of simply copying the file
         /// content.
         ///
@@ -138,7 +138,8 @@ public class FileTreeBuilder extends AbstractGenerator {
             return this;
         }
 
-        /// Invoke [String#replaceAll] on each line of the file.
+        /// Sets a filter function that invokes [String#replaceAll] on
+        /// each line of the file.
         ///
         /// @param regex the regex
         /// @param replacement the replacement

@@ -45,10 +45,6 @@ public abstract class AbstractGenerator extends AbstractProvider
         this.project = project;
     }
 
-    /// Project.
-    ///
-    /// @return the project
-    ///
     @Override
     public final Project project() {
         return project;
@@ -81,11 +77,6 @@ public abstract class AbstractGenerator extends AbstractProvider
         return true;
     }
 
-    /// To string.
-    ///
-    /// @return the string
-    ///
-    @Override
     public String toString() {
         return super.toString() + "[" + project().nameWithDirectory() + "]";
     }

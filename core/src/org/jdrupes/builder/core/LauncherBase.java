@@ -26,7 +26,7 @@ import org.jdrupes.builder.api.ConfigurationException;
 import org.jdrupes.builder.api.Project;
 import org.jdrupes.builder.api.RootProject;
 
-/// The Class LauncherBase.
+/// A base class for launchers.
 ///
 @SuppressWarnings("PMD.UseUtilityClass")
 public class LauncherBase {

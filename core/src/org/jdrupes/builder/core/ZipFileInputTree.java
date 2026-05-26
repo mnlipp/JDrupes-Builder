@@ -41,7 +41,7 @@ import org.jdrupes.builder.api.ResourceFactory;
 import org.jdrupes.builder.api.ResourceType;
 import org.jdrupes.builder.api.Resources;
 
-/// The default implementation of a [ZipFileInputTree].
+/// The default implementation of an [InputTree] provided by a ZIP file.
 ///
 /// @param <T> the type of the [InputResource]s in the tree.
 ///

@@ -25,7 +25,7 @@ import org.jdrupes.builder.api.ExecResult;
 import org.jdrupes.builder.api.Resource;
 import org.jdrupes.builder.api.ResourceProvider;
 
-/// Default implementation of a test result.
+/// Default implementation of a result from executing some command.
 ///
 /// @param <T> the generic type
 ///

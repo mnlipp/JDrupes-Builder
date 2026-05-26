@@ -32,7 +32,7 @@ import org.jdrupes.builder.api.ResourceRequest;
 import static org.jdrupes.builder.api.ResourceType.*;
 import org.jdrupes.builder.api.RootProject;
 
-/// The Class AbstractRootProject.
+/// A base class for implementing [RootProject]s.
 ///
 public abstract class AbstractRootProject extends AbstractProject
         implements RootProject {

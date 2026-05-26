@@ -52,7 +52,7 @@ public class ResourceCollector<T extends Resource> extends AbstractGenerator {
         resources = Resources.with(type);
     }
 
-    /// Adds the given file tree with resource directories.
+    /// Adds the given resources.
     ///
     /// @param resources the resources
     /// @return the resources collector
@@ -62,7 +62,7 @@ public class ResourceCollector<T extends Resource> extends AbstractGenerator {
         return this;
     }
 
-    /// Adds the given file trees with resource directories.
+    /// Adds the resources provided by the given stream.
     ///
     /// @param resources the resources
     /// @return the resources collector

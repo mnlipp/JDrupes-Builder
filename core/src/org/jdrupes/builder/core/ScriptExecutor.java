@@ -116,11 +116,6 @@ public class ScriptExecutor extends AbstractProvider
         return project;
     }
 
-    /// Name.
-    ///
-    /// @param name the name
-    /// @return the script executor
-    ///
     @Override
     public ScriptExecutor name(String name) {
         rename(name);

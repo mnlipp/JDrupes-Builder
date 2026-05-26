@@ -31,7 +31,7 @@ public class AwaitableCounter {
         // Make javadoc happy
     }
 
-    /// Increment the count's value.
+    /// Increment the counter's value.
     ///
     /// @return the counter
     ///
@@ -62,7 +62,7 @@ public class AwaitableCounter {
 
     /// Create an [Increment].
     ///
-    /// @return the count
+    /// @return the increment handle
     ///
     public Increment acquire() {
         return new Increment();

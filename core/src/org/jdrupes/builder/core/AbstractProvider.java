@@ -29,7 +29,7 @@ import org.jdrupes.builder.api.ResourceRequest;
 import org.jdrupes.builder.api.ResourceType;
 import org.jdrupes.builder.api.Resources;
 
-/// A base implementation for[ResourceProvider]s.
+/// A base implementation for [ResourceProvider]s.
 ///
 public abstract class AbstractProvider implements ResourceProvider {
 

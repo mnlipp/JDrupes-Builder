@@ -35,7 +35,7 @@ import org.jdrupes.builder.api.Resource;
 import org.jdrupes.builder.api.ResourceProvider;
 import org.jdrupes.builder.api.ResourceRequest;
 
-/// The Class DefaultBoundResourceQuery.
+/// The default implementation of [ProviderSelection].
 ///
 public class DefaultProviderSelection implements ProviderSelection {
 

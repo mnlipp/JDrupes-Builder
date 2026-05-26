@@ -24,7 +24,7 @@ import java.util.Optional;
 import org.jdrupes.builder.api.InputResource;
 import org.jdrupes.builder.api.ResourceType;
 
-/// The Class DefaultInputResource.
+/// An implementation of an [InputResource].
 ///
 public class DefaultInputResource extends ResourceObject
         implements InputResource {

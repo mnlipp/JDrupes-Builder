@@ -82,8 +82,8 @@ public class DefaultBuildContext implements BuildContext {
             ProviderInvocation<?> invocation) {
     }
 
-    /// Instantiates a new default build. By default, the build uses
-    /// a virtual thread per task executor.
+    /// Initializes a new default build context. By default, the build
+    /// represented by this context uses a virtual thread per task executor.
     ///
     /* default */ DefaultBuildContext(Path buildRoot,
             Properties jdbldProperties, CommandLine commandLine) {
