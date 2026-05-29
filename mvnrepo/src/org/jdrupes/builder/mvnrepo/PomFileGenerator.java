@@ -36,15 +36,17 @@ import org.apache.maven.model.DependencyManagement;
 import org.apache.maven.model.Model;
 import org.apache.maven.model.io.DefaultModelWriter;
 import org.jdrupes.builder.api.BuildException;
+import org.jdrupes.builder.api.CoreProperties;
+import static org.jdrupes.builder.api.CoreProperties.*;
 import org.jdrupes.builder.api.Generator;
 import static org.jdrupes.builder.api.Intent.*;
 import org.jdrupes.builder.api.Project;
-import static org.jdrupes.builder.api.Project.Properties.*;
 import org.jdrupes.builder.api.Resource;
 import org.jdrupes.builder.api.ResourceRequest;
 import org.jdrupes.builder.api.Resources;
 import org.jdrupes.builder.core.AbstractGenerator;
-import static org.jdrupes.builder.mvnrepo.MvnProperties.*;
+import static org.jdrupes.builder.mvnrepo.MvnProperties.ArtifactId;
+import static org.jdrupes.builder.mvnrepo.MvnProperties.GroupId;
 import static org.jdrupes.builder.mvnrepo.MvnRepoTypes.*;
 
 /// A [Generator] (mainly) for POM files. In response to requests for
@@ -59,7 +61,7 @@ import static org.jdrupes.builder.mvnrepo.MvnRepoTypes.*;
 ///     not defined.
 /// 
 ///   * The version is set to the value of the property
-///     [Project.Properties#Version].
+///     [CoreProperties#Version].
 /// 
 /// Dependencies in the model are evaluated by querying the project's
 /// providers.
@@ -94,11 +96,11 @@ import static org.jdrupes.builder.mvnrepo.MvnRepoTypes.*;
 /// In addition to handling [PomFile] requests, this generator also 
 /// responds to requests for [MvnRepoDependencies][MvnRepoDependency].
 /// In this case, it returns Maven coordinates derived from the
-/// properties [MvnProperties#GroupId], [MvnProperties#ArtifactId]
-/// and [Project.Properties#Version] (see above). This reflects the
-/// assumption that a project with a POM file is intended to be released
-/// as a Maven artifact. Other projects in a multi-project build will
-/// therefore ultimately depend on the Maven artifact to be released.
+/// properties [MvnProperties#GroupId], [MvnProperties#ArtifactId] and
+/// [CoreProperties#Version] (see above). This reflects the assumption that a
+/// project with a POM file is intended to be released as a Maven
+/// artifact. Other projects in a multi-project build will therefore
+/// ultimately depend on the Maven artifact to be released.
 ///
 @SuppressWarnings("PMD.TooManyStaticImports")
 public class PomFileGenerator extends AbstractGenerator {
@@ -213,12 +215,12 @@ public class PomFileGenerator extends AbstractGenerator {
         Model model = new Model();
         model.setModelVersion("4.0.0");
         model.setDependencyManagement(new DependencyManagement());
-        var groupId = project().<String> get(GroupId);
+        var groupId = project().get(GroupId);
         if (groupId != null) {
             model.setGroupId(groupId);
         }
         model.setArtifactId(Optional.ofNullable(project()
-            .<String> get(ArtifactId)).orElse(project().name()));
+            .get(ArtifactId)).orElse(project().name()));
         model.setVersion(project().get(Version));
         model.setName(project().name());
 

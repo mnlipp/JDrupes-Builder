@@ -25,6 +25,7 @@ import java.util.EnumSet;
 import java.util.Optional;
 import java.util.Set;
 import java.util.function.Function;
+import static org.jdrupes.builder.api.CoreProperties.*;
 
 /// [Project]s are used to structure the build configuration. Every build
 /// configuration has a single root project and may contain sub-projects.
@@ -167,38 +168,6 @@ import java.util.function.Function;
 ///
 public interface Project extends ResourceProvider {
 
-    /// The common project properties.
-    ///
-    @SuppressWarnings("PMD.FieldNamingConventions")
-    enum Properties implements PropertyKey {
-
-        /// The Build directory. Created artifacts should be put there.
-        /// Defaults to [Path] "build".
-        BuildDirectory(Path.of("build")),
-        
-        /// The Encoding of files in the project.
-        Encoding("UTF-8"),
-        
-        /// The version of the project. Surprisingly, there is no
-        /// agreed upon version type for Java (see e.g. 
-        /// ["Version Comparison in Java"](https://www.baeldung.com/java-comparing-versions)).
-        /// Therefore the version is represented as a string with "0.0.0"
-        /// as default.
-        Version("0.0.0");
-
-        private final Object defaultValue;
-
-        <T> Properties(T defaultValue) {
-            this.defaultValue = defaultValue;
-        }
-
-        @Override
-        @SuppressWarnings("unchecked")
-        public <T> T defaultValue() {
-            return (T)defaultValue;
-        }
-    }
-
     /// Returns the root project.
     ///
     /// @return the project
@@ -219,7 +188,7 @@ public interface Project extends ResourceProvider {
     /// @return the parent project
     ///
     Optional<Project> parentProject();
-    
+
     /// Returns the project's directory.
     ///
     /// @return the path
@@ -237,22 +206,22 @@ public interface Project extends ResourceProvider {
         if (directory() != null) {
             var relDir = rootProject().directory().relativize(directory());
             if (!relDir.toString().equals(name())
-                    && !relDir.toString().isEmpty()) {
+                && !relDir.toString().isEmpty()) {
                 result.append(" (in ").append(relDir).append(')');
             }
         }
         return result.toString();
-        
+
     }
-    
+
     /// Returns the directory where the project's [Generator]s should
     /// create the artifacts. This is short for 
-    /// `directory().resolve((Path) get(Properties.BuildDirectory))`.
+    /// `directory().resolve(get(BuildDirectory))`.
     ///
     /// @return the path
     ///
     default Path buildDirectory() {
-        return directory().resolve((Path) get(Properties.BuildDirectory));
+        return directory().resolve(get(BuildDirectory));
     }
 
     /// Adds a provider to the project that generates resources which
@@ -334,20 +303,20 @@ public interface Project extends ResourceProvider {
         dependency(intent, provider);
         return provider;
     }
-    
+
     /// Return a provider selection without any restrictions.
     ///
     /// @return the provider selection
     ///
     ProviderSelection providers();
-    
+
     /// Return a provider selection that is restricted to the given intents.
     ///
     /// @param intents the intents
     /// @return the provider selection
     ///
     ProviderSelection providers(Set<Intent> intents);
-    
+
     /// Return a provider selection that is restricted to the given intents.
     ///
     /// @param intent the intent
@@ -374,22 +343,23 @@ public interface Project extends ResourceProvider {
     /// An implementation must check this at runtime by verifying that the
     /// given value is assignable to the default value. 
     ///
+    /// @param <T> the value's type
     /// @param property the property
     /// @param value the value
     /// @return the project
     ///
-    Project set(PropertyKey property, Object value);
-    
+    <T> Project set(PropertyKey<T> property, T value);
+
     /// Returns value of the given property of the project. If the
     /// property is not set, the parent project's value is returned.
     /// If neither is set, the property's default value is returned.
     ///
-    /// @param <T> the property type
+    /// @param <T> the values type
     /// @param property the property
     /// @return the property
     ///
-    <T> T get(PropertyKey property);
-   
+    <T> T get(PropertyKey<T> property);
+
     /// Convenience method for reading the content of a file into a
     /// [String]. The path is resolved against the project's directory.
     ///
@@ -403,6 +373,4 @@ public interface Project extends ResourceProvider {
             throw new BuildException().from(this).cause(e);
         }
     }
-
-    
 }

@@ -1,10 +1,11 @@
 package jdbld;
 
 import static org.jdrupes.builder.api.Intent.*;
-import static org.jdrupes.builder.mvnrepo.MvnProperties.*;
+import static org.jdrupes.builder.api.CoreProperties.*;
+import static org.jdrupes.builder.mvnrepo.MvnProperties.GroupId;
+import static org.jdrupes.builder.mvnrepo.MvnProperties.ArtifactId;
 import java.nio.file.Path;
 import java.util.Map;
-import static org.jdrupes.builder.api.Project.Properties.Version;
 import org.jdrupes.builder.core.AbstractProject;
 import org.jdrupes.builder.java.JavaProject;
 import org.jdrupes.builder.java.Javadoc;
@@ -31,7 +32,8 @@ public class Bnd extends AbstractProject
                 .map(pomFile -> Map.entry(Path.of("META-INF/maven")
                     .resolve((String) get(GroupId)).resolve(name())
                     .resolve("pom.xml"), pomFile)))
-            .jarName((String) get(ArtifactId) + "-" + get(Version) + ".jar");
+            .jarName((String) get(ArtifactId) + "-" + get(Version)
+                + ".jar");
         dependency(Expose, new MvnRepoLookup()
             .resolve("biz.aQute.bnd:biz.aQute.bnd.maven:7.2.1"));
 

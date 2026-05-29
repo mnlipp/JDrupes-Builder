@@ -84,7 +84,7 @@ public abstract class AbstractProject extends AbstractProvider
         = new ConcurrentHashMap<>();
     private boolean providersUnlocked;
     @SuppressWarnings("PMD.UseConcurrentHashMap")
-    private final Map<PropertyKey, Object> properties = new HashMap<>();
+    private final Map<PropertyKey<?>, Object> properties = new HashMap<>();
 
     /// Named parameter for specifying the parent project.
     ///
@@ -313,7 +313,7 @@ public abstract class AbstractProject extends AbstractProvider
 
     @Override
     @SuppressWarnings("unchecked")
-    public <T> T get(PropertyKey property) {
+    public <T> T get(PropertyKey<T> property) {
         return (T) Optional.ofNullable(properties.get(property))
             .orElseGet(() -> {
                 if (parent != null) {
@@ -324,11 +324,7 @@ public abstract class AbstractProject extends AbstractProvider
     }
 
     @Override
-    public AbstractProject set(PropertyKey property, Object value) {
-        if (!property.type().isAssignableFrom(value.getClass())) {
-            throw new IllegalArgumentException("Value for " + property
-                + " must be of type " + property.type());
-        }
+    public <T> AbstractProject set(PropertyKey<T> property, T value) {
         properties.put(property, value);
         return this;
     }

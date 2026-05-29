@@ -18,13 +18,12 @@
 
 package org.jdrupes.builder.ext.bnd;
 
-import java.util.Collections;
 import java.util.Map;
 import org.jdrupes.builder.api.PropertyKey;
 
 /// This enum defines bnd specific property keys.
 ///
-public enum BndProperties implements PropertyKey {
+public final class BndProperties {
 
     /// Supports the definition of Bnd instructions as project properties.
     /// Typically, this property is set for the root project to define
@@ -35,16 +34,9 @@ public enum BndProperties implements PropertyKey {
     /// [BndAnalyzer#instructions(Map)].
     ///  
     @SuppressWarnings("PMD.FieldNamingConventions")
-    BndInstructions;
-    
-    @Override
-    public Class<?> propertyType() {
-        return Map.class;
-    }
-    
-    @Override
-    @SuppressWarnings("unchecked")
-    public <T> T defaultValue() {
-        return (T) Collections.emptyMap();
+    public static final PropertyKey<Map<String, Object>> BndInstructions
+        = new PropertyKey<>(Map.class);
+
+    private BndProperties() {
     }
 }

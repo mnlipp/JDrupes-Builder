@@ -19,14 +19,15 @@
 package org.jdrupes.builder.mvnrepo;
 
 import java.util.Optional;
+import org.jdrupes.builder.api.CoreProperties;
+import static org.jdrupes.builder.api.CoreProperties.*;
 import org.jdrupes.builder.api.FileTree;
 import static org.jdrupes.builder.api.Intent.Supply;
 import org.jdrupes.builder.api.Project;
-import static org.jdrupes.builder.api.Project.Properties.Version;
 import org.jdrupes.builder.java.JarBuilder;
 import static org.jdrupes.builder.java.JavaTypes.*;
 import org.jdrupes.builder.java.JavadocDirectory;
-import static org.jdrupes.builder.mvnrepo.MvnProperties.*;
+import static org.jdrupes.builder.mvnrepo.MvnProperties.ArtifactId;
 
 /// A special [JarBuilder] that generates a JAR with javadoc.
 ///
@@ -35,10 +36,10 @@ import static org.jdrupes.builder.mvnrepo.MvnProperties.*;
 ///     each as root for a [FileTree], which is then added to the JAR.
 ///
 ///   * The name of the JAR is set to `<artifactId>-<version>-javadoc.jar`,
-///     where `<artifactId>` is the value of the project's property 
+///     where `<artifactId>` is the value of the project's property
 ///     [MvnProperties#ArtifactId] with a fallback to the project's name.
 ///     `<version>` is the value of the project's property
-///     [Project.Properties#Version].
+///     [CoreProperties#Version].
 ///
 public class JavadocJarBuilder extends JarBuilder {
 

@@ -18,49 +18,53 @@
 
 package org.jdrupes.builder.api;
 
-/// The Interface defines the type used as key for a [Project]'s properties.
-/// Implementations of this interface should extend [Enum]. See
-/// [Project.Properties] for an example.
+import java.lang.reflect.Type;
+
+/// Instances of this class define keys for a [Project]'s properties.
+/// See [CoreProperties] for examples.
 ///
-public interface PropertyKey {
+/// @param <T> the value's type
+///
+public class PropertyKey<T> {
 
-    /// The property's name.
-    ///
-    /// @return the string
-    ///
-    String name();
+    private final Type type;
+    private final T defaultValue;
 
-    /// The property's type. Returns `Object.class` if both the
-    /// property type and the default value are null.
+    /// Initializes a PropertyKey with the given default value. The
+    /// type information is obtained from the value.
     ///
-    /// @return the class
+    /// @param defaultValue the default value
     ///
-    default Class<?> type() {
-        if (propertyType() != null) {
-            return propertyType();
-        }
-        if (defaultValue() == null) {
-            return Object.class;
-        }
-        return defaultValue().getClass();
+    @SuppressWarnings("unchecked")
+    public PropertyKey(T defaultValue) {
+        this.defaultValue = defaultValue;
+        type = (Class<T>) defaultValue.getClass();
     }
 
-    /// An explicitly set property type. Only required if the default
-    /// value is `null` or the type of the default value is a derived
-    /// class of the desired property type.
+    /// Initializes a PropertyKey with the given type information.
+    /// The default value is set to `null`.
     ///
-    /// @return the class
+    /// @param type the type
     ///
-    default Class<?> propertyType() {
-        return null;
+    public PropertyKey(Type type) {
+        this.type = type;
+        defaultValue = null;
     }
 
-    /// The property's default value. This value should not be
-    /// `null` or [propertyType] should return a non-`null` class.
+    /// Returns the property's type.
     ///
-    /// @param <T> the generic type
-    /// @return the object
+    /// @return the type
     ///
-    <T> T defaultValue();
+    public Type type() {
+        return type;
+    }
+
+    /// Returns the property's default value.
+    ///
+    /// @return the default value
+    ///
+    public T defaultValue() {
+        return defaultValue;
+    }
 
 }

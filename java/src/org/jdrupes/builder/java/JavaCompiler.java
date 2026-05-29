@@ -33,12 +33,12 @@ import javax.tools.DiagnosticCollector;
 import javax.tools.JavaFileObject;
 import javax.tools.ToolProvider;
 import org.jdrupes.builder.api.BuildException;
+import static org.jdrupes.builder.api.CoreProperties.*;
 import org.jdrupes.builder.api.FileResource;
 import org.jdrupes.builder.api.FileTree;
 import static org.jdrupes.builder.api.Intent.*;
 import org.jdrupes.builder.api.MergedTestProject;
 import org.jdrupes.builder.api.Project;
-import static org.jdrupes.builder.api.Project.Properties.*;
 import org.jdrupes.builder.api.Resource;
 import org.jdrupes.builder.api.ResourceRequest;
 import org.jdrupes.builder.api.ResourceType;
@@ -250,7 +250,7 @@ public class JavaCompiler extends JavaTool {
             allOptions.addAll(List.of(
                 "-d", destDir.toString(),
                 "-cp", classpath,
-                "-encoding", project().get(Encoding).toString()));
+                "-encoding", project().get(Encoding)));
             if (!javac.getTask(null, fileManager, diagnostics, allOptions,
                 null, compilationUnits).call()) {
                 throw new UnavailableException().from(this);

@@ -19,15 +19,16 @@
 package org.jdrupes.builder.mvnrepo;
 
 import java.util.Optional;
+import org.jdrupes.builder.api.CoreProperties;
+import static org.jdrupes.builder.api.CoreProperties.*;
 import org.jdrupes.builder.api.FileTree;
 import static org.jdrupes.builder.api.Intent.Supply;
 import org.jdrupes.builder.api.Project;
-import static org.jdrupes.builder.api.Project.Properties.Version;
 import org.jdrupes.builder.api.ResourceType;
 import org.jdrupes.builder.java.JarBuilder;
 import org.jdrupes.builder.java.JavaSourceFile;
 import static org.jdrupes.builder.java.JavaTypes.SourcesJarFileType;
-import static org.jdrupes.builder.mvnrepo.MvnProperties.*;
+import static org.jdrupes.builder.mvnrepo.MvnProperties.ArtifactId;
 
 /// A special [JarBuilder] that generates a sources jar following
 /// the maven convention.
@@ -36,10 +37,10 @@ import static org.jdrupes.builder.mvnrepo.MvnProperties.*;
 ///     with [JavaSourceFile]s from the project's suppliers.
 ///
 ///   * The name of the jar is set to `<artifactId>-<version>-sources.jar`,
-///     where `<artifactId>` is the value of the project's property 
+///     where `<artifactId>` is the value of the project's property
 ///     [MvnProperties#ArtifactId] with a fallback to the project's name.
 ///     `<version>` is the value of the project's property
-///     [Project.Properties#Version].
+///     [CoreProperties#Version].
 ///
 public class SourcesJarBuilder extends JarBuilder {
 

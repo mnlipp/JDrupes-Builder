@@ -39,10 +39,10 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import org.jdrupes.builder.api.BuildException;
+import static org.jdrupes.builder.api.CoreProperties.*;
 import org.jdrupes.builder.api.Generator;
 import static org.jdrupes.builder.api.Intent.Supply;
 import org.jdrupes.builder.api.Project;
-import static org.jdrupes.builder.api.Project.Properties.Version;
 import org.jdrupes.builder.api.Resource;
 import org.jdrupes.builder.api.ResourceRequest;
 import org.jdrupes.builder.api.ResourceType;
@@ -159,10 +159,10 @@ public class BndBaseliner extends AbstractBndGenerator {
     private Optional<BndBaselineEvaluation> baseline(LibraryJarFile lib) {
         logger.atFiner().log("Baselining %s in %s", lib, project());
 
-        var groupId = project().<String> get(GroupId);
+        var groupId = project().get(GroupId);
         var artifactId = Optional.ofNullable(project()
-            .<String> get(ArtifactId)).orElse(project().name());
-        var version = project().<String> get(Version);
+            .get(ArtifactId)).orElse(project().name());
+        var version = project().get(Version);
         if (groupId == null) {
             logger.atWarning().log("Cannot baseline in %s without a groupId",
                 project());
