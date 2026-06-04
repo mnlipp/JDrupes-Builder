@@ -29,5 +29,5 @@ layout: jdbld
   * [PomFileGenerator](javadoc/org/jdrupes/builder/mvnrepo/PomFileGenerator.html)
   * [ScriptExecutor](javadoc/org/jdrupes/builder/core/ScriptExecutor.html)
   * [SourcesJarGenerator](javadoc/org/jdrupes/builder/mvnrepo/SourcesJarGenerator.html)
-  * [UberJarGenerator](javadoc/org/jdrupes/builder/uberjar/UberJarGenerator.html)
+  * [UberJarBuilder](javadoc/org/jdrupes/builder/uberjar/UberJarBuilder.html)
   * [VscodeConfigurator](javadoc/org/jdrupes/builder/vscode/VscodeConfigurator.html)
