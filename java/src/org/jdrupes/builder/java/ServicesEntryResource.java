@@ -21,12 +21,11 @@ package org.jdrupes.builder.java;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.OutputStream;
 import java.nio.charset.StandardCharsets;
 import java.time.Instant;
 import java.util.Optional;
 import java.util.function.Predicate;
-import org.jdrupes.builder.api.IOResource;
+import org.jdrupes.builder.api.InputResource;
 import org.jdrupes.builder.core.ResourceObject;
 
 /// A temporary resource that is used to store the combined
@@ -35,7 +34,7 @@ import org.jdrupes.builder.core.ResourceObject;
 /// `hashCode` or `equals`.
 ///
 public class ServicesEntryResource extends ResourceObject
-        implements IOResource {
+        implements InputResource {
     @SuppressWarnings("PMD.AvoidStringBufferField")
     private final StringBuilder content = new StringBuilder();
     private Instant asOf;
@@ -57,7 +56,7 @@ public class ServicesEntryResource extends ResourceObject
     /// @param resource the resource
     /// @throws IOException if an I/O error occurs
     ///
-    public void add(IOResource resource) throws IOException {
+    public void add(InputResource resource) throws IOException {
         try (InputStream toRead = resource.inputStream()) {
             new String(toRead.readAllBytes(), StandardCharsets.UTF_8)
                 .lines().filter(Predicate.not(String::isBlank))
@@ -73,10 +72,4 @@ public class ServicesEntryResource extends ResourceObject
         return new ByteArrayInputStream(
             content.toString().getBytes(StandardCharsets.UTF_8));
     }
-
-    @Override
-    public OutputStream outputStream() {
-        throw new UnsupportedOperationException();
-    }
-
 }

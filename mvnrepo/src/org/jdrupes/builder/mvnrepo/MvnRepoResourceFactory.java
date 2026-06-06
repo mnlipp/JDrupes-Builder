@@ -18,6 +18,7 @@
 
 package org.jdrupes.builder.mvnrepo;
 
+import java.nio.file.Path;
 import java.util.Optional;
 import org.jdrupes.builder.api.Project;
 import org.jdrupes.builder.api.Resource;
@@ -40,23 +41,29 @@ public class MvnRepoResourceFactory implements ResourceFactory {
     public <T extends Resource> Optional<T> newResource(ResourceType<T> type,
             Project project, Object... args) {
         // ? extends MvnRepoResource
-        return createNarrowed(type, MvnRepoResource.class,
+        var candidate = createNarrowed(type, MvnRepoResource.class,
             () -> new DefaultMvnRepoResource(
                 (ResourceType<? extends MvnRepoResource>) type,
                 (String) args[0]));
-//        if (candidate.isPresent()) {
-//            return candidate;
-//        }
-//        if (MvnRepoResourceType.isAssignableFrom(type)) {
-//            return Optional
-//                .of((T) Proxy.newProxyInstance(type.rawType().getClassLoader(),
-//                    new Class<?>[] { type.rawType(), Proxyable.class },
-//                    new ForwardingHandler(
-//                        new DefaultMvnRepoResource(
-//                            (ResourceType<? extends MvnRepoResource>) type,
-//                            (String) args[0]))));
-//        }
-//        return Optional.empty();
+        if (candidate.isPresent()) {
+            return candidate;
+        }
+
+        // ? extends MvnRepoLibraryJar
+        candidate = createNarrowed(type, MvnRepoLibraryJarFile.class,
+            () -> new DefaultMvnRepoLibraryJarFile(
+                (ResourceType<? extends MvnRepoLibraryJarFile>) type,
+                (String) args[0], (Path) args[1]));
+        if (candidate.isPresent()) {
+            return candidate;
+        }
+
+        // ? extends MvnRepoJar
+        candidate = createNarrowed(type, MvnRepoJarFile.class,
+            () -> new DefaultMvnRepoJarFile(
+                (ResourceType<? extends MvnRepoJarFile>) type,
+                (String) args[0], (Path) args[1]));
+        return candidate;
     }
 
 }

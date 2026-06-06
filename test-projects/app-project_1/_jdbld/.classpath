@@ -12,14 +12,14 @@
 			<attribute name="module" value="true"/>
 		</attributes>
 	</classpathentry>
-	<classpathentry combineaccessrules="false" kind="src" path="/org.jdrupes.builder.api"/>
-	<classpathentry combineaccessrules="false" kind="src" path="/org.jdrupes.builder.core"/>
-	<classpathentry combineaccessrules="false" kind="src" path="/org.jdrupes.builder.eclipse"/>
-	<classpathentry combineaccessrules="false" kind="src" path="/org.jdrupes.builder.java"/>
-	<classpathentry combineaccessrules="false" kind="src" path="/org.jdrupes.builder.mvnrepo"/>
-	<classpathentry combineaccessrules="false" kind="src" path="/org.jdrupes.builder.startup"/>
-	<classpathentry combineaccessrules="false" kind="src" path="/org.jdrupes.builder.uberjar"/>
-	<classpathentry combineaccessrules="false" kind="src" path="/org.jdrupes.builder.vscode"/>
 	<classpathentry kind="con" path="org.eclipse.jdt.junit.JUNIT_CONTAINER/5"/>
+	<classpathentry combineaccessrules="false" kind="src" path="/org.jdrupes.builder.vscode"/>
+	<classpathentry combineaccessrules="false" kind="src" path="/org.jdrupes.builder.startup"/>
+	<classpathentry combineaccessrules="false" kind="src" path="/org.jdrupes.builder.mvnrepo"/>
+	<classpathentry combineaccessrules="false" kind="src" path="/org.jdrupes.builder.java"/>
+	<classpathentry combineaccessrules="false" kind="src" path="/org.jdrupes.builder.eclipse"/>
+	<classpathentry combineaccessrules="false" kind="src" path="/org.jdrupes.builder.core"/>
+	<classpathentry combineaccessrules="false" kind="src" path="/org.jdrupes.builder.api"/>
+	<classpathentry combineaccessrules="false" kind="src" path="/org.jdrupes.builder.distribution"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>

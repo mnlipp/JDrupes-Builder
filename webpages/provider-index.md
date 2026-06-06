@@ -10,7 +10,7 @@ layout: jdbld
 (E) indicates that the provider is made available be an
 [extension](invocation.html).
 
-  * [ApplicationBuilder](javadoc/org/jdrupes/builder/java/ApplicationBuilder.html)
+  * [ApplicationBuilder](javadoc/org/jdrupes/builder/distribution/ApplicationBuilder.html)
   * [BndAnalyzer](javadoc/org/jdrupes/builder/ext/bnd/BndAnalyzer.html) (E)
   * [BndBaseliner](javadoc/org/jdrupes/builder/ext/bnd/BndBaseliner.html) (E)
   * [ClasspathScanner](javadoc/org/jdrupes/builder/java/ClasspathScanner.html)
@@ -29,5 +29,5 @@ layout: jdbld
   * [PomFileGenerator](javadoc/org/jdrupes/builder/mvnrepo/PomFileGenerator.html)
   * [ScriptExecutor](javadoc/org/jdrupes/builder/core/ScriptExecutor.html)
   * [SourcesJarGenerator](javadoc/org/jdrupes/builder/mvnrepo/SourcesJarGenerator.html)
-  * [UberJarBuilder](javadoc/org/jdrupes/builder/uberjar/UberJarBuilder.html)
+  * [UberJarBuilder](javadoc/org/jdrupes/builder/distribution/UberJarBuilder.html)
   * [VscodeConfigurator](javadoc/org/jdrupes/builder/vscode/VscodeConfigurator.html)

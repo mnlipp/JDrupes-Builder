@@ -1,6 +1,6 @@
 /*
  * JDrupes Builder
- * Copyright (C) 2025 Michael N. Lipp
+ * Copyright (C) 2025, 2026 Michael N. Lipp
  * 
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as
@@ -16,7 +16,7 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package org.jdrupes.builder.uberjar;
+package org.jdrupes.builder.distribution;
 
 import com.google.common.flogger.FluentLogger;
 import io.github.azagniotov.matcher.AntPathMatcher;
@@ -36,7 +36,7 @@ import org.jdrupes.builder.api.BuildException;
 import org.jdrupes.builder.api.ConfigurationException;
 import org.jdrupes.builder.api.FileTree;
 import org.jdrupes.builder.api.Generator;
-import org.jdrupes.builder.api.IOResource;
+import org.jdrupes.builder.api.InputResource;
 import org.jdrupes.builder.api.Intent;
 import static org.jdrupes.builder.api.Intent.*;
 import org.jdrupes.builder.api.Project;
@@ -58,75 +58,78 @@ import org.jdrupes.builder.java.ServicesEntryResource;
 import org.jdrupes.builder.mvnrepo.MvnRepoJarFile;
 import org.jdrupes.builder.mvnrepo.MvnRepoLookup;
 import org.jdrupes.builder.mvnrepo.MvnRepoResource;
-import static org.jdrupes.builder.mvnrepo.MvnRepoTypes.*;
 
 /// A [Generator] for uber jars.
 ///
-/// Depending on the request, the generator provides two types of resources.
+/// Depending on the request, the generator provides one of two types resource
+/// types.
 /// 
 /// 1. A [JarFile]. This type of resource is also returned if a more
 ///    general [ResourceType] such as [ClasspathElement] is requested.
 ///
-/// 2. An [AppJarFile]. When requesting this special jar type, the
-///    generator checks if a main class is specified.
+/// 2. An [AppJarFile]. When this special [JarFile] type is requested, the
+///    generator requires a main class to be configured.
 ///
 /// The generator takes the following approach:
 /// 
-///   * Request `Resources<ClasspathElement>` from the providers. Add the
-///     resource trees and the jar files to the sources to be processed.
-///     Ignore jar files from maven repositories (instances of
-///     [MvnRepoJarFile]).
-///   * Request all [MvnRepoResource]s from the providers and use them for
-///     a dependency resolution. Add the jar files from the dependency
-///     resolution to the resources to be processed.
+///   * Request resources of type [ClasspathElement] with intents
+///     [Consume][Intent#Consume], [Reveal][Intent#Reveal],
+///     [Supply][Intent#Supply] and [Expose][Intent#Expose] from the
+///     providers. Add the class and resource trees to the sources
+///     to be processed. JAR files are handled differently depending on their
+///     origin. The content of JAR files that are not retrieved from a Maven
+///     repository is added to the sources to be processed. For
+///     [MvnRepoJarFile]s (i.e. JAR files from a Maven repository) only the
+///     [MvnRepoResource] information is collected.
+///   * Use all [MvnRepoResource]s obtained in the previous step for a
+///     dependency resolution. Add the content from the resulting JAR
+///     files to the sources to be processed.
 ///   * Add resources from the sources to the uber jar. Merge the files in
 ///     `META-INF/services/` that have the same name by concatenating them.
-///   * Filter out any other duplicate direct child files of `META-INF`.
+///   * Filter out any other duplicate files under `META-INF`.
 ///     These files often contain information related to the origin jar
 ///     that is not applicable to the uber jar.
 ///   * Filter out any module-info.class entries.
 ///
-/// Note that the [UberJarBuilder] does deliberately not request the
+/// Note that the [UberJarBuilder] deliberately does not request the
 /// [ClasspathElement]s as `RuntimeResources` because this may return
 /// resources twice if a project uses another project as runtime
-/// dependency (i.e. with [Intent#Consume]. If this rule causes entries
+/// dependency (i.e. with [Intent#Consume]). If this rule causes entries
 /// to be missing, simply add them explicitly.  
 /// 
 /// The resource type of the uber jar generator's output is one
 /// of the resource types of its inputs, because uber jars can also be used
 /// as [ClasspathElement]. Therefore, if you want to create an uber jar
 /// from all resources provided by a project, you must not add the
-/// generator to the project like this:
+/// builder to the project like this:
 /// ```java
-///     generator(UberJarGenerator::new).add(this); // Circular dependency
+///     generator(UberJarBuilder::new).add(this); // Circular dependency
 /// ```
 ///
 /// This would add the project as provider and thus make the uber jar
-/// generator as supplier to the project its own provider (via
-/// [Project.resources][Project#resources]). Rather, you have to use this
-/// slightly more complicated approach to adding providers to the uber
-/// jar generator:
+/// builder's result a uber jar builder's source (via
+/// [Project.resources][Project#resources]). Instead use the following
+/// approach:
 /// ```java
 ///     generator(UberJarGenerator::new)
 ///         .addAll(providers().select(Forward, Expose, Supply));
 /// ```
 /// This requests the same providers from the project as 
-/// [Project.resources][Project#resources] does, but allows the uber jar
-/// generator's [addFrom] method to filter out the uber jar
-/// generator itself from the providers. The given intents can
+/// [Project.resources][Project#resources] would, but allows the uber jar
+/// builder's [addFrom] method to filter out the uber jar
+/// builder itself from the providers. The given intents can
 /// vary depending on the requirements.
 ///
-/// If you don't want the generated uber jar to be available to other
-/// generators of your project, you can also add it to a project like this:
+/// If the generated uber jar should not be visible to the project's other
+/// generators, you can also add it like this:
 /// ```java
 ///     dependency(new UberJarGenerator(this)
 ///         .from(providers(EnumSet.of(Forward, Expose, Supply))), Intent.Forward)
 /// ```
 ///
-/// Of course, the easiest thing to do is separate the generation of
-/// class trees or library jars from the generation of the uber jar by
-/// generating the uber jar in a project of its own. Often the root
-/// project can be used for this purpose.  
+/// In many cases, the simplest solution is to generate the uber jar
+/// in a separate project. This cleanly separates the generation of
+/// class trees or library jars from the generation of the uber jar.
 ///
 public class UberJarBuilder extends LibraryBuilder {
 
@@ -164,31 +167,35 @@ public class UberJarBuilder extends LibraryBuilder {
 
     @Override
     protected void collectFromProviders(
-            Map<Path, Resources<IOResource>> contents) {
+            Map<Path, Resources<InputResource>> contents) {
+        Resources<MvnRepoResource> repoRefs
+            = Resources.of(new ResourceType<>() {});
         openJars = new ConcurrentHashMap<>();
         contentProviders().stream().filter(p -> !p.equals(this))
-            .map(p -> p.resources(
-                of(ClasspathElementType).using(Supply, Expose)))
+            .map(p -> p.resources(of(ClasspathElementType)
+                .using(Consume, Reveal, Supply, Expose)))
             // Terminate to trigger all future stream evaluations before
             // starting to process the results. Then collect in parallel
             .toList().stream().flatMap(s -> s).toList().parallelStream()
             .filter(resourceFilter::test).forEach(cpe -> {
                 if (cpe instanceof FileTree<?> fileTree) {
                     collect(contents, fileTree);
-                } else if (cpe instanceof JarFile jarFile
-                    // Ignore jar files from maven repositories, see below
-                    && !(jarFile instanceof MvnRepoJarFile)) {
-                    addJarFile(contents, jarFile, openJars);
+                    return;
+                }
+                if (cpe instanceof JarFile jarFile) {
+                    if (jarFile instanceof MvnRepoJarFile repoFile) {
+                        // Resolve JAR files from Maven repositories, see below
+                        repoRefs.add(repoFile.resource());
+                    } else {
+                        addJarFile(contents, jarFile, openJars);
+                    }
                 }
             });
 
-        // Jar files from maven repositories must be resolved before
-        // they can be added to the uber jar, i.e. they must be added
-        // with their transitive dependencies.
+        // Jar files from Maven repositories must be resolved before
+        // they can be added to the uber jar to avoid duplicates.
         var lookup = new MvnRepoLookup();
-        lookup.resolve(contentProviders().stream().map(
-            p -> p.resources(of(MvnRepoDependencyType).usingAll()))
-            .flatMap(s -> s));
+        lookup.resolve(repoRefs.stream());
         project().context().resources(lookup, of(ClasspathElementType)
             .using(Consume, Reveal, Supply, Expose, Forward))
             .parallel().filter(resourceFilter::test).forEach(cpe -> {
@@ -213,7 +220,7 @@ public class UberJarBuilder extends LibraryBuilder {
         return this;
     }
 
-    private void addJarFile(Map<Path, Resources<IOResource>> entries,
+    private void addJarFile(Map<Path, Resources<InputResource>> entries,
             JarFile jarFile, Map<Path, java.util.jar.JarFile> openJars) {
         @SuppressWarnings({ "PMD.CloseResource" })
         java.util.jar.JarFile jar
@@ -238,7 +245,7 @@ public class UberJarBuilder extends LibraryBuilder {
             }).forEach(e -> {
                 var relPath = Path.of(e.getRealName());
                 entries.computeIfAbsent(relPath,
-                    _ -> Resources.with(IOResource.class))
+                    _ -> Resources.with(InputResource.class))
                     .add(new JarFileEntry(jar, e));
             });
     }
@@ -246,7 +253,8 @@ public class UberJarBuilder extends LibraryBuilder {
     @SuppressWarnings({ "PMD.UselessPureMethodCall",
         "PMD.AvoidLiteralsInIfCondition" })
     @Override
-    protected void resolveDuplicates(Map<Path, Resources<IOResource>> entries) {
+    protected void
+            resolveDuplicates(Map<Path, Resources<InputResource>> entries) {
         entries.entrySet().parallelStream().forEach(item -> {
             var entryName = item.getKey();
             var candidates = item.getValue();

@@ -116,8 +116,7 @@ public interface Resources<T extends Resource> extends Resource {
         return of(ResourceType.resourceType(Resources.class, type));
     }
 
-    /// Creates a new resource container with the specified container
-    /// and elements type.
+    /// Creates a new resource container with the specified type.
     ///
     /// @param <T> the generic type
     /// @param type the type

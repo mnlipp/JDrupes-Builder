@@ -16,7 +16,7 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package org.jdrupes.builder.java.internal;
+package org.jdrupes.builder.distribution.internal;
 
 import com.google.common.flogger.FluentLogger;
 import java.io.IOException;
@@ -31,7 +31,7 @@ import org.jdrupes.builder.api.FileResource;
 import org.jdrupes.builder.api.FileTree;
 import static org.jdrupes.builder.api.ResourceType.BaseFileTreeType;
 import org.jdrupes.builder.api.Resources;
-import org.jdrupes.builder.java.ApplicationZipFile;
+import org.jdrupes.builder.distribution.ApplicationZipFile;
 import org.jdrupes.builder.java.ClasspathElement;
 import static org.jdrupes.builder.java.JavaTypes.JarFileType;
 

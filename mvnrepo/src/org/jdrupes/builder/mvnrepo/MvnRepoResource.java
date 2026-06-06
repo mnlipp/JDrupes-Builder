@@ -20,8 +20,7 @@ package org.jdrupes.builder.mvnrepo;
 
 import org.jdrupes.builder.api.Resource;
 
-/// Represents a dependency on a maven artifact obtainable from a
-/// maven repository.
+/// Represents a reference to a resource in a Maven repository.
 ///
 public interface MvnRepoResource extends Resource {
 

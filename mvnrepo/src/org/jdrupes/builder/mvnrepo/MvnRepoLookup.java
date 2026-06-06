@@ -288,8 +288,9 @@ public class MvnRepoLookup extends AbstractProvider {
                     downloadJavadocJar(repoSystem, repoSession, a);
                 }
                 return a;
-            }).map(a -> a.getFile().toPath())
-            .map(p -> ResourceFactory.create(MvnRepoLibraryJarFileType, p))
+            })
+            .map(a -> ResourceFactory.create(MvnRepoLibraryJarFileType,
+                a.toString(), a.getFile().toPath()))
             .toList();
         return result;
     }

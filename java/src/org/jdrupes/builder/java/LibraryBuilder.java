@@ -30,7 +30,7 @@ import java.util.stream.Stream;
 import org.jdrupes.builder.api.BuildException;
 import org.jdrupes.builder.api.ConfigurationException;
 import org.jdrupes.builder.api.Generator;
-import org.jdrupes.builder.api.IOResource;
+import org.jdrupes.builder.api.InputResource;
 import static org.jdrupes.builder.api.Intent.*;
 import org.jdrupes.builder.api.Project;
 import org.jdrupes.builder.api.Resource;
@@ -130,7 +130,8 @@ public class LibraryBuilder extends JarBuilder
     }
 
     @Override
-    protected void collectContents(Map<Path, Resources<IOResource>> contents) {
+    protected void
+            collectContents(Map<Path, Resources<InputResource>> contents) {
         super.collectContents(contents);
         // Add main class if defined
         if (mainClass() != null) {
@@ -145,7 +146,7 @@ public class LibraryBuilder extends JarBuilder
     /// @param contents the contents
     ///
     protected void collectFromProviders(
-            Map<Path, Resources<IOResource>> contents) {
+            Map<Path, Resources<InputResource>> contents) {
         contentProviders().stream()
             .map(p -> p.resources(of(ClassTreeType).using(Supply)))
             // Terminate to trigger all future stream evaluations before

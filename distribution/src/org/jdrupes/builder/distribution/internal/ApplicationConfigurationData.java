@@ -16,7 +16,7 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package org.jdrupes.builder.java.internal;
+package org.jdrupes.builder.distribution.internal;
 
 import java.util.ArrayList;
 import java.util.List;

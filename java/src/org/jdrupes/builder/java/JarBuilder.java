@@ -48,6 +48,7 @@ import static org.jdrupes.builder.api.CoreProperties.*;
 import org.jdrupes.builder.api.FileResource;
 import org.jdrupes.builder.api.FileTree;
 import org.jdrupes.builder.api.IOResource;
+import org.jdrupes.builder.api.InputResource;
 import org.jdrupes.builder.api.Project;
 import org.jdrupes.builder.api.Resource;
 import org.jdrupes.builder.api.ResourceProviderSpi;
@@ -74,7 +75,7 @@ public class JarBuilder extends AbstractGenerator {
     private final StreamCollector<Entry<Name, String>> attributes
         = StreamCollector.cached();
     private final StreamCollector<
-            Map.Entry<Path, ? extends IOResource>> entryStreams
+            Map.Entry<Path, ? extends InputResource>> entryStreams
                 = StreamCollector.cached();
     private final StreamCollector<FileTree<?>> fileTrees
         = StreamCollector.cached();
@@ -203,8 +204,8 @@ public class JarBuilder extends AbstractGenerator {
     /// @param entries the entries
     /// @return the JAR builder
     ///
-    public JarBuilder addEntries(
-            Stream<? extends Map.Entry<Path, ? extends IOResource>> entries) {
+    public JarBuilder addEntries(Stream<
+            ? extends Map.Entry<Path, ? extends InputResource>> entries) {
         entryStreams.add(entries);
         return this;
     }
@@ -261,7 +262,7 @@ public class JarBuilder extends AbstractGenerator {
     /// @param resource the resource
     /// @return the JAR builder
     ///
-    public JarBuilder add(Path path, IOResource resource) {
+    public JarBuilder add(Path path, InputResource resource) {
         addEntries(Map.of(path, resource).entrySet().stream());
         return this;
     }
@@ -273,7 +274,7 @@ public class JarBuilder extends AbstractGenerator {
     @SuppressWarnings("PMD.ConfusingTernary")
     protected void buildJar(JarFile jarResource) {
         // Collect entries for JAR from all sources
-        var contents = new ConcurrentHashMap<Path, Resources<IOResource>>();
+        var contents = new ConcurrentHashMap<Path, Resources<InputResource>>();
         collectContents(contents);
         resolveDuplicates(contents);
 
@@ -316,7 +317,7 @@ public class JarBuilder extends AbstractGenerator {
     }
 
     private void writeJar(JarFile jarResource,
-            Map<Path, Resources<IOResource>> contents, Manifest manifest) {
+            Map<Path, Resources<InputResource>> contents, Manifest manifest) {
         // Write JAR file
         logger.atInfo().log("Building %s in %s", jarName(), project().name());
         try {
@@ -361,10 +362,11 @@ public class JarBuilder extends AbstractGenerator {
     ///
     /// @param contents the preliminary contents
     ///
-    protected void collectContents(Map<Path, Resources<IOResource>> contents) {
+    protected void
+            collectContents(Map<Path, Resources<InputResource>> contents) {
         entryStreams.stream().forEach(entry -> {
             contents.computeIfAbsent(entry.getKey(),
-                _ -> Resources.with(IOResource.class))
+                _ -> Resources.with(InputResource.class))
                 .add(entry.getValue());
         });
         var snapshot = ScopedValueContext.snapshot();
@@ -379,13 +381,13 @@ public class JarBuilder extends AbstractGenerator {
     /// @param collected the preliminary contents
     /// @param fileTree the file tree
     ///
-    protected void collect(Map<Path, Resources<IOResource>> collected,
+    protected void collect(Map<Path, Resources<InputResource>> collected,
             FileTree<?> fileTree) {
         var root = fileTree.root();
         fileTree.stream().forEach(file -> {
             var relPath = root.relativize(file.path());
             collected.computeIfAbsent(relPath,
-                _ -> Resources.with(IOResource.class)).add(file);
+                _ -> Resources.with(InputResource.class)).add(file);
         });
     }
 
@@ -397,7 +399,7 @@ public class JarBuilder extends AbstractGenerator {
     @SuppressWarnings({ "PMD.AvoidLiteralsInIfCondition",
         "PMD.UselessPureMethodCall" })
     protected void resolveDuplicates(
-            Map<Path, Resources<IOResource>> entries) {
+            Map<Path, Resources<InputResource>> entries) {
         entries.entrySet().parallelStream().forEach(item -> {
             var resources = item.getValue();
             if (resources.stream().count() == 1) {

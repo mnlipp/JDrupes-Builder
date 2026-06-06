@@ -1,6 +1,6 @@
 /*
  * JDrupes Builder
- * Copyright (C) 2025 Michael N. Lipp
+ * Copyright (C) 2026 Michael N. Lipp
  * 
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as
@@ -19,31 +19,32 @@
 package org.jdrupes.builder.mvnrepo;
 
 import java.nio.file.Path;
-import org.jdrupes.builder.api.ResourceFactory;
 import org.jdrupes.builder.api.ResourceType;
+import org.jdrupes.builder.java.DefaultJarFile;
 import org.jdrupes.builder.java.JarFile;
+import static org.jdrupes.builder.mvnrepo.MvnRepoTypes.MvnRepoResourceType;
 
-/// A [JarFile] that is obtained from a maven repository.
+/// The default implementation of a [MvnRepoJarFile].
 ///
-public interface MvnRepoJarFile extends JarFile {
+public class DefaultMvnRepoJarFile extends DefaultJarFile
+        implements MvnRepoJarFile {
 
-    /// The Maven repository resource information for this jar file.
-    ///
-    /// @return the mvn repo resource
-    ///
-    MvnRepoResource resource();
+    private final MvnRepoResource resource;
 
-    /// Creates a new maven repository jar file resource from the given values.
+    /// Initializes a new instance with the given values.
     ///
-    /// @param <T> the resource type
-    /// @param fileType the requested type
+    /// @param type the type
     /// @param coordinates the coordinates
     /// @param path the path
-    /// @return the maven repository jar file
     ///
-    @SuppressWarnings("PMD.ShortMethodName")
-    static <T extends JarFile> T of(ResourceType<T> fileType,
+    public DefaultMvnRepoJarFile(ResourceType<? extends JarFile> type,
             String coordinates, Path path) {
-        return ResourceFactory.create(fileType, coordinates, path);
+        super(type, path);
+        resource = new DefaultMvnRepoResource(MvnRepoResourceType, coordinates);
+    }
+
+    @Override
+    public MvnRepoResource resource() {
+        return resource;
     }
 }

@@ -33,7 +33,7 @@ public class DemoProjectSimpleApp extends AbstractProject
 
         dependency(Consume, project(Core.class));
         dependency(Consume, project(Java.class));
-        dependency(Consume, project(Uberjar.class));
+        dependency(Consume, project(Distribution.class));
         dependency(Consume, project(Startup.class));
         dependency(Consume, project(Eclipse.class));
         TestProjects.prepareProject(this);

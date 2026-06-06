@@ -16,7 +16,7 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package org.jdrupes.builder.java;
+package org.jdrupes.builder.distribution;
 
 import com.google.common.flogger.FluentLogger;
 import java.nio.file.Path;
@@ -31,28 +31,35 @@ import org.jdrupes.builder.api.Cleanliness;
 import org.jdrupes.builder.api.ConfigurationException;
 import static org.jdrupes.builder.api.CoreProperties.*;
 import org.jdrupes.builder.api.FileResource;
+import static org.jdrupes.builder.api.Intent.*;
 import org.jdrupes.builder.api.Project;
 import org.jdrupes.builder.api.Resource;
 import org.jdrupes.builder.api.ResourceProviderSpi;
 import org.jdrupes.builder.api.ResourceRequest;
-import org.jdrupes.builder.api.ResourceType;
 import static org.jdrupes.builder.api.ResourceType.*;
 import org.jdrupes.builder.api.Resources;
 import org.jdrupes.builder.api.TarFile;
 import org.jdrupes.builder.api.ZipFile;
 import org.jdrupes.builder.core.AbstractGenerator;
 import org.jdrupes.builder.core.StreamCollector;
+import static org.jdrupes.builder.distribution.DistributionTypes.*;
+import org.jdrupes.builder.distribution.internal.ApplicationConfigurationData;
+import org.jdrupes.builder.distribution.internal.TarDistributionBuilder;
+import org.jdrupes.builder.distribution.internal.ZipDistributionBuilder;
+import org.jdrupes.builder.java.ClasspathElement;
 import static org.jdrupes.builder.java.JavaTypes.*;
-import org.jdrupes.builder.java.internal.ApplicationConfigurationData;
-import org.jdrupes.builder.java.internal.TarDistributionBuilder;
-import org.jdrupes.builder.java.internal.ZipDistributionBuilder;
+import org.jdrupes.builder.mvnrepo.MvnRepoJarFile;
+import org.jdrupes.builder.mvnrepo.MvnRepoLibraryJarFile;
+import org.jdrupes.builder.mvnrepo.MvnRepoLookup;
+import org.jdrupes.builder.mvnrepo.MvnRepoResource;
+import static org.jdrupes.builder.mvnrepo.MvnRepoTypes.*;
 
-/// The [ApplicationBuilder] generates resources of type
-/// [ApplicationZipFile] or [ApplicationTarFile].
+/// The [ApplicationBuilder] generates application distributions as
+/// resources of type [ApplicationZipFile] or [ApplicationTarFile].
 ///
-/// Both resource types are runnable application distributions built from
-/// a set of classpath resources and a generated start script that launches
-/// the application.
+/// Both resource types represent runnable application distributions 
+/// consisting of classpath resources and a generated start script
+/// that launches the application.
 ///
 /// The application can be configured using methods that control:
 /// 
@@ -66,12 +73,19 @@ import org.jdrupes.builder.java.internal.ZipDistributionBuilder;
 ///     by the application and included in the generated start script.
 ///
 /// Method [#add(Stream)] is used to specify the classpath resources to
-/// be included in the generated distribution and to be added to the
-/// classpath when running the application.
+/// be included in the generated distribution and added to the
+/// classpath when running the application. Special handling is provided
+/// for resources of type [MvnRepoJarFile]. For these resources the
+/// associated [MvnRepoResource] information is collected first.
+/// The collected coordinates are then used to resolve the corresponding
+/// jar files from the Maven repository. The resolved JAR files are then
+/// added to the generated distribution. This prevents different versions
+/// of the same library to be included in the distribution.
 /// 
 /// A request for [Cleanliness] removes any generated distribution
 /// archives from the configured destination directory.
 ///
+@SuppressWarnings("PMD.TooManyStaticImports")
 public class ApplicationBuilder extends AbstractGenerator {
     private static final FluentLogger logger = FluentLogger.forEnclosingClass();
     private Supplier<Path> destination
@@ -245,9 +259,30 @@ public class ApplicationBuilder extends AbstractGenerator {
             throw new ConfigurationException().from(this)
                 .message("Cannot create directory " + destDir);
         }
-        Resources<ClasspathElement> cpes
-            = Resources.of(new ResourceType<>() {});
-        cpes.addAll(resourceStreams.stream());
+
+        // Collect jars
+        var cpes = Resources.with(ClasspathElementType);
+        var repoRefs = Resources.with(MvnRepoResourceType);
+        resourceStreams.stream().forEach(r -> {
+            if (r instanceof MvnRepoJarFile repoJar) {
+                repoRefs.add(repoJar.resource());
+            } else {
+                cpes.add(r);
+            }
+        });
+        // Jar files from maven repositories must be resolved before
+        // they can be added to the application to avoid duplicates.
+        var lookup = new MvnRepoLookup();
+        lookup.resolve(repoRefs.stream());
+        project().context().resources(lookup, of(ClasspathElementType)
+            .using(Consume, Reveal, Supply, Expose))
+            .forEach(cpe -> {
+                if (cpe instanceof MvnRepoLibraryJarFile jarFile) {
+                    cpes.add(jarFile);
+                }
+            });
+
+        // Now build distribution
         FileResource distFile;
         if (request.accepts(ApplicationZipFileType)) {
             distFile = buildZip(cpes);

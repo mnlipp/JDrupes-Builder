@@ -24,11 +24,11 @@ import java.nio.file.Path;
 import org.jdrupes.builder.api.ResourceType;
 import static org.jdrupes.builder.api.ResourceType.*;
 import org.jdrupes.builder.core.AbstractRootProject;
+import org.jdrupes.builder.distribution.UberJarBuilder;
 import org.jdrupes.builder.eclipse.EclipseConfiguration;
 import org.jdrupes.builder.java.JavaCompiler;
 import org.jdrupes.builder.java.JavaExecutor;
 import static org.jdrupes.builder.java.JavaTypes.*;
-import org.jdrupes.builder.uberjar.UberJarBuilder;
 
 public class SimpleApp extends AbstractRootProject {
 
