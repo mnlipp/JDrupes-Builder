@@ -185,7 +185,7 @@ public class UberJarBuilder extends LibraryBuilder {
                 if (cpe instanceof JarFile jarFile) {
                     if (jarFile instanceof MvnRepoJarFile repoFile) {
                         // Resolve JAR files from Maven repositories, see below
-                        repoRefs.add(repoFile.resource());
+                        repoRefs.add(repoFile.reference());
                     } else {
                         addJarFile(contents, jarFile, openJars);
                     }

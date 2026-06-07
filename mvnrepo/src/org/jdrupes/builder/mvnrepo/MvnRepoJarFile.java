@@ -27,11 +27,11 @@ import org.jdrupes.builder.java.JarFile;
 ///
 public interface MvnRepoJarFile extends JarFile {
 
-    /// The Maven repository resource information for this jar file.
+    /// The Maven repository resource reference for this jar file.
     ///
     /// @return the mvn repo resource
     ///
-    MvnRepoResource resource();
+    MvnRepoResource reference();
 
     /// Creates a new maven repository jar file resource from the given values.
     ///

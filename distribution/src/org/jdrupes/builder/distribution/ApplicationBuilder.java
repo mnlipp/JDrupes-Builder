@@ -265,7 +265,7 @@ public class ApplicationBuilder extends AbstractGenerator {
         var repoRefs = Resources.with(MvnRepoResourceType);
         resourceStreams.stream().forEach(r -> {
             if (r instanceof MvnRepoJarFile repoJar) {
-                repoRefs.add(repoJar.resource());
+                repoRefs.add(repoJar.reference());
             } else {
                 cpes.add(r);
             }

@@ -44,7 +44,7 @@ public class DefaultMvnRepoJarFile extends DefaultJarFile
     }
 
     @Override
-    public MvnRepoResource resource() {
+    public MvnRepoResource reference() {
         return resource;
     }
 }
