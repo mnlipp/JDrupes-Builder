@@ -31,6 +31,7 @@ import org.jdrupes.builder.api.BuildException;
 import org.jdrupes.builder.api.ConfigurationException;
 import org.jdrupes.builder.api.Generator;
 import org.jdrupes.builder.api.InputResource;
+import org.jdrupes.builder.api.Intent;
 import static org.jdrupes.builder.api.Intent.*;
 import org.jdrupes.builder.api.Project;
 import org.jdrupes.builder.api.Resource;
@@ -57,19 +58,16 @@ import static org.jdrupes.builder.java.JavaTypes.*;
 ///
 /// In addition to explicitly adding resources, this generator supports
 /// resource retrieval from added providers. The resources of type [ClassTree]
-/// and [JavaResourceTree] that the providers supply will be used in
-/// addition to the explicitly added resources. To make adding providers
-/// easier, the [LibraryBuilder] itself is automatically filtered from the
-/// added providers. This makes it possible to add a project as provider
-/// even if this includes the [LibraryBuilder].
-///
-/// The standard pattern for creating a library is:
+/// and [JavaResourceTree] that the providers added with
+/// [ResourceRetriever#addFrom(ResourceProvider...)] [supply][Intent#Supply]
+/// are included in the library in addition to the explicitly added resources.
+/// 
+/// The enables the simple standard pattern for creating a library:
 /// ```java
-/// generator(LibraryGenerator::new).addFrom(providers().select(Supply));
+/// generator(LibraryBuilder::new).addFrom(this);
 /// ```
 ///
-public class LibraryBuilder extends JarBuilder
-        implements ResourceRetriever {
+public class LibraryBuilder extends JarBuilder implements ResourceRetriever {
 
     @SuppressWarnings({ "unused" })
     private static final FluentLogger logger = FluentLogger.forEnclosingClass();

@@ -31,11 +31,14 @@ import org.jdrupes.builder.api.Cleanliness;
 import org.jdrupes.builder.api.ConfigurationException;
 import static org.jdrupes.builder.api.CoreProperties.*;
 import org.jdrupes.builder.api.FileResource;
+import org.jdrupes.builder.api.Intent;
 import static org.jdrupes.builder.api.Intent.*;
 import org.jdrupes.builder.api.Project;
 import org.jdrupes.builder.api.Resource;
+import org.jdrupes.builder.api.ResourceProvider;
 import org.jdrupes.builder.api.ResourceProviderSpi;
 import org.jdrupes.builder.api.ResourceRequest;
+import org.jdrupes.builder.api.ResourceRetriever;
 import static org.jdrupes.builder.api.ResourceType.*;
 import org.jdrupes.builder.api.Resources;
 import org.jdrupes.builder.api.TarFile;
@@ -48,6 +51,7 @@ import org.jdrupes.builder.distribution.internal.TarDistributionBuilder;
 import org.jdrupes.builder.distribution.internal.ZipDistributionBuilder;
 import org.jdrupes.builder.java.ClasspathElement;
 import static org.jdrupes.builder.java.JavaTypes.*;
+import org.jdrupes.builder.java.LibraryJarFile;
 import org.jdrupes.builder.mvnrepo.MvnRepoJarFile;
 import org.jdrupes.builder.mvnrepo.MvnRepoLibraryJarFile;
 import org.jdrupes.builder.mvnrepo.MvnRepoLookup;
@@ -74,19 +78,25 @@ import static org.jdrupes.builder.mvnrepo.MvnRepoTypes.*;
 ///
 /// Method [#add(Stream)] is used to specify the classpath resources to
 /// be included in the generated distribution and added to the
-/// classpath when running the application. Special handling is provided
-/// for resources of type [MvnRepoJarFile]. For these resources the
-/// associated [MvnRepoResource] information is collected first.
-/// The collected coordinates are then used to resolve the corresponding
-/// jar files from the Maven repository. The resolved JAR files are then
-/// added to the generated distribution. This prevents different versions
-/// of the same library to be included in the distribution.
+/// classpath when running the application. In addition, the application
+/// builder adds the resources obtained from the providers specified
+/// with [#addFrom], using a request for resources of type [LibraryJarFile]
+/// with all [intents][Intent].
+/// 
+/// Special handling is provided for resources of type [MvnRepoJarFile].
+/// For these resources the associated [MvnRepoResource] information is
+/// collected first. The collected coordinates are then used to resolve
+/// the corresponding jar files from the Maven repository. The resolved
+/// JAR files are then added to the generated distribution. This prevents
+/// different versions of the same library to be included in the
+/// distribution.
 /// 
 /// A request for [Cleanliness] removes any generated distribution
 /// archives from the configured destination directory.
 ///
 @SuppressWarnings("PMD.TooManyStaticImports")
-public class ApplicationBuilder extends AbstractGenerator {
+public class ApplicationBuilder extends AbstractGenerator
+        implements ResourceRetriever {
     private static final FluentLogger logger = FluentLogger.forEnclosingClass();
     private Supplier<Path> destination
         = () -> project().buildDirectory().resolve("distributions");
@@ -94,6 +104,9 @@ public class ApplicationBuilder extends AbstractGenerator {
         = () -> project().name() + "-" + project().get(Version);
     private final StreamCollector<ClasspathElement> resourceStreams
         = StreamCollector.cached();
+    private final StreamCollector<ResourceProvider> providers
+        = StreamCollector.uncached();
+    private boolean providersProcessed;
     private final ApplicationConfigurationData config
         = new ApplicationConfigurationData();
 
@@ -230,6 +243,12 @@ public class ApplicationBuilder extends AbstractGenerator {
     }
 
     @Override
+    public ResourceRetriever addFrom(Stream<ResourceProvider> providers) {
+        this.providers.add(providers);
+        return this;
+    }
+
+    @Override
     protected <T extends Resource> Collection<T>
             doProvide(ResourceRequest<T> request) {
         if (!request.accepts(ApplicationZipFileType)
@@ -261,6 +280,12 @@ public class ApplicationBuilder extends AbstractGenerator {
         }
 
         // Collect jars
+        if (!providersProcessed) {
+            resourceStreams.add(providers.stream()
+                .map(p -> p.resources(of(LibraryJarFileType).usingAll()))
+                .flatMap(s -> s));
+            providersProcessed = true;
+        }
         var cpes = Resources.with(ClasspathElementType);
         var repoRefs = Resources.with(MvnRepoResourceType);
         resourceStreams.stream().forEach(r -> {

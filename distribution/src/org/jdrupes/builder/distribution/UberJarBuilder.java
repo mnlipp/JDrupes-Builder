@@ -37,7 +37,6 @@ import org.jdrupes.builder.api.ConfigurationException;
 import org.jdrupes.builder.api.FileTree;
 import org.jdrupes.builder.api.Generator;
 import org.jdrupes.builder.api.InputResource;
-import org.jdrupes.builder.api.Intent;
 import static org.jdrupes.builder.api.Intent.*;
 import org.jdrupes.builder.api.Project;
 import org.jdrupes.builder.api.Resource;
@@ -61,7 +60,7 @@ import org.jdrupes.builder.mvnrepo.MvnRepoResource;
 
 /// A [Generator] for uber jars.
 ///
-/// Depending on the request, the generator provides one of two types resource
+/// Depending on the request, the generator provides one of two resource
 /// types.
 /// 
 /// 1. A [JarFile]. This type of resource is also returned if a more
@@ -72,15 +71,13 @@ import org.jdrupes.builder.mvnrepo.MvnRepoResource;
 ///
 /// The generator takes the following approach:
 /// 
-///   * Request resources of type [ClasspathElement] with intents
-///     [Consume][Intent#Consume], [Reveal][Intent#Reveal],
-///     [Supply][Intent#Supply] and [Expose][Intent#Expose] from the
-///     providers. Add the class and resource trees to the sources
+///   * Request resources of type [ClasspathElement] with all intents from
+///     the added providers. Add the class and resource trees to the sources
 ///     to be processed. JAR files are handled differently depending on their
 ///     origin. The content of JAR files that are not retrieved from a Maven
 ///     repository is added to the sources to be processed. For
 ///     [MvnRepoJarFile]s (i.e. JAR files from a Maven repository) only the
-///     [MvnRepoResource] information is collected.
+///     [MvnRepoResource] reference is collected.
 ///   * Use all [MvnRepoResource]s obtained in the previous step for a
 ///     dependency resolution. Add the content from the resulting JAR
 ///     files to the sources to be processed.
@@ -91,19 +88,12 @@ import org.jdrupes.builder.mvnrepo.MvnRepoResource;
 ///     that is not applicable to the uber jar.
 ///   * Filter out any module-info.class entries.
 ///
-/// Note that the [UberJarBuilder] deliberately does not request the
-/// [ClasspathElement]s as `RuntimeResources` because this may return
-/// resources twice if a project uses another project as runtime
-/// dependency (i.e. with [Intent#Consume]). If this rule causes entries
-/// to be missing, simply add them explicitly.  
-/// 
-/// The resource type of the uber jar generator's output is one
+/// The resource type of the uber jar builder's output is one
 /// of the resource types of its inputs, because uber jars can also be used
-/// as [ClasspathElement]. Therefore, if you want to create an uber jar
-/// from all resources provided by a project, you must not add the
-/// builder to the project like this:
+/// as [ClasspathElement]. Therefore, you cannot add a uber jar builder
+/// to the project like this:
 /// ```java
-///     generator(UberJarBuilder::new).add(this); // Circular dependency
+///     generator(UberJarBuilder::new).addFrom(this); // Circular dependency
 /// ```
 ///
 /// This would add the project as provider and thus make the uber jar
@@ -112,8 +102,9 @@ import org.jdrupes.builder.mvnrepo.MvnRepoResource;
 /// approach:
 /// ```java
 ///     generator(UberJarGenerator::new)
-///         .addAll(providers().select(Forward, Expose, Supply));
+///         .addFrom(providers().select(Forward, Expose, Supply));
 /// ```
+/// 
 /// This requests the same providers from the project as 
 /// [Project.resources][Project#resources] would, but allows the uber jar
 /// builder's [addFrom] method to filter out the uber jar
@@ -123,13 +114,14 @@ import org.jdrupes.builder.mvnrepo.MvnRepoResource;
 /// If the generated uber jar should not be visible to the project's other
 /// generators, you can also add it like this:
 /// ```java
-///     dependency(new UberJarGenerator(this)
-///         .from(providers(EnumSet.of(Forward, Expose, Supply))), Intent.Forward)
+///     dependency(new UberJarGenerator(this).addFrom(
+///         providers(EnumSet.of(Forward, Expose, Supply))), Intent.Forward)
 /// ```
 ///
-/// In many cases, the simplest solution is to generate the uber jar
-/// in a separate project. This cleanly separates the generation of
-/// class trees or library jars from the generation of the uber jar.
+/// In most cases, the simplest solution is to generate the uber jar
+/// in a separate project, typically the parent project. This cleanly
+/// separates the generation of class and resource trees and library jars
+/// from the generation of the uber jar.
 ///
 public class UberJarBuilder extends LibraryBuilder {
 
@@ -172,8 +164,7 @@ public class UberJarBuilder extends LibraryBuilder {
             = Resources.of(new ResourceType<>() {});
         openJars = new ConcurrentHashMap<>();
         contentProviders().stream().filter(p -> !p.equals(this))
-            .map(p -> p.resources(of(ClasspathElementType)
-                .using(Consume, Reveal, Supply, Expose)))
+            .map(p -> p.resources(of(ClasspathElementType).usingAll()))
             // Terminate to trigger all future stream evaluations before
             // starting to process the results. Then collect in parallel
             .toList().stream().flatMap(s -> s).toList().parallelStream()

@@ -109,8 +109,7 @@ public class Root extends AbstractRootProject {
                 model.setDevelopers(List.of(developer));
             });
 
-            project.generator(LibraryBuilder::new)
-                .addFrom(project.providers().select(Supply))
+            project.generator(LibraryBuilder::new).addFrom(project)
                 .addAttributeValues(Map.of(
                     IMPLEMENTATION_TITLE, project.name(),
                     IMPLEMENTATION_VERSION, project.get(Version),

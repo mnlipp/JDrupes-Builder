@@ -26,8 +26,7 @@ public class Bnd extends AbstractProject
         set(ArtifactId, "jdbld-ext-bnd");
         dependency(Reveal, project(Root.class));
         generator(PomFileGenerator::new).adaptPom(Root.addCommonPomInfo());
-        generator(LibraryBuilder::new)
-            .addFrom(providers().select(Supply))
+        generator(LibraryBuilder::new).addFrom(this)
             .addEntries(resources(of(PomFileType).using(Supply))
                 .map(pomFile -> Map.entry(Path.of("META-INF/maven")
                     .resolve((String) get(GroupId)).resolve(name())
