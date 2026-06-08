@@ -49,7 +49,7 @@ public interface RootProject extends Project, AutoCloseable {
     }
 
     /// Return the projects matching the patterns. A pattern is a glob
-    /// pattern applied to the project's directory. `""`matches the root
+    /// pattern applied to the project's directory. `""` matches the root
     /// project. `"*"` matches the root project and all immediate
     /// sub project. `"**"` matches all projects.
     ///
