@@ -37,10 +37,10 @@ import org.jdrupes.builder.api.BuildException;
 import org.jdrupes.builder.api.ConfigurationException;
 import org.jdrupes.builder.api.FileResource;
 import org.jdrupes.builder.api.FileTree;
+import org.jdrupes.builder.api.Intent;
 import static org.jdrupes.builder.api.Intent.*;
 import org.jdrupes.builder.api.Project;
 import org.jdrupes.builder.api.Resource;
-import org.jdrupes.builder.api.ResourceProvider;
 import org.jdrupes.builder.api.ResourceRequest;
 import static org.jdrupes.builder.api.ResourceType.*;
 import org.jdrupes.builder.api.Resources;
@@ -54,8 +54,8 @@ import static org.jdrupes.builder.java.JavaTypes.*;
 /// No attempt is made to define dedicated types for Javadoc tool options.
 /// Instead, options are passed as strings, as suggested by the
 /// [ToolProvider] API. Notable exceptions exist for options that are
-/// directly related to resource types (such as files, directory trees,
-/// and paths) originating from the builder context.
+/// directly related to resource types originating from the builder
+/// context (such as files, directory trees, and paths).
 /// 
 /// By default, the generator builds the Javadoc for the project passed
 /// to the constructor. In some cases – such as generating a shared
@@ -63,12 +63,17 @@ import static org.jdrupes.builder.java.JavaTypes.*;
 /// these cases, the project(s) for which Javadoc is generated can be
 /// configured via [#projects(Stream)].
 ///
-/// By default, the processed sources are the project's [JavaSourceFile]s,
-/// i.e. the resources obtained by invoking
-/// [resources][ResourceProvider#resources(ResourceRequest)] for type
-/// [JavaTypes#JavaSourceTreeType] on the configured project(s). This
-/// behavior can be overridden by setting the sources explicitly using
-/// one or more invocations of the `addSources` methods.
+/// The classpath for the Javadoc tool invocation is assembled by requesting
+/// the [ClasspathElement]s with intents [Consume][Intent#Consume],
+/// [Reveal][Intent#Reveal] and [Expose][Intent#Expose] from the configured
+/// project(s).
+/// 
+/// The [JavaSourceFile]s to be processed are obtained by requesting
+/// resources of [JavaTypes#JavaSourceTreeType] with intents
+/// [Supply][Intent#Supply] and [Expose][Intent#Expose] from the configured
+/// project(s). This default behavior can be overridden by setting the
+/// sources explicitly using one or more invocations of the `addSources`
+/// methods.
 ///
 public class Javadoc extends JavaTool {
 
