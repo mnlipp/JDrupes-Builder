@@ -88,7 +88,7 @@ public class MvnRepoLookup extends AbstractProvider {
     /// 
     /// @return the context
     ///
-    /* default */ static Context rootContext() {
+    public static Context rootContext() {
         if (rootContextInstance != null) {
             return rootContextInstance;
         }
