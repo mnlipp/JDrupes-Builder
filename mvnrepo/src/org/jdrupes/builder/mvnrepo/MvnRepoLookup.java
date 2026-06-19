@@ -226,8 +226,13 @@ public class MvnRepoLookup extends AbstractProvider {
             if (probeMode) {
                 return Collections.emptyList();
             }
-            throw new BuildException().from(this).cause(e);
+            Throwable cause = e;
+            while (cause.getCause() != null) {
+                cause = cause.getCause();
+            }
+            throw new BuildException().from(this).cause(cause);
         }
+
     }
 
     private <T extends Resource> Collection<T> provideMvnDeps() {
