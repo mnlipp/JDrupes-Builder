@@ -109,7 +109,7 @@ public class DefaultProviderSelection implements ProviderSelection {
         return select(request.uses()).map(p -> {
             if (p instanceof Project) {
                 logger.atFinest()
-                    .log("%s forwards % to %s", project, request, p);
+                    .log("%s forwards %s to %s", project, request, p);
                 return snapshot.call(() -> project.context().resources(p,
                     projectRequest.updateAndGet(
                         r -> r != null ? r : forwardedRequest(request))));
