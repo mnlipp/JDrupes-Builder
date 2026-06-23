@@ -383,7 +383,7 @@ public class MvnPublisher extends AbstractGenerator {
         } finally {
             if (!keepSubArtifacts) {
                 toDeploy.stream().filter(Deployable::temporary).forEach(d -> {
-                    d.artifact().getFile().delete();
+                    d.artifact().getPath().toFile().delete();
                 });
             }
         }
@@ -394,10 +394,11 @@ public class MvnPublisher extends AbstractGenerator {
 
     private Artifact mainArtifact(PomFile pomResource)
             throws ModelBuildingException {
-        var repoSystem = MvnRepoLookup.rootContext().repositorySystem();
-        var repoSession = MvnRepoLookup.rootContext().repositorySystemSession();
-        var repos
-            = new ArrayList<>(MvnRepoLookup.rootContext().remoteRepositories());
+        @SuppressWarnings("PMD.CloseResource")
+        var repoSystem = MvnRepoLookup.mavenContext().repositorySystem();
+        var repoSession = MvnRepoLookup.mavenContext().repositorySession();
+        var repos = new ArrayList<>(
+            MvnRepoLookup.mavenContext().remoteRepositories());
         if (snapshotUri != null) {
             repos.add(createSnapshotRepository());
         }
@@ -433,7 +434,7 @@ public class MvnPublisher extends AbstractGenerator {
         toDeploy.add(new Deployable(artifact, false));
 
         // Generate .md5 and .sha1 checksum files
-        var artifactFile = artifact.getFile().toPath();
+        var artifactFile = artifact.getPath();
         try {
             MessageDigest md5 = MessageDigest.getInstance("MD5");
             MessageDigest sha1 = MessageDigest.getInstance("SHA-1");
@@ -553,10 +554,9 @@ public class MvnPublisher extends AbstractGenerator {
     private void deploySnapshot(List<Deployable> toDeploy)
             throws DeploymentException {
         // Now deploy everything
-        @SuppressWarnings("PMD.CloseResource")
-        var context = MvnRepoLookup.rootContext();
+        var context = MvnRepoLookup.mavenContext();
         var session = new DefaultRepositorySystemSession(
-            context.repositorySystemSession());
+            context.repositorySession());
         var startMsgLogged = new AtomicBoolean(false);
         var deployedCount = new AtomicInteger(0);
         @SuppressWarnings("PMD.CloseResource")
@@ -632,7 +632,7 @@ public class MvnPublisher extends AbstractGenerator {
                         .toString());
                     zos.putNextEntry(entry);
                     try (var fis = Files.newInputStream(
-                        artifact.getFile().toPath())) {
+                        artifact.getPath())) {
                         fis.transferTo(zos);
                     }
                     zos.closeEntry();

@@ -19,16 +19,16 @@
 package org.jdrupes.builder.mvnrepo;
 
 import com.google.common.flogger.FluentLogger;
-import eu.maveniverse.maven.mima.context.Context;
-import eu.maveniverse.maven.mima.context.ContextOverrides;
-import eu.maveniverse.maven.mima.context.Runtime;
-import eu.maveniverse.maven.mima.context.Runtimes;
+import java.io.File;
 import java.net.URI;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import org.apache.maven.model.DependencyManagement;
@@ -37,6 +37,15 @@ import org.apache.maven.model.building.DefaultModelBuilderFactory;
 import org.apache.maven.model.building.DefaultModelBuildingRequest;
 import org.apache.maven.model.building.ModelBuildingException;
 import org.apache.maven.model.building.ModelBuildingRequest;
+import org.apache.maven.settings.Profile;
+import org.apache.maven.settings.Repository;
+import org.apache.maven.settings.Settings;
+import org.apache.maven.settings.building.DefaultSettingsBuilderFactory;
+import org.apache.maven.settings.building.DefaultSettingsBuildingRequest;
+import org.apache.maven.settings.building.SettingsBuilder;
+import org.apache.maven.settings.building.SettingsBuildingException;
+import org.apache.maven.settings.building.SettingsBuildingRequest;
+import org.apache.maven.settings.building.SettingsBuildingResult;
 import org.eclipse.aether.RepositorySystem;
 import org.eclipse.aether.RepositorySystemSession;
 import org.eclipse.aether.artifact.Artifact;
@@ -48,8 +57,10 @@ import org.eclipse.aether.resolution.ArtifactRequest;
 import org.eclipse.aether.resolution.ArtifactResolutionException;
 import org.eclipse.aether.resolution.DependencyRequest;
 import org.eclipse.aether.resolution.DependencyResolutionException;
+import org.eclipse.aether.supplier.RepositorySystemSupplier;
+import org.eclipse.aether.supplier.SessionBuilderSupplier;
 import org.eclipse.aether.util.artifact.SubArtifact;
-import org.eclipse.aether.util.graph.visitor.PreorderNodeListGenerator;
+import org.eclipse.aether.util.graph.visitor.PreorderDependencyNodeConsumerVisitor;
 import org.jdrupes.builder.api.BuildException;
 import org.jdrupes.builder.api.Resource;
 import org.jdrupes.builder.api.ResourceFactory;
@@ -66,11 +77,11 @@ import static org.jdrupes.builder.mvnrepo.MvnRepoTypes.*;
 ///  2. The resources of type [MvnRepoLibraryJarFile] that result from
 ///     resolving the artifacts to be resolved.
 ///
-@SuppressWarnings("PMD.CouplingBetweenObjects")
+@SuppressWarnings({ "PMD.CouplingBetweenObjects" })
 public class MvnRepoLookup extends AbstractProvider {
 
     private static final FluentLogger logger = FluentLogger.forEnclosingClass();
-    private static Context rootContextInstance;
+    private static MavenContext mavenContext;
     private final List<String> coordinates = new ArrayList<>();
     private final List<String> boms = new ArrayList<>();
     private boolean downloadSources = true;
@@ -84,23 +95,74 @@ public class MvnRepoLookup extends AbstractProvider {
         // Make javadoc happy.
     }
 
-    /// Lazily creates the root context.
-    /// 
-    /// @return the context
+    /// Returns the (singleton) Maven context.
     ///
-    public static Context rootContext() {
-        if (rootContextInstance != null) {
-            return rootContextInstance;
+    /// @return the Maven context
+    ///
+    @SuppressWarnings("PMD.AvoidSynchronizedAtMethodLevel")
+    public static synchronized MavenContext mavenContext() {
+        if (mavenContext != null) {
+            return mavenContext;
         }
-        ContextOverrides overrides = ContextOverrides.create()
-            .withUserSettings(true).build();
-        Runtime runtime = Runtimes.INSTANCE.getRuntime();
-        rootContextInstance = runtime.create(overrides);
-        logger.atFine().log("Using repositories: %s",
-            rootContextInstance.remoteRepositories().stream()
-                .map(RemoteRepository::getUrl)
-                .collect(Collectors.joining(", ")));
-        return rootContextInstance;
+
+        // Settings
+        SettingsBuildingRequest settingsRequest
+            = new DefaultSettingsBuildingRequest()
+                .setUserSettingsFile(new File(System.getProperty("user.home"),
+                    ".m2/settings.xml"));
+        SettingsBuilder settingsBuilder
+            = new DefaultSettingsBuilderFactory().newInstance();
+        SettingsBuildingResult settingsResult;
+        try {
+            settingsResult = settingsBuilder.build(settingsRequest);
+        } catch (SettingsBuildingException e) {
+            throw new BuildException().cause(e);
+        }
+        var settings = settingsResult.getEffectiveSettings();
+
+        // Repository system
+        @SuppressWarnings("PMD.CloseResource")
+        var repoSystem = new RepositorySystemSupplier().get();
+
+        // Repository system session
+        String localRepoPath = settings.getLocalRepository() != null
+            ? settings.getLocalRepository()
+            : System.getProperty("user.home") + "/.m2/repository";
+        @SuppressWarnings("PMD.CloseResource")
+        var session = new SessionBuilderSupplier(repoSystem).get()
+            .withLocalRepositoryBaseDirectories(Path.of(localRepoPath))
+            .build();
+
+        // Combine
+        mavenContext = new MavenContext(settings, repoSystem, session,
+            remoteRepositories(settings));
+        return mavenContext;
+    }
+
+    private static List<RemoteRepository>
+            remoteRepositories(Settings settings) {
+        List<RemoteRepository> repos = new ArrayList<>();
+
+        Map<String, Profile> profiles = settings.getProfiles().stream()
+            .collect(Collectors.toMap(Profile::getId, Function.identity()));
+
+        for (String profileId : settings.getActiveProfiles()) {
+            Profile profile = profiles.get(profileId);
+            if (profile == null) {
+                continue;
+            }
+            for (Repository repo : profile.getRepositories()) {
+                repos.add(new RemoteRepository.Builder(repo.getId(),
+                    "default", repo.getUrl()).build());
+            }
+        }
+
+        if (repos.isEmpty()) {
+            repos.add(new RemoteRepository.Builder("central", "default",
+                "https://repo.maven.apache.org/maven2").build());
+        }
+
+        return repos;
     }
 
     /// Sets the Maven snapshot repository URI.
@@ -247,9 +309,10 @@ public class MvnRepoLookup extends AbstractProvider {
 
     private <T extends Resource> Collection<T> provideJars()
             throws DependencyResolutionException, ModelBuildingException {
-        var repoSystem = rootContext().repositorySystem();
-        var repoSession = rootContext().repositorySystemSession();
-        var repos = new ArrayList<>(rootContext().remoteRepositories());
+        @SuppressWarnings("PMD.CloseResource")
+        var repoSystem = mavenContext().repositorySystem();
+        var repoSession = mavenContext().repositorySession();
+        var repos = new ArrayList<>(mavenContext().remoteRepositories());
         if (snapshotUri != null) {
             repos.add(createSnapshotRepository());
         }
@@ -274,13 +337,9 @@ public class MvnRepoLookup extends AbstractProvider {
         DependencyNode rootNode;
         rootNode = repoSystem.resolveDependencies(repoSession,
             dependencyRequest).getRoot();
-// For maven 2.x libraries:
-//                List<DependencyNode> dependencyNodes = new ArrayList<>();
-//                rootNode.accept(new PreorderDependencyNodeConsumerVisitor(
-//                    dependencyNodes::add));
-        PreorderNodeListGenerator nlg = new PreorderNodeListGenerator();
-        rootNode.accept(nlg);
-        List<DependencyNode> dependencyNodes = nlg.getNodes();
+        List<DependencyNode> dependencyNodes = new ArrayList<>();
+        rootNode.accept(new PreorderDependencyNodeConsumerVisitor(
+            dependencyNodes::add));
         @SuppressWarnings("unchecked")
         var result = (Collection<T>) dependencyNodes.stream()
             .filter(d -> d.getArtifact() != null)
@@ -295,7 +354,7 @@ public class MvnRepoLookup extends AbstractProvider {
                 return a;
             })
             .map(a -> ResourceFactory.create(MvnRepoLibraryJarFileType,
-                a.toString(), a.getFile().toPath()))
+                a.toString(), a.getPath()))
             .toList();
         return result;
     }
@@ -353,7 +412,7 @@ public class MvnRepoLookup extends AbstractProvider {
             = new SubArtifact(jarArtifact, "sources", "jar");
         ArtifactRequest sourcesRequest = new ArtifactRequest();
         sourcesRequest.setArtifact(sourcesArtifact);
-        sourcesRequest.setRepositories(rootContext().remoteRepositories());
+        sourcesRequest.setRepositories(mavenContext().remoteRepositories());
         try {
             repoSystem.resolveArtifact(repoSession, sourcesRequest);
         } catch (ArtifactResolutionException e) { // NOPMD
@@ -367,7 +426,7 @@ public class MvnRepoLookup extends AbstractProvider {
             = new SubArtifact(jarArtifact, "javadoc", "jar");
         ArtifactRequest sourcesRequest = new ArtifactRequest();
         sourcesRequest.setArtifact(javadocArtifact);
-        sourcesRequest.setRepositories(rootContext().remoteRepositories());
+        sourcesRequest.setRepositories(mavenContext().remoteRepositories());
         try {
             repoSystem.resolveArtifact(repoSession, sourcesRequest);
         } catch (ArtifactResolutionException e) { // NOPMD

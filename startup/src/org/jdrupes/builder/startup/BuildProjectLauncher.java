@@ -19,42 +19,30 @@
 package org.jdrupes.builder.startup;
 
 import com.google.common.flogger.FluentLogger;
-import eu.maveniverse.maven.mima.context.Context;
-import eu.maveniverse.maven.mima.context.ContextOverrides;
-import eu.maveniverse.maven.mima.context.Runtime;
-import eu.maveniverse.maven.mima.context.Runtimes;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLClassLoader;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.List;
 import java.util.Properties;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.DefaultParser;
 import org.apache.commons.cli.ParseException;
-import org.eclipse.aether.artifact.DefaultArtifact;
-import org.eclipse.aether.collection.CollectRequest;
-import org.eclipse.aether.graph.Dependency;
-import org.eclipse.aether.graph.DependencyNode;
-import org.eclipse.aether.resolution.DependencyRequest;
-import org.eclipse.aether.resolution.DependencyResolutionException;
-import org.eclipse.aether.util.graph.visitor.PreorderNodeListGenerator;
 import org.jdrupes.builder.api.BuildException;
 import org.jdrupes.builder.api.ConfigurationException;
 import org.jdrupes.builder.api.FaultAware;
 import org.jdrupes.builder.api.Launcher;
 import org.jdrupes.builder.api.Masked;
 import org.jdrupes.builder.api.Project;
-import org.jdrupes.builder.api.ResourceFactory;
 import org.jdrupes.builder.api.RootProject;
 import org.jdrupes.builder.api.UnavailableException;
 import org.jdrupes.builder.core.AbstractRootProject;
 import org.jdrupes.builder.java.JarFile;
-import static org.jdrupes.builder.java.JavaTypes.*;
+import org.jdrupes.builder.mvnrepo.MvnRepoLookup;
+import static org.jdrupes.builder.mvnrepo.MvnRepoTypes.*;
 
 /// An implementation of a [Launcher] that launches the build configuration.
 /// It expects that the JDrupes Builder project has already been compiled
@@ -145,41 +133,10 @@ public class BuildProjectLauncher extends AbstractLauncher {
         rootProject.close();
     }
 
-    @SuppressWarnings({ "PMD.UseVarargs",
-        "PMD.AvoidInstantiatingObjectsInLoops" })
+    @SuppressWarnings({ "PMD.UseVarargs" })
     private Stream<JarFile> resolveRequested(String[] coordinates) {
-        ContextOverrides overrides = ContextOverrides.create()
-            .withUserSettings(true).build();
-        Runtime runtime = Runtimes.INSTANCE.getRuntime();
-        try (Context context = runtime.create(overrides)) {
-            CollectRequest collectRequest = new CollectRequest()
-                .setRepositories(context.remoteRepositories());
-            for (var coord : coordinates) {
-                collectRequest.addDependency(
-                    new Dependency(new DefaultArtifact(coord), "runtime"));
-            }
-
-            DependencyRequest dependencyRequest
-                = new DependencyRequest(collectRequest, null);
-            DependencyNode rootNode;
-            try {
-                rootNode = context.repositorySystem()
-                    .resolveDependencies(context.repositorySystemSession(),
-                        dependencyRequest)
-                    .getRoot();
-                PreorderNodeListGenerator nlg = new PreorderNodeListGenerator();
-                rootNode.accept(nlg);
-                List<DependencyNode> dependencyNodes = nlg.getNodes();
-                return dependencyNodes.stream()
-                    .filter(d -> d.getArtifact() != null)
-                    .map(d -> d.getArtifact().getFile().toPath())
-                    .map(p -> ResourceFactory
-                        .create(JarFileType, p));
-            } catch (DependencyResolutionException e) {
-                throw new ConfigurationException()
-                    .message("Cannot resolve: %s", e).cause(e);
-            }
-        }
+        var lookup = new MvnRepoLookup().resolve(coordinates);
+        return lookup.resources(lookup.of(MvnRepoLibraryJarFileType));
     }
 
     @Override
@@ -243,7 +200,7 @@ public class BuildProjectLauncher extends AbstractLauncher {
                     return bpl.runCommands();
                 }
             })) {
-                java.lang.Runtime.getRuntime().exit(1);
+                Runtime.getRuntime().exit(1);
             }
         } catch (BuildException e) {
             if (e.getCause() == null) {
@@ -255,7 +212,7 @@ public class BuildProjectLauncher extends AbstractLauncher {
             }
             System.out.println(formatter().summary(e));
             System.out.println(e.details());
-            java.lang.Runtime.getRuntime().exit(2);
+            Runtime.getRuntime().exit(2);
         }
     }
 }
