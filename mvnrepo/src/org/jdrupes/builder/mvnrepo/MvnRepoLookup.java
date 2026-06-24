@@ -60,6 +60,7 @@ import org.eclipse.aether.resolution.DependencyResolutionException;
 import org.eclipse.aether.supplier.RepositorySystemSupplier;
 import org.eclipse.aether.supplier.SessionBuilderSupplier;
 import org.eclipse.aether.util.artifact.SubArtifact;
+import org.eclipse.aether.util.graph.transformer.ConfigurableVersionSelector;
 import org.eclipse.aether.util.graph.visitor.PreorderDependencyNodeConsumerVisitor;
 import org.jdrupes.builder.api.BuildException;
 import org.jdrupes.builder.api.Resource;
@@ -77,7 +78,7 @@ import static org.jdrupes.builder.mvnrepo.MvnRepoTypes.*;
 ///  2. The resources of type [MvnRepoLibraryJarFile] that result from
 ///     resolving the artifacts to be resolved.
 ///
-@SuppressWarnings({ "PMD.CouplingBetweenObjects" })
+@SuppressWarnings({ "PMD.CouplingBetweenObjects", "PMD.ExcessiveImports" })
 public class MvnRepoLookup extends AbstractProvider {
 
     private static final FluentLogger logger = FluentLogger.forEnclosingClass();
@@ -131,6 +132,10 @@ public class MvnRepoLookup extends AbstractProvider {
         @SuppressWarnings("PMD.CloseResource")
         var session = new SessionBuilderSupplier(repoSystem).get()
             .withLocalRepositoryBaseDirectories(Path.of(localRepoPath))
+            // TODO: make this configurable
+            .setConfigProperty(
+                ConfigurableVersionSelector.CONFIG_PROP_SELECTION_STRATEGY,
+                ConfigurableVersionSelector.HIGHEST_SELECTION_STRATEGY)
             .build();
 
         // Combine
