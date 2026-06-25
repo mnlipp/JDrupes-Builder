@@ -19,6 +19,7 @@
 package org.jdrupes.builder.mvnrepo;
 
 import com.google.common.flogger.FluentLogger;
+import static com.google.common.flogger.LazyArgs.lazy;
 import java.io.File;
 import java.net.URI;
 import java.nio.file.Path;
@@ -81,7 +82,11 @@ import static org.jdrupes.builder.mvnrepo.MvnRepoTypes.*;
 /// Resolving is done with the Maven 2.0 resolver library. The resolution
 /// strategy used is "highest wins" (instead of the default "nearest wins").
 /// 
-@SuppressWarnings({ "PMD.CouplingBetweenObjects", "PMD.ExcessiveImports" })
+/// Results of the dependency resolution are written to the log with
+/// log level FINE.
+/// 
+@SuppressWarnings({ "PMD.CouplingBetweenObjects", "PMD.ExcessiveImports",
+    "PMD.GodClass" })
 public class MvnRepoLookup extends AbstractProvider {
 
     private static final FluentLogger logger = FluentLogger.forEnclosingClass();
@@ -340,6 +345,7 @@ public class MvnRepoLookup extends AbstractProvider {
             = new DependencyRequest(collectRequest, null);
         DependencyNode rootNode = repoSystem.resolveDependencies(repoSession,
             dependencyRequest).getRoot();
+        dumpDependencyTree(rootNode);
         List<DependencyNode> dependencyNodes = new ArrayList<>();
         rootNode.accept(new PreorderDependencyNodeConsumerVisitor(
             dependencyNodes::add));
@@ -367,6 +373,8 @@ public class MvnRepoLookup extends AbstractProvider {
             RepositorySystemSession repoSession,
             List<RemoteRepository> repos)
             throws ModelBuildingException {
+        context().statusLine().update("Resolving %s", coordinates);
+
         // First build raw model
         Model model = new Model();
         model.setModelVersion("4.0.0");
@@ -442,5 +450,32 @@ public class MvnRepoLookup extends AbstractProvider {
         } catch (ArtifactResolutionException e) { // NOPMD
             // Ignore, javadoc is optional
         }
+    }
+
+    private void dumpDependencyTree(DependencyNode root) {
+        logger.atFine().log("Dependency tree for %s:\n%s", name(),
+            lazy(() -> buildTreeString(root, 0)));
+    }
+
+    private String buildTreeString(DependencyNode node, int indent) {
+        return buildTreeString(node, indent, "|-- ");
+    }
+
+    private String buildTreeString(DependencyNode node, int indent,
+            String connector) {
+        @SuppressWarnings("PMD.ShortVariable")
+        StringBuilder sb = new StringBuilder();
+        String indentation = "  ".repeat(indent);
+        var artifact = node.getArtifact();
+        sb.append(indentation).append(indent > 0 ? connector : "")
+            .append(artifact != null ? artifact.toString() : "root")
+            .append('\n');
+        var children = node.getChildren();
+        for (int i = 0; i < children.size(); i++) {
+            String nextConnector = (i == children.size() - 1) ? "`-- " : "|-- ";
+            sb.append(
+                buildTreeString(children.get(i), indent + 1, nextConnector));
+        }
+        return sb.toString();
     }
 }
