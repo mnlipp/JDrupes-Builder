@@ -454,11 +454,7 @@ public class MvnRepoLookup extends AbstractProvider {
 
     private void dumpDependencyTree(DependencyNode root) {
         logger.atFine().log("Dependency tree for %s:\n%s", name(),
-            lazy(() -> buildTreeString(root, 0)));
-    }
-
-    private String buildTreeString(DependencyNode node, int indent) {
-        return buildTreeString(node, indent, "", true);
+            lazy(() -> buildTreeString(root, 0, "", true)));
     }
 
     private String buildTreeString(DependencyNode node, int indent,
