@@ -458,23 +458,30 @@ public class MvnRepoLookup extends AbstractProvider {
     }
 
     private String buildTreeString(DependencyNode node, int indent) {
-        return buildTreeString(node, indent, "|-- ");
+        return buildTreeString(node, indent, "", true);
     }
 
     private String buildTreeString(DependencyNode node, int indent,
-            String connector) {
+            String prefix, boolean isLast) {
         @SuppressWarnings("PMD.ShortVariable")
         StringBuilder sb = new StringBuilder();
-        String indentation = "  ".repeat(indent);
         var artifact = node.getArtifact();
-        sb.append(indentation).append(indent > 0 ? connector : "")
-            .append(artifact != null ? artifact.toString() : "root")
-            .append('\n');
+
+        if (indent == 0) {
+            sb.append("root\n");
+        } else {
+            sb.append(prefix).append(isLast ? "`-- " : "|-- ")
+                .append(artifact != null ? artifact.toString() : "node")
+                .append('\n');
+        }
+
         var children = node.getChildren();
+        String childPrefix
+            = prefix + (indent == 0 ? "  " : isLast ? "    " : "|  ");
+
         for (int i = 0; i < children.size(); i++) {
-            String nextConnector = (i == children.size() - 1) ? "`-- " : "|-- ";
-            sb.append(
-                buildTreeString(children.get(i), indent + 1, nextConnector));
+            sb.append(buildTreeString(children.get(i), indent + 1, childPrefix,
+                i == children.size() - 1));
         }
         return sb.toString();
     }
