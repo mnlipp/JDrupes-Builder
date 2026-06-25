@@ -78,6 +78,9 @@ import static org.jdrupes.builder.mvnrepo.MvnRepoTypes.*;
 ///  2. The resources of type [MvnRepoLibraryJarFile] that result from
 ///     resolving the artifacts to be resolved.
 ///
+/// Resolving is done with the Maven 2.0 resolver library. The resolution
+/// strategy used is "highest wins" (instead of the default "nearest wins").
+/// 
 @SuppressWarnings({ "PMD.CouplingBetweenObjects", "PMD.ExcessiveImports" })
 public class MvnRepoLookup extends AbstractProvider {
 
@@ -132,7 +135,6 @@ public class MvnRepoLookup extends AbstractProvider {
         @SuppressWarnings("PMD.CloseResource")
         var session = new SessionBuilderSupplier(repoSystem).get()
             .withLocalRepositoryBaseDirectories(Path.of(localRepoPath))
-            // TODO: make this configurable
             .setConfigProperty(
                 ConfigurableVersionSelector.CONFIG_PROP_SELECTION_STRATEGY,
                 ConfigurableVersionSelector.HIGHEST_SELECTION_STRATEGY)
@@ -191,7 +193,8 @@ public class MvnRepoLookup extends AbstractProvider {
 
     /// Add a bill of materials. The coordinates are resolved as 
     /// a dependency with scope `import` which is added to the
-    /// `dependencyManagement` section.
+    /// `dependencyManagement` section when evaluating the effective
+    /// model.
     ///
     /// @param coordinates the coordinates
     /// @return the mvn repo lookup
@@ -322,25 +325,20 @@ public class MvnRepoLookup extends AbstractProvider {
             repos.add(createSnapshotRepository());
         }
 
-        // Create an effective model. This make sure that BOMs are
-        // handled correctly.
-        Model model = getEffectiveModel(repoSystem, repoSession,
-            repos);
-
-        // Create collect request using data from the (effective) model
+        // Create one synthetic CollectRequest
         CollectRequest collectRequest
             = new CollectRequest().setRepositories(repos);
-        collectRequest.setManagedDependencies(
-            model.getDependencyManagement().getDependencies().stream()
-                .map(DependencyConverter::convert).toList());
-        model.getDependencies().stream().map(DependencyConverter::convert)
-            .forEach(collectRequest::addDependency);
 
-        // Resolve dependencies
+        // Add dependencies via their effective model
+        for (String coord : coordinates) {
+            addFromEffectiveModel(
+                collectRequest, coord, repoSystem, repoSession, repos);
+        }
+
+        // Resolve dependencies - Resolver performs mediation
         DependencyRequest dependencyRequest
             = new DependencyRequest(collectRequest, null);
-        DependencyNode rootNode;
-        rootNode = repoSystem.resolveDependencies(repoSession,
+        DependencyNode rootNode = repoSystem.resolveDependencies(repoSession,
             dependencyRequest).getRoot();
         List<DependencyNode> dependencyNodes = new ArrayList<>();
         rootNode.accept(new PreorderDependencyNodeConsumerVisitor(
@@ -351,10 +349,10 @@ public class MvnRepoLookup extends AbstractProvider {
             .map(DependencyNode::getArtifact)
             .map(a -> {
                 if (downloadSources) {
-                    downloadSourceJar(repoSystem, repoSession, a);
+                    downloadSourceJar(repoSystem, repoSession, repos, a);
                 }
                 if (downloadJavadoc) {
-                    downloadJavadocJar(repoSystem, repoSession, a);
+                    downloadJavadocJar(repoSystem, repoSession, repos, a);
                 }
                 return a;
             })
@@ -364,8 +362,10 @@ public class MvnRepoLookup extends AbstractProvider {
         return result;
     }
 
-    private Model getEffectiveModel(RepositorySystem repoSystem,
-            RepositorySystemSession repoSession, List<RemoteRepository> repos)
+    private void addFromEffectiveModel(CollectRequest collectRequest,
+            String coordinates, RepositorySystem repoSystem,
+            RepositorySystemSession repoSession,
+            List<RemoteRepository> repos)
             throws ModelBuildingException {
         // First build raw model
         Model model = new Model();
@@ -373,28 +373,31 @@ public class MvnRepoLookup extends AbstractProvider {
         model.setGroupId("model.group");
         model.setArtifactId("model.artifact");
         model.setVersion("0.0.0");
+        model.setDescription(name());
         var depMgmt = new DependencyManagement();
         model.setDependencyManagement(depMgmt);
-        boms.stream().forEach(c -> {
-            var mvnResource = MvnRepoDependency.of(c);
-            var dep = DependencyConverter.convert(mvnResource, "import");
+
+        // Build raw model from boms and coordinate
+        for (String bom : boms) {
+            var dep = DependencyConverter
+                .convert(MvnRepoDependency.of(bom), "import");
             dep.setType("pom");
             depMgmt.addDependency(dep);
-        });
-        coordinates.forEach(c -> {
-            var mvnResource = MvnRepoDependency.of(c);
-            model.addDependency(
-                DependencyConverter.convert(mvnResource, "compile"));
-        });
+        }
+        model.addDependency(DependencyConverter.convert(
+            MvnRepoDependency.of(coordinates), "compile"));
 
-        // Now build (derive) effective model
+        // Now build (derive) effective model and add its dependencies
         var buildingRequest = new DefaultModelBuildingRequest()
             .setRawModel(model).setProcessPlugins(false)
             .setValidationLevel(ModelBuildingRequest.VALIDATION_LEVEL_MINIMAL)
             .setModelResolver(
                 new MvnModelResolver(repoSystem, repoSession, repos));
-        return new DefaultModelBuilderFactory()
+        var effectiveModel = new DefaultModelBuilderFactory()
             .newInstance().build(buildingRequest).getEffectiveModel();
+        effectiveModel.getDependencies().stream()
+            .map(DependencyConverter::convert)
+            .forEach(collectRequest::addDependency);
     }
 
     private RemoteRepository createSnapshotRepository() {
@@ -412,12 +415,13 @@ public class MvnRepoLookup extends AbstractProvider {
     }
 
     private void downloadSourceJar(RepositorySystem repoSystem,
-            RepositorySystemSession repoSession, Artifact jarArtifact) {
+            RepositorySystemSession repoSession,
+            List<RemoteRepository> repos, Artifact jarArtifact) {
         Artifact sourcesArtifact
             = new SubArtifact(jarArtifact, "sources", "jar");
         ArtifactRequest sourcesRequest = new ArtifactRequest();
         sourcesRequest.setArtifact(sourcesArtifact);
-        sourcesRequest.setRepositories(mavenContext().remoteRepositories());
+        sourcesRequest.setRepositories(repos);
         try {
             repoSystem.resolveArtifact(repoSession, sourcesRequest);
         } catch (ArtifactResolutionException e) { // NOPMD
@@ -426,12 +430,13 @@ public class MvnRepoLookup extends AbstractProvider {
     }
 
     private void downloadJavadocJar(RepositorySystem repoSystem,
-            RepositorySystemSession repoSession, Artifact jarArtifact) {
+            RepositorySystemSession repoSession,
+            List<RemoteRepository> repos, Artifact jarArtifact) {
         Artifact javadocArtifact
             = new SubArtifact(jarArtifact, "javadoc", "jar");
         ArtifactRequest sourcesRequest = new ArtifactRequest();
         sourcesRequest.setArtifact(javadocArtifact);
-        sourcesRequest.setRepositories(mavenContext().remoteRepositories());
+        sourcesRequest.setRepositories(repos);
         try {
             repoSystem.resolveArtifact(repoSession, sourcesRequest);
         } catch (ArtifactResolutionException e) { // NOPMD
