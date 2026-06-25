@@ -51,6 +51,7 @@ import org.eclipse.aether.RepositorySystem;
 import org.eclipse.aether.RepositorySystemSession;
 import org.eclipse.aether.artifact.Artifact;
 import org.eclipse.aether.collection.CollectRequest;
+import org.eclipse.aether.graph.Dependency;
 import org.eclipse.aether.graph.DependencyNode;
 import org.eclipse.aether.repository.RemoteRepository;
 import org.eclipse.aether.repository.RepositoryPolicy;
@@ -74,13 +75,19 @@ import static org.jdrupes.builder.mvnrepo.MvnRepoTypes.*;
 /// 
 ///  1. The artifacts to be resolved as resources of type [MvnRepoDependency].
 ///     The artifacts to be resolved are those added with [resolve].
-///     Note that the result also includes the [MvnRepoBom]s.
+///     Note that the result also includes the [MvnRepoBom]s added with
+///     [bom].
 ///
 ///  2. The resources of type [MvnRepoLibraryJarFile] that result from
 ///     resolving the artifacts to be resolved.
 ///
-/// Resolving is done with the Maven 2.0 resolver library. The resolution
-/// strategy used is "highest wins" (instead of the default "nearest wins").
+/// Resolving is performed using Maven Resolver (formerly Eclipse Aether)
+/// version 2.x. Dependencies are collected from the specified artifacts
+/// after evaluating their effective Maven models, including any imported
+/// BOMs. Version conflicts are resolved using a "highest wins"
+/// strategy, i.e. the highest version of a dependency encountered in the
+/// dependency graph is selected. Note that this differs from Maven's
+/// default behavior which is "nearest wins".
 /// 
 /// Results of the dependency resolution are written to the log with
 /// log level FINE.
@@ -187,8 +194,8 @@ public class MvnRepoLookup extends AbstractProvider {
         return this;
     }
 
-    /// Returns the snapshot repository. Defaults to
-    /// `https://central.sonatype.com/repository/maven-snapshots/`.
+    /// Returns the snapshot repository. Defaults to `null`
+    /// (none configured).
     ///
     /// @return the snapshot repository
     ///
@@ -201,7 +208,8 @@ public class MvnRepoLookup extends AbstractProvider {
     /// `dependencyManagement` section when evaluating the effective
     /// model.
     ///
-    /// @param coordinates the coordinates
+    /// @param coordinates the coordinates in the form
+    /// groupId:artifactId:version
     /// @return the mvn repo lookup
     ///
     public MvnRepoLookup bom(String... coordinates) {
@@ -212,7 +220,8 @@ public class MvnRepoLookup extends AbstractProvider {
     /// Add artifacts, specified by their coordinates
     /// (`groupId:artifactId:version`) as resources.
     ///
-    /// @param coordinates the coordinates
+    /// @param coordinates the coordinates in the form
+    /// groupId:artifactId:version
     /// @return the mvn repo lookup
     ///
     public MvnRepoLookup resolve(String... coordinates) {
@@ -320,6 +329,7 @@ public class MvnRepoLookup extends AbstractProvider {
         return Stream.concat(boms, deps).toList();
     }
 
+    @SuppressWarnings("PMD.AvoidSynchronizedStatement")
     private <T extends Resource> Collection<T> provideJars()
             throws DependencyResolutionException, ModelBuildingException {
         @SuppressWarnings("PMD.CloseResource")
@@ -335,10 +345,13 @@ public class MvnRepoLookup extends AbstractProvider {
             = new CollectRequest().setRepositories(repos);
 
         // Add dependencies via their effective model
-        for (String coord : coordinates) {
-            addFromEffectiveModel(
-                collectRequest, coord, repoSystem, repoSession, repos);
-        }
+        coordinates.stream().parallel().map(c -> depsFromEffectiveModel(
+            c, repoSystem, repoSession, repos)).forEach(deps -> {
+                // collectRequest::addDependency is not thread safe
+                synchronized (collectRequest) {
+                    deps.forEach(collectRequest::addDependency);
+                }
+            });
 
         // Resolve dependencies - Resolver performs mediation
         DependencyRequest dependencyRequest
@@ -368,13 +381,10 @@ public class MvnRepoLookup extends AbstractProvider {
         return result;
     }
 
-    private void addFromEffectiveModel(CollectRequest collectRequest,
+    private Stream<Dependency> depsFromEffectiveModel(
             String coordinates, RepositorySystem repoSystem,
             RepositorySystemSession repoSession,
-            List<RemoteRepository> repos)
-            throws ModelBuildingException {
-        context().statusLine().update("Resolving %s", coordinates);
-
+            List<RemoteRepository> repos) {
         // First build raw model
         Model model = new Model();
         model.setModelVersion("4.0.0");
@@ -401,11 +411,14 @@ public class MvnRepoLookup extends AbstractProvider {
             .setValidationLevel(ModelBuildingRequest.VALIDATION_LEVEL_MINIMAL)
             .setModelResolver(
                 new MvnModelResolver(repoSystem, repoSession, repos));
-        var effectiveModel = new DefaultModelBuilderFactory()
-            .newInstance().build(buildingRequest).getEffectiveModel();
-        effectiveModel.getDependencies().stream()
-            .map(DependencyConverter::convert)
-            .forEach(collectRequest::addDependency);
+        try {
+            var effectiveModel = new DefaultModelBuilderFactory()
+                .newInstance().build(buildingRequest).getEffectiveModel();
+            return effectiveModel.getDependencies().stream()
+                .map(DependencyConverter::convert);
+        } catch (ModelBuildingException e) {
+            throw new BuildException().from(this).cause(e);
+        }
     }
 
     private RemoteRepository createSnapshotRepository() {
