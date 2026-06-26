@@ -36,6 +36,7 @@ import org.jdrupes.builder.mvnrepo.JavadocJarBuilder;
 import static org.jdrupes.builder.mvnrepo.MvnProperties.GroupId;
 import static org.jdrupes.builder.mvnrepo.MvnProperties.ArtifactId;
 import org.jdrupes.builder.mvnrepo.MvnPublisher;
+import org.jdrupes.builder.mvnrepo.MvnRepoJarFile;
 import org.jdrupes.builder.mvnrepo.MvnRepoLookup;
 import org.jdrupes.builder.mvnrepo.PomFileGenerator;
 import org.jdrupes.builder.mvnrepo.SourcesJarBuilder;
@@ -80,6 +81,9 @@ public class Root extends AbstractRootProject {
 
         // Provide app jar
         generator(new UberJarBuilder(this)
+            // maven-resolver-transport-apache has this as run-time dependency
+            .resourceFilter(e -> !(e instanceof MvnRepoJarFile mvnRes
+                && mvnRes.reference().artifactId().equals("jcl-over-slf4j")))
             .addFrom(providers().select(Expose))
             // Runtime (only) dependencies of executable jar
             .addFrom(new MvnRepoLookup().resolve(
