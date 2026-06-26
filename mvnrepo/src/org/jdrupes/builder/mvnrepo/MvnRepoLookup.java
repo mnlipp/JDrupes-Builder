@@ -354,11 +354,15 @@ public class MvnRepoLookup extends AbstractProvider {
             });
 
         // Resolve dependencies - Resolver performs mediation
+        logger.atFine().log("Resolving dependencies: %s",
+            lazy(() -> collectRequest.getDependencies().stream()
+                .map(Dependency::toString).collect(Collectors.joining(", "))));
         DependencyRequest dependencyRequest
             = new DependencyRequest(collectRequest, null);
         DependencyNode rootNode = repoSystem.resolveDependencies(repoSession,
             dependencyRequest).getRoot();
-        dumpDependencyTree(rootNode);
+        logger.atFine().log("Dependency tree for %s:\n%s", name(),
+            lazy(() -> buildTreeString(rootNode, 0, "", true)));
         List<DependencyNode> dependencyNodes = new ArrayList<>();
         rootNode.accept(new PreorderDependencyNodeConsumerVisitor(
             dependencyNodes::add));
@@ -366,19 +370,25 @@ public class MvnRepoLookup extends AbstractProvider {
         var result = (Collection<T>) dependencyNodes.stream()
             .filter(d -> d.getArtifact() != null)
             .map(DependencyNode::getArtifact)
-            .map(a -> {
-                if (downloadSources) {
-                    downloadSourceJar(repoSystem, repoSession, repos, a);
-                }
-                if (downloadJavadoc) {
-                    downloadJavadocJar(repoSystem, repoSession, repos, a);
-                }
-                return a;
-            })
+            .map(a -> extraDownloads(repoSystem, repoSession, repos, a))
             .map(a -> ResourceFactory.create(MvnRepoLibraryJarFileType,
                 a.toString(), a.getPath()))
             .toList();
         return result;
+    }
+
+    private RemoteRepository createSnapshotRepository() {
+        return new RemoteRepository.Builder(
+            "snapshots", "default", snapshotUri.toString())
+                .setSnapshotPolicy(new RepositoryPolicy(
+                    true,  // enable snapshots
+                    RepositoryPolicy.UPDATE_POLICY_ALWAYS,
+                    RepositoryPolicy.CHECKSUM_POLICY_WARN))
+                .setReleasePolicy(new RepositoryPolicy(
+                    false,
+                    RepositoryPolicy.UPDATE_POLICY_NEVER,
+                    RepositoryPolicy.CHECKSUM_POLICY_IGNORE))
+                .build();
     }
 
     private Stream<Dependency> depsFromEffectiveModel(
@@ -421,18 +431,16 @@ public class MvnRepoLookup extends AbstractProvider {
         }
     }
 
-    private RemoteRepository createSnapshotRepository() {
-        return new RemoteRepository.Builder(
-            "snapshots", "default", snapshotUri.toString())
-                .setSnapshotPolicy(new RepositoryPolicy(
-                    true,  // enable snapshots
-                    RepositoryPolicy.UPDATE_POLICY_ALWAYS,
-                    RepositoryPolicy.CHECKSUM_POLICY_WARN))
-                .setReleasePolicy(new RepositoryPolicy(
-                    false,
-                    RepositoryPolicy.UPDATE_POLICY_NEVER,
-                    RepositoryPolicy.CHECKSUM_POLICY_IGNORE))
-                .build();
+    private Artifact extraDownloads(
+            RepositorySystem repoSystem, RepositorySystemSession repoSession,
+            List<RemoteRepository> repos, Artifact artifact) {
+        if (downloadSources) {
+            downloadSourceJar(repoSystem, repoSession, repos, artifact);
+        }
+        if (downloadJavadoc) {
+            downloadJavadocJar(repoSystem, repoSession, repos, artifact);
+        }
+        return artifact;
     }
 
     private void downloadSourceJar(RepositorySystem repoSystem,
@@ -463,11 +471,6 @@ public class MvnRepoLookup extends AbstractProvider {
         } catch (ArtifactResolutionException e) { // NOPMD
             // Ignore, javadoc is optional
         }
-    }
-
-    private void dumpDependencyTree(DependencyNode root) {
-        logger.atFine().log("Dependency tree for %s:\n%s", name(),
-            lazy(() -> buildTreeString(root, 0, "", true)));
     }
 
     private String buildTreeString(DependencyNode node, int indent,
