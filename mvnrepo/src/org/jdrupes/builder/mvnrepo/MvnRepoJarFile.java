@@ -23,17 +23,20 @@ import org.jdrupes.builder.api.ResourceFactory;
 import org.jdrupes.builder.api.ResourceType;
 import org.jdrupes.builder.java.JarFile;
 
-/// A [JarFile] that is obtained from a maven repository.
-///
+/// A [JarFile] that has been downloaded from a Maven repository.
+/// Unlike a [MvnRepoResource], a resource of this type represents a
+/// local file. This interface merely preserves information about the
+/// Maven repository resource from which it originated.
+/// 
 public interface MvnRepoJarFile extends JarFile {
 
-    /// The Maven repository resource reference for this jar file.
+    /// Returns the Maven repository reference for this JAR file.
     ///
-    /// @return the mvn repo resource
+    /// @return the Maven repository resource
     ///
     MvnRepoResource reference();
 
-    /// Creates a new maven repository jar file resource from the given values.
+    /// Creates a new Maven repository JAR file resource from the given values.
     ///
     /// @param <T> the resource type
     /// @param fileType the requested type
