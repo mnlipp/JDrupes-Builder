@@ -170,16 +170,18 @@ public class UberJarBuilder extends LibraryBuilder {
             .toList().stream().flatMap(s -> s).toList().parallelStream()
             .filter(resourceFilter::test).forEach(cpe -> {
                 if (cpe instanceof FileTree<?> fileTree) {
+                    logger.atFine().log("Adding from FileTree: %s", fileTree);
                     collect(contents, fileTree);
                     return;
                 }
+                if (cpe instanceof MvnRepoJarFile repoFile) {
+                    // Resolve JAR files from Maven repositories, see below
+                    repoRefs.add(repoFile.reference());
+                    return;
+                }
                 if (cpe instanceof JarFile jarFile) {
-                    if (jarFile instanceof MvnRepoJarFile repoFile) {
-                        // Resolve JAR files from Maven repositories, see below
-                        repoRefs.add(repoFile.reference());
-                    } else {
-                        addJarFile(contents, jarFile, openJars);
-                    }
+                    logger.atFine().log("Adding from library: %s", jarFile);
+                    addJarFile(contents, jarFile, openJars);
                 }
             });
 
@@ -191,6 +193,8 @@ public class UberJarBuilder extends LibraryBuilder {
             .using(Consume, Reveal, Supply, Expose, Forward))
             .parallel().filter(resourceFilter::test).forEach(cpe -> {
                 if (cpe instanceof MvnRepoJarFile jarFile) {
+                    logger.atFine().log("Adding from Maven repository: %s (%s)",
+                        jarFile, jarFile.reference());
                     addJarFile(contents, jarFile, openJars);
                 }
             });
