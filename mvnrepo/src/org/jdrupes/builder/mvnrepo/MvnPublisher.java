@@ -78,6 +78,8 @@ import org.eclipse.aether.artifact.Artifact;
 import org.eclipse.aether.artifact.DefaultArtifact;
 import org.eclipse.aether.deployment.DeployRequest;
 import org.eclipse.aether.deployment.DeploymentException;
+import org.eclipse.aether.installation.InstallRequest;
+import org.eclipse.aether.installation.InstallationException;
 import org.eclipse.aether.repository.RemoteRepository;
 import org.eclipse.aether.repository.RepositoryPolicy;
 import org.eclipse.aether.util.artifact.SubArtifact;
@@ -98,12 +100,13 @@ import org.jdrupes.builder.java.SourcesJarFile;
 import static org.jdrupes.builder.mvnrepo.MvnProperties.ArtifactId;
 import static org.jdrupes.builder.mvnrepo.MvnRepoTypes.*;
 
-/// A [Generator] for maven deployments in response to requests for
-/// [MvnPublication] It supports publishing releases using the
+/// A [Generator] for Maven deployments in response to requests for
+/// [MvnPublication] or [MvnInstallation]. It supports publishing
+/// releases using the
 /// [Publish Portal API](https://central.sonatype.org/publish/publish-portal-api/)
-/// and publishing snapshots using the "traditional" maven approach
-/// (uploading the files, including the appropriate `maven-metadata.xml`
-/// files).
+/// and publishing snapshots (and local installations) using the
+/// "traditional" Maven approach (uploading the files individually,
+/// including the appropriate `maven-metadata.xml` files).
 ///
 /// The publisher requests the [PomFile] from the project and uses
 /// the groupId, artfactId and version as specified in this file.
@@ -284,7 +287,8 @@ public class MvnPublisher extends AbstractGenerator {
     @Override
     protected <T extends Resource> Collection<T>
             doProvide(ResourceRequest<T> requested) {
-        if (!requested.accepts(MvnPublicationType)) {
+        if (!requested.accepts(MvnPublicationType)
+            && !requested.accepts(MvnInstallationType)) {
             return Collections.emptyList();
         }
         PomFile pomResource = resourceCheck(project()
@@ -322,8 +326,9 @@ public class MvnPublisher extends AbstractGenerator {
 
         // Deploy what we've found
         @SuppressWarnings("unchecked")
-        var result = (Collection<T>) deploy(pomResource, jarResource, srcsFile,
-            jdFile);
+        var result = (Collection<T>) deploy(
+            pomResource, jarResource, srcsFile, jdFile,
+            requested.accepts(MvnInstallationType));
         return result;
     }
 
@@ -348,7 +353,7 @@ public class MvnPublisher extends AbstractGenerator {
     @SuppressWarnings("PMD.AvoidDuplicateLiterals")
     private Collection<?> deploy(PomFile pomResource,
             LibraryJarFile jarResource, SourcesJarFile srcsJar,
-            JavadocJarFile javadocJar) {
+            JavadocJarFile javadocJar, boolean locally) {
         Artifact mainArtifact;
         try {
             mainArtifact = mainArtifact(pomResource);
@@ -373,12 +378,20 @@ public class MvnPublisher extends AbstractGenerator {
         }
 
         try {
-            if (mainArtifact.isSnapshot()) {
+            if (locally) {
+                install(toDeploy);
+                return List.of(MvnInstallation.of(String.format("%s:%s:%s",
+                    mainArtifact.getGroupId(), mainArtifact.getArtifactId(),
+                    mainArtifact.getVersion())));
+            } else if (mainArtifact.isSnapshot()) {
                 deploySnapshot(toDeploy);
             } else {
                 deployRelease(mainArtifact, toDeploy);
             }
-        } catch (DeploymentException e) {
+            return List.of(MvnPublication.of(String.format("%s:%s:%s",
+                mainArtifact.getGroupId(), mainArtifact.getArtifactId(),
+                mainArtifact.getVersion())));
+        } catch (DeploymentException | InstallationException e) {
             throw new BuildException().from(this).cause(e);
         } finally {
             if (!keepSubArtifacts) {
@@ -387,9 +400,6 @@ public class MvnPublisher extends AbstractGenerator {
                 });
             }
         }
-        return List.of(MvnPublication.of(String.format("%s:%s:%s",
-            mainArtifact.getGroupId(), mainArtifact.getArtifactId(),
-            mainArtifact.getVersion())));
     }
 
     private Artifact mainArtifact(PomFile pomResource)
@@ -549,6 +559,16 @@ public class MvnPublisher extends AbstractGenerator {
             signature.encode(sigOut);
         }
         return sigPath;
+    }
+
+    private void install(List<Deployable> toDeploy)
+            throws InstallationException {
+        var context = MvnRepoLookup.mavenContext();
+        var session = new DefaultRepositorySystemSession(
+            context.repositorySession());
+        var installReq = new InstallRequest();
+        toDeploy.stream().map(d -> d.artifact).forEach(installReq::addArtifact);
+        context.repositorySystem().install(session, installReq);
     }
 
     private void deploySnapshot(List<Deployable> toDeploy)

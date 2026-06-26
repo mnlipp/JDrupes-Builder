@@ -19,11 +19,11 @@
 package org.jdrupes.builder.mvnrepo;
 
 import org.jdrupes.builder.api.ResourceFactory;
-import static org.jdrupes.builder.mvnrepo.MvnRepoTypes.MvnPublicationType;
+import static org.jdrupes.builder.mvnrepo.MvnRepoTypes.MvnInstallationType;
 
-/// Represents an artifact published in a Maven repository.
+/// Represents an artifact installed in the local Maven repository.
 ///
-public interface MvnPublication extends MvnRepoResource {
+public interface MvnInstallation extends MvnRepoResource {
 
     /// Creates a maven publication from Maven coordinates.
     ///
@@ -31,7 +31,7 @@ public interface MvnPublication extends MvnRepoResource {
     /// @return the maven publication
     ///
     @SuppressWarnings("PMD.ShortMethodName")
-    static MvnPublication of(String coordinates) {
-        return ResourceFactory.create(MvnPublicationType, coordinates);
+    static MvnInstallation of(String coordinates) {
+        return ResourceFactory.create(MvnInstallationType, coordinates);
     }
 }

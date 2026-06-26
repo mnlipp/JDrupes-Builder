@@ -50,6 +50,10 @@ public final class MvnRepoTypes {
     public static final ResourceType<
             MvnPublication> MvnPublicationType = new ResourceType<>() {};
 
+    /// The Constant MvnInstallationType.
+    public static final ResourceType<
+            MvnInstallation> MvnInstallationType = new ResourceType<>() {};
+
     /// A jar file from the maven repository.
     public static final ResourceType<
             MvnRepoJarFile> MvnRepoJarFileType = new ResourceType<>() {};

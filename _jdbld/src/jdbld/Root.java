@@ -155,6 +155,8 @@ public class Root extends AbstractRootProject {
         commandAlias("pomFile").resources(of(PomFileType));
         commandAlias("mavenPublication").projects("**").resources(
             of(MvnPublicationType).using(Supply));
+        commandAlias("mavenInstallation").projects("**").resources(
+            of(MvnInstallationType).using(Supply));
     }
 
     public static Consumer<Model> addCommonPomInfo() {
