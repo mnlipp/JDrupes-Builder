@@ -27,8 +27,6 @@ import java.io.OutputStream;
 import java.net.URI;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.security.MessageDigest;
-import java.security.NoSuchAlgorithmException;
 import java.security.Security;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -368,38 +366,11 @@ public class MvnPublisher extends AbstractGenerator {
         // Generate .md5 and .sha1 checksum files
         var artifactFile = artifact.getPath();
         try {
-            MessageDigest md5 = MessageDigest.getInstance("MD5");
-            MessageDigest sha1 = MessageDigest.getInstance("SHA-1");
-            try (var fis = Files.newInputStream(artifactFile)) {
-                byte[] buffer = new byte[8192];
-                while (true) {
-                    int read = fis.read(buffer);
-                    if (read < 0) {
-                        break;
-                    }
-                    md5.update(buffer, 0, read);
-                    sha1.update(buffer, 0, read);
-                }
-            }
-            var fileName = artifactFile.getFileName().toString();
-
-            // Handle generated md5
-            var md5Path = destinationPath(artifactFile, fileName + ".md5");
-            Files.writeString(md5Path, toHex(md5.digest()));
-            toDeploy.add(new Deployable(new SubArtifact(artifact, "*", "*.md5",
-                md5Path.toFile()), true));
-
-            // Handle generated sha1
-            var sha1Path = destinationPath(artifactFile, fileName + ".sha1");
-            Files.writeString(sha1Path, toHex(sha1.digest()));
-            toDeploy.add(new Deployable(new SubArtifact(artifact, "*", "*.sha1",
-                sha1Path.toFile()), true));
-
             // Add signature as yet another artifact
             var sigPath = signResource(artifactFile);
             toDeploy.add(new Deployable(new SubArtifact(artifact, "*", "*.asc",
                 sigPath.toFile()), true));
-        } catch (NoSuchAlgorithmException | IOException | PGPException e) {
+        } catch (IOException | PGPException e) {
             throw new BuildException().from(this).cause(e);
         }
     }
@@ -410,18 +381,6 @@ public class MvnPublisher extends AbstractGenerator {
             base.resolveSibling(fileName);
         }
         return dir.resolve(fileName);
-    }
-
-    private static String toHex(byte[] bytes) {
-        char[] hexDigits = "0123456789abcdef".toCharArray();
-        char[] result = new char[bytes.length * 2];
-
-        for (int i = 0; i < bytes.length; i++) {
-            int unsigned = bytes[i] & 0xFF;
-            result[i * 2] = hexDigits[unsigned >>> 4];
-            result[i * 2 + 1] = hexDigits[unsigned & 0x0F];
-        }
-        return new String(result);
     }
 
     private void initSigning()
