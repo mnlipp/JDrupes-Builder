@@ -1,7 +1,6 @@
 package jdbld;
 
 import java.io.IOException;
-import java.net.URI;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
@@ -37,7 +36,6 @@ import org.jdrupes.builder.mvnrepo.JavadocJarBuilder;
 import static org.jdrupes.builder.mvnrepo.MvnProperties.GroupId;
 import static org.jdrupes.builder.mvnrepo.MvnProperties.ArtifactId;
 import org.jdrupes.builder.mvnrepo.MvnPublisher;
-import org.jdrupes.builder.mvnrepo.MvnPublishingDestination.PublicationType;
 import org.jdrupes.builder.mvnrepo.MvnRepoJarFile;
 import org.jdrupes.builder.mvnrepo.MvnRepoLookup;
 import org.jdrupes.builder.mvnrepo.PomFileGenerator;
@@ -138,10 +136,7 @@ public class Root extends AbstractRootProject {
         generator(JavadocJarBuilder::new);
 
         // Publish (deploy). Credentials and signing information is
-        // obtained through properties.
-//        generator(MvnPublisher::new).destination(PublicationType.SNAPSHOT,
-//            "sonatype", URI.create(
-//                "https://central.sonatype.com/repository/maven-snapshots/"));
+        // obtained through properties and/or settings.xml.
         generator(MvnPublisher::new);
 
         // Commands
