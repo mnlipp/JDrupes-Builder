@@ -89,8 +89,11 @@ public class MvnDeployDestination extends MvnPublishingDestination {
         var mvnContext = MvnRepoLookup.mavenContext();
         var session = new DefaultRepositorySystemSession(
             mvnContext.repositorySession());
-        session.setRepositoryListener(
-            new UploadListener(context, toDeploy.size()));
+        session.setRepositoryListener(new UploadListener(
+            context, mainArtifact.getGroupId() + ":"
+                + mainArtifact.getArtifactId()
+                + ":" + mainArtifact.getVersion(),
+            toDeploy.size()));
         var user = repositoryUser(context);
         var password = repositoryPassword(context);
         var repo = new RemoteRepository.Builder("deploy", "default",
@@ -111,22 +114,24 @@ public class MvnDeployDestination extends MvnPublishingDestination {
     private final class UploadListener extends AbstractRepositoryListener {
         private final AtomicBoolean startMsgLogged = new AtomicBoolean(false);
         private final AtomicInteger deployedCount = new AtomicInteger(0);
-        private final int artifacts;
+        private final String artifact;
         private final BuildContext context;
+        private final int artifacts;
 
         @SuppressWarnings("PMD.PublicMemberInNonPublicType")
-        public UploadListener(BuildContext context, int artifacts) {
+        public UploadListener(BuildContext context, String artifact,
+                int artifacts) {
             this.context = context;
+            this.artifact = artifact;
             this.artifacts = artifacts;
         }
 
         @Override
         public void artifactDeploying(RepositoryEvent event) {
             if (!startMsgLogged.getAndSet(true)) {
-                logger.atInfo()
-                    .log("Start deploying artifacts...");
+                logger.atInfo().log("Start deploying artifacts...");
                 context.statusLine().update(
-                    MvnDeployDestination.this + " starts deploying artifacts");
+                    "%s deploys to %s", this, repositoryUri);
             }
         }
 
@@ -146,6 +151,12 @@ public class MvnDeployDestination extends MvnPublishingDestination {
             context.statusLine().update("%s deployed %d/%d", this,
                 deployedCount.incrementAndGet(), artifacts);
         }
+
+        @Override
+        public String toString() {
+            return "Maven deployer for " + artifact;
+        }
+
     }
 
     @Override
