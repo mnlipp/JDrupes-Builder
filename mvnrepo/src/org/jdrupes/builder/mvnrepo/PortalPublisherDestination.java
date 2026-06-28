@@ -36,6 +36,7 @@ import java.net.http.HttpResponse;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.time.Duration;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.ExecutorService;
@@ -142,7 +143,8 @@ public class PortalPublisherDestination extends MvnPublishingDestination {
             throw new BuildException().from(publisher).cause(e);
         }
 
-        try (var client = HttpClient.newHttpClient()) {
+        try (var client = HttpClient.newBuilder()
+            .connectTimeout(Duration.ofMinutes(1)).build()) {
             var boundary = "===" + System.currentTimeMillis() + "===";
             var user = repositoryUser(context);
             var password = repositoryPassword(context);
@@ -154,6 +156,7 @@ public class PortalPublisherDestination extends MvnPublishingDestination {
                     uploadUri, "publishingType", "AUTOMATIC");
             }
             HttpRequest request = HttpRequest.newBuilder().uri(effectiveUri)
+                .timeout(Duration.ofMinutes(10))
                 .header("Authorization", "Bearer " + token)
                 .header("Content-Type",
                     "multipart/form-data; boundary=" + boundary)
