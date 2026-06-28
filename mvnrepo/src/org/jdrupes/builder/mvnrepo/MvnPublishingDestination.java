@@ -30,31 +30,22 @@ import org.jdrupes.builder.api.BuildContext;
 ///
 /// It provides common functionality for managing repository credentials,
 /// supporting fallbacks to build context properties and Maven's `settings.xml`,
-/// and defining which [PublicationType] (SNAPSHOT or RELEASE) the destination
+/// and defining which [MvnVersionType] (SNAPSHOT or RELEASE) the destination
 /// accepts.
 ///
 public abstract class MvnPublishingDestination {
 
     private static final FluentLogger logger = FluentLogger.forEnclosingClass();
-    private final Set<PublicationType> acceptedTypes;
+    private final Set<MvnVersionType> acceptedTypes;
     private String repoUser;
     private String repoPass;
     private String id;
-
-    /// The versions of artifacts that can be published to this destination.
-    ///
-    public enum PublicationType {
-        /// The snapshot type.
-        SNAPSHOT,
-        /// The release type.
-        RELEASE
-    }
 
     /// Initializes a new Maven publishing destination.
     ///
     /// @param publicationTypes the accepted publication types
     ///
-    public MvnPublishingDestination(PublicationType... publicationTypes) {
+    public MvnPublishingDestination(MvnVersionType... publicationTypes) {
         acceptedTypes = EnumSet.copyOf(Arrays.asList(publicationTypes));
     }
 
@@ -63,7 +54,7 @@ public abstract class MvnPublishingDestination {
     /// @param type the type
     /// @return true, if successful
     ///
-    public boolean accepts(PublicationType type) {
+    public boolean accepts(MvnVersionType type) {
         return acceptedTypes.contains(type);
     }
 

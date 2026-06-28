@@ -46,6 +46,7 @@ import org.jdrupes.builder.java.ClasspathScanner;
 import org.jdrupes.builder.java.JavaCompiler;
 import static org.jdrupes.builder.java.JavaTypes.*;
 import org.jdrupes.builder.mvnrepo.MvnRepoLookup;
+import org.jdrupes.builder.mvnrepo.MvnVersionType;
 
 /// An implementation of a [Launcher] that bootstraps the build.
 /// The [BootstrapProjectLauncher] uses the built-in [BootstrapRoot] and
@@ -124,7 +125,8 @@ public class BootstrapProjectLauncher extends AbstractLauncher {
         var mvnLookup = new MvnRepoLookup();
         Optional.ofNullable(jdbldProps
             .getProperty(BuildContext.EXTENSIONS_SNAPSHOT_REPOSITORY, null))
-            .map(URI::create).ifPresent(mvnLookup::snapshotRepository);
+            .map(URI::create).ifPresent(esr -> mvnLookup.addRepository(
+                "extensionSnapshots", esr, MvnVersionType.SNAPSHOT));
         var buildCoords = Arrays.asList(jdbldProps
             .getProperty(BuildContext.BUILD_EXTENSIONS, "").split(","))
             .stream().map(String::trim).filter(c -> !c.isBlank()).toList();

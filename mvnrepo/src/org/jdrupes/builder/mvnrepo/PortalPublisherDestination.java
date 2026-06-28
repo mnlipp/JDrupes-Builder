@@ -73,7 +73,7 @@ public class PortalPublisherDestination extends MvnPublishingDestination {
     ///
     @SuppressWarnings("PMD.ConstructorCallsOverridableMethod")
     public PortalPublisherDestination() {
-        super(PublicationType.RELEASE);
+        super(MvnVersionType.RELEASE);
         id("central");
     }
 

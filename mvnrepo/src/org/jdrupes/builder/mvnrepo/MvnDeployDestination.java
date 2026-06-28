@@ -52,10 +52,10 @@ public class MvnDeployDestination extends MvnPublishingDestination {
     ///
     /// @param publicationTypes the supported publication types
     ///
-    public MvnDeployDestination(PublicationType... publicationTypes) {
+    public MvnDeployDestination(MvnVersionType... publicationTypes) {
         super(publicationTypes);
         if (publicationTypes.length == 1
-            && publicationTypes[0] == PublicationType.SNAPSHOT) {
+            && publicationTypes[0] == MvnVersionType.SNAPSHOT) {
             repositoryUri = URI.create(
                 "https://central.sonatype.com/repository/maven-snapshots/");
         }

@@ -71,7 +71,6 @@ import static org.jdrupes.builder.java.JavaTypes.*;
 import org.jdrupes.builder.java.JavadocJarFile;
 import org.jdrupes.builder.java.LibraryJarFile;
 import org.jdrupes.builder.java.SourcesJarFile;
-import org.jdrupes.builder.mvnrepo.MvnPublishingDestination.PublicationType;
 import static org.jdrupes.builder.mvnrepo.MvnRepoTypes.*;
 
 /// A [Generator] for Maven deployments in response to requests for
@@ -141,7 +140,7 @@ public class MvnPublisher extends AbstractGenerator {
     /// @param uri the location
     /// @return the Maven publisher
     ///
-    public MvnPublisher destination(PublicationType type, String id, URI uri) {
+    public MvnPublisher destination(MvnVersionType type, String id, URI uri) {
         destinations.add(new MvnDeployDestination(type)
             .repositoryUri(Objects.requireNonNull(uri))
             .id(Objects.requireNonNull(id)));
@@ -230,7 +229,7 @@ public class MvnPublisher extends AbstractGenerator {
         if (requested.accepts(MvnPublicationType) && destinations.isEmpty()) {
             destination(new PortalPublisherDestination(),
                 new MvnDeployDestination(
-                    PublicationType.SNAPSHOT).id("central"));
+                    MvnVersionType.SNAPSHOT).id("central"));
         }
         PomFile pomResource = resourceCheck(project()
             .resources(of(PomFileType).using(Supply)), "POM file");
@@ -327,8 +326,8 @@ public class MvnPublisher extends AbstractGenerator {
             }
             destinations.stream().parallel().forEach(destination -> {
                 if (mainArtifact.isSnapshot()
-                    ? !destination.accepts(PublicationType.SNAPSHOT)
-                    : !destination.accepts(PublicationType.RELEASE)) {
+                    ? !destination.accepts(MvnVersionType.SNAPSHOT)
+                    : !destination.accepts(MvnVersionType.RELEASE)) {
                     return;
                 }
                 destination.publish(context(), this, mainArtifact,

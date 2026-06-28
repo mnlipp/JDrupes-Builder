@@ -27,9 +27,11 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.EnumSet;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.function.Function;
+import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import org.apache.maven.model.DependencyManagement;
@@ -40,7 +42,6 @@ import org.apache.maven.model.building.ModelBuildingException;
 import org.apache.maven.model.building.ModelBuildingRequest;
 import org.apache.maven.settings.Profile;
 import org.apache.maven.settings.Repository;
-import org.apache.maven.settings.Settings;
 import org.apache.maven.settings.building.DefaultSettingsBuilderFactory;
 import org.apache.maven.settings.building.DefaultSettingsBuildingRequest;
 import org.apache.maven.settings.building.SettingsBuilder;
@@ -98,17 +99,58 @@ public class MvnRepoLookup extends AbstractProvider {
 
     private static final FluentLogger logger = FluentLogger.forEnclosingClass();
     private static MavenContext mavenContext;
+    private final Set<String> useProfiles = new HashSet<>();
+    private final List<RemoteRepository> addedRepos = new ArrayList<>();
+    private List<RemoteRepository> mergedRepos;
     private final List<String> coordinates = new ArrayList<>();
     private final List<String> boms = new ArrayList<>();
     private boolean downloadSources = true;
     private boolean downloadJavadoc = true;
-    private URI snapshotUri;
     private boolean probeMode;
 
     /// Initializes a new Maven repository lookup.
     ///
     public MvnRepoLookup() {
         // Make javadoc happy.
+    }
+
+    /// Use repositories from the specified profiles in `settings.xml`
+    /// to resolve dependencies.
+    ///
+    /// @param profiles the profiles
+    /// @return the mvn repo lookup
+    ///
+    public MvnRepoLookup useProfiles(String... profiles) {
+        if (mavenContext != null) {
+            throw new IllegalStateException(
+                "Maven context is already created.");
+        }
+        useProfiles.addAll(Arrays.asList(profiles));
+        return this;
+    }
+
+    /// Add a repository that is to be used for the lookup.
+    ///
+    /// @param id the repository id
+    /// @param uri the repository uri
+    /// @param supported the supported version types
+    /// @return the mvn repo lookup
+    ///
+    public MvnRepoLookup addRepository(
+            String id, URI uri, MvnVersionType... supported) {
+        if (mavenContext != null) {
+            throw new IllegalStateException(
+                "Maven context is already created.");
+        }
+        var types = EnumSet.copyOf(Arrays.asList(supported));
+        var builder = new RemoteRepository.Builder(
+            id, "default", uri.toString())
+                .setReleasePolicy(new RepositoryPolicy(
+                    types.contains(MvnVersionType.RELEASE), null, null))
+                .setSnapshotPolicy(new RepositoryPolicy(
+                    types.contains(MvnVersionType.SNAPSHOT), null, null));
+        addedRepos.add(builder.build());
+        return this;
     }
 
     /// Returns the (singleton) Maven context.
@@ -153,54 +195,53 @@ public class MvnRepoLookup extends AbstractProvider {
             .build();
 
         // Combine
-        mavenContext = new MavenContext(settings, repoSystem, session,
-            remoteRepositories(settings));
+        mavenContext = new MavenContext(settings, repoSystem, session);
         return mavenContext;
     }
 
-    private static List<RemoteRepository>
-            remoteRepositories(Settings settings) {
-        List<RemoteRepository> repos = new ArrayList<>();
+    @SuppressWarnings("PMD.AvoidSynchronizedAtMethodLevel")
+    private synchronized List<RemoteRepository> remoteRepositories() {
+        if (mergedRepos != null) {
+            return mergedRepos;
+        }
 
-        Map<String, Profile> profiles = settings.getProfiles().stream()
-            .collect(Collectors.toMap(Profile::getId, Function.identity()));
-
+        // Add repositories from profiles
+        mergedRepos = new ArrayList<>(addedRepos);
+        var settings = mavenContext.settings();
+        Map<String, Profile> profiles = settings.getProfilesAsMap();
         for (String profileId : settings.getActiveProfiles()) {
             Profile profile = profiles.get(profileId);
-            if (profile == null) {
+            if (profile == null || !useProfiles.contains(profileId)) {
                 continue;
             }
             for (Repository repo : profile.getRepositories()) {
-                repos.add(new RemoteRepository.Builder(repo.getId(),
-                    "default", repo.getUrl()).build());
+                @SuppressWarnings("PMD.AvoidInstantiatingObjectsInLoops")
+                var builder = new RemoteRepository.Builder(repo.getId(),
+                    "default", repo.getUrl())
+                        .setReleasePolicy(new RepositoryPolicy(
+                            repo.getReleases() != null
+                                && repo.getReleases().isEnabled(),
+                            repo.getReleases().getUpdatePolicy(),
+                            repo.getReleases().getChecksumPolicy()))
+                        .setSnapshotPolicy(new RepositoryPolicy(
+                            repo.getSnapshots() != null
+                                && repo.getSnapshots().isEnabled(),
+                            repo.getSnapshots().getUpdatePolicy(),
+                            repo.getSnapshots().getChecksumPolicy()));
+                mergedRepos.add(builder.build());
             }
         }
 
-        if (repos.isEmpty()) {
-            repos.add(new RemoteRepository.Builder("central", "default",
-                "https://repo.maven.apache.org/maven2").build());
+        // Add central as fallback
+        if (mergedRepos.isEmpty()) {
+            mergedRepos.add(new RemoteRepository.Builder("central", "default",
+                "https://repo.maven.apache.org/maven2")
+                    .setSnapshotPolicy(new RepositoryPolicy(false,
+                        RepositoryPolicy.UPDATE_POLICY_NEVER,
+                        RepositoryPolicy.CHECKSUM_POLICY_IGNORE))
+                    .build());
         }
-
-        return repos;
-    }
-
-    /// Sets the Maven snapshot repository URI.
-    ///
-    /// @param uri the snapshot repository URI
-    /// @return the mvn repo lookup
-    ///
-    public MvnRepoLookup snapshotRepository(URI uri) {
-        this.snapshotUri = uri;
-        return this;
-    }
-
-    /// Returns the snapshot repository. Defaults to `null`
-    /// (none configured).
-    ///
-    /// @return the snapshot repository
-    ///
-    public URI snapshotRepository() {
-        return snapshotUri;
+        return mergedRepos;
     }
 
     /// Add a bill of materials. The coordinates are resolved as 
@@ -335,18 +376,15 @@ public class MvnRepoLookup extends AbstractProvider {
         @SuppressWarnings("PMD.CloseResource")
         var repoSystem = mavenContext().repositorySystem();
         var repoSession = mavenContext().repositorySession();
-        var repos = new ArrayList<>(mavenContext().remoteRepositories());
-        if (snapshotUri != null) {
-            repos.add(createSnapshotRepository());
-        }
+        var remoteRepositories = remoteRepositories();
 
         // Create one synthetic CollectRequest
         CollectRequest collectRequest
-            = new CollectRequest().setRepositories(repos);
+            = new CollectRequest().setRepositories(remoteRepositories);
 
         // Add dependencies via their effective model
         coordinates.stream().parallel().map(c -> depsFromEffectiveModel(
-            c, repoSystem, repoSession, repos)).forEach(deps -> {
+            c, repoSystem, repoSession, remoteRepositories)).forEach(deps -> {
                 // collectRequest::addDependency is not thread safe
                 synchronized (collectRequest) {
                     deps.forEach(collectRequest::addDependency);
@@ -370,25 +408,12 @@ public class MvnRepoLookup extends AbstractProvider {
         var result = (Collection<T>) dependencyNodes.stream()
             .filter(d -> d.getArtifact() != null)
             .map(DependencyNode::getArtifact)
-            .map(a -> extraDownloads(repoSystem, repoSession, repos, a))
+            .map(a -> extraDownloads(repoSystem, repoSession,
+                remoteRepositories, a))
             .map(a -> ResourceFactory.create(MvnRepoLibraryJarFileType,
                 a.toString(), a.getPath()))
             .toList();
         return result;
-    }
-
-    private RemoteRepository createSnapshotRepository() {
-        return new RemoteRepository.Builder(
-            "snapshots", "default", snapshotUri.toString())
-                .setSnapshotPolicy(new RepositoryPolicy(
-                    true,  // enable snapshots
-                    RepositoryPolicy.UPDATE_POLICY_ALWAYS,
-                    RepositoryPolicy.CHECKSUM_POLICY_WARN))
-                .setReleasePolicy(new RepositoryPolicy(
-                    false,
-                    RepositoryPolicy.UPDATE_POLICY_NEVER,
-                    RepositoryPolicy.CHECKSUM_POLICY_IGNORE))
-                .build();
     }
 
     private Stream<Dependency> depsFromEffectiveModel(

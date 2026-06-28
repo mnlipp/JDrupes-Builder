@@ -18,17 +18,11 @@
 
 package org.jdrupes.builder.mvnrepo;
 
-import org.apache.maven.settings.Settings;
-import org.eclipse.aether.RepositorySystem;
-import org.eclipse.aether.RepositorySystemSession;
-
-/// The Maven context information.
+/// The types of Maven versions.
 ///
-/// @param settings the settings
-/// @param repositorySystem the repository system
-/// @param repositorySession the repository session
-///
-public record MavenContext(Settings settings,
-        RepositorySystem repositorySystem,
-        RepositorySystemSession repositorySession) {
+public enum MvnVersionType {
+    /// The snapshot type.
+    SNAPSHOT,
+    /// The release type.
+    RELEASE
 }
