@@ -63,8 +63,8 @@ public class MvnDeployDestination extends MvnPublishingDestination {
 
     /// Sets the Maven repository URI.
     ///
-    /// @param uri the snapshot repository URI
-    /// @return the Maven publisher
+    /// @param uri the repository URI
+    /// @return this destination
     ///
     public MvnDeployDestination repositoryUri(URI uri) {
         this.repositoryUri = uri;
@@ -73,7 +73,7 @@ public class MvnDeployDestination extends MvnPublishingDestination {
 
     /// Returns the repository URI. Defaults to
     /// `https://central.sonatype.com/repository/maven-snapshots/` if
-    /// this deploy destination has been created with publication type
+    /// this destination was created specifically for publication type
     /// `SNAPSHOT`.
     ///
     /// @return the uri

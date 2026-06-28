@@ -78,7 +78,7 @@ public class PortalPublisherDestination extends MvnPublishingDestination {
 
     /// Publish the release automatically.
     ///
-    /// @return the mvn publisher
+    /// @return this destination
     ///
     public PortalPublisherDestination publishAutomatically() {
         publishAutomatically = true;
@@ -88,7 +88,7 @@ public class PortalPublisherDestination extends MvnPublishingDestination {
     /// Sets the upload URI.
     ///
     /// @param uri the repository URI
-    /// @return the Maven publisher
+    /// @return this destination
     ///
     public PortalPublisherDestination uploadUri(URI uri) {
         this.uploadUri = uri;

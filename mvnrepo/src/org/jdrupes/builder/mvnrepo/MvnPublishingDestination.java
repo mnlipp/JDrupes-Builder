@@ -70,7 +70,7 @@ public abstract class MvnPublishingDestination {
     /// Sets the id.
     ///
     /// @param id the new id
-    /// @return the Maven publisher
+    /// @return this destination
     ///
     @SuppressWarnings("PMD.ShortMethodName")
     public MvnPublishingDestination id(String id) {
@@ -92,7 +92,7 @@ public abstract class MvnPublishingDestination {
     ///
     /// @param user the user name
     /// @param pass the password
-    /// @return the Maven publication generator
+    /// @return this destination
     ///
     public MvnPublishingDestination credentials(String user, String pass) {
         logger.atConfig().log("Using explicitly set credentials for %s", this);
@@ -101,9 +101,9 @@ public abstract class MvnPublishingDestination {
         return this;
     }
 
-    /// Returns the repository user set by [credentials].
+    /// Returns the repository user set by [credentials] or a fallback.
     /// 
-    /// The uses the following fallback:
+    /// The fallback order is:
     /// 
     /// 1. Look for properties `mvnrepo.user` and `mvnrepo.password`
     ///    in the properties provided by the [BuildContext].
@@ -119,8 +119,8 @@ public abstract class MvnPublishingDestination {
         return repoUser;
     }
 
-    /// Returns the repository password set by [credentials] of the fallback,
-    /// see [repositoryUser].
+    /// Returns the repository password set by [credentials] or a fallback.
+    /// See [repositoryUser] for the fallback logic.
     ///
     /// @param context the context
     /// @return the password
