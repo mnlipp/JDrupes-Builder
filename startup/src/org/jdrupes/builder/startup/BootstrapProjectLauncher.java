@@ -45,6 +45,7 @@ import org.jdrupes.builder.core.ScopedValueContext;
 import org.jdrupes.builder.java.ClasspathScanner;
 import org.jdrupes.builder.java.JavaCompiler;
 import static org.jdrupes.builder.java.JavaTypes.*;
+import org.jdrupes.builder.mvnrepo.MavenContext;
 import org.jdrupes.builder.mvnrepo.MvnRepoLookup;
 import org.jdrupes.builder.mvnrepo.MvnVersionType;
 
@@ -122,7 +123,8 @@ public class BootstrapProjectLauncher extends AbstractLauncher {
 
     private URL[] buildProjectClasses(RootProject rootProject) {
         // Add build extensions to the build project.
-        var mvnLookup = new MvnRepoLookup();
+        var mvnLookup
+            = new MvnRepoLookup().addRepository(MavenContext.mavenCentral());
         Optional.ofNullable(jdbldProps
             .getProperty(BuildContext.EXTENSIONS_SNAPSHOT_REPOSITORY, null))
             .map(URI::create).ifPresent(esr -> mvnLookup.addRepository(

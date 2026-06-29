@@ -86,9 +86,8 @@ public class MvnDeployDestination extends MvnPublishingDestination {
     /* default */void publish(BuildContext context, MvnPublisher publisher,
             Artifact mainArtifact, List<Artifact> toDeploy) {
         // Now deploy everything
-        var mvnContext = MvnRepoLookup.mavenContext();
         var session = new DefaultRepositorySystemSession(
-            mvnContext.repositorySession());
+            MavenContext.repositorySession());
         session.setRepositoryListener(new UploadListener(
             context, mainArtifact.getGroupId() + ":"
                 + mainArtifact.getArtifactId()
@@ -104,7 +103,7 @@ public class MvnDeployDestination extends MvnPublishingDestination {
         var deployReq = new DeployRequest().setRepository(repo);
         toDeploy.stream().forEach(deployReq::addArtifact);
         try {
-            mvnContext.repositorySystem().deploy(session, deployReq);
+            MavenContext.repositorySystem().deploy(session, deployReq);
         } catch (DeploymentException e) {
             throw new BuildException().from(publisher).cause(e);
         }

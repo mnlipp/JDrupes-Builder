@@ -138,15 +138,12 @@ public abstract class MvnPublishingDestination {
         }
 
         // Try settings
-        if (id != null
-            && MvnRepoLookup.mavenContext().settings().getServers().stream()
-                .filter(s -> id.equals(s.getId())).findFirst().map(s -> {
-                    logger.atConfig().log(
-                        "Using credentials from settings for %s", this);
-                    repoUser = s.getUsername();
-                    repoPass = s.getPassword();
-                    return true;
-                }).orElse(false)) {
+        if (id != null && MavenContext.lookupCredentials(id, (u, p) -> {
+            logger.atConfig().log(
+                "Using credentials from settings for %s", this);
+            repoUser = u;
+            repoPass = p;
+        })) {
             return;
         }
 

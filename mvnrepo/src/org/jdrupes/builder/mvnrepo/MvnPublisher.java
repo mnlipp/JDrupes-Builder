@@ -442,13 +442,12 @@ public class MvnPublisher extends AbstractGenerator {
     }
 
     private void install(List<Deployable> toDeploy) {
-        var context = MvnRepoLookup.mavenContext();
         var session = new DefaultRepositorySystemSession(
-            context.repositorySession());
+            MavenContext.repositorySession());
         var installReq = new InstallRequest();
         toDeploy.stream().map(d -> d.artifact).forEach(installReq::addArtifact);
         try {
-            context.repositorySystem().install(session, installReq);
+            MavenContext.repositorySystem().install(session, installReq);
         } catch (InstallationException e) {
             throw new BuildException().from(this).cause(e);
         }

@@ -20,18 +20,13 @@ package org.jdrupes.builder.mvnrepo;
 
 import com.google.common.flogger.FluentLogger;
 import static com.google.common.flogger.LazyArgs.lazy;
-import java.io.File;
 import java.net.URI;
-import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.EnumSet;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Map;
-import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import org.apache.maven.model.DependencyManagement;
@@ -40,14 +35,6 @@ import org.apache.maven.model.building.DefaultModelBuilderFactory;
 import org.apache.maven.model.building.DefaultModelBuildingRequest;
 import org.apache.maven.model.building.ModelBuildingException;
 import org.apache.maven.model.building.ModelBuildingRequest;
-import org.apache.maven.settings.Profile;
-import org.apache.maven.settings.Repository;
-import org.apache.maven.settings.building.DefaultSettingsBuilderFactory;
-import org.apache.maven.settings.building.DefaultSettingsBuildingRequest;
-import org.apache.maven.settings.building.SettingsBuilder;
-import org.apache.maven.settings.building.SettingsBuildingException;
-import org.apache.maven.settings.building.SettingsBuildingRequest;
-import org.apache.maven.settings.building.SettingsBuildingResult;
 import org.eclipse.aether.RepositorySystem;
 import org.eclipse.aether.RepositorySystemSession;
 import org.eclipse.aether.artifact.Artifact;
@@ -55,15 +42,11 @@ import org.eclipse.aether.collection.CollectRequest;
 import org.eclipse.aether.graph.Dependency;
 import org.eclipse.aether.graph.DependencyNode;
 import org.eclipse.aether.repository.RemoteRepository;
-import org.eclipse.aether.repository.RepositoryPolicy;
 import org.eclipse.aether.resolution.ArtifactRequest;
 import org.eclipse.aether.resolution.ArtifactResolutionException;
 import org.eclipse.aether.resolution.DependencyRequest;
 import org.eclipse.aether.resolution.DependencyResolutionException;
-import org.eclipse.aether.supplier.RepositorySystemSupplier;
-import org.eclipse.aether.supplier.SessionBuilderSupplier;
 import org.eclipse.aether.util.artifact.SubArtifact;
-import org.eclipse.aether.util.graph.transformer.ConfigurableVersionSelector;
 import org.eclipse.aether.util.graph.visitor.PreorderDependencyNodeConsumerVisitor;
 import org.jdrupes.builder.api.BuildException;
 import org.jdrupes.builder.api.Resource;
@@ -82,9 +65,14 @@ import static org.jdrupes.builder.mvnrepo.MvnRepoTypes.*;
 ///  2. The resources of type [MvnRepoLibraryJarFile] that result from
 ///     resolving the artifacts to be resolved.
 ///
+/// The repositories used are those configured for all instances of this
+/// provider by [MavenContext] and the repositories added with
+/// [addRepository]. Should there be no repositories configured, the
+/// Maven Central repository will be added automatically.
+/// 
 /// Resolving is performed using Maven Resolver (formerly Eclipse Aether)
-/// version 2.x. Dependencies are collected from the specified artifacts
-/// after evaluating their effective Maven models, including any imported
+/// version 2.x. Dependencies are collected from the specified artifacts after
+/// evaluating their effective Maven models, including any imported
 /// BOMs. Version conflicts are resolved using a "highest wins"
 /// strategy, i.e. the highest version of a dependency encountered in the
 /// dependency graph is selected. Note that this differs from Maven's
@@ -93,15 +81,13 @@ import static org.jdrupes.builder.mvnrepo.MvnRepoTypes.*;
 /// Results of the dependency resolution are written to the log with
 /// log level FINE.
 /// 
-@SuppressWarnings({ "PMD.CouplingBetweenObjects", "PMD.ExcessiveImports",
-    "PMD.GodClass" })
+@SuppressWarnings("PMD.CouplingBetweenObjects")
 public class MvnRepoLookup extends AbstractProvider {
 
     private static final FluentLogger logger = FluentLogger.forEnclosingClass();
-    private static MavenContext mavenContext;
-    private final Set<String> useProfiles = new HashSet<>();
     private final List<RemoteRepository> addedRepos = new ArrayList<>();
-    private List<RemoteRepository> mergedRepos;
+    @SuppressWarnings("PMD.AvoidUsingVolatile")
+    private volatile List<RemoteRepository> mergedRepos;
     private final List<String> coordinates = new ArrayList<>();
     private final List<String> boms = new ArrayList<>();
     private boolean downloadSources = true;
@@ -114,19 +100,15 @@ public class MvnRepoLookup extends AbstractProvider {
         // Make javadoc happy.
     }
 
-    /// Use repositories from the specified profiles in `settings.xml`
-    /// to resolve dependencies.
+    /// Add a repository that is to be used for the lookup.
     ///
-    /// @param profiles the profiles
+    /// @param repository the repository
     /// @return the mvn repo lookup
     ///
-    public MvnRepoLookup useProfiles(String... profiles) {
-        if (mavenContext != null) {
-            throw new IllegalStateException(
-                "Maven context is already created.");
-        }
-        useProfiles.addAll(Arrays.asList(profiles));
+    public MvnRepoLookup addRepository(RemoteRepository repository) {
+        addedRepos.add(repository);
         return this;
+
     }
 
     /// Add a repository that is to be used for the lookup.
@@ -138,110 +120,37 @@ public class MvnRepoLookup extends AbstractProvider {
     ///
     public MvnRepoLookup addRepository(
             String id, URI uri, MvnVersionType... supported) {
-        if (mavenContext != null) {
-            throw new IllegalStateException(
-                "Maven context is already created.");
-        }
         var types = EnumSet.copyOf(Arrays.asList(supported));
         var builder = new RemoteRepository.Builder(
             id, "default", uri.toString())
-                .setReleasePolicy(new RepositoryPolicy(
-                    types.contains(MvnVersionType.RELEASE), null, null))
-                .setSnapshotPolicy(new RepositoryPolicy(
-                    types.contains(MvnVersionType.SNAPSHOT), null, null));
+                .setReleasePolicy(
+                    MavenContext.createPolicy(MvnVersionType.RELEASE,
+                        types.contains(MvnVersionType.RELEASE), null, null))
+                .setSnapshotPolicy(
+                    MavenContext.createPolicy(MvnVersionType.SNAPSHOT,
+                        types.contains(MvnVersionType.SNAPSHOT), null, null));
         addedRepos.add(builder.build());
         return this;
     }
 
-    /// Returns the (singleton) Maven context.
-    ///
-    /// @return the Maven context
-    ///
-    @SuppressWarnings("PMD.AvoidSynchronizedAtMethodLevel")
-    public static synchronized MavenContext mavenContext() {
-        if (mavenContext != null) {
-            return mavenContext;
-        }
-
-        // Settings
-        SettingsBuildingRequest settingsRequest
-            = new DefaultSettingsBuildingRequest()
-                .setUserSettingsFile(new File(System.getProperty("user.home"),
-                    ".m2/settings.xml"));
-        SettingsBuilder settingsBuilder
-            = new DefaultSettingsBuilderFactory().newInstance();
-        SettingsBuildingResult settingsResult;
-        try {
-            settingsResult = settingsBuilder.build(settingsRequest);
-        } catch (SettingsBuildingException e) {
-            throw new BuildException().cause(e);
-        }
-        var settings = settingsResult.getEffectiveSettings();
-
-        // Repository system
-        @SuppressWarnings("PMD.CloseResource")
-        var repoSystem = new RepositorySystemSupplier().get();
-
-        // Repository system session
-        String localRepoPath = settings.getLocalRepository() != null
-            ? settings.getLocalRepository()
-            : System.getProperty("user.home") + "/.m2/repository";
-        @SuppressWarnings("PMD.CloseResource")
-        var session = new SessionBuilderSupplier(repoSystem).get()
-            .withLocalRepositoryBaseDirectories(Path.of(localRepoPath))
-            .setConfigProperty(
-                ConfigurableVersionSelector.CONFIG_PROP_SELECTION_STRATEGY,
-                ConfigurableVersionSelector.HIGHEST_SELECTION_STRATEGY)
-            .build();
-
-        // Combine
-        mavenContext = new MavenContext(settings, repoSystem, session);
-        return mavenContext;
-    }
-
-    @SuppressWarnings("PMD.AvoidSynchronizedAtMethodLevel")
-    private synchronized List<RemoteRepository> remoteRepositories() {
+    @SuppressWarnings({ "PMD.AvoidSynchronizedStatement" })
+    private List<RemoteRepository> remoteRepositories() {
         if (mergedRepos != null) {
             return mergedRepos;
         }
-
-        // Add repositories from profiles
-        mergedRepos = new ArrayList<>(addedRepos);
-        var settings = mavenContext.settings();
-        Map<String, Profile> profiles = settings.getProfilesAsMap();
-        for (String profileId : settings.getActiveProfiles()) {
-            Profile profile = profiles.get(profileId);
-            if (profile == null || !useProfiles.contains(profileId)) {
-                continue;
+        synchronized (this) {
+            if (mergedRepos != null) {
+                return mergedRepos;
             }
-            for (Repository repo : profile.getRepositories()) {
-                @SuppressWarnings("PMD.AvoidInstantiatingObjectsInLoops")
-                var builder = new RemoteRepository.Builder(repo.getId(),
-                    "default", repo.getUrl())
-                        .setReleasePolicy(new RepositoryPolicy(
-                            repo.getReleases() != null
-                                && repo.getReleases().isEnabled(),
-                            repo.getReleases().getUpdatePolicy(),
-                            repo.getReleases().getChecksumPolicy()))
-                        .setSnapshotPolicy(new RepositoryPolicy(
-                            repo.getSnapshots() != null
-                                && repo.getSnapshots().isEnabled(),
-                            repo.getSnapshots().getUpdatePolicy(),
-                            repo.getSnapshots().getChecksumPolicy()));
-                mergedRepos.add(builder.build());
+            List<RemoteRepository> repos
+                = new ArrayList<>(MavenContext.remoteRepositories());
+            repos.addAll(addedRepos);
+            if (repos.isEmpty()) {
+                repos.add(MavenContext.mavenCentral());
             }
+            mergedRepos = repos;
+            return mergedRepos;
         }
-
-        // Add central as fallback
-        if (mergedRepos.isEmpty()) {
-            mergedRepos.add(new RemoteRepository.Builder("central", "default",
-                "https://repo.maven.apache.org/maven2")
-                    .setSnapshotPolicy(new RepositoryPolicy(false,
-                        RepositoryPolicy.UPDATE_POLICY_NEVER,
-                        RepositoryPolicy.CHECKSUM_POLICY_IGNORE))
-                    .build());
-        }
-        return mergedRepos;
     }
 
     /// Add a bill of materials. The coordinates are resolved as 
@@ -374,8 +283,8 @@ public class MvnRepoLookup extends AbstractProvider {
     private <T extends Resource> Collection<T> provideJars()
             throws DependencyResolutionException, ModelBuildingException {
         @SuppressWarnings("PMD.CloseResource")
-        var repoSystem = mavenContext().repositorySystem();
-        var repoSession = mavenContext().repositorySession();
+        var repoSystem = MavenContext.repositorySystem();
+        var repoSession = MavenContext.repositorySession();
         var remoteRepositories = remoteRepositories();
 
         // Create one synthetic CollectRequest
