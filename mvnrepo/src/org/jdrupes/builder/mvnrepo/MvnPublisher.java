@@ -27,6 +27,8 @@ import java.io.OutputStream;
 import java.net.URI;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 import java.security.Security;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -287,7 +289,8 @@ public class MvnPublisher extends AbstractGenerator {
         return result;
     }
 
-    private record Deployable(Artifact artifact, boolean temporary) {
+    private record Deployable(Artifact artifact, boolean isCheckum,
+            boolean temporary) {
     }
 
     @SuppressWarnings("PMD.AvoidDuplicateLiterals")
@@ -304,17 +307,20 @@ public class MvnPublisher extends AbstractGenerator {
             artifactDirectory().toFile().mkdirs();
         }
         List<Deployable> toDeploy = new ArrayList<>();
+        var needChecksums = destinations.stream()
+            .filter(MvnPublishingDestination::requiresChecksumArtifacts)
+            .findAny().isPresent();
         addWithGenerated(toDeploy, new SubArtifact(mainArtifact, "", "pom",
-            pomResource.path().toFile()));
+            pomResource.path().toFile()), needChecksums);
         addWithGenerated(toDeploy, new SubArtifact(mainArtifact, "", "jar",
-            jarResource.path().toFile()));
+            jarResource.path().toFile()), needChecksums);
         if (srcsJar != null) {
             addWithGenerated(toDeploy, new SubArtifact(mainArtifact, "sources",
-                "jar", srcsJar.path().toFile()));
+                "jar", srcsJar.path().toFile()), needChecksums);
         }
         if (javadocJar != null) {
             addWithGenerated(toDeploy, new SubArtifact(mainArtifact, "javadoc",
-                "jar", javadocJar.path().toFile()));
+                "jar", javadocJar.path().toFile()), needChecksums);
         }
 
         try {
@@ -330,8 +336,10 @@ public class MvnPublisher extends AbstractGenerator {
                     : !destination.accepts(MvnVersionType.RELEASE)) {
                     return;
                 }
-                destination.publish(context(), this, mainArtifact,
-                    toDeploy.stream().map(d -> d.artifact).toList());
+                var artifacts = toDeploy.stream().filter(d -> !d.isCheckum()
+                    || destination.requiresChecksumArtifacts())
+                    .map(d -> d.artifact).toList();
+                destination.publish(context(), this, mainArtifact, artifacts);
             });
             return List.of(MvnPublication.of(String.format("%s:%s:%s",
                 mainArtifact.getGroupId(), mainArtifact.getArtifactId(),
@@ -358,20 +366,57 @@ public class MvnPublisher extends AbstractGenerator {
     }
 
     private void addWithGenerated(List<Deployable> toDeploy,
-            Artifact artifact) {
+            Artifact artifact, boolean withChecksums) {
         // Add main artifact
-        toDeploy.add(new Deployable(artifact, false));
+        toDeploy.add(new Deployable(artifact, false, false));
 
         // Generate .md5 and .sha1 checksum files
-        var artifactFile = artifact.getPath();
         try {
+            if (withChecksums) {
+                generateChecksums(toDeploy, artifact);
+            }
+
             // Add signature as yet another artifact
-            var sigPath = signResource(artifactFile);
+            var sigPath = signResource(artifact.getPath());
             toDeploy.add(new Deployable(new SubArtifact(artifact, "*", "*.asc",
-                sigPath.toFile()), true));
-        } catch (IOException | PGPException e) {
+                sigPath.toFile()), false, true));
+        } catch (NoSuchAlgorithmException | IOException | PGPException e) {
             throw new BuildException().from(this).cause(e);
         }
+    }
+
+    private void generateChecksums(List<Deployable> toDeploy, Artifact artifact)
+            throws NoSuchAlgorithmException, IOException {
+        var artifactFile = artifact.getPath();
+        MessageDigest md5 = MessageDigest.getInstance("MD5");
+        MessageDigest sha1 = MessageDigest.getInstance("SHA-1");
+        try (var fis = Files.newInputStream(artifactFile)) {
+            byte[] buffer = new byte[8192];
+            while (true) {
+                int read = fis.read(buffer);
+                if (read < 0) {
+                    break;
+                }
+                md5.update(buffer, 0, read);
+                sha1.update(buffer, 0, read);
+            }
+        }
+        var fileName = artifactFile.getFileName().toString();
+
+        // Handle generated md5
+        var md5Path = destinationPath(artifactFile, fileName + ".md5");
+        Files.writeString(md5Path, toHex(md5.digest()));
+        toDeploy
+            .add(new Deployable(new SubArtifact(artifact, "*", "*.md5",
+                md5Path.toFile()), true, true));
+
+        // Handle generated sha1
+        var sha1Path
+            = destinationPath(artifactFile, fileName + ".sha1");
+        Files.writeString(sha1Path, toHex(sha1.digest()));
+        toDeploy
+            .add(new Deployable(new SubArtifact(artifact, "*", "*.sha1",
+                sha1Path.toFile()), true, true));
     }
 
     private Path destinationPath(Path base, String fileName) {
@@ -380,6 +425,18 @@ public class MvnPublisher extends AbstractGenerator {
             base.resolveSibling(fileName);
         }
         return dir.resolve(fileName);
+    }
+
+    private static String toHex(byte[] bytes) {
+        char[] hexDigits = "0123456789abcdef".toCharArray();
+        char[] result = new char[bytes.length * 2];
+
+        for (int i = 0; i < bytes.length; i++) {
+            int unsigned = bytes[i] & 0xFF;
+            result[i * 2] = hexDigits[unsigned >>> 4];
+            result[i * 2 + 1] = hexDigits[unsigned & 0x0F];
+        }
+        return new String(result);
     }
 
     private void initSigning()

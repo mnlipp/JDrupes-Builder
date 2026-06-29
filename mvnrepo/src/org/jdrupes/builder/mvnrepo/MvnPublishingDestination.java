@@ -58,6 +58,15 @@ public abstract class MvnPublishingDestination {
         return acceptedTypes.contains(type);
     }
 
+    /// Returns if this destination requires checksum artifacts to
+    /// be passed to [publish].
+    ///
+    /// @return true, if successful
+    ///
+    public boolean requiresChecksumArtifacts() {
+        return false;
+    }
+
     /// Sets the id.
     ///
     /// @param id the new id

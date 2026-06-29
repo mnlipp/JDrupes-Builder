@@ -77,6 +77,11 @@ public class PortalPublisherDestination extends MvnPublishingDestination {
         id("central");
     }
 
+    @Override
+    public boolean requiresChecksumArtifacts() {
+        return true;
+    }
+
     /// Publish the release automatically.
     ///
     /// @return this destination
