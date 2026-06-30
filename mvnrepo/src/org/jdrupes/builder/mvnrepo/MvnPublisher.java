@@ -330,6 +330,8 @@ public class MvnPublisher extends AbstractGenerator {
                     mainArtifact.getGroupId(), mainArtifact.getArtifactId(),
                     mainArtifact.getVersion())));
             }
+            @SuppressWarnings("PMD.CloseResource")
+            var context = context();
             destinations.stream().parallel().forEach(destination -> {
                 if (mainArtifact.isSnapshot()
                     ? !destination.accepts(MvnVersionType.SNAPSHOT)
@@ -339,7 +341,7 @@ public class MvnPublisher extends AbstractGenerator {
                 var artifacts = toDeploy.stream().filter(d -> !d.isCheckum()
                     || destination.requiresChecksumArtifacts())
                     .map(d -> d.artifact).toList();
-                destination.publish(context(), this, mainArtifact, artifacts);
+                destination.publish(context, this, mainArtifact, artifacts);
             });
             return List.of(MvnPublication.of(String.format("%s:%s:%s",
                 mainArtifact.getGroupId(), mainArtifact.getArtifactId(),
