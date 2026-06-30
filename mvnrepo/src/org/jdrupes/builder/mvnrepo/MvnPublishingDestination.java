@@ -27,11 +27,23 @@ import org.eclipse.aether.artifact.Artifact;
 import org.jdrupes.builder.api.BuildContext;
 
 /// The base class for all Maven publishing destinations.
+/// It provides common functionality for managing a destination's accepted
+/// version types (SNAPSHOT, RELEASE) and for managing repository credentials.
+/// 
+/// Credentials for the destination are resolved using the following 
+/// order of precedence:
 ///
-/// It provides common functionality for managing repository credentials,
-/// supporting fallbacks to build context properties and Maven's `settings.xml`,
-/// and defining which [MvnVersionType] (SNAPSHOT or RELEASE) the destination
-/// accepts.
+/// 1. Explicitly set credentials: Values provided via the [credentials] 
+///    method take the highest priority.
+/// 2. Build context properties: If no explicit credentials are set, the 
+///    publisher looks for `mvnrepo.user` and `mvnrepo.password` within 
+///    the [BuildContext].
+/// 3. Maven `settings.xml`: If an ID is configured for the destination, 
+///    the publisher searches the `servers` section of the Maven 
+///    `settings.xml` for a server matching that ID.
+/// 4. Fallback: If no credentials are found in any of the above sources, 
+///    empty strings are used, which typically results in an anonymous 
+///    upload attempt.
 ///
 public abstract class MvnPublishingDestination {
 
