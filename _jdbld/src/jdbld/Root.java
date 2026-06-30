@@ -33,12 +33,15 @@ import static org.jdrupes.builder.java.JavaTypes.*;
 import org.jdrupes.builder.java.Javadoc;
 import org.jdrupes.builder.junit.JUnitTestRunner;
 import org.jdrupes.builder.mvnrepo.JavadocJarBuilder;
-import static org.jdrupes.builder.mvnrepo.MvnProperties.GroupId;
-import static org.jdrupes.builder.mvnrepo.MvnProperties.ArtifactId;
+import org.jdrupes.builder.mvnrepo.MvnDeployDestination;
+import static org.jdrupes.builder.mvnrepo.MvnProperties.*;
 import org.jdrupes.builder.mvnrepo.MvnPublisher;
+import org.jdrupes.builder.mvnrepo.MvnPublishingDestination;
 import org.jdrupes.builder.mvnrepo.MvnRepoJarFile;
 import org.jdrupes.builder.mvnrepo.MvnRepoLookup;
+import org.jdrupes.builder.mvnrepo.MvnVersionType;
 import org.jdrupes.builder.mvnrepo.PomFileGenerator;
+import org.jdrupes.builder.mvnrepo.PortalPublisherDestination;
 import org.jdrupes.builder.mvnrepo.SourcesJarBuilder;
 import static org.jdrupes.builder.mvnrepo.MvnRepoTypes.*;
 import org.jdrupes.builder.vscode.VscodeConfiguration;
@@ -63,6 +66,20 @@ public class Root extends AbstractRootProject {
         super(name("JDrupes-Builder"));
         set(GroupId, "org.jdrupes");
         set(ArtifactId, "jdrupes-builder");
+        set(PublishingDestinations, new MvnPublishingDestination[] {
+            new PortalPublisherDestination(),
+            new MvnDeployDestination(MvnVersionType.SNAPSHOT).id("central")
+//            new MvnDeployDestination(
+//                MvnVersionType.SNAPSHOT, MvnVersionType.RELEASE)
+//                    .repositoryUri(URI.create(
+//                        "https://maven.pkg.github.com/mnlipp/jdrupes-builder"))
+//                    .id("github")
+//            new MvnDeployDestination(
+//                MvnVersionType.SNAPSHOT, MvnVersionType.RELEASE)
+//                    .repositoryUri(URI.create(
+//                        "https://forgejo.mnl.de/api/packages/mnl/maven"))
+//                    .id("forgejo")
+        });
 
         dependency(Expose, project(Api.class));
         dependency(Expose, project(Core.class));
@@ -137,7 +154,7 @@ public class Root extends AbstractRootProject {
 
         // Publish (deploy). Credentials and signing information is
         // obtained through properties and/or settings.xml.
-        generator(MvnPublisher::new);
+        generator(MvnPublisher::new).destination(get(PublishingDestinations));
 
         // Commands
         commandAlias("build").resources(of(LibraryJarFileType)

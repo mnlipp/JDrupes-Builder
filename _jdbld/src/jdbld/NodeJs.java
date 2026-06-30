@@ -3,6 +3,7 @@ package jdbld;
 import static org.jdrupes.builder.api.Intent.*;
 import static org.jdrupes.builder.api.CoreProperties.*;
 import static org.jdrupes.builder.mvnrepo.MvnProperties.GroupId;
+import static org.jdrupes.builder.mvnrepo.MvnProperties.PublishingDestinations;
 import static org.jdrupes.builder.mvnrepo.MvnProperties.ArtifactId;
 import static org.jdrupes.builder.mvnrepo.MvnRepoTypes.*;
 import java.nio.file.Path;
@@ -37,7 +38,7 @@ public class NodeJs extends AbstractProject
             resources(of(JavaSourceTreeType).using(Supply, Expose)));
         generator(Javadoc::new).options("-quiet");
         generator(JavadocJarBuilder::new);
-        generator(MvnPublisher::new);
+        generator(MvnPublisher::new).destination(get(PublishingDestinations));
     }
 
 }
