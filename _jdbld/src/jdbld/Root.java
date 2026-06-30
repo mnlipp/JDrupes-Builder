@@ -154,7 +154,7 @@ public class Root extends AbstractRootProject {
 
         // Publish (deploy). Credentials and signing information is
         // obtained through properties and/or settings.xml.
-        generator(MvnPublisher::new).destination(get(PublishingDestinations));
+        generator(MvnPublisher::new).destinations(get(PublishingDestinations));
 
         // Commands
         commandAlias("build").resources(of(LibraryJarFileType)

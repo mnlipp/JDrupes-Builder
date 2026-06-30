@@ -38,7 +38,7 @@ public class NodeJs extends AbstractProject
             resources(of(JavaSourceTreeType).using(Supply, Expose)));
         generator(Javadoc::new).options("-quiet");
         generator(JavadocJarBuilder::new);
-        generator(MvnPublisher::new).destination(get(PublishingDestinations));
+        generator(MvnPublisher::new).destinations(get(PublishingDestinations));
     }
 
 }

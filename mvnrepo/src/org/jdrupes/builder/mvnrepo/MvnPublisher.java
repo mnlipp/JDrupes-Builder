@@ -127,11 +127,11 @@ public class MvnPublisher extends AbstractGenerator {
 
     /// Adds the given publishing destinations.
     ///
-    /// @param destination the destinations
+    /// @param destinations the destinations
     /// @return the Maven publisher
     ///
-    public MvnPublisher destination(MvnPublishingDestination... destination) {
-        this.destinations.addAll(Arrays.asList(destination));
+    public MvnPublisher destinations(MvnPublishingDestination... destinations) {
+        this.destinations.addAll(Arrays.asList(destinations));
         return this;
     }
 
@@ -231,7 +231,7 @@ public class MvnPublisher extends AbstractGenerator {
             return Collections.emptyList();
         }
         if (requested.accepts(MvnPublicationType) && destinations.isEmpty()) {
-            destination(new PortalPublisherDestination(),
+            destinations(new PortalPublisherDestination(),
                 new MvnDeployDestination(
                     MvnVersionType.SNAPSHOT).id("central"));
         }
