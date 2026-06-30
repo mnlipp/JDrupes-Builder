@@ -137,13 +137,15 @@ public class MvnPublisher extends AbstractGenerator {
 
     /// Create and add a [MvnPublishingDestination] from the given arguments.
     ///
-    /// @param type the type
-    /// @param id the id
+    /// @param id the id. May be used to lookup credentials, see 
+    ///    [MvnPublishingDestination]
     /// @param uri the location
+    /// @param types the supported version types
     /// @return the Maven publisher
     ///
-    public MvnPublisher destination(MvnVersionType type, String id, URI uri) {
-        destinations.add(new MvnDeployDestination(type)
+    public MvnPublisher destination(String id, URI uri,
+            MvnVersionType... types) {
+        destinations.add(new MvnDeployDestination(types)
             .repositoryUri(Objects.requireNonNull(uri))
             .id(Objects.requireNonNull(id)));
         return this;
