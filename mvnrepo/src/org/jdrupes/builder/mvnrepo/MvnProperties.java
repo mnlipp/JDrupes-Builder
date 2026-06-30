@@ -34,6 +34,16 @@ public final class MvnProperties {
     public static final PropertyKey<String> ArtifactId
         = new PropertyKey<>(String.class);
 
+    /// A key that can be used for centralized management of
+    /// [MvnPublishingDestination]s. The pattern is to set the
+    /// value of this property in the root project and then use
+    /// `generator(MvnPublisher::new).destination(get(PublishingDestinations));`
+    /// in each project when adding a [MvnPublisher].
+    @SuppressWarnings("PMD.FieldNamingConventions")
+    public static final PropertyKey<
+            MvnPublishingDestination[]> PublishingDestinations
+                = new PropertyKey<>(MvnPublishingDestination[].class);
+
     private MvnProperties() {
     }
 }
