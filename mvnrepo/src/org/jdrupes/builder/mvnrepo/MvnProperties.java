@@ -18,14 +18,17 @@
 
 package org.jdrupes.builder.mvnrepo;
 
+import org.eclipse.aether.repository.RemoteRepository;
 import org.jdrupes.builder.api.PropertyKey;
 
 /// Additional properties used with maven repositories.
 ///
+@SuppressWarnings("PMD.DataClass")
 public final class MvnProperties {
 
     /// The group that the project's artifacts belong to. Defaults to `null`.
-    @SuppressWarnings("PMD.FieldNamingConventions")
+    @SuppressWarnings({ "PMD.FieldNamingConventions",
+        "PMD.AvoidDuplicateLiterals" })
     public static final PropertyKey<String> GroupId
         = new PropertyKey<>(String.class);
 
@@ -33,6 +36,16 @@ public final class MvnProperties {
     @SuppressWarnings("PMD.FieldNamingConventions")
     public static final PropertyKey<String> ArtifactId
         = new PropertyKey<>(String.class);
+
+    /// A key that can be used for centralized management of
+    /// repositories for [MvnRepoLookup]s. The pattern is to set the
+    /// value of this property in the root project and then use
+    /// `new MvnRepoLookup().addRepositories(get(LookupRepositories));`
+    /// wherever an instance of [MvnRepoLookup] is required.
+    @SuppressWarnings("PMD.FieldNamingConventions")
+    public static final PropertyKey<
+            RemoteRepository[]> LookupRepositories
+                = new PropertyKey<>(RemoteRepository[].class);
 
     /// A key that can be used for centralized management of
     /// [MvnPublishingDestination]s. The pattern is to set the

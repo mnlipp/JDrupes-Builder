@@ -65,10 +65,9 @@ import static org.jdrupes.builder.mvnrepo.MvnRepoTypes.*;
 ///  2. The resources of type [MvnRepoLibraryJarFile] that result from
 ///     resolving the artifacts to be resolved.
 ///
-/// The repositories used are those configured for all instances of this
-/// provider by [MavenContext] and the repositories added with
-/// [addRepository]. Should there be no repositories configured, the
-/// Maven Central repository will be added automatically.
+/// The repositories used are those added with [addRepositories]. If
+/// no repositories are configured, the Maven Central repository
+/// is added automatically.
 /// 
 /// Resolving is performed using Maven Resolver (formerly Eclipse Aether)
 /// version 2.x. Dependencies are collected from the specified artifacts after
@@ -86,8 +85,6 @@ public class MvnRepoLookup extends AbstractProvider {
 
     private static final FluentLogger logger = FluentLogger.forEnclosingClass();
     private final List<RemoteRepository> addedRepos = new ArrayList<>();
-    @SuppressWarnings("PMD.AvoidUsingVolatile")
-    private volatile List<RemoteRepository> mergedRepos;
     private final List<String> coordinates = new ArrayList<>();
     private final List<String> boms = new ArrayList<>();
     private boolean downloadSources = true;
@@ -100,13 +97,13 @@ public class MvnRepoLookup extends AbstractProvider {
         // Make javadoc happy.
     }
 
-    /// Add a repository that is to be used for the lookup.
+    /// Add repositories to be used for the lookup.
     ///
-    /// @param repository the repository
+    /// @param repositories the repositories
     /// @return the mvn repo lookup
     ///
-    public MvnRepoLookup addRepository(RemoteRepository repository) {
-        addedRepos.add(repository);
+    public MvnRepoLookup addRepositories(RemoteRepository... repositories) {
+        addedRepos.addAll(Arrays.asList(repositories));
         return this;
 
     }
@@ -131,26 +128,6 @@ public class MvnRepoLookup extends AbstractProvider {
                         types.contains(MvnVersionType.SNAPSHOT), null, null));
         addedRepos.add(builder.build());
         return this;
-    }
-
-    @SuppressWarnings({ "PMD.AvoidSynchronizedStatement" })
-    private List<RemoteRepository> remoteRepositories() {
-        if (mergedRepos != null) {
-            return mergedRepos;
-        }
-        synchronized (this) {
-            if (mergedRepos != null) {
-                return mergedRepos;
-            }
-            List<RemoteRepository> repos
-                = new ArrayList<>(MavenContext.remoteRepositories());
-            repos.addAll(addedRepos);
-            if (repos.isEmpty()) {
-                repos.add(MavenContext.mavenCentral());
-            }
-            mergedRepos = repos;
-            return mergedRepos;
-        }
     }
 
     /// Add a bill of materials. The coordinates are resolved as 
@@ -285,15 +262,18 @@ public class MvnRepoLookup extends AbstractProvider {
         @SuppressWarnings("PMD.CloseResource")
         var repoSystem = MavenContext.repositorySystem();
         var repoSession = MavenContext.repositorySession();
-        var remoteRepositories = remoteRepositories();
 
         // Create one synthetic CollectRequest
+        var repos = new ArrayList<>(addedRepos);
+        if (repos.isEmpty()) {
+            repos.add(MavenContext.mavenCentral());
+        }
         CollectRequest collectRequest
-            = new CollectRequest().setRepositories(remoteRepositories);
+            = new CollectRequest().setRepositories(repos);
 
         // Add dependencies via their effective model
         coordinates.stream().parallel().map(c -> depsFromEffectiveModel(
-            c, repoSystem, repoSession, remoteRepositories)).forEach(deps -> {
+            c, repoSystem, repoSession, repos)).forEach(deps -> {
                 // collectRequest::addDependency is not thread safe
                 synchronized (collectRequest) {
                     deps.forEach(collectRequest::addDependency);
@@ -316,9 +296,8 @@ public class MvnRepoLookup extends AbstractProvider {
         @SuppressWarnings("unchecked")
         var result = (Collection<T>) dependencyNodes.stream()
             .filter(d -> d.getArtifact() != null)
-            .map(DependencyNode::getArtifact)
-            .map(a -> extraDownloads(repoSystem, repoSession,
-                remoteRepositories, a))
+            .map(DependencyNode::getArtifact).map(a -> extraDownloads(
+                repoSystem, repoSession, repos, a))
             .map(a -> ResourceFactory.create(MvnRepoLibraryJarFileType,
                 a.toString(), a.getPath()))
             .toList();

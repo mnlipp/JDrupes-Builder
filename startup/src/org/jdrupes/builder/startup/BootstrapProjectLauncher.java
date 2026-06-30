@@ -124,7 +124,7 @@ public class BootstrapProjectLauncher extends AbstractLauncher {
     private URL[] buildProjectClasses(RootProject rootProject) {
         // Add build extensions to the build project.
         var mvnLookup
-            = new MvnRepoLookup().addRepository(MavenContext.mavenCentral());
+            = new MvnRepoLookup().addRepositories(MavenContext.mavenCentral());
         Optional.ofNullable(jdbldProps
             .getProperty(BuildContext.EXTENSIONS_SNAPSHOT_REPOSITORY, null))
             .map(URI::create).ifPresent(esr -> mvnLookup.addRepository(

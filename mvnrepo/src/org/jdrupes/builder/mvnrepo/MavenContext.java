@@ -19,16 +19,10 @@
 package org.jdrupes.builder.mvnrepo;
 
 import java.io.File;
-import java.net.URI;
 import java.nio.file.Path;
 import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.EnumSet;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import java.util.function.BiConsumer;
 import org.apache.maven.settings.Profile;
 import org.apache.maven.settings.Repository;
@@ -49,12 +43,8 @@ import org.eclipse.aether.util.graph.transformer.ConfigurableVersionSelector;
 import org.jdrupes.builder.api.BuildException;
 
 /// Manages a global instance of [RepositorySystem] and 
-/// [RepositorySystemSession] and a list of [RemoteRepository]s for
-/// use by all instances of [MvnRepoLookup] and others.
-/// 
-/// The remote repositories are evaluated by looking up the repositories
-/// from the profiles in `settings.xml` selected with [useProfiles] and the
-/// repositories added with [addRepository].
+/// [RepositorySystemSession] and provides lists of [RemoteRepository]s
+/// from profiles in `settings.xml`.
 ///
 public final class MavenContext {
 
@@ -67,14 +57,6 @@ public final class MavenContext {
                     RepositoryPolicy.UPDATE_POLICY_NEVER,
                     RepositoryPolicy.CHECKSUM_POLICY_IGNORE))
                 .build();
-    @SuppressWarnings("PMD.FieldNamingConventions")
-    private static final Set<String> useProfiles
-        = Collections.synchronizedSet(new HashSet<>());
-    @SuppressWarnings("PMD.AvoidUsingVolatile")
-    private static volatile List<RemoteRepository> settingsRepos;
-    @SuppressWarnings("PMD.FieldNamingConventions")
-    private static final List<RemoteRepository> addedRepos
-        = Collections.synchronizedList(new ArrayList<>());
 
     private MavenContext() {
     }
@@ -169,53 +151,6 @@ public final class MavenContext {
             }).orElse(false);
     }
 
-    /// Include repositories from the specified profiles in `settings.xml`
-    /// in the result of [remoteRepositories].
-    ///
-    /// @param profiles the profiles
-    /// @return the Maven context
-    ///
-    public static Class<MavenContext> useProfiles(String... profiles) {
-        if (settingsRepos != null) {
-            throw new IllegalStateException(
-                "Repositories are already evauated");
-        }
-        useProfiles.addAll(Arrays.asList(profiles));
-        return MavenContext.class;
-    }
-
-    /// Include the given repository in the result of [remoteRepositories].
-    ///
-    /// @param repository the repository
-    /// @return the Maven context
-    ///
-    public static Class<MavenContext>
-            addRepository(RemoteRepository repository) {
-        addedRepos.add(repository);
-        return MavenContext.class;
-    }
-
-    /// Include the repository created from the given values in the
-    /// result of [remoteRepositories].
-    ///
-    /// @param id the repository id
-    /// @param uri the repository uri
-    /// @param supported the supported version types
-    /// @return the Maven context
-    ///
-    public static Class<MavenContext> addRepository(
-            String id, URI uri, MvnVersionType... supported) {
-        var types = EnumSet.copyOf(Arrays.asList(supported));
-        var builder = new RemoteRepository.Builder(
-            id, "default", uri.toString())
-                .setReleasePolicy(createPolicy(MvnVersionType.RELEASE,
-                    types.contains(MvnVersionType.RELEASE), null, null))
-                .setSnapshotPolicy(createPolicy(MvnVersionType.SNAPSHOT,
-                    types.contains(MvnVersionType.SNAPSHOT), null, null));
-        addRepository(builder.build());
-        return MavenContext.class;
-    }
-
     /// Returns the [RemoteRepository] for Maven Central.
     ///
     /// @return the remote repository
@@ -224,40 +159,31 @@ public final class MavenContext {
         return MAVEN_CENTRAL_REPO;
     }
 
-    /* default */ @SuppressWarnings("PMD.AvoidSynchronizedStatement")
-    static List<RemoteRepository> remoteRepositories() {
-        if (settingsRepos == null) {
-            synchronized (MavenContext.class) {
-                if (settingsRepos == null) {
-                    settingsRepos = evaluateSettingsRepositories();
-                }
-            }
-        }
-        var mergedRepos = new ArrayList<>(settingsRepos);
-        mergedRepos.addAll(addedRepos);
-        return mergedRepos;
-    }
-
-    private static List<RemoteRepository> evaluateSettingsRepositories() {
-        // Add repositories from profiles
+    /// Return the [RemoteRepository]s from the specified profile.
+    ///
+    /// @param profileId the profile id
+    /// @return the repositories
+    ///
+    public static List<RemoteRepository> repositories(String profileId) {
         List<RemoteRepository> repos = new ArrayList<>();
         var settings = session().settings();
+        if (!settings.getActiveProfiles().contains(profileId)) {
+            return repos;
+        }
         Map<String, Profile> profiles = settings.getProfilesAsMap();
-        for (String profileId : settings.getActiveProfiles()) {
-            Profile profile = profiles.get(profileId);
-            if (profile == null || !useProfiles.contains(profileId)) {
-                continue;
-            }
-            for (Repository repo : profile.getRepositories()) {
-                @SuppressWarnings("PMD.AvoidInstantiatingObjectsInLoops")
-                var builder = new RemoteRepository.Builder(repo.getId(),
-                    "default", repo.getUrl())
-                        .setReleasePolicy(createPolicy(MvnVersionType.RELEASE,
-                            repo.getReleases()))
-                        .setSnapshotPolicy(createPolicy(MvnVersionType.SNAPSHOT,
-                            repo.getSnapshots()));
-                repos.add(builder.build());
-            }
+        Profile profile = profiles.get(profileId);
+        if (profile == null) {
+            return repos;
+        }
+        for (Repository repo : profile.getRepositories()) {
+            @SuppressWarnings("PMD.AvoidInstantiatingObjectsInLoops")
+            var builder = new RemoteRepository.Builder(repo.getId(),
+                "default", repo.getUrl())
+                    .setReleasePolicy(createPolicy(MvnVersionType.RELEASE,
+                        repo.getReleases()))
+                    .setSnapshotPolicy(createPolicy(MvnVersionType.SNAPSHOT,
+                        repo.getSnapshots()));
+            repos.add(builder.build());
         }
         return repos;
     }
