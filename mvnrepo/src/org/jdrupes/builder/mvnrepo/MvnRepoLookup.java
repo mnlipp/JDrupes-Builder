@@ -53,6 +53,7 @@ import org.jdrupes.builder.api.Resource;
 import org.jdrupes.builder.api.ResourceFactory;
 import org.jdrupes.builder.api.ResourceRequest;
 import org.jdrupes.builder.core.AbstractProvider;
+import static org.jdrupes.builder.mvnrepo.MavenContext.createDefaultPolicy;
 import static org.jdrupes.builder.mvnrepo.MvnRepoTypes.*;
 
 /// Depending on the request, this provider provides two types of resources.
@@ -120,12 +121,10 @@ public class MvnRepoLookup extends AbstractProvider {
         var types = EnumSet.copyOf(Arrays.asList(supported));
         var builder = new RemoteRepository.Builder(
             id, "default", uri.toString())
-                .setReleasePolicy(
-                    MavenContext.createPolicy(MvnVersionType.RELEASE,
-                        types.contains(MvnVersionType.RELEASE), null, null))
-                .setSnapshotPolicy(
-                    MavenContext.createPolicy(MvnVersionType.SNAPSHOT,
-                        types.contains(MvnVersionType.SNAPSHOT), null, null));
+                .setReleasePolicy(createDefaultPolicy(MvnVersionType.RELEASE,
+                    types.contains(MvnVersionType.RELEASE)))
+                .setSnapshotPolicy(createDefaultPolicy(MvnVersionType.SNAPSHOT,
+                    types.contains(MvnVersionType.SNAPSHOT)));
         addedRepos.add(builder.build());
         return this;
     }

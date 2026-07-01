@@ -23,6 +23,7 @@ import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.function.BiConsumer;
 import org.apache.maven.settings.Profile;
 import org.apache.maven.settings.Repository;
@@ -53,9 +54,10 @@ public final class MavenContext {
     private static final RemoteRepository MAVEN_CENTRAL_REPO
         = new RemoteRepository.Builder("central", "default",
             "https://repo.maven.apache.org/maven2")
-                .setSnapshotPolicy(new RepositoryPolicy(false,
-                    RepositoryPolicy.UPDATE_POLICY_NEVER,
-                    RepositoryPolicy.CHECKSUM_POLICY_IGNORE))
+                .setReleasePolicy(
+                    createDefaultPolicy(MvnVersionType.RELEASE, true))
+                .setSnapshotPolicy(
+                    createDefaultPolicy(MvnVersionType.SNAPSHOT, false))
                 .build();
 
     private MavenContext() {
@@ -165,6 +167,7 @@ public final class MavenContext {
     /// @return the repositories
     ///
     public static List<RemoteRepository> repositories(String profileId) {
+        Objects.requireNonNull(profileId);
         List<RemoteRepository> repos = new ArrayList<>();
         var settings = session().settings();
         if (!settings.getActiveProfiles().contains(profileId)) {
@@ -188,6 +191,24 @@ public final class MavenContext {
         return repos;
     }
 
+    /// Creates a policy for the specified type with reasonable defaults.
+    ///
+    /// @param type the type
+    /// @param enabled the enabled
+    /// @return the repository policy
+    ///
+    /* default */ static RepositoryPolicy createDefaultPolicy(
+            MvnVersionType type, boolean enabled) {
+        return createPolicy(type, enabled, null, null);
+    }
+
+    /// Creates a policy from settings data. Fills in reasonable defaults if
+    /// necessary.
+    ///
+    /// @param type the type
+    /// @param policy the policy data from settings
+    /// @return the repository policy
+    ///
     /* default */ static RepositoryPolicy createPolicy(MvnVersionType type,
             org.apache.maven.settings.RepositoryPolicy policy) {
         if (policy == null) {
@@ -197,6 +218,15 @@ public final class MavenContext {
             policy.getUpdatePolicy(), policy.getChecksumPolicy());
     }
 
+    /// Creates a policy from settings data with the given details.
+    /// Fills in reasonable defaults for `null` values.
+    ///
+    /// @param type the type
+    /// @param enabled the enabled
+    /// @param updatePolicy the update policy
+    /// @param checksumPolicy the checksum policy
+    /// @return the repository policy
+    ///
     /* default */ static RepositoryPolicy createPolicy(MvnVersionType type,
             boolean enabled, String updatePolicy, String checksumPolicy) {
         if (updatePolicy == null) {
@@ -209,5 +239,4 @@ public final class MavenContext {
         }
         return new RepositoryPolicy(enabled, updatePolicy, checksumPolicy);
     }
-
 }
