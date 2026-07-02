@@ -20,13 +20,11 @@ package org.jdrupes.builder.mvnrepo;
 
 import java.io.File;
 import java.nio.file.Path;
-import java.util.ArrayList;
-import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.function.BiConsumer;
+import java.util.stream.Stream;
 import org.apache.maven.settings.Profile;
-import org.apache.maven.settings.Repository;
 import org.apache.maven.settings.Settings;
 import org.apache.maven.settings.building.DefaultSettingsBuilderFactory;
 import org.apache.maven.settings.building.DefaultSettingsBuildingRequest;
@@ -166,29 +164,37 @@ public final class MavenContext {
     /// @param profileId the profile id
     /// @return the repositories
     ///
-    public static List<RemoteRepository> repositories(String profileId) {
+    public static Stream<RemoteRepository> repositories(String profileId) {
         Objects.requireNonNull(profileId);
-        List<RemoteRepository> repos = new ArrayList<>();
-        var settings = session().settings();
+        return repositories(session().settings(), profileId);
+    }
+
+    /// Return the [RemoteRepository]s from the specified settings and profile.
+    ///
+    /// @param settings the settings
+    /// @param profileId the profile id
+    /// @return the repositories
+    ///
+    public static Stream<RemoteRepository> repositories(Settings settings,
+            String profileId) {
+        Objects.requireNonNull(profileId);
         if (!settings.getActiveProfiles().contains(profileId)) {
-            return repos;
+            return Stream.empty();
         }
         Map<String, Profile> profiles = settings.getProfilesAsMap();
         Profile profile = profiles.get(profileId);
         if (profile == null) {
-            return repos;
+            return Stream.empty();
         }
-        for (Repository repo : profile.getRepositories()) {
-            @SuppressWarnings("PMD.AvoidInstantiatingObjectsInLoops")
+        return profile.getRepositories().stream().map(repo -> {
             var builder = new RemoteRepository.Builder(repo.getId(),
                 "default", repo.getUrl())
                     .setReleasePolicy(createPolicy(MvnVersionType.RELEASE,
                         repo.getReleases()))
                     .setSnapshotPolicy(createPolicy(MvnVersionType.SNAPSHOT,
                         repo.getSnapshots()));
-            repos.add(builder.build());
-        }
-        return repos;
+            return builder.build();
+        });
     }
 
     /// Creates a policy for the specified type with reasonable defaults.
