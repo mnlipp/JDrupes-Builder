@@ -278,8 +278,8 @@ public class UberJarBuilder extends LibraryBuilder {
                 return;
             }
             candidates.stream().reduce((a, b) -> {
-                logger.atWarning().log("Entry %s from %s duplicates"
-                    + " entry from %s and is skipped.", entryName, a, b);
+                logger.atWarning().log("%s: Entry %s from %s duplicates"
+                    + " entry from %s and is skipped.", this, entryName, a, b);
                 return a;
             });
         });
