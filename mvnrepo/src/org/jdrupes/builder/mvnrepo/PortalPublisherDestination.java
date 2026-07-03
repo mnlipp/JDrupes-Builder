@@ -26,7 +26,6 @@ import java.io.OutputStream;
 import java.io.PipedInputStream;
 import java.io.PipedOutputStream;
 import java.io.UncheckedIOException;
-import java.io.UnsupportedEncodingException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URLEncoder;
@@ -185,15 +184,14 @@ public class PortalPublisherDestination extends MvnPublishingDestination {
         String query = uri.getQuery();
         try {
             String newQueryParam
-                = key + "=" + URLEncoder.encode(value, "UTF-8");
+                = key + "=" + URLEncoder.encode(value, StandardCharsets.UTF_8);
             String newQuery = (query == null || query.isEmpty()) ? newQueryParam
                 : query + "&" + newQueryParam;
 
             // Build a new URI with the new query string
             return new URI(uri.getScheme(), uri.getAuthority(), uri.getPath(),
                 newQuery, uri.getFragment());
-        } catch (UnsupportedEncodingException | URISyntaxException e) {
-            // UnsupportedEncodingException cannot happen, UTF-8 is standard.
+        } catch (URISyntaxException e) {
             // URISyntaxException cannot happen when starting with a valid URI
             throw new IllegalArgumentException(e);
         }

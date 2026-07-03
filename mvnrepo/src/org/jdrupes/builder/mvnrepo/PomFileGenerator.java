@@ -102,7 +102,6 @@ import static org.jdrupes.builder.mvnrepo.MvnRepoTypes.*;
 /// artifact. Other projects in a multi-project build will therefore
 /// ultimately depend on the Maven artifact to be released.
 ///
-@SuppressWarnings("PMD.TooManyStaticImports")
 public class PomFileGenerator extends AbstractGenerator {
 
     private static final FluentLogger logger = FluentLogger.forEnclosingClass();
