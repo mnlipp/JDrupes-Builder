@@ -70,7 +70,6 @@ import static org.jdrupes.builder.java.JavaTypes.*;
 /// default behavior of the java compiler, you have to specify
 /// "`-g:[lines, source]`" explicitly.
 ///
-@SuppressWarnings("PMD.TooManyStaticImports")
 public class JavaCompiler extends JavaTool {
 
     private static final FluentLogger logger = FluentLogger.forEnclosingClass();
