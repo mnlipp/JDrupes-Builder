@@ -276,6 +276,16 @@ public class Root extends AbstractRootProject {
                         .appendChild(doc.createTextNode(
                             "ch.acanda.eclipse.pmd.builder.PMDNature"));
                 }
+            }).adaptJdtCorePrefs(props -> {
+                var formatterPrefs = new java.util.Properties();
+                try {
+                    formatterPrefs.load(Root.class.getResourceAsStream(
+                        "org.eclipse.jdt.core.formatter.prefs"));
+                    formatterPrefs.entrySet().stream()
+                        .forEach(e -> props.put(e.getKey(), e.getValue()));
+                } catch (IOException e) {
+                    throw new BuildException().from(project).cause(e);
+                }
             }).adaptClasspathConfiguration((_, classpath) -> {
                 // Sub-projects that have their own library reference
                 // the jdrupes-builder in their POM but must not have
@@ -294,8 +304,7 @@ public class Root extends AbstractRootProject {
                         }
                     }
                 }
-            })
-            .adaptConfiguration(() -> {
+            }).adaptConfiguration(() -> {
                 if (!(project instanceof JavaProject)) {
                     return;
                 }
