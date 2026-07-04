@@ -27,6 +27,7 @@ import aQute.bnd.osgi.Jar;
 import aQute.bnd.osgi.Processor;
 import aQute.bnd.service.diff.Diff;
 import com.google.common.flogger.FluentLogger;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Collection;
@@ -74,7 +75,6 @@ import org.jdrupes.builder.mvnrepo.PomFileGenerator;
 /// https://img.shields.io/maven-central/v/org.jdrupes/jdbld-ext-bnd?label=org.jdrupes:jdbld-ext-bnd%3A)
 /// ](https://mvnrepository.com/artifact/org.jdrupes/jdbld-ext-bnd)
 ///
-@SuppressWarnings("PMD.TooManyStaticImports")
 public class BndBaseliner extends AbstractBndGenerator {
 
     private static final FluentLogger logger = FluentLogger.forEnclosingClass();
@@ -230,7 +230,8 @@ public class BndBaseliner extends AbstractBndGenerator {
         reportLocation = reportLocation.resolve(
             String.format("%s-baseline.txt", currentJar.getName()));
         try (var report = Files.newOutputStream(reportLocation);
-                Formatter fmt = new Formatter(report, "UTF-8", Locale.US)) {
+                Formatter fmt = new Formatter(
+                    report, StandardCharsets.UTF_8, Locale.US)) {
             var formatInfo = new FormatInfo(currentJar, baselineJar, bundleInfo,
                 infos);
             String format = formatInfo.formatString();

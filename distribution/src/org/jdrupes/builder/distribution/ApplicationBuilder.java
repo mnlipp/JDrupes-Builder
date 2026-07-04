@@ -94,7 +94,6 @@ import static org.jdrupes.builder.mvnrepo.MvnRepoTypes.*;
 /// A request for [Cleanliness] removes any generated distribution
 /// archives from the configured destination directory.
 ///
-@SuppressWarnings("PMD.TooManyStaticImports")
 public class ApplicationBuilder extends AbstractGenerator
         implements ResourceRetriever {
     private static final FluentLogger logger = FluentLogger.forEnclosingClass();

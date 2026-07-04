@@ -88,7 +88,6 @@ import org.jdrupes.builder.java.ManifestAttributes;
 /// https://img.shields.io/maven-central/v/org.jdrupes/jdbld-ext-bnd?label=org.jdrupes:jdbld-ext-bnd%3A)
 /// ](https://mvnrepository.com/artifact/org.jdrupes/jdbld-ext-bnd)
 ///
-@SuppressWarnings("PMD.TooManyStaticImports")
 public class BndAnalyzer extends AbstractBndGenerator {
 
     private static final FluentLogger logger = FluentLogger.forEnclosingClass();

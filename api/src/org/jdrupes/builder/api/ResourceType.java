@@ -173,7 +173,7 @@ public class ResourceType<T extends Resource> {
         return new ResourceType<>(type, resourceType(elementType));
     }
 
-    @SuppressWarnings("unchecked")
+    @SuppressWarnings({ "unchecked", "PMD.AvoidDeeplyNestedIfStmts" })
     private ResourceType(Type type) {
         if (type instanceof WildcardType wType) {
             type = wType.getUpperBounds()[0];

@@ -89,7 +89,6 @@ public class AwaitableCounter {
 
         /// Initializes a new Increment. Increments the counter.
         ///
-        @SuppressWarnings("PMD.ConstructorCallsOverridableMethod")
         public Increment() {
             increment();
         }
