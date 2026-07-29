@@ -18,7 +18,7 @@
 
 package org.jdrupes.builder.api;
 
-/// The Class ConfigurationException.
+/// Exception thrown when there is a problem with the build configuration.
 ///
 @SuppressWarnings("serial")
 public class ConfigurationException extends BuildException {

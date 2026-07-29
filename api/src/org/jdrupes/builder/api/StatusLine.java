@@ -48,9 +48,9 @@ public interface StatusLine extends AutoCloseable {
         }
     };
 
-    /// Update the text in the status line. If argumnts are given, `text`
-    /// is interpreted as a format string for []String#format] with the
-    /// given arguments.
+    /// Update the text in the status line. If arguments are given,
+    /// `text` is interpreted as a format string for [String#format] with
+    /// the given arguments.
     ///
     /// @param text the text
     /// @param args the arguments
@@ -65,7 +65,7 @@ public interface StatusLine extends AutoCloseable {
     /// status line.
     ///
     /// @param prefix the prefix
-    /// @return the prints the writer
+    /// @return the writer
     ///
     PrintWriter writer(String prefix);
 

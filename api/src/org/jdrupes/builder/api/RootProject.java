@@ -64,10 +64,10 @@ public interface RootProject extends Project, AutoCloseable {
     /// of the pattern in the `without` parameter. A pattern is a glob
     /// pattern applied to the project's directory. `""`matches the root
     /// project. `"*"` matches the root project and all immediate
-    /// sub project. `"**"` matches all projects.
+    /// sub-project. `"**"` matches all projects.
     ///
     /// @param patterns the patterns
-    /// @param without patterns to exclude
+    /// @param without the patterns to exclude
     /// @return the stream
     ///
     @SuppressWarnings("PMD.UseVarargs")

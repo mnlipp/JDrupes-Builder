@@ -108,7 +108,7 @@ public class ResourceType<T extends Resource> {
     public static final ResourceType<TarFile> TarFileType
         = new ResourceType<>() {};
 
-    /// The resource type for [ZipFile].
+    /// The resource type for [TarGzFile].
     @SuppressWarnings("PMD.FieldNamingConventions")
     public static final ResourceType<TarGzFile> TarGzFileType
         = new ResourceType<>() {};

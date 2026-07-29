@@ -64,8 +64,8 @@ public interface InputTree<T extends InputResource> extends Resources<T> {
     ///
     Stream<Path> paths();
 
-    /// Returns the paths of the files in this file tree relative to
-    /// its root.
+    /// Returns the entries in this tree. An [Entry][InputTree.Entry]'s
+    /// path attribute is the path relative to this input tree's root.
     ///
     /// @return the stream
     ///

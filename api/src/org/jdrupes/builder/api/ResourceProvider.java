@@ -52,7 +52,7 @@ public interface ResourceProvider {
     /// Convenience method to access the build context which is sometimes
     /// needed in the context of resource requests.
     ///
-    /// @return the builder configuration
+    /// @return the build context
     ///
     BuildContext context();
 

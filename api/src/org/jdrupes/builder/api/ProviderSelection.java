@@ -24,7 +24,9 @@ import java.util.function.Consumer;
 import java.util.function.Predicate;
 import java.util.stream.Stream;
 
-/// The interface ProviderSelection.
+/// Interface for selecting [ResourceProvider]s from a [Project] based on
+/// filters and intents, and requesting resources from the selected
+/// providers.
 ///
 public interface ProviderSelection {
 

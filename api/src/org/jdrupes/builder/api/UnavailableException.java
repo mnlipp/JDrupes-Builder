@@ -18,7 +18,7 @@
 
 package org.jdrupes.builder.api;
 
-/// The Class UnavailableException.
+/// Exception thrown when a requested resource is unavailable.
 ///
 @SuppressWarnings("serial")
 public class UnavailableException extends BuildException {
