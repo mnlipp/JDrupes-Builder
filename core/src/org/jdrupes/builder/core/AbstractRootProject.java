@@ -18,11 +18,14 @@
 
 package org.jdrupes.builder.core;
 
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Objects;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
+import java.util.stream.Collectors;
 import org.jdrupes.builder.api.BuildException;
 import org.jdrupes.builder.api.ConfigurationException;
 import static org.jdrupes.builder.api.Intent.*;
@@ -56,7 +59,8 @@ public abstract class AbstractRootProject extends AbstractProject
         // ConcurrentHashMap does not support null values.
         projects = Collections.synchronizedMap(new HashMap<>());
         commands = new HashMap<>();
-        commandAlias("clean").projects("**")
+        commandAlias("clean").description("Removes generated resources")
+            .projects("**")
             .resources(of(CleanlinessType).using(Supply, Consume));
     }
 
@@ -149,6 +153,7 @@ public abstract class AbstractRootProject extends AbstractProject
     public class CommandBuilder implements RootProject.CommandBuilder {
         private final RootProject rootProject;
         private final String name;
+        private String description;
         private String[] projects = { "" };
         private String[] without = {};
 
@@ -160,6 +165,12 @@ public abstract class AbstractRootProject extends AbstractProject
         public CommandBuilder(RootProject rootProject, String name) {
             this.rootProject = rootProject;
             this.name = name;
+        }
+
+        @Override
+        public CommandBuilder description(String description) {
+            this.description = Objects.requireNonNull(description);
+            return this;
         }
 
         @Override
@@ -183,7 +194,13 @@ public abstract class AbstractRootProject extends AbstractProject
                     requests[i] = requests[i].usingAll();
                 }
             }
-            commands.put(name, new CommandData(projects, without, requests));
+            if (description == null) {
+                description = "Generate resources of type "
+                    + Arrays.stream(requests).map(r -> r.type().toString())
+                        .collect(Collectors.joining(", "));
+            }
+            commands.put(name, new CommandData(projects, without, requests,
+                description));
             return rootProject;
         }
     }
@@ -193,9 +210,10 @@ public abstract class AbstractRootProject extends AbstractProject
     /// @param patterns the patterns
     /// @param without the without
     /// @param requests the requests
+    /// @param description the description
     ///
     public record CommandData(String[] patterns, String[] without,
-            ResourceRequest<?>[] requests) {
+            ResourceRequest<?>[] requests, String description) {
     }
 
     /// Lookup command.
@@ -206,7 +224,20 @@ public abstract class AbstractRootProject extends AbstractProject
     public CommandData lookupCommand(String name) {
         return commands.getOrDefault(name,
             new CommandData(new String[] { "" }, new String[0],
-                new ResourceRequest[0]));
+                new ResourceRequest[0], null));
+    }
+
+    /// Return the registered command names with their descriptions.
+    /// The values in the map (the descriptions) are never null, but
+    /// may be empty strings.
+    ///
+    /// @return the command names with their descriptions
+    ///
+    public Map<String, String> commands() {
+        return commands.entrySet().stream().collect(Collectors.toMap(
+            Map.Entry::getKey, e -> e.getValue().description() != null
+                ? e.getValue().description()
+                : ""));
     }
 
 }

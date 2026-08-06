@@ -91,6 +91,13 @@ public interface RootProject extends Project, AutoCloseable {
     /// A builder for command aliases.
     interface CommandBuilder {
 
+        /// Adds a description.
+        ///
+        /// @param description the description
+        /// @return the command builder
+        ///
+        CommandBuilder description(String description);
+
         /// Apply the request(s) to the projects selected by the given
         /// patterns instead of the root project.
         ///

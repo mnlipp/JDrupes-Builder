@@ -150,6 +150,8 @@ public abstract class AbstractLauncher extends LauncherBase
         options.addOption("B-x", true, "Exclude from project scan");
         options.addOption(Option.builder("P").hasArgs().valueSeparator('=')
             .desc("Property in form key=value").get());
+        options.addOption(Option.builder("h").longOpt("help")
+            .desc("Show available commands").get());
         return options;
     }
 

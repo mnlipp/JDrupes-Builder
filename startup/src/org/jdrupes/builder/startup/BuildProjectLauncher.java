@@ -26,6 +26,7 @@ import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Properties;
+import java.util.TreeMap;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import org.apache.commons.cli.CommandLine;
@@ -151,6 +152,11 @@ public class BuildProjectLauncher extends AbstractLauncher {
     @SuppressWarnings({ "PMD.AvoidLiteralsInIfCondition",
         "PMD.AvoidInstantiatingObjectsInLoops" })
     public boolean runCommands() {
+        if (commandLine.hasOption("help")
+            || commandLine.getArgs().length == 0) {
+            printHelp();
+            return true;
+        }
         for (var arg : commandLine.getArgs()) {
             var parts = arg.split(":");
             String resource = parts[parts.length - 1];
@@ -181,6 +187,19 @@ public class BuildProjectLauncher extends AbstractLauncher {
             }
         }
         return true;
+    }
+
+    private void printHelp() {
+        rootProject.context().out()
+            .println("Usage: jdbld [Options] command ...");
+        rootProject.context().out().println();
+        var cmds = new TreeMap<>(rootProject.commands());
+        int maxNameLen = cmds.keySet().stream()
+            .mapToInt(String::length).max().orElse(0);
+        String fmt = "  - %-" + maxNameLen + "s   %s";
+        rootProject.context().out().println("Available commands:");
+        cmds.forEach((name, desc) -> rootProject.context().out()
+            .println(String.format(fmt, name, desc)));
     }
 
     /// This main can be used to start the user's JDrupes Builder

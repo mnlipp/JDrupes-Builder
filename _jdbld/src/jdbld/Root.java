@@ -157,23 +157,31 @@ public class Root extends AbstractRootProject {
         generator(MvnPublisher::new).destinations(get(PublishingDestinations));
 
         // Commands
-        commandAlias("build").resources(of(LibraryJarFileType)
-            .using(Supply, Forward), of(JavadocDirectoryType).using(Supply));
-        commandAlias("test").projects("**")
+        commandAlias("build")
+            .description("Build the project jars and documentation")
+            .resources(of(LibraryJarFileType).using(Supply, Forward),
+                of(JavadocDirectoryType).using(Supply));
+        commandAlias("test").description("Run all tests").projects("**")
             .resources(of(TestResultType).using(Supply));
         commandAlias("sourcesJar").resources(of(SourcesJarFileType));
-        commandAlias("javadoc")
+        commandAlias("javadoc").description("Generate javadoc")
             .resources(of(JavadocDirectoryType).using(Supply));
-        commandAlias("javadocJar").resources(of(JavadocJarFileType));
-        commandAlias("eclipse").projects("**").resources(
-            of(new ResourceType<EclipseConfiguration>() {}).using(Supply));
+        commandAlias("javadocJar").description("Generate javadoc jar")
+            .resources(of(JavadocJarFileType));
+        commandAlias("eclipse").description("Generate eclipse project files")
+            .projects("**").resources(
+                of(new ResourceType<EclipseConfiguration>() {}).using(Supply));
         commandAlias("vscode")
             .resources(of(new ResourceType<VscodeConfiguration>() {}));
-        commandAlias("pomFile").resources(of(PomFileType));
-        commandAlias("mavenPublication").projects("**").resources(
-            of(MvnPublicationType).using(Supply));
-        commandAlias("mavenInstallation").projects("**").resources(
-            of(MvnInstallationType).using(Supply));
+        commandAlias("pomFile").description("Generate pom file")
+            .resources(of(PomFileType));
+        commandAlias("mavenPublication")
+            .description("Publish artifacts on maven central").projects("**")
+            .resources(of(MvnPublicationType).using(Supply));
+        commandAlias("mavenInstallation")
+            .description("Install artifacts in local maven repository")
+            .projects("**").resources(
+                of(MvnInstallationType).using(Supply));
     }
 
     public static Consumer<Model> addCommonPomInfo() {
