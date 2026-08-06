@@ -9,3 +9,11 @@ JDrupes Builder (jdbld) is a
 that uses Java code for its configuration and models builds as collections
 of resources that are produced on demand.
 See the project [website](https://builder.jdrupes.org) for more information.
+
+## Building
+
+The projects itself uses its own `jdbld` configuration for build operations.
+This implies a bootstrap problem which can be solved in two ways. Either 
+run the builder from Eclipse or use the previous (published) version of the
+builder. While the former approach should always work, the latter approach
+may fail if there are incompatible changes in the API.
