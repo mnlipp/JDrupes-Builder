@@ -123,12 +123,7 @@ public class BootstrapProjectLauncher extends AbstractLauncher {
 
     private URL[] buildProjectClasses(RootProject rootProject) {
         // Add build extensions to the build project.
-        var mvnLookup
-            = new MvnRepoLookup().addRepositories(MavenContext.mavenCentral());
-        Optional.ofNullable(jdbldProps
-            .getProperty(BuildContext.EXTENSIONS_SNAPSHOT_REPOSITORY, null))
-            .map(URI::create).ifPresent(esr -> mvnLookup.addRepository(
-                "extensionSnapshots", esr, MvnVersionType.SNAPSHOT));
+        var mvnLookup = extensionsLookup();
         var buildCoords = Arrays.asList(jdbldProps
             .getProperty(BuildContext.BUILD_EXTENSIONS, "").split(","))
             .stream().map(String::trim).filter(c -> !c.isBlank()).toList();
@@ -155,6 +150,28 @@ public class BootstrapProjectLauncher extends AbstractLauncher {
                     throw new BuildException().from(rootProject).cause(e);
                 }
             }).toArray(URL[]::new);
+    }
+
+    private MvnRepoLookup extensionsLookup() {
+        var mvnLookup = new MvnRepoLookup();
+        var extRepoUrls = Optional.ofNullable(jdbldProps
+            .getProperty(BuildContext.EXTENSIONS_REPOSITORIES, null))
+            .stream().flatMap(s -> Arrays.stream(s.split(",")))
+            .map(String::trim).map(URI::create).toList();
+        if (extRepoUrls.isEmpty()) {
+            mvnLookup.addRepositories(MavenContext.mavenCentral(),
+                MavenContext.jdbldDistribution());
+        } else {
+            for (int i = 0; i < extRepoUrls.size(); i++) {
+                mvnLookup.addRepository("extensionRepo_" + i,
+                    extRepoUrls.get(i), MvnVersionType.RELEASE);
+            }
+        }
+        Optional.ofNullable(jdbldProps
+            .getProperty(BuildContext.EXTENSIONS_SNAPSHOT_REPOSITORY, null))
+            .map(URI::create).ifPresent(esr -> mvnLookup.addRepository(
+                "extensionSnapshots", esr, MvnVersionType.SNAPSHOT));
+        return mvnLookup;
     }
 
     @Override

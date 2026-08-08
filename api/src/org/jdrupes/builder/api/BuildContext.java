@@ -37,6 +37,10 @@ public interface BuildContext extends AutoCloseable {
     /// The key for specifying the build extensions in the properties file.
     String BUILD_EXTENSIONS = "buildExtensions";
 
+    /// The key for specifying the extension repositories in the
+    /// properties file.
+    String EXTENSIONS_REPOSITORIES = "extensionsRepositories";
+
     /// The key for specifying the extensions snapshot repository in the
     /// properties file.
     @SuppressWarnings("PMD.LongVariable")

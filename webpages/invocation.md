@@ -40,6 +40,11 @@ options for running the JDrupes Builder.
     : is a comma-separated list of Maven coordinates of libraries that are
     added to the classpath when compiling the builder project.
     
+  * `extensionsRepositories = <url>,<url>,...`
+    : sets the repositories to use for looking up Maven coordinates
+    in `buildExtensions`. Defaults to Maven Central and the JDrupes Builder's
+    own distribution repository.
+    
   * `extensionsSnapshotRepository = <url>`
     : sets the snapshot repository to use if one of the Maven coordinates
     in `buildExtensions` refers to a snapshot.

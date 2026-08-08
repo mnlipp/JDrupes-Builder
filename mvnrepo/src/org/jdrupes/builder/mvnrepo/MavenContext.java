@@ -57,6 +57,14 @@ public final class MavenContext {
                 .setSnapshotPolicy(
                     createDefaultPolicy(MvnVersionType.SNAPSHOT, false))
                 .build();
+    private static final RemoteRepository JDBLD_DISTRIBUTION_REPO
+        = new RemoteRepository.Builder("jdbld-distribution", "default",
+            "https://codeberg.org/api/packages/mnlipp/maven")
+                .setReleasePolicy(
+                    createDefaultPolicy(MvnVersionType.RELEASE, true))
+                .setSnapshotPolicy(
+                    createDefaultPolicy(MvnVersionType.SNAPSHOT, false))
+                .build();
 
     private MavenContext() {
     }
@@ -157,6 +165,15 @@ public final class MavenContext {
     ///
     public static RemoteRepository mavenCentral() {
         return MAVEN_CENTRAL_REPO;
+    }
+
+    /// Returns the [RemoteRepository] for the JDrupes Builder distribution
+    /// repository.
+    ///
+    /// @return the remote repository
+    ///
+    public static RemoteRepository jdbldDistribution() {
+        return JDBLD_DISTRIBUTION_REPO;
     }
 
     /// Return the [RemoteRepository]s from the specified profile.
