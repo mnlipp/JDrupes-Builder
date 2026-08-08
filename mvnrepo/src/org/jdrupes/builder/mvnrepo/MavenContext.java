@@ -34,8 +34,10 @@ import org.apache.maven.settings.building.SettingsBuildingRequest;
 import org.apache.maven.settings.building.SettingsBuildingResult;
 import org.eclipse.aether.RepositorySystem;
 import org.eclipse.aether.RepositorySystemSession;
+import org.eclipse.aether.internal.impl.Maven2RepositoryLayoutFactory;
 import org.eclipse.aether.repository.RemoteRepository;
 import org.eclipse.aether.repository.RepositoryPolicy;
+import org.eclipse.aether.spi.connector.layout.RepositoryLayoutFactory;
 import org.eclipse.aether.supplier.RepositorySystemSupplier;
 import org.eclipse.aether.supplier.SessionBuilderSupplier;
 import org.eclipse.aether.util.graph.transformer.ConfigurableVersionSelector;
@@ -108,8 +110,17 @@ public final class MavenContext {
 
         // Repository system
         @SuppressWarnings("PMD.CloseResource")
-        var repoSystem = new RepositorySystemSupplier().get();
-
+        var repoSystem = new RepositorySystemSupplier() {
+            @Override
+            protected Map<String, RepositoryLayoutFactory>
+                    createRepositoryLayoutFactories() {
+                var factories = super.createRepositoryLayoutFactories();
+                var maven2 = factories.get(Maven2RepositoryLayoutFactory.NAME);
+                factories.put(Maven2RepositoryLayoutFactory.NAME,
+                    new NoMetadataChecksumLayoutFactory(maven2));
+                return factories;
+            }
+        }.get();
         // Repository system session
         String localRepoPath = settings.getLocalRepository() != null
             ? settings.getLocalRepository()
