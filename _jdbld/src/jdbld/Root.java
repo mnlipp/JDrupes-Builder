@@ -1,6 +1,7 @@
 package jdbld;
 
 import java.io.IOException;
+import java.net.URI;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
@@ -41,7 +42,6 @@ import org.jdrupes.builder.mvnrepo.MvnRepoJarFile;
 import org.jdrupes.builder.mvnrepo.MvnRepoLookup;
 import org.jdrupes.builder.mvnrepo.MvnVersionType;
 import org.jdrupes.builder.mvnrepo.PomFileGenerator;
-import org.jdrupes.builder.mvnrepo.PortalPublisherDestination;
 import org.jdrupes.builder.mvnrepo.SourcesJarBuilder;
 import static org.jdrupes.builder.mvnrepo.MvnRepoTypes.*;
 import org.jdrupes.builder.vscode.VscodeConfiguration;
@@ -67,18 +67,11 @@ public class Root extends AbstractRootProject {
         set(GroupId, "org.jdrupes");
         set(ArtifactId, "jdrupes-builder");
         set(PublishingDestinations, new MvnPublishingDestination[] {
-            new PortalPublisherDestination(),
-            new MvnDeployDestination(MvnVersionType.SNAPSHOT).id("central")
-//            new MvnDeployDestination(
-//                MvnVersionType.SNAPSHOT, MvnVersionType.RELEASE)
-//                    .repositoryUri(URI.create(
-//                        "https://maven.pkg.github.com/mnlipp/jdrupes-builder"))
-//                    .id("github")
-//            new MvnDeployDestination(
-//                MvnVersionType.SNAPSHOT, MvnVersionType.RELEASE)
-//                    .repositoryUri(URI.create(
-//                        "https://forgejo.mnl.de/api/packages/mnl/maven"))
-//                    .id("forgejo")
+            new MvnDeployDestination(
+                MvnVersionType.SNAPSHOT, MvnVersionType.RELEASE)
+                    .repositoryUri(URI.create(
+                        "https://codeberg.org/api/packages/mnlipp/maven"))
+                    .id("codeberg")
         });
 
         dependency(Expose, project(Api.class));
