@@ -93,7 +93,7 @@ import org.jdrupes.builder.core.StreamCollector;
 /// 
 /// This provider is made available as an extension.
 /// [![org.jdrupes:jdbld-ext-nodejs:](
-/// https://img.shields.io/maven-metadata/v?metadataUrl=https%3A%2F%2Fcodeberg.org%2Fapi%2Fpackages%2FJDrupes%2Fmaven%2Forg%2Fjdrupes%2Fjjdbld-ext-nodejs%2Fmaven-metadata.xml&strategy=releaseProperty)
+/// https://img.shields.io/maven-metadata/v?metadataUrl=https%3A%2F%2Fcodeberg.org%2Fapi%2Fpackages%2FJDrupes%2Fmaven%2Forg%2Fjdrupes%2Fjdbld-ext-nodejs%2Fmaven-metadata.xml&strategy=releaseProperty)
 /// ](https://codeberg.org/JDrupes/-/packages/maven/org.jdrupes:jdbld-ext-nodejs/versions)
 ///
 public class NpmExecutor extends AbstractProvider

@@ -85,7 +85,7 @@ import org.jdrupes.builder.java.ManifestAttributes;
 /// 
 /// This provider is made available as an extension.
 /// [![org.jdrupes:jdbld-ext-bnd:](
-/// https://img.shields.io/maven-metadata/v?metadataUrl=https%3A%2F%2Fcodeberg.org%2Fapi%2Fpackages%2FJDrupes%2Fmaven%2Forg%2Fjdrupes%2Fjjdbld-ext-bnd%2Fmaven-metadata.xml&strategy=releaseProperty)
+/// https://img.shields.io/maven-metadata/v?metadataUrl=https%3A%2F%2Fcodeberg.org%2Fapi%2Fpackages%2FJDrupes%2Fmaven%2Forg%2Fjdrupes%2Fjdbld-ext-bnd%2Fmaven-metadata.xml&strategy=releaseProperty)
 /// ](https://codeberg.org/JDrupes/-/packages/maven/org.jdrupes:jdbld-ext-bnd/versions)
 ///
 public class BndAnalyzer extends AbstractBndGenerator {
