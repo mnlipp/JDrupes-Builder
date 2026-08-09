@@ -91,10 +91,8 @@ import org.jdrupes.builder.core.StreamCollector;
 /// the resources to be removed when it is invoked with a request for
 /// [Cleanliness].
 /// 
-/// This provider is made available as an extension.
-/// [![org.jdrupes:jdbld-ext-nodejs:](
-/// https://img.shields.io/maven-central/v/org.jdrupes/jdbld-ext-nodejs?label=org.jdrupes:jdbld-ext-nodejs%3A)
-/// ](https://mvnrepository.com/artifact/org.jdrupes/jdbld-ext-nodejs)
+/// This provider is made available as an
+/// [extension](https://codeberg.org/JDrupes/-/packages/maven/org.jdrupes:jdbld-ext-nodejs/versions).
 ///
 public class NpmExecutor extends AbstractProvider
         implements Renamable, RequiredResourceSupport {

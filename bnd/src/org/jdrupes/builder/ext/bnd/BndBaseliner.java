@@ -70,10 +70,8 @@ import org.jdrupes.builder.mvnrepo.PomFileGenerator;
 /// `-diffignore` and `-diffpackages` are supported and forwarded to
 /// `bndlib`.
 /// 
-/// This provider is made available as an extension.
-/// [![org.jdrupes:jdbld-ext-bnd:](
-/// https://img.shields.io/maven-central/v/org.jdrupes/jdbld-ext-bnd?label=org.jdrupes:jdbld-ext-bnd%3A)
-/// ](https://mvnrepository.com/artifact/org.jdrupes/jdbld-ext-bnd)
+/// This provider is made available as an
+/// [extension](https://codeberg.org/JDrupes/-/packages/maven/org.jdrupes:jdbld-ext-bnd/versions).
 ///
 public class BndBaseliner extends AbstractBndGenerator {
 

@@ -14,7 +14,7 @@ To get started with JDrupes Builder, you only need the `jdbld` script.
 It can be downloaded from [GitHub](https://github.com/mnlipp/jdbld/) using:
 
 ```bash
-curl -L https://raw.githubusercontent.com/mnlipp/JDrupes-Builder/refs/heads/main/jdbld -o jdbld
+curl -L https://codeberg.org/JDrupes/JDrupes-Builder/raw/branch/main/jdbld -o jdbld
 chmod +x jdbld
 ```
 

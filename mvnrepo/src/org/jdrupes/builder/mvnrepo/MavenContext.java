@@ -61,7 +61,7 @@ public final class MavenContext {
                 .build();
     private static final RemoteRepository JDBLD_DISTRIBUTION_REPO
         = new RemoteRepository.Builder("jdbld-distribution", "default",
-            "https://codeberg.org/api/packages/mnlipp/maven")
+            "https://codeberg.org/api/packages/JDrupes/maven")
                 .setReleasePolicy(
                     createDefaultPolicy(MvnVersionType.RELEASE, true))
                 .setSnapshotPolicy(

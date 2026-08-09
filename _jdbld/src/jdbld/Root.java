@@ -70,7 +70,7 @@ public class Root extends AbstractRootProject {
             new MvnDeployDestination(
                 MvnVersionType.SNAPSHOT, MvnVersionType.RELEASE)
                     .repositoryUri(URI.create(
-                        "https://codeberg.org/api/packages/mnlipp/maven"))
+                        "https://codeberg.org/api/packages/JDrupes/maven"))
                     .id("codeberg")
         });
 
@@ -169,7 +169,7 @@ public class Root extends AbstractRootProject {
         commandAlias("pomFile").description("Generate pom file")
             .resources(of(PomFileType));
         commandAlias("mavenPublication")
-            .description("Publish artifacts on maven central").projects("**")
+            .description("Publish artifacts on codeberg").projects("**")
             .resources(of(MvnPublicationType).using(Supply));
         commandAlias("mavenInstallation")
             .description("Install artifacts in local maven repository")
