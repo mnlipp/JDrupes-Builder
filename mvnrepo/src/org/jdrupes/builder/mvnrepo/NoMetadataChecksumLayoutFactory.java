@@ -28,13 +28,6 @@ import org.eclipse.aether.transfer.NoRepositoryLayoutException;
 /// A [RepositoryLayoutFactory] decorator that produces instances of
 /// [NoMetadataChecksumLayout]. See [NoMetadataChecksumLayout] for details.
 ///
-/// Eclipse Aether attempts to upload `.sha1` and `.md5` checksum files for
-/// `maven-metadata.xml` during a deployment. Some remote repositories, notably
-/// Sonatype's snapshot repository at `central.sonatype.com`, reject these
-/// checksum uploads with HTTP 400. This factory wraps a delegate layout
-/// factory and produces [NoMetadataChecksumLayout] instances that suppress
-/// checksum file uploads for metadata.
-///
 final class NoMetadataChecksumLayoutFactory
         implements RepositoryLayoutFactory {
 
