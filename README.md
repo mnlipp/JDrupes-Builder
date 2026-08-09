@@ -2,7 +2,7 @@
 
 [![Build status](https://github.com/mnlipp/JDrupes-Builder/actions/workflows/jekyll.yml/badge.svg)](https://github.com/mnlipp/JDrupes-Builder/actions/workflows/jekyll.yml)
 [![Codacy Badge](https://app.codacy.com/project/badge/Grade/56aae350ec2b465f84e2ca22d1208003)](https://app.codacy.com/gh/mnlipp/JDrupes-Builder/dashboard?utm_source=gh&utm_medium=referral&utm_content=&utm_campaign=Badge_grade)
-[![Maven Central Version](https://img.shields.io/maven-metadata/v?metadataUrl=https%3A%2F%2Fcodeberg.org%2Fapi%2Fpackages%2FJDrupes%2Fmaven%2Forg%2Fjdrupes%2Fjdrupes-builder%2Fmaven-metadata.xml&strategy=releaseProperty
+[![Maven Repository Version](https://img.shields.io/maven-metadata/v?metadataUrl=https%3A%2F%2Fcodeberg.org%2Fapi%2Fpackages%2FJDrupes%2Fmaven%2Forg%2Fjdrupes%2Fjdrupes-builder%2Fmaven-metadata.xml&strategy=releaseProperty
 )](https://codeberg.org/JDrupes/-/packages/maven/org.jdrupes:jdrupes-builder/versions)
 
 JDrupes Builder (jdbld) is a
