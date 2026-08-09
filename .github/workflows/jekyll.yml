@@ -65,7 +65,7 @@ jobs:
         uses: cicirello/generate-sitemap@v1
         with:
           path-to-root: webpages/_site
-          base-url-path: https://vm-operator.jdrupes.org
+          base-url-path: https://builder.jdrupes.org
       - name: Index pagefind
         run: cd webpages && npx pagefind --source "_site"          
       - name: Upload artifact
