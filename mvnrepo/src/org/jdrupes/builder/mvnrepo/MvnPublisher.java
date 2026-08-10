@@ -39,6 +39,7 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.function.Supplier;
 import java.util.stream.Stream;
+import org.apache.maven.model.Model;
 import org.apache.maven.model.building.DefaultModelBuilderFactory;
 import org.apache.maven.model.building.DefaultModelBuildingRequest;
 import org.apache.maven.model.building.ModelBuildingException;
@@ -299,12 +300,20 @@ public class MvnPublisher extends AbstractGenerator {
     private Collection<?> publish(PomFile pomResource,
             LibraryJarFile jarResource, SourcesJarFile srcsJar,
             JavadocJarFile javadocJar, boolean installOnly) {
-        Artifact mainArtifact;
+        // Create model etc. and check
+        Model model;
         try {
-            mainArtifact = mainArtifact(pomResource);
+            model = buildModel(pomResource);
         } catch (ModelBuildingException e) {
             throw new BuildException().from(this).cause(e);
         }
+        Artifact mainArtifact = new DefaultArtifact(model.getGroupId(),
+            model.getArtifactId(), "jar", model.getVersion());
+        if (!mainArtifact.isSnapshot()) {
+            checkReleaseDeps(mainArtifact, model);
+        }
+
+        // Generate files
         if (artifactDirectory() != null) {
             artifactDirectory().toFile().mkdirs();
         }
@@ -357,16 +366,29 @@ public class MvnPublisher extends AbstractGenerator {
         }
     }
 
-    private Artifact mainArtifact(PomFile pomResource)
+    private Model buildModel(PomFile pomResource)
             throws ModelBuildingException {
         var pomFile = pomResource.path().toFile();
         var buildingRequest = new DefaultModelBuildingRequest()
             .setPomFile(pomFile).setProcessPlugins(false)
             .setValidationLevel(ModelBuildingRequest.VALIDATION_LEVEL_MINIMAL);
-        var model = new DefaultModelBuilderFactory().newInstance()
+        return new DefaultModelBuilderFactory().newInstance()
             .build(buildingRequest).getEffectiveModel();
-        return new DefaultArtifact(model.getGroupId(), model.getArtifactId(),
-            "jar", model.getVersion());
+    }
+
+    private void checkReleaseDeps(Artifact mainArtifact, Model model) {
+        var snapshotDeps = model.getDependencies().stream()
+            .map(d -> new DefaultArtifact(d.getGroupId(), d.getArtifactId(),
+                d.getClassifier(), d.getType(), d.getVersion()))
+            .filter(Artifact::isSnapshot)
+            .map(a -> a.getGroupId() + ":" + a.getArtifactId() + ":"
+                + a.getVersion())
+            .toList();
+        if (!snapshotDeps.isEmpty()) {
+            throw new BuildException().from(this).message(
+                "Release version %s cannot depend on snapshot version(s): %s",
+                mainArtifact, String.join(", ", snapshotDeps));
+        }
     }
 
     private void addWithGenerated(List<Deployable> toDeploy,
