@@ -36,15 +36,6 @@ public interface ProjectVersion extends Resource {
     ///
     String version();
 
-    /// Returns the version as a tag. This is the version string with the
-    /// project name prepended.
-    ///
-    /// @return the string
-    ///
-    default String asTag() {
-        return project().name() + "-" + version();
-    }
-
     /// Creates a new project version.
     ///
     /// @param project the project
