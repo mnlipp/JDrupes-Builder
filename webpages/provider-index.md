@@ -30,4 +30,5 @@ layout: jdbld
   * [ScriptExecutor](javadoc/org/jdrupes/builder/core/ScriptExecutor.html)
   * [SourcesJarGenerator](javadoc/org/jdrupes/builder/mvnrepo/SourcesJarGenerator.html)
   * [UberJarBuilder](javadoc/org/jdrupes/builder/distribution/UberJarBuilder.html)
+  * [VersionReporter](javadoc/org/jdrupes/builder/core/VersionReporter.html)
   * [VscodeConfigurator](javadoc/org/jdrupes/builder/vscode/VscodeConfigurator.html)

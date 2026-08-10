@@ -36,6 +36,7 @@ import org.jdrupes.builder.api.FileTree;
 import org.jdrupes.builder.api.InputResource;
 import org.jdrupes.builder.api.InputTree;
 import org.jdrupes.builder.api.Project;
+import org.jdrupes.builder.api.ProjectVersion;
 import org.jdrupes.builder.api.Proxyable;
 import org.jdrupes.builder.api.Resource;
 import org.jdrupes.builder.api.ResourceFactory;
@@ -165,6 +166,13 @@ public class CoreResourceFactory implements ResourceFactory {
                 }
                 return result;
             });
+        if (candidate.isPresent()) {
+            return candidate;
+        }
+
+        // ? extends ProjectVersion
+        candidate = createNarrowed(type, ProjectVersion.class,
+            () -> new DefaultProjectVersion(project, (String) args[0]));
         if (candidate.isPresent()) {
             return candidate;
         }

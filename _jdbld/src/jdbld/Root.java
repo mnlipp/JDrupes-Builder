@@ -24,6 +24,7 @@ import org.jdrupes.builder.api.ResourceType;
 import static org.jdrupes.builder.api.ResourceType.*;
 import org.jdrupes.builder.api.RootProject;
 import org.jdrupes.builder.core.AbstractRootProject;
+import org.jdrupes.builder.core.VersionReporter;
 import org.jdrupes.builder.distribution.UberJarBuilder;
 import org.jdrupes.builder.eclipse.EclipseConfiguration;
 import org.jdrupes.builder.eclipse.EclipseConfigurator;
@@ -150,6 +151,8 @@ public class Root extends AbstractRootProject {
         generator(MvnPublisher::new).destinations(get(PublishingDestinations));
 
         // Commands
+        commandAlias("version").projects("**")
+            .resources(of(ProjectVersionType).using(Supply));
         commandAlias("build")
             .description("Build the project jars and documentation")
             .resources(of(LibraryJarFileType).using(Supply, Forward),
@@ -214,6 +217,7 @@ public class Root extends AbstractRootProject {
             .subDirectory(project.directory())
             .tagFilter(new DefaultTagFilter().prepend("v"));
         project.set(Version, evaluator.version());
+        project.generator(VersionReporter::new);
     }
 
     private static void setupCommonGenerators(Project project) {

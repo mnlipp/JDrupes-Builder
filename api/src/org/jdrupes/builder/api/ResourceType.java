@@ -113,6 +113,11 @@ public class ResourceType<T extends Resource> {
     public static final ResourceType<TarGzFile> TarGzFileType
         = new ResourceType<>() {};
 
+    /// The resource type for [ProjectVersion].
+    @SuppressWarnings("PMD.FieldNamingConventions")
+    public static final ResourceType<ProjectVersion> ProjectVersionType
+        = new ResourceType<>() {};
+
     private final Class<T> type;
     private final ResourceType<?> containedType;
 
