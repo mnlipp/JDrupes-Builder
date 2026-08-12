@@ -19,8 +19,10 @@
 package org.jdrupes.builder.api;
 
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.ServiceLoader;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.StreamSupport;
 
 /// Defines both an interface for factories that create [Resource]s and
@@ -30,15 +32,18 @@ import java.util.stream.StreamSupport;
 public interface ResourceFactory {
 
     /// The factories as found by the [ServiceLoader].
-    List<ResourceFactory> FACTORIES = StreamSupport.stream(
-        ServiceLoader.load(ResourceFactory.class).spliterator(), false)
-        .toList();
+    Map<ClassLoader, List<ResourceFactory>> FACTORIES
+        = new ConcurrentHashMap<>();
 
     /// Returns a new resource with the given type, passing the given
     /// arguments to the constructor of the resource. The implementation
     /// uses [ServiceLoader] to find a [ResourceFactory] that creates the
     /// resource, i.e. that does not return `Optional.empty()` when
     /// [newResource] is called.
+    /// 
+    /// The implementation uses [ServiceLoader#load(Class, ClassLoader)]
+    /// with the class loader of the [Project] if provided, or the
+    /// class loader of the current thread otherwise.
     ///
     /// @param <T> the generic resource type
     /// @param type the resource type
@@ -48,7 +53,13 @@ public interface ResourceFactory {
     ///
     static <T extends Resource> T create(ResourceType<T> type,
             Project project, Object... args) {
-        return FACTORIES.stream().map(f -> f.newResource(type, project, args))
+        var clsLdr = Optional.ofNullable(project).map(Project::context)
+            .map(BuildContext::classLoader)
+            .orElseGet(() -> Thread.currentThread().getContextClassLoader());
+        return FACTORIES.computeIfAbsent(clsLdr,
+            cl -> StreamSupport.stream(ServiceLoader.load(
+                ResourceFactory.class, cl).spliterator(), false).toList())
+            .stream().map(f -> f.newResource(type, project, args))
             .filter(Optional::isPresent).map(Optional::get).findFirst()
             .orElseThrow(() -> new ConfigurationException()
                 .message("No resource factory for %s", type));

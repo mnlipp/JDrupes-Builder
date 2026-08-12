@@ -76,6 +76,12 @@ public interface BuildContext extends AutoCloseable {
     ///
     CommandLine commandLine();
 
+    /// Returns the class loader to use for loading resources.
+    ///
+    /// @return the class loader
+    ///
+    ClassLoader classLoader();
+
     /// Obtains the stream of resources of the given type from the
     /// given provider. The result from invoking the provider is
     /// evaluated asynchronously and cached. Only when the returned

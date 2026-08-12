@@ -57,6 +57,7 @@ public class DefaultBuildContext implements BuildContext {
     private final FutureStreamCache cache;
     private ExecutorService executor
         = Executors.newVirtualThreadPerTaskExecutor();
+    private final ClassLoader classLoader;
     private final Path buildRoot;
     private final Properties jdbldProperties;
     private final CommandLine commandLine;
@@ -85,8 +86,14 @@ public class DefaultBuildContext implements BuildContext {
     /// Initializes a new default build context. By default, the build
     /// represented by this context uses a virtual thread per task executor.
     ///
-    /* default */ DefaultBuildContext(Path buildRoot,
+    /// @param classLoader the class loader
+    /// @param buildRoot the build root
+    /// @param jdbldProperties the jdbld properties
+    /// @param commandLine the command line
+    ///
+    /* default */ DefaultBuildContext(ClassLoader classLoader, Path buildRoot,
             Properties jdbldProperties, CommandLine commandLine) {
+        this.classLoader = classLoader;
         this.buildRoot = buildRoot;
         this.jdbldProperties = jdbldProperties;
         this.commandLine = commandLine;
@@ -124,6 +131,11 @@ public class DefaultBuildContext implements BuildContext {
     ///
     public Path buildRoot() {
         return buildRoot;
+    }
+
+    @Override
+    public ClassLoader classLoader() {
+        return classLoader;
     }
 
     @Override

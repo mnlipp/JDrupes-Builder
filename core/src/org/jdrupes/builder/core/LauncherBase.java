@@ -79,7 +79,8 @@ public class LauncherBase {
         try {
             return ScopedValue
                 .where(scopedBuildContext,
-                    new DefaultBuildContext(buildRoot, jdbldProps, commandLine))
+                    new DefaultBuildContext(rootProject.getClassLoader(),
+                        buildRoot, jdbldProps, commandLine))
                 .call(() -> {
                     var result = (AbstractRootProject) rootProject
                         .getConstructor().newInstance();
