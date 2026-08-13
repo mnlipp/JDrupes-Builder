@@ -9,7 +9,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.function.Consumer;
 import java.util.stream.Stream;
-import static jdbld.ExtProps.GitApi;
 import org.apache.maven.model.Developer;
 import org.apache.maven.model.License;
 import org.apache.maven.model.Model;
@@ -28,6 +27,9 @@ import org.jdrupes.builder.core.VersionReporter;
 import org.jdrupes.builder.distribution.UberJarBuilder;
 import org.jdrupes.builder.eclipse.EclipseConfiguration;
 import org.jdrupes.builder.eclipse.EclipseConfigurator;
+import org.jdrupes.builder.ext.git.VersionTagger;
+import static org.jdrupes.builder.ext.git.GitProperties.*;
+import static org.jdrupes.builder.ext.git.GitTypes.*;
 import org.jdrupes.builder.java.JavaCompiler;
 import org.jdrupes.builder.java.JavaProject;
 import org.jdrupes.builder.java.JavaResourceCollector;
@@ -86,6 +88,7 @@ public class Root extends AbstractRootProject {
         dependency(Expose, project(JUnit.class));
         dependency(Forward, project(Bnd.class));
         dependency(Forward, project(NodeJs.class));
+        dependency(Forward, project(jdbld.Git.class));
 
         // Generate POM
         generator(PomFileGenerator::new).adaptPom(addCommonPomInfo());
@@ -178,6 +181,8 @@ public class Root extends AbstractRootProject {
             .description("Install artifacts in local maven repository")
             .projects("**").resources(
                 of(MvnInstallationType).using(Supply));
+        commandAlias("releaseTag").description("Create a release tag")
+            .projects("**").resources(of(GitVersionTagType).using(Supply));
     }
 
     public static Consumer<Model> addCommonPomInfo() {
@@ -204,20 +209,16 @@ public class Root extends AbstractRootProject {
     }
 
     public static void setupVersion(Project project) {
-        try {
-            if (project instanceof RootProject) {
-                project.set(GitApi, Git.open(project.directory().toFile()));
-            }
-        } catch (IOException e) {
-            throw new BuildException().from(project).cause(e);
+        if (project instanceof RootProject rootPrj) {
+            project.set(GitApi, VersionTagger.setGitApi(rootPrj));
         }
-
         var evaluator = VersionEvaluator
             .forRepository(project.<Git> get(GitApi).getRepository())
             .subDirectory(project.directory())
             .tagFilter(new DefaultTagFilter().prepend("v"));
         project.set(Version, evaluator.version());
         project.generator(VersionReporter::new);
+        project.generator(VersionTagger::new);
     }
 
     private static void setupCommonGenerators(Project project) {
