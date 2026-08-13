@@ -19,3 +19,4 @@
 # VSCode
 **/.vscode
 /jdbld.log
+/jdbld.log.lck
