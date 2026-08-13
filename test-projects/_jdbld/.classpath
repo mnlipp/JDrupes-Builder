@@ -13,15 +13,16 @@
 		</attributes>
 	</classpathentry>
 	<classpathentry kind="lib" path="/JDrupes-Builder/build/app/jdrupes-builder-current.jar"/>
-	<classpathentry combineaccessrules="false" kind="src" path="/org.jdrupes.gitversioning.core"/>
-	<classpathentry combineaccessrules="false" kind="src" path="/org.jdrupes.gitversioning.api"/>
-	<classpathentry combineaccessrules="false" kind="src" path="/org.jdrupes.builder.api"/>
-	<classpathentry combineaccessrules="false" kind="src" path="/org.jdrupes.builder.core"/>
-	<classpathentry combineaccessrules="false" kind="src" path="/org.jdrupes.builder.eclipse"/>
-	<classpathentry combineaccessrules="false" kind="src" path="/org.jdrupes.builder.java"/>
-	<classpathentry combineaccessrules="false" kind="src" path="/org.jdrupes.builder.mvnrepo"/>
-	<classpathentry combineaccessrules="false" kind="src" path="/org.jdrupes.builder.startup"/>
-	<classpathentry combineaccessrules="false" kind="src" path="/org.jdrupes.builder.vscode"/>
 	<classpathentry combineaccessrules="false" kind="src" path="/org.jdrupes.builder.distribution"/>
+	<classpathentry combineaccessrules="false" kind="src" path="/org.jdrupes.builder.vscode"/>
+	<classpathentry combineaccessrules="false" kind="src" path="/org.jdrupes.builder.startup"/>
+	<classpathentry combineaccessrules="false" kind="src" path="/org.jdrupes.builder.mvnrepo"/>
+	<classpathentry combineaccessrules="false" kind="src" path="/org.jdrupes.builder.java"/>
+	<classpathentry combineaccessrules="false" kind="src" path="/org.jdrupes.builder.eclipse"/>
+	<classpathentry combineaccessrules="false" kind="src" path="/org.jdrupes.builder.core"/>
+	<classpathentry combineaccessrules="false" kind="src" path="/org.jdrupes.builder.api"/>
+	<classpathentry combineaccessrules="false" kind="src" path="/org.jdrupes.gitversioning.api"/>
+	<classpathentry combineaccessrules="false" kind="src" path="/org.jdrupes.gitversioning.core"/>
+	<classpathentry combineaccessrules="false" kind="src" path="/org.jdrupes.builder.ext.git"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>
