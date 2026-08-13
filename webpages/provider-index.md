@@ -31,4 +31,5 @@ layout: jdbld
   * [SourcesJarGenerator](javadoc/org/jdrupes/builder/mvnrepo/SourcesJarGenerator.html)
   * [UberJarBuilder](javadoc/org/jdrupes/builder/distribution/UberJarBuilder.html)
   * [VersionReporter](javadoc/org/jdrupes/builder/core/VersionReporter.html)
+  * [VersionTagger](javadoc/org/jdrupes/builder/ext/git/VersionTagger.html) (E)
   * [VscodeConfigurator](javadoc/org/jdrupes/builder/vscode/VscodeConfigurator.html)

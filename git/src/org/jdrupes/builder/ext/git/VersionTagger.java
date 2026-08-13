@@ -68,6 +68,11 @@ import org.jdrupes.gitversioning.api.VersionEvaluator;
 /// the build project with the instance using [setGitApi]. Else that
 /// property will be set on first usage of the generator.
 ///
+/// This provider is made available as an extension.
+/// [![org.jdrupes:jdbld-ext-git:](
+/// https://img.shields.io/maven-metadata/v?metadataUrl=https%3A%2F%2Fcodeberg.org%2Fapi%2Fpackages%2FJDrupes%2Fmaven%2Forg%2Fjdrupes%2Fjdbld-ext-git%2Fmaven-metadata.xml&strategy=releaseProperty)
+/// ](https://codeberg.org/JDrupes/-/packages/maven/org.jdrupes:jdbld-ext-git/versions)
+/// 
 public class VersionTagger extends AbstractGenerator {
 
     /// If defined and not equal to `false` prevents the actual creation

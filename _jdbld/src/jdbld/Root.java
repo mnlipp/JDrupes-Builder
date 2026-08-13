@@ -120,7 +120,7 @@ public class Root extends AbstractRootProject {
 
         // Supply javadoc
         generator(Javadoc::new).projects(Stream.of(this, project(NodeJs.class),
-            project(Bnd.class)))
+            project(Bnd.class), project(jdbld.Git.class)))
             .destination(rootProject().directory().resolve("webpages/javadoc"))
             .tagletpath(new MvnRepoLookup()
                 .resolve("org.jdrupes.taglets:plantuml-taglet:3.1.0",
