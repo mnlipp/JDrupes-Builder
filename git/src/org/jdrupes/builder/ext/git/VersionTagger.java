@@ -56,6 +56,10 @@ import org.jdrupes.gitversioning.api.VersionEvaluator;
 /// `closest` algorithms only increment if the version has a pre-release
 /// qualifier (usually `SNAPSHOT`). Use the `-P` flag to set the algorithm
 /// on the command line, e.g. `jdbld -Pjdbld.versionTagger.mode=nextMinor`.
+/// 
+/// The generator creates annotated tags with a default message of
+/// "Release tag `<tag>`". You can override this message by setting
+/// property `jdbld.versionTagger.message`.
 ///
 /// The generator uses an instance of [Git] to access the repository.
 /// If also required elsewhere, the jdbld configuration should associate
@@ -63,6 +67,16 @@ import org.jdrupes.gitversioning.api.VersionEvaluator;
 /// property will be set on first usage of the generator.
 ///
 public class VersionTagger extends AbstractGenerator {
+
+    /// If defined and not equal to `false` prevents the actual creation
+    /// of the tag.
+    public static final String DRY_RUN = "jdbld.versionTagger.dryRun";
+
+    /// Defines the message to use when creating the annotated tag.
+    private static final String MESSAGE = "jdbld.versionTagger.message";
+
+    /// Defines the evaluation mode for the new version.
+    public static final String MODE = "jdbld.versionTagger.mode";
 
     /// Creates a new tag that increments the major version if the current
     /// version has a pre-release qualifier (e.g. `0.3.1-SNAPSHOT` becomes
@@ -190,7 +204,7 @@ public class VersionTagger extends AbstractGenerator {
 
         try {
             var dryRunProperty = project().context()
-                .property("jdbld.versionTagger.dryRun", "false");
+                .property(DRY_RUN, "false");
             // Don't use Boolean.parseString because typos would
             // lead to tags being created.
             var dryRun = dryRunProperty.isEmpty()
@@ -204,8 +218,9 @@ public class VersionTagger extends AbstractGenerator {
                     throw new BuildException().from(this)
                         .message("Won't tag dirty project");
                 }
-                gitApi.tag()
-                    .setName(tag).setMessage("Release tag " + tag).call();
+
+                gitApi.tag().setName(tag).setMessage(project().context()
+                    .property(MESSAGE, "Release tag " + tag)).call();
             }
         } catch (GitAPIException e) {
             throw new BuildException().cause(e);
@@ -218,7 +233,7 @@ public class VersionTagger extends AbstractGenerator {
     private String evaluateNewVersion(String currentVersion) {
         Semver base = new Semver(currentVersion);
         String mode
-            = project().context().property("jdbld.versionTagger.mode", null);
+            = project().context().property(MODE, null);
         boolean isSnapshot = !Collections.disjoint(
             new HashSet<>(Arrays.asList(base.getSuffixTokens())),
             preReleaseQualifiers);
