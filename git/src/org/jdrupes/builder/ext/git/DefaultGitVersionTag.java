@@ -76,7 +76,7 @@ public class DefaultGitVersionTag extends ResourceObject
 
     @Override
     public String toString() {
-        return String.format("%s from %s:%s",
+        return String.format("%s from %s: %s",
             GitVersionTag.class.getSimpleName(), project.name(), versionTag);
     }
 
