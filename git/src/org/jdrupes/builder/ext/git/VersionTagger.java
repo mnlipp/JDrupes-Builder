@@ -20,6 +20,7 @@ package org.jdrupes.builder.ext.git;
 
 import com.vdurmont.semver4j.Semver;
 import java.io.IOException;
+import java.nio.file.Path;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
@@ -27,6 +28,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.function.Function;
+import java.util.stream.Collectors;
 import org.eclipse.jgit.api.Git;
 import org.eclipse.jgit.api.errors.GitAPIException;
 import org.eclipse.jgit.lib.Ref;
@@ -203,24 +205,34 @@ public class VersionTagger extends AbstractGenerator {
         var gitApi = setGitApi(project().rootProject());
 
         try {
-            var dryRunProperty = project().context()
-                .property(DRY_RUN, "false");
-            // Don't use Boolean.parseString because typos would
-            // lead to tags being created.
-            var dryRun = dryRunProperty.isEmpty()
-                || !"false".equals(dryRunProperty);
-            // Check if tag already exists
-            if (!gitApi.tagList().call().stream().map(Ref::getName)
-                .anyMatch(name -> name.endsWith("/" + tag)) && !dryRun) {
-                if (VersionEvaluator.isDirty(gitApi.getRepository(),
-                    project().rootProject()
-                        .relativize(project().directory()))) {
+            if (gitApi.tagList().call().stream().map(Ref::getName)
+                .anyMatch(name -> name.endsWith("/" + tag))) {
+                project().context().out().println(
+                    String.format("Tag %s already exists", tag));
+            } else {
+                // Check prerequitite
+                var dirtyFiles = VersionEvaluator.dirtyFiles(
+                    gitApi.getRepository(), project().rootProject()
+                        .relativize(project().directory()));
+                if (!dirtyFiles.isEmpty()) {
                     throw new BuildException().from(this)
-                        .message("Won't tag dirty project");
+                        .message("Won't tag project with dirty files %s",
+                            dirtyFiles.stream().map(Path::toString)
+                                .collect(Collectors.joining(", ")));
                 }
 
-                gitApi.tag().setName(tag).setMessage(project().context()
-                    .property(MESSAGE, "Release tag " + tag)).call();
+                // Check for dry run
+                var dryRunProperty = project().context()
+                    .property(DRY_RUN, "false");
+                if (!Set.of("", "true", "false").contains(dryRunProperty)) {
+                    throw new BuildException().from(this).message("Property "
+                        + DRY_RUN + " must be empty or \"true\" or \"false\"");
+                }
+                if (!dryRunProperty.isEmpty()
+                    && !Boolean.parseBoolean(dryRunProperty)) {
+                    gitApi.tag().setName(tag).setMessage(project().context()
+                        .property(MESSAGE, "Release tag " + tag)).call();
+                }
             }
         } catch (GitAPIException e) {
             throw new BuildException().cause(e);
