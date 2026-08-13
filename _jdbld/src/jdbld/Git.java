@@ -33,9 +33,7 @@ public class Git extends AbstractProject
             .jarName((String) get(ArtifactId) + "-" + get(Version) + ".jar");
         dependency(Expose,
             new MvnRepoLookup().addRepositories(get(LookupRepositories))
-                .resolve("org.jdrupes.gitversioning:core:0.3.0"));
-        dependency(Reveal, new MvnRepoLookup()
-            .resolve("com.vdurmont:semver4j:3.1.0"));
+                .resolve("org.jdrupes.gitversioning:core:0.4.0"));
 
         // Publication
         generator(SourcesJarBuilder::new).addTrees(
