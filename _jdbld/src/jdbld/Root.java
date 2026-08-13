@@ -13,6 +13,7 @@ import org.apache.maven.model.Developer;
 import org.apache.maven.model.License;
 import org.apache.maven.model.Model;
 import org.apache.maven.model.Scm;
+import org.eclipse.aether.repository.RemoteRepository;
 import org.eclipse.jgit.api.Git;
 import org.jdrupes.builder.api.BuildException;
 import static org.jdrupes.builder.api.CoreProperties.*;
@@ -37,6 +38,7 @@ import static org.jdrupes.builder.java.JavaTypes.*;
 import org.jdrupes.builder.java.Javadoc;
 import org.jdrupes.builder.junit.JUnitTestRunner;
 import org.jdrupes.builder.mvnrepo.JavadocJarBuilder;
+import org.jdrupes.builder.mvnrepo.MavenContext;
 import org.jdrupes.builder.mvnrepo.MvnDeployDestination;
 import static org.jdrupes.builder.mvnrepo.MvnProperties.*;
 import org.jdrupes.builder.mvnrepo.MvnPublisher;
@@ -69,6 +71,10 @@ public class Root extends AbstractRootProject {
         super(name("JDrupes-Builder"));
         set(GroupId, "org.jdrupes");
         set(ArtifactId, "jdrupes-builder");
+        set(LookupRepositories, new RemoteRepository[] {
+            MavenContext.mavenCentral(),
+            MavenContext.jdbldDistribution()
+        });
         set(PublishingDestinations, new MvnPublishingDestination[] {
             new MvnDeployDestination(
                 MvnVersionType.SNAPSHOT, MvnVersionType.RELEASE)
@@ -212,13 +218,18 @@ public class Root extends AbstractRootProject {
         if (project instanceof RootProject rootPrj) {
             project.set(GitApi, VersionTagger.setGitApi(rootPrj));
         }
-        var evaluator = VersionEvaluator
-            .forRepository(project.<Git> get(GitApi).getRepository())
-            .subDirectory(project.directory())
-            .tagFilter(new DefaultTagFilter().prepend("v"));
-        project.set(Version, evaluator.version());
-        project.generator(VersionReporter::new);
-        project.generator(VersionTagger::new);
+        if (project instanceof RootProject
+            || project instanceof JdbldExtension) {
+            var prefix = project instanceof RootProject ? "jdbld-"
+                : project.name() + "-";
+            var evaluator = VersionEvaluator
+                .forRepository(project.<Git> get(GitApi).getRepository())
+                .subDirectory(project.directory())
+                .tagFilter(new DefaultTagFilter().prepend(prefix));
+            project.set(Version, evaluator.version());
+            project.generator(VersionReporter::new);
+            project.generator(VersionTagger::new).prefixEvalutor(_ -> prefix);
+        }
     }
 
     private static void setupCommonGenerators(Project project) {

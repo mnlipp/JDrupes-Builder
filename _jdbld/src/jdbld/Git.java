@@ -2,9 +2,7 @@ package jdbld;
 
 import static org.jdrupes.builder.api.Intent.*;
 import static org.jdrupes.builder.api.CoreProperties.*;
-import static org.jdrupes.builder.mvnrepo.MvnProperties.GroupId;
-import static org.jdrupes.builder.mvnrepo.MvnProperties.PublishingDestinations;
-import static org.jdrupes.builder.mvnrepo.MvnProperties.ArtifactId;
+import static org.jdrupes.builder.mvnrepo.MvnProperties.*;
 import java.nio.file.Path;
 import java.util.Map;
 import org.jdrupes.builder.core.AbstractProject;
@@ -33,8 +31,9 @@ public class Git extends AbstractProject
                     .resolve((String) get(GroupId)).resolve(name())
                     .resolve("pom.xml"), pomFile)))
             .jarName((String) get(ArtifactId) + "-" + get(Version) + ".jar");
-        dependency(Expose, new MvnRepoLookup()
-            .resolve("org.eclipse.jgit:org.eclipse.jgit:7.3.0.202506031305-r"));
+        dependency(Expose,
+            new MvnRepoLookup().addRepositories(get(LookupRepositories))
+                .resolve("org.jdrupes.gitversioning:core:0.3.0"));
         dependency(Reveal, new MvnRepoLookup()
             .resolve("com.vdurmont:semver4j:3.1.0"));
 

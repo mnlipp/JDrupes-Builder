@@ -20,7 +20,6 @@ package org.jdrupes.builder.ext.git;
 
 import com.vdurmont.semver4j.Semver;
 import java.io.IOException;
-import java.nio.file.Path;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
@@ -29,7 +28,6 @@ import java.util.List;
 import java.util.Set;
 import java.util.function.Function;
 import org.eclipse.jgit.api.Git;
-import org.eclipse.jgit.api.Status;
 import org.eclipse.jgit.api.errors.GitAPIException;
 import org.eclipse.jgit.lib.Ref;
 import org.jdrupes.builder.api.BuildException;
@@ -42,6 +40,7 @@ import org.jdrupes.builder.api.RootProject;
 import org.jdrupes.builder.core.AbstractGenerator;
 import static org.jdrupes.builder.ext.git.GitProperties.*;
 import static org.jdrupes.builder.ext.git.GitTypes.*;
+import org.jdrupes.gitversioning.api.VersionEvaluator;
 
 /// A generator that creates a new Git tag that denotes a [Project]'s
 /// version. The version to be used for the tag is based on
@@ -199,8 +198,9 @@ public class VersionTagger extends AbstractGenerator {
             // Check if tag already exists
             if (!gitApi.tagList().call().stream().map(Ref::getName)
                 .anyMatch(name -> name.endsWith("/" + tag)) && !dryRun) {
-                if (isDirty(gitApi, project().rootProject()
-                    .relativize(project().directory()))) {
+                if (VersionEvaluator.isDirty(gitApi.getRepository(),
+                    project().rootProject()
+                        .relativize(project().directory()))) {
                     throw new BuildException().from(this)
                         .message("Won't tag dirty project");
                 }
@@ -242,25 +242,5 @@ public class VersionTagger extends AbstractGenerator {
         default -> throw new BuildException().message(
             "Unknown algorithm for deriving new version: %s", mode);
         }
-    }
-
-    private boolean isDirty(Git git, Path subDir) throws GitAPIException {
-        Status status = git.status().call();
-        String start = subDir == null ? "" : subDir.toString();
-
-        return status.getModified().stream()
-            .anyMatch(path -> path.startsWith(start))
-            || status.getUntracked().stream()
-                .anyMatch(path -> path.startsWith(start))
-            || status.getUncommittedChanges().stream()
-                .anyMatch(path -> path.startsWith(start))
-            || status.getMissing().stream()
-                .anyMatch(path -> path.startsWith(start))
-            || status.getConflicting().stream()
-                .anyMatch(path -> path.startsWith(start))
-            || status.getAdded().stream()
-                .anyMatch(path -> path.startsWith(start))
-            || status.getRemoved().stream()
-                .anyMatch(path -> path.startsWith(start));
     }
 }

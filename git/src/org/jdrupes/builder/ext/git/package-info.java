@@ -16,6 +16,7 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-/// Support for GIT.
+/// Support for using Git tags for version management. This extension
+/// also exposes the JDrupes GitVersioning API for convenience.
 
 package org.jdrupes.builder.ext.git;
