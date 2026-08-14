@@ -76,8 +76,9 @@ public class DefaultProjectVersion extends ResourceObject
 
     @Override
     public String toString() {
+        var dir = project().rootProject().relativize(project().directory())
+            .toString();
         return project().name() + ": " + version() + " ("
-            + project().rootProject().relativize(project().directory())
-            + ")";
+            + (dir.isBlank() ? "." : dir) + ")";
     }
 }
