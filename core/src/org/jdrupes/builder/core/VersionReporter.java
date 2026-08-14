@@ -30,6 +30,23 @@ import static org.jdrupes.builder.api.ResourceType.ProjectVersionType;
 /// A provider that reports the version of a project as a
 /// [ProjectVersion] resource. The version is obtained from
 /// the project's [Version property][CoreProperties#Version].
+/// 
+/// Add the generator to a project like this:
+/// ```java
+/// generator(VersionReporter::new);
+///  ```
+/// 
+/// Also add a command alias that requests the [ProjectVersion] resource:
+/// ```java
+/// commandAlias("version")
+///     .resources(of(ProjectVersionType).using(Supply));
+/// ```
+/// 
+/// This makes it possible to query the project version from the command line
+/// with:
+/// ```bash
+/// ./jdbld version
+/// ```
 ///
 public class VersionReporter extends AbstractGenerator {
 
