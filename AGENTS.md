@@ -3,104 +3,82 @@
 JDrupes-Builder (jdbld) is a build automation tool that uses Java code for its
 configuration and models builds as collections of resources produced on demand.
 
-## Project Overview
-
-- **Core Concept:** Builds are modeled as a graph of `Project`s and
-  `ResourceProvider`s.
-- **Configuration:** Instead of XML or YAML, the build logic is written in Java
-  within the `_jdbld/src/jdbld/` directory.
-- **Key Components:**
-    - `api`: Definitions for Projects, Resources, and Intents.
-    - `core`: The build engine implementation.
-    - `java`, `nodejs`, `junit`, `mvnrepo`, `bnd`: Extensions providing specific
-      build capabilities.
-    - `startup`: Launchers for the build tool.
-- **Intents:** Relationships between projects and providers are qualified by
-  Intents:
-    - `Supply`: Resources generated specifically for the project (e.g., by a
-      Generator).
-    - `Consume`: Resources used only by the project's generators.
-    - `Reveal`: Resources used by generators and also provided when explicitly
-      requested.
-    - `Expose`: Resources used by generators and provided to dependents.
-    - `Forward`: Resources provided to dependents but not used by the project's
-      own generators.
-
-## Technical Stack
-
-- **Language:** Java (Targeting Java 25).
-- **Versioning:** Git-based versioning using `org.jdrupes.gitversioning`.
-- **Logging:** Google Flogger. Configured to forward to java.util.logging.
-- **Dependencies:** Managed via Maven repositories (lookup and resolution
-  handled by the `mvnrepo` module).
-- **IDE Support:** Generators for Eclipse (`.project`, `.classpath`, settings)
-  and VS Code (`tasks.json`, `launch.json`).
-
 ## Building and Running
 
-The project uses its own `jdbld` script for build operations.
+The project uses its own `jdbld` script. **Always exclude test projects with**
+`-B-x "test-projects/*project*"` when building the tool itself.
 
-### Key Commands
-
-- **Build Project:** `./jdbld -B-x "test-projects/*project*" build`
-  (Builds all modules and the application jar in `build/app/`).
-- **Run Tests:** `./jdbld -B-x "test-projects/*project*" test`.
-- **Generate IDE Config:**
-    - Eclipse: `./jdbld -B-x "test-projects/*project*" eclipse`.
-    - VS Code: `./jdbld -B-x "test-projects/*project*" vscode`.
-- **Generate Documentation:** `./jdbld -B-x "test-projects/*project*" javadoc`.
-- **Clean Build:** `./jdbld -B-x "test-projects/*project*" clean`.
-- **Help:** `./jdbld -h` or `--help` lists available build aliases. Invoking
-  the script with no arguments also shows help.
+- **Build:** `./jdbld -B-x "test-projects/*project*" build`
+- **Test:** `./jdbld -B-x "test-projects/*project*" test`
+- **Clean:** `./jdbld -B-x "test-projects/*project*" clean`
+- **Help:** `./jdbld -h`
 
 ### Bootstrap Problem
 
 The project builds itself using a chicken-and-egg bootstrap. `./jdbld` fetches
-a published JAR from Codeberg (version from `.jdbld.properties`) which is used
-to compile `_jdbld/src/jdbld/` and produce a new JAR. To iterate, you must
-pass the newly built JAR via `JDBLD_JAR`:
+a published JAR from Codeberg (version from `.jdbld.properties`). After the
+first build, pass the new JAR via `JDBLD_JAR`:
 
 ```bash
-# First build uses published snapshot
-./jdbld -B-x "test-projects/*project*" build
-# Subsequent builds use the just-built JAR
 JDBLD_JAR=build/app/jdrupes-builder-current.jar \
   ./jdbld -B-x "test-projects/*project*" build
 ```
 
-Test projects in `test-projects/` must always be excluded with
-`-B-x "test-projects/*project*"` when building the tool itself, to avoid them
-being treated as part of the build configuration.
+## Architecture
 
-## Development Conventions
+- **`api/`** — Pure API. Defines `Project`, `Resource`, `ResourceProvider`,
+  `ResourceFactory`, `Intent`, `BuildContext`. Must NOT depend on `core/`.
+- **`core/`** — Build engine implementation. `DefaultBuildContext`,
+  `CoreResourceFactory`, `AbstractProvider`, `AbstractRootProject`.
+- **`startup/`** — Launchers. `BootstrapProjectLauncher` (uber JAR),
+  `BuildProjectLauncher` (IDE debug).
+- **`java/`, `nodejs/`, `junit/`, `mvnrepo/`, `bnd/`, `git/`** — Extensions.
+  Build on `api/` and `core/`. Used in build projects, not basis for other
+  providers.
+- **`_jdbld/`** — Build config for this repo itself. Lives in
+  `_jdbld/src/jdbld/`.
 
-- **Code Quality:** Rigorous use of Checkstyle (`checkstyle.xml`) and PMD
-  (`ruleset.xml`).
-- **Style:**
-  - Adhere to the existing Java style. Use virtual threads where
-    appropriate (as seen in `NpmExecutor`).
-  - Line length should not exceed 80 characters.
-- **Architecture:**
-  - The classes in `api/` define a real API. The classes in `core/` and
-    `startup/` implement it. This distinction must be preserved. It must be
-    possible to implement the API with another approach if desired.
-  - The ResourceProviders and resource types in sub-projects `java/`,
-    `mvnrepo/` etc. build on `api/` and `core/`. They are intended to be used
-    in build projects, and only exceptionally as basis for other providers.
-    Therefore, they don't keep up a distinction between an API and an
-    implementation.
-- **CLI:** New flags go into `baseOptions()` in
-  `startup/.../AbstractLauncher.java`. Help output lives in
-  `startup/.../BuildProjectLauncher.printHelp()`.
-- **Command Aliases:** Defined via `commandAlias(name).description(desc)`
-  fluent builder on `AbstractRootProject`. Descriptions appear in `-h` output.
-- **Testing:** Test projects are located in `test-projects/`. JUnit tests for
-  core components are in `core/test/`. The project uses JUnit 5.
-- **Documentation:** Javadoc comments are written in Markdown (see JEP 467).
+### ResourceFactory and ClassLoader
 
-## Directory Structure
+`ResourceFactory.FACTORIES` is a `ConcurrentHashMap<ClassLoader, List<ResourceFactory>>`.
+Factories are loaded via `ServiceLoader` per classloader, keyed by the
+classloader from `BuildContext.classLoader()`. New factories are discovered
+automatically when a different classloader is in scope. No manual
+`FACTORIES.set()` is needed.
 
-- `_jdbld/`: The build configuration for the JDrupes-Builder project itself.
-- `api/`, `core/`, `java/`, etc.: Source code for the various modules.
-- `webpages/`: Project website and documentation (Jekyll-based).
-- `test-projects/`: Integration tests and demo projects.
+Every extension must register its factory via
+`resources/META-INF/services/org.jdrupes.builder.api.ResourceFactory`.
+
+### Intents
+
+Relationships between projects and providers are qualified by Intents:
+- `Supply` — Generated by a provider (e.g. generator)
+- `Consume` — Used by this project's generators only
+- `Reveal` — Used by generators, also provided on explicit request
+- `Expose` — Used by generators, also provided to dependents
+- `Forward` — Provided to dependents, not used by own generators
+
+## External Dependencies
+
+The `git` extension (`org.jdrupes:jdbld-ext-git`) is loaded externally via
+`buildExtensions` in `.jdbld.properties`, not from the local workspace.
+This avoids a circular dependency: the local `git/` module depends on the
+built tool.
+
+## Conventions
+
+- **Java 25**, no JPMS (no `module-info.java` files)
+- **Line length:** max 80 (configured in Eclipse; checkstyle.xml is more
+  permissive because sometimes lines cannot be split)
+- **Javadoc:** Markdown format (JEP 467)
+- **Logging:** Google Flogger, configured to forward to java.util.logging
+- **Code quality:** Checkstyle (`checkstyle.xml`), PMD (`ruleset.xml`)
+- **CLI flags:** Add to `baseOptions()` in `startup/.../AbstractLauncher.java`
+- **Command aliases:** `commandAlias(name).description(desc)` on
+  `AbstractRootProject`
+- **Virtual threads:** Used in executors (e.g. `NpmExecutor`)
+
+## Testing
+
+- **Integration tests:** `test-projects/` directory
+- **Unit tests:** `core/test/` — JUnit 5
