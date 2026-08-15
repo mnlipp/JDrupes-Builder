@@ -220,13 +220,12 @@ public class VersionTagger extends AbstractGenerator {
                 project().context().out().println(
                     String.format("Tag %s already exists", tag));
                 @SuppressWarnings("unchecked")
-                var result = List.of(
-                    (R) GitVersionTag.of(project(), tag,
-                        resolveTagTimestamp(gitApi, existing.get())));
+                var result = List.of((R) GitVersionTag.of(project(), tag,
+                    resolveTagTimestamp(gitApi, existing.get())));
                 return result;
             }
 
-            // Check prerequitite
+            // Check prerequisite
             var dirtyFiles = VersionEvaluator.dirtyFiles(
                 gitApi.getRepository(), project().rootProject()
                     .relativize(project().directory()));
@@ -281,14 +280,13 @@ public class VersionTagger extends AbstractGenerator {
 
     private String evaluateNewVersion(String currentVersion) {
         Semver base = new Semver(currentVersion);
-        String mode
-            = project().context().property(MODE, null);
-        boolean isSnapshot = !Collections.disjoint(
+        String mode = project().context().property(MODE, null);
+        boolean isPreRelease = !Collections.disjoint(
             new HashSet<>(Arrays.asList(base.getSuffixTokens())),
             preReleaseQualifiers);
         if (mode == null
             || Set.of(CLOSEST_MAJOR, CLOSEST_MINOR, CLOSEST_PATCH)
-                .contains(mode) && !isSnapshot) {
+                .contains(mode) && !isPreRelease) {
             return currentVersion;
         }
 
