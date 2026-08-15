@@ -18,7 +18,9 @@
 
 package org.jdrupes.builder.ext.git;
 
+import java.time.Instant;
 import java.util.Objects;
+import java.util.Optional;
 import org.jdrupes.builder.api.Project;
 import org.jdrupes.builder.core.ResourceObject;
 
@@ -29,15 +31,19 @@ public class DefaultGitVersionTag extends ResourceObject
 
     private final Project project;
     private final String versionTag;
+    private final Instant asOf;
 
     /// Initializes a new Git version tag.
     ///
     /// @param project the project
     /// @param versionTag the version tag
+    /// @param asOf the timestamp of the tag
     ///
-    public DefaultGitVersionTag(Project project, String versionTag) {
+    public DefaultGitVersionTag(Project project, String versionTag,
+            Instant asOf) {
         this.project = project;
         this.versionTag = versionTag;
+        this.asOf = asOf;
     }
 
     @Override
@@ -48,6 +54,11 @@ public class DefaultGitVersionTag extends ResourceObject
     @Override
     public String tag() {
         return versionTag;
+    }
+
+    @Override
+    public Optional<Instant> asOf() {
+        return Optional.ofNullable(asOf);
     }
 
     @Override
@@ -76,8 +87,9 @@ public class DefaultGitVersionTag extends ResourceObject
 
     @Override
     public String toString() {
-        return String.format("%s from %s: %s",
-            GitVersionTag.class.getSimpleName(), project.name(), versionTag);
+        return String.format("%s from %s: %s (%s)",
+            GitVersionTag.class.getSimpleName(), project.name(),
+            tag(), asOf().get());
     }
 
 }

@@ -21,6 +21,7 @@ package org.jdrupes.builder.ext.git;
 import com.vdurmont.semver4j.Semver;
 import java.io.IOException;
 import java.nio.file.Path;
+import java.time.Instant;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
@@ -32,6 +33,9 @@ import java.util.stream.Collectors;
 import org.eclipse.jgit.api.Git;
 import org.eclipse.jgit.api.errors.GitAPIException;
 import org.eclipse.jgit.lib.Ref;
+import org.eclipse.jgit.revwalk.RevCommit;
+import org.eclipse.jgit.revwalk.RevTag;
+import org.eclipse.jgit.revwalk.RevWalk;
 import org.jdrupes.builder.api.BuildException;
 import org.jdrupes.builder.api.CoreProperties;
 import org.jdrupes.builder.api.Project;
@@ -210,41 +214,69 @@ public class VersionTagger extends AbstractGenerator {
         var gitApi = setGitApi(project().rootProject());
 
         try {
-            if (gitApi.tagList().call().stream().map(Ref::getName)
-                .anyMatch(name -> name.endsWith("/" + tag))) {
+            var existing = gitApi.tagList().call().stream()
+                .filter(ref -> ref.getName().endsWith("/" + tag)).findFirst();
+            if (existing.isPresent()) {
                 project().context().out().println(
                     String.format("Tag %s already exists", tag));
-            } else {
-                // Check prerequitite
-                var dirtyFiles = VersionEvaluator.dirtyFiles(
-                    gitApi.getRepository(), project().rootProject()
-                        .relativize(project().directory()));
-                if (!dirtyFiles.isEmpty()) {
-                    throw new BuildException().from(this)
-                        .message("Won't tag project with dirty files %s",
-                            dirtyFiles.stream().map(Path::toString)
-                                .collect(Collectors.joining(", ")));
-                }
+                @SuppressWarnings("unchecked")
+                var result = List.of(
+                    (R) GitVersionTag.of(project(), tag,
+                        resolveTagTimestamp(gitApi, existing.get())));
+                return result;
+            }
 
-                // Check for dry run
-                var dryRunProperty = project().context()
-                    .property(DRY_RUN, "false");
-                if (!Set.of("", "true", "false").contains(dryRunProperty)) {
-                    throw new BuildException().from(this).message("Property "
-                        + DRY_RUN + " must be empty or \"true\" or \"false\"");
-                }
-                if (!dryRunProperty.isEmpty()
-                    && !Boolean.parseBoolean(dryRunProperty)) {
-                    gitApi.tag().setName(tag).setMessage(project().context()
-                        .property(MESSAGE, "Release tag " + tag)).call();
-                }
+            // Check prerequitite
+            var dirtyFiles = VersionEvaluator.dirtyFiles(
+                gitApi.getRepository(), project().rootProject()
+                    .relativize(project().directory()));
+            if (!dirtyFiles.isEmpty()) {
+                throw new BuildException().from(this)
+                    .message("Won't tag project with dirty files %s",
+                        dirtyFiles.stream().map(Path::toString)
+                            .collect(Collectors.joining(", ")));
+            }
+
+            // Check for dry run
+            var dryRunProperty = project().context()
+                .property(DRY_RUN, "false");
+            if (!Set.of("", "true", "false").contains(dryRunProperty)) {
+                throw new BuildException().from(this).message("Property "
+                    + DRY_RUN + " must be empty or \"true\" or \"false\"");
+            }
+            if (!dryRunProperty.isEmpty()
+                && !Boolean.parseBoolean(dryRunProperty)) {
+                gitApi.tag().setName(tag).setMessage(project().context()
+                    .property(MESSAGE, "Release tag " + tag)).call();
             }
         } catch (GitAPIException e) {
             throw new BuildException().cause(e);
         }
         @SuppressWarnings("unchecked")
-        var result = List.of((R) GitVersionTag.of(project(), tag));
+        var result
+            = List.of((R) GitVersionTag.of(project(), tag, Instant.now()));
         return result;
+    }
+
+    private Instant resolveTagTimestamp(Git gitApi, Ref tagRef) {
+        if (tagRef == null) {
+            return Instant.now();
+        }
+        try (var walk = new RevWalk(gitApi.getRepository())) {
+            var obj = walk.parseAny(tagRef.getObjectId());
+            if (obj instanceof RevTag revTag) {
+                var taggerIdent = revTag.getTaggerIdent();
+                if (taggerIdent != null) {
+                    return taggerIdent.getWhenAsInstant();
+                }
+            }
+            if (obj instanceof RevCommit revCommit) {
+                return revCommit.getCommitterIdent().getWhenAsInstant();
+            }
+            return Instant.now();
+        } catch (IOException e) {
+            throw new BuildException().cause(e);
+        }
     }
 
     private String evaluateNewVersion(String currentVersion) {

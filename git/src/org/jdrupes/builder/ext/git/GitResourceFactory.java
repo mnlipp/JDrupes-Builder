@@ -18,6 +18,7 @@
 
 package org.jdrupes.builder.ext.git;
 
+import java.time.Instant;
 import java.util.Optional;
 import org.jdrupes.builder.api.Project;
 import org.jdrupes.builder.api.Resource;
@@ -39,7 +40,8 @@ public class GitResourceFactory implements ResourceFactory {
     public <T extends Resource> Optional<T> newResource(ResourceType<T> type,
             Project project, Object... args) {
         var candidate = createNarrowed(type, GitVersionTag.class,
-            () -> new DefaultGitVersionTag(project, (String) args[0]));
+            () -> new DefaultGitVersionTag(project, (String) args[0],
+                (Instant) args[1]));
         if (candidate.isPresent()) {
             return candidate;
         }

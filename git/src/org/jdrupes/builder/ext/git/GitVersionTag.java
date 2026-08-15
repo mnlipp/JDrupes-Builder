@@ -18,6 +18,7 @@
 
 package org.jdrupes.builder.ext.git;
 
+import java.time.Instant;
 import org.jdrupes.builder.api.Project;
 import org.jdrupes.builder.api.Resource;
 import org.jdrupes.builder.api.ResourceFactory;
@@ -34,11 +35,12 @@ public interface GitVersionTag extends Resource {
     ///
     /// @param project the project
     /// @param tag the tag
+    /// @param asOf the timestamp of the tag
     /// @return the project version
     ///
     @SuppressWarnings("PMD.ShortMethodName")
-    static GitVersionTag of(Project project, String tag) {
-        return ResourceFactory.create(GitVersionTagType, project, tag);
+    static GitVersionTag of(Project project, String tag, Instant asOf) {
+        return ResourceFactory.create(GitVersionTagType, project, tag, asOf);
     }
 
     /// Returns the project the tag is associated with.
