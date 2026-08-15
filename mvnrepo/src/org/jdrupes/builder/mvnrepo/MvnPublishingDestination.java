@@ -176,4 +176,15 @@ public abstract class MvnPublishingDestination {
     /* default */ abstract void publish(BuildContext context,
             MvnPublisher publisher, Artifact mainArtifact,
             List<Artifact> toDeploy);
+
+    /// Checks whether the given artifact is already published at this
+    /// destination.
+    ///
+    /// @param context the build context. Used to retrieve credentials for
+    /// private repositories
+    /// @param mainArtifact the main artifact
+    /// @return true if the artifact already exists
+    ///
+    /* default */ abstract boolean alreadyPublished(BuildContext context,
+            Artifact mainArtifact);
 }

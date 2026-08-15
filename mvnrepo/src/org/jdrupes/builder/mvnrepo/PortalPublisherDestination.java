@@ -36,6 +36,7 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.Duration;
+import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.ExecutorService;
@@ -44,6 +45,8 @@ import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
 import org.bouncycastle.util.encoders.Base64;
 import org.eclipse.aether.artifact.Artifact;
+import org.eclipse.aether.resolution.ArtifactRequest;
+import org.eclipse.aether.resolution.ArtifactResolutionException;
 import org.jdrupes.builder.api.BuildContext;
 import org.jdrupes.builder.api.BuildException;
 import org.jdrupes.builder.api.ConfigurationException;
@@ -177,6 +180,26 @@ public class PortalPublisherDestination extends MvnPublishingDestination {
             }
         } catch (IOException | InterruptedException e) {
             throw new BuildException().from(publisher).cause(e);
+        }
+    }
+
+    @Override
+    /* default */boolean alreadyPublished(BuildContext context,
+            Artifact mainArtifact) {
+        var artifactRequest = new ArtifactRequest();
+        artifactRequest.setArtifact(mainArtifact);
+        artifactRequest.setRepositories(
+            Collections.singletonList(MavenContext.mavenCentral()));
+        try {
+            var resolved = MavenContext.repositorySystem().resolveArtifact(
+                MavenContext.repositorySession(), artifactRequest).isResolved();
+            logger.atFinest().log("Artifact %s already on Maven Central",
+                mainArtifact);
+            return resolved;
+        } catch (ArtifactResolutionException e) {
+            logger.atFinest().log("Artifact %s not on Maven Central: %s",
+                mainArtifact, e.getMessage());
+            return false;
         }
     }
 

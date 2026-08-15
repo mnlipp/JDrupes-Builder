@@ -20,6 +20,7 @@ package org.jdrupes.builder.mvnrepo;
 
 import com.google.common.flogger.FluentLogger;
 import java.net.URI;
+import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -30,6 +31,8 @@ import org.eclipse.aether.artifact.Artifact;
 import org.eclipse.aether.deployment.DeployRequest;
 import org.eclipse.aether.deployment.DeploymentException;
 import org.eclipse.aether.repository.RemoteRepository;
+import org.eclipse.aether.resolution.ArtifactRequest;
+import org.eclipse.aether.resolution.ArtifactResolutionException;
 import org.eclipse.aether.util.repository.AuthenticationBuilder;
 import org.jdrupes.builder.api.BuildContext;
 import org.jdrupes.builder.api.BuildException;
@@ -106,6 +109,33 @@ public class MvnDeployDestination extends MvnPublishingDestination {
             MavenContext.repositorySystem().deploy(session, deployReq);
         } catch (DeploymentException e) {
             throw new BuildException().from(publisher).cause(e);
+        }
+    }
+
+    @Override
+    /* default */ boolean alreadyPublished(BuildContext context,
+            Artifact mainArtifact) {
+        var user = repositoryUser(context);
+        var password = repositoryPassword(context);
+        var repo = new RemoteRepository.Builder(
+            id() != null ? ("check-" + id()) : "check", "default",
+            repositoryUri().toString())
+                .setAuthentication(new AuthenticationBuilder()
+                    .addUsername(user).addPassword(password).build())
+                .build();
+        var artifactRequest = new ArtifactRequest();
+        artifactRequest.setArtifact(mainArtifact);
+        artifactRequest.setRepositories(Collections.singletonList(repo));
+        try {
+            var resolved = MavenContext.repositorySystem().resolveArtifact(
+                MavenContext.repositorySession(), artifactRequest).isResolved();
+            logger.atFinest().log("Artifact %s exists in %s", mainArtifact,
+                repositoryUri);
+            return resolved;
+        } catch (ArtifactResolutionException e) {
+            logger.atFinest().log("Artifact %s not found in %s: %s",
+                mainArtifact, repositoryUri, e.getMessage());
+            return false;
         }
     }
 

@@ -309,41 +309,36 @@ public class MvnPublisher extends AbstractGenerator {
         }
         Artifact mainArtifact = new DefaultArtifact(model.getGroupId(),
             model.getArtifactId(), "jar", model.getVersion());
+        var coords = String.format("%s:%s:%s", mainArtifact.getGroupId(),
+            mainArtifact.getArtifactId(), mainArtifact.getVersion());
+        @SuppressWarnings("PMD.CloseResource")
+        var context = context();
+        var effectiveDests = destinations;
         if (!mainArtifact.isSnapshot()) {
             checkReleaseDeps(mainArtifact, model);
+            effectiveDests = destinations.stream()
+                .filter(d -> d.accepts(MvnVersionType.RELEASE)
+                    && !d.alreadyPublished(context, mainArtifact))
+                .toList();
+            // Check if non-snapshot artifact already exists at all destinations
+            if (effectiveDests.isEmpty()) {
+                logger.atInfo().log("Artifact %s already published, skipping",
+                    coords);
+                return List.of(MvnPublication.of(coords));
+            }
         }
 
-        // Generate files
-        if (artifactDirectory() != null) {
-            artifactDirectory().toFile().mkdirs();
-        }
-        List<Deployable> toDeploy = new ArrayList<>();
-        var needChecksums = destinations.stream()
-            .filter(MvnPublishingDestination::requiresChecksumArtifacts)
-            .findAny().isPresent();
-        addWithGenerated(toDeploy, new SubArtifact(mainArtifact, "", "pom",
-            pomResource.path().toFile()), needChecksums);
-        addWithGenerated(toDeploy, new SubArtifact(mainArtifact, "", "jar",
-            jarResource.path().toFile()), needChecksums);
-        if (srcsJar != null) {
-            addWithGenerated(toDeploy, new SubArtifact(mainArtifact, "sources",
-                "jar", srcsJar.path().toFile()), needChecksums);
-        }
-        if (javadocJar != null) {
-            addWithGenerated(toDeploy, new SubArtifact(mainArtifact, "javadoc",
-                "jar", javadocJar.path().toFile()), needChecksums);
-        }
+        // Assemble all files to deploy
+        List<Deployable> toDeploy = filesToDeploy(pomResource, jarResource,
+            srcsJar, javadocJar, mainArtifact, effectiveDests);
 
         try {
             if (installOnly) {
                 install(toDeploy);
-                return List.of(MvnInstallation.of(String.format("%s:%s:%s",
-                    mainArtifact.getGroupId(), mainArtifact.getArtifactId(),
-                    mainArtifact.getVersion())));
+                return List.of(MvnInstallation.of(coords));
             }
-            @SuppressWarnings("PMD.CloseResource")
-            var context = context();
-            destinations.stream().parallel().forEach(destination -> {
+
+            effectiveDests.stream().parallel().forEach(destination -> {
                 if (mainArtifact.isSnapshot()
                     ? !destination.accepts(MvnVersionType.SNAPSHOT)
                     : !destination.accepts(MvnVersionType.RELEASE)) {
@@ -354,9 +349,7 @@ public class MvnPublisher extends AbstractGenerator {
                     .map(d -> d.artifact).toList();
                 destination.publish(context, this, mainArtifact, artifacts);
             });
-            return List.of(MvnPublication.of(String.format("%s:%s:%s",
-                mainArtifact.getGroupId(), mainArtifact.getArtifactId(),
-                mainArtifact.getVersion())));
+            return List.of(MvnPublication.of(coords));
         } finally {
             if (!keepSubArtifacts) {
                 toDeploy.stream().filter(Deployable::temporary).forEach(d -> {
@@ -389,6 +382,32 @@ public class MvnPublisher extends AbstractGenerator {
                 "Release version %s cannot depend on snapshot version(s): %s",
                 mainArtifact, String.join(", ", snapshotDeps));
         }
+    }
+
+    private List<Deployable> filesToDeploy(PomFile pomResource,
+            LibraryJarFile jarResource, SourcesJarFile srcsJar,
+            JavadocJarFile javadocJar, Artifact mainArtifact,
+            List<MvnPublishingDestination> effectiveDests) {
+        if (artifactDirectory() != null) {
+            artifactDirectory().toFile().mkdirs();
+        }
+        List<Deployable> toDeploy = new ArrayList<>();
+        var needChecksums = effectiveDests.stream()
+            .filter(MvnPublishingDestination::requiresChecksumArtifacts)
+            .findAny().isPresent();
+        addWithGenerated(toDeploy, new SubArtifact(mainArtifact, "", "pom",
+            pomResource.path().toFile()), needChecksums);
+        addWithGenerated(toDeploy, new SubArtifact(mainArtifact, "", "jar",
+            jarResource.path().toFile()), needChecksums);
+        if (srcsJar != null) {
+            addWithGenerated(toDeploy, new SubArtifact(mainArtifact, "sources",
+                "jar", srcsJar.path().toFile()), needChecksums);
+        }
+        if (javadocJar != null) {
+            addWithGenerated(toDeploy, new SubArtifact(mainArtifact, "javadoc",
+                "jar", javadocJar.path().toFile()), needChecksums);
+        }
+        return toDeploy;
     }
 
     private void addWithGenerated(List<Deployable> toDeploy,
