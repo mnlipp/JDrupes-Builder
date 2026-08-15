@@ -212,7 +212,6 @@ public class VersionTagger extends AbstractGenerator {
         var tag = prefixEvaluator.apply(project()) + newVersion;
         @SuppressWarnings("PMD.CloseResource")
         var gitApi = setGitApi(project().rootProject());
-
         try {
             var existing = gitApi.tagList().call().stream()
                 .filter(ref -> ref.getName().endsWith("/" + tag)).findFirst();
@@ -226,25 +225,13 @@ public class VersionTagger extends AbstractGenerator {
             }
 
             // Check prerequisite
-            var dirtyFiles = VersionEvaluator.dirtyFiles(
-                gitApi.getRepository(), project().rootProject()
-                    .relativize(project().directory()));
-            if (!dirtyFiles.isEmpty()) {
-                throw new BuildException().from(this)
-                    .message("Won't tag project with dirty files %s",
-                        dirtyFiles.stream().map(Path::toString)
-                            .collect(Collectors.joining(", ")));
+            var dryRun = checkDryRun();
+            if (!checkPrerequesites(gitApi, newVersion, tag, dryRun)) {
+                return Collections.emptyList();
             }
 
-            // Check for dry run
-            var dryRunProperty = project().context()
-                .property(DRY_RUN, "false");
-            if (!Set.of("", "true", "false").contains(dryRunProperty)) {
-                throw new BuildException().from(this).message("Property "
-                    + DRY_RUN + " must be empty or \"true\" or \"false\"");
-            }
-            if (!dryRunProperty.isEmpty()
-                && !Boolean.parseBoolean(dryRunProperty)) {
+            // Create tag unless dry run
+            if (!dryRun) {
                 gitApi.tag().setName(tag).setMessage(project().context()
                     .property(MESSAGE, "Release tag " + tag)).call();
             }
@@ -255,6 +242,54 @@ public class VersionTagger extends AbstractGenerator {
         var result
             = List.of((R) GitVersionTag.of(project(), tag, Instant.now()));
         return result;
+    }
+
+    private boolean checkPrerequesites(Git gitApi, String newVersion,
+            String tag,
+            boolean dryRun) throws GitAPIException {
+        var dirtyFiles = VersionEvaluator.dirtyFiles(
+            gitApi.getRepository(), project().rootProject()
+                .relativize(project().directory()));
+        if (!dirtyFiles.isEmpty()) {
+            if (dryRun) {
+                project().context().out().println(
+                    String.format("%s: wouldn't create tag %s "
+                        + "since project has dirty files %s", this,
+                        tag, dirtyFiles.stream().map(Path::toString)
+                            .collect(Collectors.joining(", "))));
+                return false;
+            } else {
+                throw new BuildException().from(this)
+                    .message("Won't create tag %s since project has "
+                        + "dirty files %s", tag,
+                        dirtyFiles.stream().map(Path::toString)
+                            .collect(Collectors.joining(", ")));
+            }
+        }
+        if (isPreRelease(newVersion)) {
+            if (dryRun) {
+                project().context().out().println(
+                    String.format("%s: wouldn't create tag %s "
+                        + "since it is a pre-release", this, tag));
+                return false;
+            } else {
+                throw new BuildException().from(this)
+                    .message("Won't create tag %s since it is a pre-release",
+                        tag);
+            }
+        }
+        return true;
+    }
+
+    private boolean checkDryRun() {
+        var dryRunProperty = project().context()
+            .property(DRY_RUN, "false");
+        if (!Set.of("", "true", "false").contains(dryRunProperty)) {
+            throw new BuildException().from(this).message("Property "
+                + DRY_RUN + " must be empty or \"true\" or \"false\"");
+        }
+        return dryRunProperty.isEmpty()
+            || Boolean.parseBoolean(dryRunProperty);
     }
 
     private Instant resolveTagTimestamp(Git gitApi, Ref tagRef) {
@@ -281,12 +316,9 @@ public class VersionTagger extends AbstractGenerator {
     private String evaluateNewVersion(String currentVersion) {
         Semver base = new Semver(currentVersion);
         String mode = project().context().property(MODE, null);
-        boolean isPreRelease = !Collections.disjoint(
-            new HashSet<>(Arrays.asList(base.getSuffixTokens())),
-            preReleaseQualifiers);
         if (mode == null
             || Set.of(CLOSEST_MAJOR, CLOSEST_MINOR, CLOSEST_PATCH)
-                .contains(mode) && !isPreRelease) {
+                .contains(mode) && !isPreRelease(currentVersion)) {
             return currentVersion;
         }
 
@@ -304,5 +336,12 @@ public class VersionTagger extends AbstractGenerator {
         default -> throw new BuildException().message(
             "Unknown algorithm for deriving new version: %s", mode);
         }
+    }
+
+    private boolean isPreRelease(String version) {
+        Semver base = new Semver(version);
+        return !Collections.disjoint(
+            new HashSet<>(Arrays.asList(base.getSuffixTokens())),
+            preReleaseQualifiers);
     }
 }
