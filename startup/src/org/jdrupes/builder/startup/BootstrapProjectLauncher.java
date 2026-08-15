@@ -123,6 +123,11 @@ public class BootstrapProjectLauncher extends AbstractLauncher {
 
     private URL[] buildProjectClasses(RootProject rootProject) {
         // Add build extensions to the build project.
+        var extCp = System.getenv("JDBLD_EXTS");
+        if (extCp != null) {
+            rootProject.project(BootstrapBuild.class)
+                .dependency(Expose, ClasspathScanner::new).path(extCp);
+        }
         var mvnLookup = extensionsLookup();
         var buildCoords = Arrays.asList(jdbldProps
             .getProperty(BuildContext.BUILD_EXTENSIONS, "").split(","))
@@ -132,11 +137,6 @@ public class BootstrapProjectLauncher extends AbstractLauncher {
         buildCoords.forEach(mvnLookup::resolve);
         rootProject.project(BootstrapBuild.class).dependency(Expose,
             mvnLookup);
-        var extCp = System.getenv("JDBLD_EXTS");
-        if (extCp != null) {
-            rootProject.project(BootstrapBuild.class)
-                .dependency(Expose, ClasspathScanner::new).path(extCp);
-        }
         return rootProject.resources(rootProject
             .of(ClasspathElementType).using(Supply, Expose)).map(cpe -> {
                 try {
