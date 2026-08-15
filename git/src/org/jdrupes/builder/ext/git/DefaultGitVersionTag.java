@@ -89,7 +89,7 @@ public class DefaultGitVersionTag extends ResourceObject
     public String toString() {
         return String.format("%s from %s: %s (%s)",
             GitVersionTag.class.getSimpleName(), project.name(),
-            tag(), asOf().get());
+            tag(), asOfLocalized());
     }
 
 }
