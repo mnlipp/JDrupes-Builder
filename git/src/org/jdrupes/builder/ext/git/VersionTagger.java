@@ -245,11 +245,11 @@ public class VersionTagger extends AbstractGenerator {
     }
 
     private boolean checkPrerequesites(Git gitApi, String newVersion,
-            String tag,
-            boolean dryRun) throws GitAPIException {
-        var dirtyFiles = VersionEvaluator.dirtyFiles(
-            gitApi.getRepository(), project().rootProject()
-                .relativize(project().directory()));
+            String tag, boolean dryRun) throws GitAPIException {
+        var evaluator = VersionEvaluator
+            .forRepository(gitApi.getRepository())
+            .subDirectory(project().directory());
+        var dirtyFiles = evaluator.dirtyFiles().toList();
         if (!dirtyFiles.isEmpty()) {
             if (dryRun) {
                 project().context().out().println(

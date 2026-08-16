@@ -33,7 +33,7 @@ public class Git extends AbstractProject
             .jarName((String) get(ArtifactId) + "-" + get(Version) + ".jar");
         dependency(Expose,
             new MvnRepoLookup().addRepositories(get(LookupRepositories))
-                .resolve("org.jdrupes.gitversioning:core:0.5.0"));
+                .resolve("org.jdrupes.gitversioning:core:0.7.0"));
 
         // Publication
         generator(SourcesJarBuilder::new).addTrees(
