@@ -231,7 +231,7 @@ public final class MavenContext {
     /// @param enabled the enabled
     /// @return the repository policy
     ///
-    /* default */ static RepositoryPolicy createDefaultPolicy(
+    public static RepositoryPolicy createDefaultPolicy(
             MvnVersionType type, boolean enabled) {
         return createPolicy(type, enabled, null, null);
     }
@@ -243,7 +243,7 @@ public final class MavenContext {
     /// @param policy the policy data from settings
     /// @return the repository policy
     ///
-    /* default */ static RepositoryPolicy createPolicy(MvnVersionType type,
+    public static RepositoryPolicy createPolicy(MvnVersionType type,
             org.apache.maven.settings.RepositoryPolicy policy) {
         if (policy == null) {
             return createPolicy(type, false, null, null);
@@ -261,7 +261,7 @@ public final class MavenContext {
     /// @param checksumPolicy the checksum policy
     /// @return the repository policy
     ///
-    /* default */ static RepositoryPolicy createPolicy(MvnVersionType type,
+    public static RepositoryPolicy createPolicy(MvnVersionType type,
             boolean enabled, String updatePolicy, String checksumPolicy) {
         if (updatePolicy == null) {
             updatePolicy = type == MvnVersionType.SNAPSHOT
