@@ -27,11 +27,14 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import org.eclipse.jgit.api.Git;
+import org.eclipse.jgit.api.errors.ConcurrentRefUpdateException;
 import org.eclipse.jgit.api.errors.GitAPIException;
+import org.eclipse.jgit.api.errors.RefAlreadyExistsException;
 import org.eclipse.jgit.lib.Ref;
 import org.eclipse.jgit.revwalk.RevCommit;
 import org.eclipse.jgit.revwalk.RevTag;
@@ -77,6 +80,7 @@ import org.jdrupes.gitversioning.api.VersionEvaluator;
 /// https://img.shields.io/maven-metadata/v?metadataUrl=https%3A%2F%2Fcodeberg.org%2Fapi%2Fpackages%2FJDrupes%2Fmaven%2Forg%2Fjdrupes%2Fjdbld-ext-git%2Fmaven-metadata.xml&strategy=releaseProperty)
 /// ](https://codeberg.org/JDrupes/-/packages/maven/org.jdrupes:jdbld-ext-git/versions)
 /// 
+@SuppressWarnings("PMD.GodClass")
 public class VersionTagger extends AbstractGenerator {
 
     /// If defined and not equal to `false` prevents the actual creation
@@ -199,6 +203,8 @@ public class VersionTagger extends AbstractGenerator {
     }
 
     @Override
+    @SuppressWarnings({ "PMD.AvoidInstantiatingObjectsInLoops",
+        "PMD.AvoidInstanceofChecksInCatchClause" })
     protected <R extends Resource> Collection<R>
             doProvide(ResourceRequest<R> requested) {
         if (!requested.accepts(GitVersionTagType)) {
@@ -210,12 +216,49 @@ public class VersionTagger extends AbstractGenerator {
         String newVersion = evaluateNewVersion(currentVersion);
 
         var tag = prefixEvaluator.apply(project()) + newVersion;
-        @SuppressWarnings("PMD.CloseResource")
         var gitApi = setGitApi(project().rootProject());
-        try {
-            var existing = gitApi.tagList().call().stream()
-                .filter(ref -> ref.getName().endsWith("/" + tag)).findFirst();
-            if (existing.isPresent()) {
+        for (int attempt = 0;; attempt++) {
+            try {
+                return createTag(newVersion, tag, gitApi);
+            } catch (GitAPIException e) {
+                if (e instanceof ConcurrentRefUpdateException && attempt < 10) {
+                    try {
+                        Thread.sleep(10L * (attempt + 1));
+                        continue;
+                    } catch (InterruptedException ex) { // NOPMD
+                    }
+                }
+                throw new BuildException().cause(e);
+            }
+        }
+    }
+
+    @SuppressWarnings("PMD.AvoidSynchronizedStatement")
+    private <R extends Resource> List<R> createTag(String newVersion,
+            String tag, Git gitApi) throws GitAPIException {
+        // Check prerequisite
+        var dryRun = checkDryRun();
+        if (!checkPrerequesites(gitApi, newVersion, tag, dryRun)) {
+            return Collections.emptyList();
+        }
+
+        // Create tag unless dry run
+        if (!dryRun) {
+            try {
+                synchronized (gitApi) {
+                    gitApi.tag().setName(tag).setMessage(project().context()
+                        .property(MESSAGE, "Release tag " + tag)).call();
+                }
+            } catch (RefAlreadyExistsException e) {
+                Optional<Ref> existing;
+                synchronized (gitApi) {
+                    existing = gitApi.tagList().call().stream().filter(
+                        ref -> ref.getName().endsWith("/" + tag)).findFirst();
+                }
+                if (existing.isEmpty()) {
+                    throw new BuildException().from(this).cause(e).message(
+                        "Tag %s reported to exist but not found", tag);
+                }
                 project().context().out().println(
                     String.format("Tag %s already exists", tag));
                 @SuppressWarnings("unchecked")
@@ -223,20 +266,6 @@ public class VersionTagger extends AbstractGenerator {
                     resolveTagTimestamp(gitApi, existing.get())));
                 return result;
             }
-
-            // Check prerequisite
-            var dryRun = checkDryRun();
-            if (!checkPrerequesites(gitApi, newVersion, tag, dryRun)) {
-                return Collections.emptyList();
-            }
-
-            // Create tag unless dry run
-            if (!dryRun) {
-                gitApi.tag().setName(tag).setMessage(project().context()
-                    .property(MESSAGE, "Release tag " + tag)).call();
-            }
-        } catch (GitAPIException e) {
-            throw new BuildException().cause(e);
         }
         @SuppressWarnings("unchecked")
         var result
@@ -292,24 +321,27 @@ public class VersionTagger extends AbstractGenerator {
             || Boolean.parseBoolean(dryRunProperty);
     }
 
+    @SuppressWarnings("PMD.AvoidSynchronizedStatement")
     private Instant resolveTagTimestamp(Git gitApi, Ref tagRef) {
         if (tagRef == null) {
             return Instant.now();
         }
-        try (var walk = new RevWalk(gitApi.getRepository())) {
-            var obj = walk.parseAny(tagRef.getObjectId());
-            if (obj instanceof RevTag revTag) {
-                var taggerIdent = revTag.getTaggerIdent();
-                if (taggerIdent != null) {
-                    return taggerIdent.getWhenAsInstant();
+        synchronized (gitApi) {
+            try (var walk = new RevWalk(gitApi.getRepository())) {
+                var obj = walk.parseAny(tagRef.getObjectId());
+                if (obj instanceof RevTag revTag) {
+                    var taggerIdent = revTag.getTaggerIdent();
+                    if (taggerIdent != null) {
+                        return taggerIdent.getWhenAsInstant();
+                    }
                 }
+                if (obj instanceof RevCommit revCommit) {
+                    return revCommit.getCommitterIdent().getWhenAsInstant();
+                }
+                return Instant.now();
+            } catch (IOException e) {
+                throw new BuildException().cause(e);
             }
-            if (obj instanceof RevCommit revCommit) {
-                return revCommit.getCommitterIdent().getWhenAsInstant();
-            }
-            return Instant.now();
-        } catch (IOException e) {
-            throw new BuildException().cause(e);
         }
     }
 
