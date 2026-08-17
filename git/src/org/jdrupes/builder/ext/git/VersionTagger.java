@@ -167,7 +167,8 @@ public class VersionTagger extends AbstractGenerator {
     /// @param project the new git api
     /// @return the [Git] instance
     ///
-    @SuppressWarnings({ "PMD.AvoidSynchronizedStatement", "PMD.CloseResource" })
+    @SuppressWarnings({ "PMD.CloseResource", "PMD.AvoidSynchronizedStatement",
+        "PMD.AvoidDuplicateLiterals" })
     public static Git setGitApi(RootProject project) {
         var git = project.get(GitApi);
         if (git != null) {
@@ -233,9 +234,22 @@ public class VersionTagger extends AbstractGenerator {
         var currentVersion = ProjectVersion.of(project(),
             project().get(CoreProperties.Version)).version();
         String newVersion = evaluateNewVersion(currentVersion);
-
         var tag = prefixEvaluator.apply(project()) + newVersion;
         var gitApi = setGitApi(project().rootProject());
+
+        // Check for existing tag
+        try {
+            var existing = findTag(gitApi, tag);
+            if (existing.isPresent()) {
+                @SuppressWarnings("unchecked")
+                var result = List.of((R) existing.get());
+                return result;
+            }
+        } catch (GitAPIException e) {
+            throw new BuildException().from(this).cause(e);
+        }
+
+        // Create new tag
         for (int attempt = 0;; attempt++) {
             try {
                 return createTag(newVersion, tag, gitApi);
@@ -247,6 +261,45 @@ public class VersionTagger extends AbstractGenerator {
                     } catch (InterruptedException ex) { // NOPMD
                     }
                 }
+                throw new BuildException().cause(e);
+            }
+        }
+    }
+
+    @SuppressWarnings("PMD.AvoidSynchronizedStatement")
+    private Optional<GitVersionTag> findTag(Git gitApi, String tag)
+            throws GitAPIException {
+        Optional<Ref> existing;
+        synchronized (gitApi) {
+            existing = gitApi.tagList().call().stream().filter(
+                ref -> ref.getName().endsWith("/" + tag)).findFirst();
+        }
+        if (existing.isEmpty()) {
+            return Optional.empty();
+        }
+        return Optional.of(GitVersionTag.of(project(), tag,
+            resolveTagTimestamp(gitApi, existing.get())));
+    }
+
+    @SuppressWarnings("PMD.AvoidSynchronizedStatement")
+    private Instant resolveTagTimestamp(Git gitApi, Ref tagRef) {
+        if (tagRef == null) {
+            return Instant.now();
+        }
+        synchronized (gitApi) {
+            try (var walk = new RevWalk(gitApi.getRepository())) {
+                var obj = walk.parseAny(tagRef.getObjectId());
+                if (obj instanceof RevTag revTag) {
+                    var taggerIdent = revTag.getTaggerIdent();
+                    if (taggerIdent != null) {
+                        return taggerIdent.getWhenAsInstant();
+                    }
+                }
+                if (obj instanceof RevCommit revCommit) {
+                    return revCommit.getCommitterIdent().getWhenAsInstant();
+                }
+                return Instant.now();
+            } catch (IOException e) {
                 throw new BuildException().cause(e);
             }
         }
@@ -269,11 +322,7 @@ public class VersionTagger extends AbstractGenerator {
                         .property(MESSAGE, "Release tag " + tag)).call();
                 }
             } catch (RefAlreadyExistsException e) {
-                Optional<Ref> existing;
-                synchronized (gitApi) {
-                    existing = gitApi.tagList().call().stream().filter(
-                        ref -> ref.getName().endsWith("/" + tag)).findFirst();
-                }
+                var existing = findTag(gitApi, tag);
                 if (existing.isEmpty()) {
                     throw new BuildException().from(this).cause(e).message(
                         "Tag %s reported to exist but not found", tag);
@@ -281,8 +330,7 @@ public class VersionTagger extends AbstractGenerator {
                 project().context().out().println(
                     String.format("Tag %s already exists", tag));
                 @SuppressWarnings("unchecked")
-                var result = List.of((R) GitVersionTag.of(project(), tag,
-                    resolveTagTimestamp(gitApi, existing.get())));
+                var result = List.of((R) existing.get());
                 return result;
             }
         }
@@ -338,30 +386,6 @@ public class VersionTagger extends AbstractGenerator {
         }
         return dryRunProperty.isEmpty()
             || Boolean.parseBoolean(dryRunProperty);
-    }
-
-    @SuppressWarnings("PMD.AvoidSynchronizedStatement")
-    private Instant resolveTagTimestamp(Git gitApi, Ref tagRef) {
-        if (tagRef == null) {
-            return Instant.now();
-        }
-        synchronized (gitApi) {
-            try (var walk = new RevWalk(gitApi.getRepository())) {
-                var obj = walk.parseAny(tagRef.getObjectId());
-                if (obj instanceof RevTag revTag) {
-                    var taggerIdent = revTag.getTaggerIdent();
-                    if (taggerIdent != null) {
-                        return taggerIdent.getWhenAsInstant();
-                    }
-                }
-                if (obj instanceof RevCommit revCommit) {
-                    return revCommit.getCommitterIdent().getWhenAsInstant();
-                }
-                return Instant.now();
-            } catch (IOException e) {
-                throw new BuildException().cause(e);
-            }
-        }
     }
 
     private String evaluateNewVersion(String currentVersion) {
