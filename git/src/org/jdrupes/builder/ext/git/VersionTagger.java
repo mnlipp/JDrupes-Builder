@@ -58,13 +58,16 @@ import org.jdrupes.gitversioning.api.VersionEvaluator;
 ///
 /// The generator reads the property `jdbld.versionTagger.mode` to
 /// determine how the version for the tag is computed. If the property is not
-/// set, the generator uses the version as-is. If set to one of the algorithm
-/// constants ([NEXT_MAJOR], [NEXT_MINOR], [NEXT_PATCH], [CLOSEST_MAJOR],
+/// set, the generator removes any pre-release qualifier (usually `SNAPSHOT`)
+/// from the version if present and otherwise uses the version as-is.
+/// 
+/// If the property is set to one of the algorithm constants
+/// ([NEXT_MAJOR], [NEXT_MINOR], [NEXT_PATCH], [CLOSEST_MAJOR],
 /// [CLOSEST_MINOR], [CLOSEST_PATCH]), it increments the respective
 /// version component. The `next` algorithms always increment, while the
 /// `closest` algorithms only increment if the version has a pre-release
-/// qualifier (usually `SNAPSHOT`). Use the `-P` flag to set the algorithm
-/// on the command line, e.g. `jdbld -Pjdbld.versionTagger.mode=nextMinor`.
+/// qualifier. Use the `-P` flag to set the algorithm on the command line,
+/// e.g. `jdbld -Pjdbld.versionTagger.mode=nextMinor`.
 /// 
 /// The generator creates annotated tags with a default message of
 /// "Release tag `<tag>`". You can override this message by setting
@@ -92,6 +95,15 @@ public class VersionTagger extends AbstractGenerator {
 
     /// Defines the evaluation mode for the new version.
     public static final String MODE = "jdbld.versionTagger.mode";
+
+    /// Creates a new tag by removing the pre-release qualifier
+    /// (e.g. `0.3.1-SNAPSHOT` becomes `0.3.1`). Does nothing if the
+    /// version has no snapshot qualifier. This is the default behavior
+    /// if no algorithm is specified. 
+    /// 
+    /// Use `jdbld -Pjdbld.versionTagger.mode=release` to set the algorithm.
+    ///
+    public static final String RELEASE = "release";
 
     /// Creates a new tag that increments the major version if the current
     /// version has a pre-release qualifier (e.g. `0.3.1-SNAPSHOT` becomes
@@ -347,15 +359,17 @@ public class VersionTagger extends AbstractGenerator {
 
     private String evaluateNewVersion(String currentVersion) {
         Semver base = new Semver(currentVersion);
-        String mode = project().context().property(MODE, null);
-        if (mode == null
-            || Set.of(CLOSEST_MAJOR, CLOSEST_MINOR, CLOSEST_PATCH)
-                .contains(mode) && !isPreRelease(currentVersion)) {
+        String mode = project().context().property(MODE, RELEASE);
+        if (Set.of(CLOSEST_MAJOR, CLOSEST_MINOR, CLOSEST_PATCH)
+            .contains(mode) && !isPreRelease(currentVersion)) {
             return currentVersion;
         }
 
         // Evalute the new version
         switch (mode) {
+        case RELEASE -> {
+            return base.withClearedSuffix().getValue();
+        }
         case NEXT_MAJOR, CLOSEST_MAJOR -> {
             return base.nextMajor().getValue();
         }
