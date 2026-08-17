@@ -224,8 +224,14 @@ public class Root extends AbstractRootProject {
                 : project.name() + "-";
             var evaluator = VersionEvaluator
                 .forRepository(project.<Git> get(GitApi).getRepository())
-                .subDirectory(project.directory())
                 .tagFilter(new DefaultTagFilter().prepend(prefix));
+            if (project instanceof RootProject) {
+                evaluator.subDirectory(Path.of("api"));
+                evaluator.subDirectory(Path.of("core"));
+            } else {
+                evaluator.subDirectory(project.directory());
+
+            }
             project.set(Version, evaluator.version());
             project.generator(VersionReporter::new);
             project.generator(VersionTagger::new).prefixEvalutor(_ -> prefix);
