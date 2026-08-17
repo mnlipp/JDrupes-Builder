@@ -68,11 +68,11 @@ The Git versioning support lives in an extension that must be listed in
 your `.jdbld.properties`:
 
 ```properties
-buildExtensions = org.jdrupes:jdbld-ext-git:0.6.0
+buildExtensions = org.jdrupes:jdbld-ext-git:1.0.0
 ```
 
 This makes the classes from `org.jdrupes.builder.ext.git` available to your
-build configuration. The latest version can be found on
+build configuration. The latest version of the plugin can be found on
 [Codeberg](https://codeberg.org/JDrupes/-/packages/maven/org.jdrupes:jdbld-ext-git).
 
 ### Git API instance
@@ -158,8 +158,7 @@ Then invoke it with a version increment mode, for example:
 
 The command will create an annotated tag with the incremented version. See the
 [VersionTagger javadoc](javadoc/org/jdrupes/builder/ext/git/VersionTagger.html)
-for the available increment modes (`nextMajor`, `nextMinor`, `nextPatch`,
-`closestMajor`, `closestMinor`, `closestPatch`).
+for the available increment modes.
 
 ## Multi-project setup
 

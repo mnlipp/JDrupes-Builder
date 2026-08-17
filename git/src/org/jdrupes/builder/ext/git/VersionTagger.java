@@ -1,6 +1,6 @@
 /*
  * JDrupes Builder
- * Copyright (C) 2025 Michael N. Lipp
+ * Copyright (C) 2026 Michael N. Lipp
  * 
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as
@@ -62,12 +62,21 @@ import org.jdrupes.gitversioning.api.VersionEvaluator;
 /// from the version if present and otherwise uses the version as-is.
 /// 
 /// If the property is set to one of the algorithm constants
-/// ([NEXT_MAJOR], [NEXT_MINOR], [NEXT_PATCH], [CLOSEST_MAJOR],
-/// [CLOSEST_MINOR], [CLOSEST_PATCH]), it increments the respective
+/// ([NEXT_MAJOR], [NEXT_MINOR], [NEXT_PATCH], [INCREMENT_MAJOR],
+/// [INCREMENT_MINOR]), it increments the respective
 /// version component. The `next` algorithms always increment, while the
-/// `closest` algorithms only increment if the version has a pre-release
+/// `increment` algorithms only increment if the version has a pre-release
 /// qualifier. Use the `-P` flag to set the algorithm on the command line,
-/// e.g. `jdbld -Pjdbld.versionTagger.mode=nextMinor`.
+/// e.g. `jdbld -Pjdbld.versionTagger.mode=incrementMinor`.
+/// 
+/// The supported algorithms follow this usage pattern: every change
+/// starts with a patch version increment plus a pre-release qualifier
+/// (e.g. `1.0.1-SNAPSHOT`). If development reveals the change warrants a
+/// higher version, create a lightweight tag with the intended minor or
+/// major version (e.g. `git tag 1.1.0-SNAPSHOT`). If at release time,
+/// it becomes clear that a new major or minor version is needed for
+/// several sub-projects, use the `increment` algorithms to force the
+/// desired version bump.
 /// 
 /// The generator creates annotated tags with a default message of
 /// "Release tag `<tag>`". You can override this message by setting
@@ -105,29 +114,27 @@ public class VersionTagger extends AbstractGenerator {
     ///
     public static final String RELEASE = "release";
 
-    /// Creates a new tag that increments the major version if the current
-    /// version has a pre-release qualifier (e.g. `0.3.1-SNAPSHOT` becomes
-    /// `1.0.0`). Does nothing if the version has no snapshot qualifier.
+    /// Creates a new tag that removes any pre-release qualifier and
+    /// increments the major version unless the version without qualifier
+    /// is already a new major version (e.g. `0.3.1-SNAPSHOT` becomes `1.0.0`,
+    /// `1.0.0-SNAPSHOT` becomes `1.0.0`). Does nothing if the version has
+    /// no snapshot qualifier.
     /// 
-    /// Use `jdbld -Pjdbld.versionTagger.mode=closestMajor` to set the algorithm.
+    /// Use
+    /// `jdbld -Pjdbld.versionTagger.mode=incrementMajor` to set the algorithm.
     ///
-    public static final String CLOSEST_MAJOR = "closestMajor";
+    public static final String INCREMENT_MAJOR = "incrementMajor";
 
-    /// Creates a new tag that increments the minor version if the current
-    /// version has a pre-release qualifier (e.g. `0.3.1-SNAPSHOT` becomes
-    /// `0.4.0`). Does nothing if the version has no snapshot qualifier.
+    /// Creates a new tag that removes any pre-release qualifier and
+    /// increments the minor version unless the version without qualifier
+    /// is already a new minor version (e.g. `0.3.1-SNAPSHOT` becomes `0.4.0`,
+    /// `0.4.0-SNAPSHOT` becomes `0.4.0`). Does nothing if the version has
+    /// no snapshot qualifier.
+    /// 
+    /// Use
+    /// `jdbld -Pjdbld.versionTagger.mode=incrementMajor` to set the algorithm.
     ///
-    /// Use `jdbld -Pjdbld.versionTagger.mode=closestMinor` to set the algorithm.
-    ///
-    public static final String CLOSEST_MINOR = "closestMinor";
-
-    /// Creates a new tag that increments the patch version if the current
-    /// version has a pre-release qualifier (e.g. `0.3.1-SNAPSHOT` becomes
-    /// `0.3.2`). Does nothing if the version has no snapshot qualifier.
-    ///
-    /// Use `jdbld -Pjdbld.versionTagger.mode=closestPatch` to set the algorithm.
-    ///
-    public static final String CLOSEST_PATCH = "closestPatch";
+    public static final String INCREMENT_MINOR = "incrementMinor";
 
     /// Creates a new tag that increments the major version regardless of
     /// any qualifier (e.g. `0.3.1` becomes `1.0.0`).
@@ -360,7 +367,7 @@ public class VersionTagger extends AbstractGenerator {
     private String evaluateNewVersion(String currentVersion) {
         Semver base = new Semver(currentVersion);
         String mode = project().context().property(MODE, RELEASE);
-        if (Set.of(CLOSEST_MAJOR, CLOSEST_MINOR, CLOSEST_PATCH)
+        if (Set.of(RELEASE, INCREMENT_MAJOR, INCREMENT_MINOR)
             .contains(mode) && !isPreRelease(currentVersion)) {
             return currentVersion;
         }
@@ -370,13 +377,25 @@ public class VersionTagger extends AbstractGenerator {
         case RELEASE -> {
             return base.withClearedSuffix().getValue();
         }
-        case NEXT_MAJOR, CLOSEST_MAJOR -> {
+        case INCREMENT_MAJOR -> {
+            if (base.getMinor() == 0 && base.getPatch() == 0) {
+                return base.withClearedSuffix().getValue();
+            }
             return base.nextMajor().getValue();
         }
-        case NEXT_MINOR, CLOSEST_MINOR -> {
+        case INCREMENT_MINOR -> {
+            if (base.getPatch() == 0) {
+                return base.withClearedSuffix().getValue();
+            }
             return base.nextMinor().getValue();
         }
-        case NEXT_PATCH, CLOSEST_PATCH -> {
+        case NEXT_MAJOR -> {
+            return base.nextMajor().getValue();
+        }
+        case NEXT_MINOR -> {
+            return base.nextMinor().getValue();
+        }
+        case NEXT_PATCH -> {
             return base.nextPatch().getValue();
         }
         default -> throw new BuildException().message(
