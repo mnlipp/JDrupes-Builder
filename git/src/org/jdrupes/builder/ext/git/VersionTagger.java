@@ -217,7 +217,7 @@ public class VersionTagger extends AbstractGenerator {
     /// prefix string
     /// @return this generator for chaining
     ///
-    public VersionTagger prefixEvalutor(Function<Project, String> evaluator) {
+    public VersionTagger prefixEvaluator(Function<Project, String> evaluator) {
         this.prefixEvaluator = evaluator;
         return this;
     }
@@ -258,7 +258,8 @@ public class VersionTagger extends AbstractGenerator {
                     try {
                         Thread.sleep(10L * (attempt + 1));
                         continue;
-                    } catch (InterruptedException ex) { // NOPMD
+                    } catch (InterruptedException ex) {
+                        Thread.currentThread().interrupt();
                     }
                 }
                 throw new BuildException().cause(e);
@@ -270,7 +271,7 @@ public class VersionTagger extends AbstractGenerator {
     private Optional<GitVersionTag> findTag(Git gitApi, String tag)
             throws GitAPIException {
         Optional<Ref> existing;
-        synchronized (gitApi) {
+        synchronized (gitApi.getRepository()) {
             existing = gitApi.tagList().call().stream().filter(
                 ref -> ref.getName().endsWith("/" + tag)).findFirst();
         }
@@ -286,7 +287,7 @@ public class VersionTagger extends AbstractGenerator {
         if (tagRef == null) {
             return Instant.now();
         }
-        synchronized (gitApi) {
+        synchronized (gitApi.getRepository()) {
             try (var walk = new RevWalk(gitApi.getRepository())) {
                 var obj = walk.parseAny(tagRef.getObjectId());
                 if (obj instanceof RevTag revTag) {
@@ -310,14 +311,14 @@ public class VersionTagger extends AbstractGenerator {
             String tag, Git gitApi) throws GitAPIException {
         // Check prerequisite
         var dryRun = checkDryRun();
-        if (!checkPrerequesites(gitApi, newVersion, tag, dryRun)) {
+        if (!checkPrerequisites(gitApi, newVersion, tag, dryRun)) {
             return Collections.emptyList();
         }
 
         // Create tag unless dry run
         if (!dryRun) {
             try {
-                synchronized (gitApi) {
+                synchronized (gitApi.getRepository()) {
                     gitApi.tag().setName(tag).setMessage(project().context()
                         .property(MESSAGE, "Release tag " + tag)).call();
                 }
@@ -340,19 +341,26 @@ public class VersionTagger extends AbstractGenerator {
         return result;
     }
 
-    private boolean checkPrerequesites(Git gitApi, String newVersion,
+    @SuppressWarnings("PMD.AvoidSynchronizedStatement")
+    private boolean checkPrerequisites(Git gitApi, String newVersion,
             String tag, boolean dryRun) throws GitAPIException {
-        var evaluator = VersionEvaluator
-            .forRepository(gitApi.getRepository())
-            .subDirectory(project().directory());
-        var dirtyFiles = evaluator.dirtyFiles().toList();
+        List<Path> dirtyFiles;
+        synchronized (gitApi.getRepository()) {
+            var evaluator = VersionEvaluator
+                .forRepository(gitApi.getRepository())
+                .subDirectory(project().directory());
+            dirtyFiles = evaluator.dirtyFiles().toList();
+        }
         if (!dirtyFiles.isEmpty()) {
             if (dryRun) {
                 project().context().out().println(
                     String.format("%s: wouldn't create tag %s "
                         + "since project has dirty files %s", this,
-                        tag, dirtyFiles.stream().map(Path::toString)
-                            .collect(Collectors.joining(", "))));
+                        tag, dirtyFiles.size() > 5
+                            ? dirtyFiles.stream().limit(5).map(Path::toString)
+                                .collect(Collectors.joining(", ")) + ", ..."
+                            : dirtyFiles.stream().map(Path::toString)
+                                .collect(Collectors.joining(", "))));
                 return false;
             } else {
                 throw new BuildException().from(this)
@@ -396,7 +404,7 @@ public class VersionTagger extends AbstractGenerator {
             return currentVersion;
         }
 
-        // Evalute the new version
+        // Evaluate the new version
         switch (mode) {
         case RELEASE -> {
             return base.withClearedSuffix().getValue();

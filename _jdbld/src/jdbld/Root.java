@@ -234,7 +234,7 @@ public class Root extends AbstractRootProject {
             }
             project.set(Version, evaluator.version());
             project.generator(VersionReporter::new);
-            project.generator(VersionTagger::new).prefixEvalutor(_ -> prefix);
+            project.generator(VersionTagger::new).prefixEvaluator(_ -> prefix);
         }
     }
 
