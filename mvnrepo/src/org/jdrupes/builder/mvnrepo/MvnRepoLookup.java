@@ -25,7 +25,6 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.EnumSet;
 import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -52,7 +51,6 @@ import org.jdrupes.builder.api.BuildException;
 import org.jdrupes.builder.api.Resource;
 import org.jdrupes.builder.api.ResourceRequest;
 import org.jdrupes.builder.core.AbstractProvider;
-import static org.jdrupes.builder.mvnrepo.MavenContext.createDefaultPolicy;
 import static org.jdrupes.builder.mvnrepo.MvnRepoTypes.*;
 
 /// Depending on the request, this provider provides two types of resources.
@@ -108,7 +106,8 @@ public class MvnRepoLookup extends AbstractProvider {
 
     }
 
-    /// Add a repository that is to be used for the lookup.
+    /// Uses [MavenContext#createRepository] to create a repository
+    /// and adds it to the lookup.
     ///
     /// @param id the repository id
     /// @param uri the repository uri
@@ -117,14 +116,7 @@ public class MvnRepoLookup extends AbstractProvider {
     ///
     public MvnRepoLookup addRepository(
             String id, URI uri, MvnVersionType... supported) {
-        var types = EnumSet.copyOf(Arrays.asList(supported));
-        var builder = new RemoteRepository.Builder(
-            id, "default", uri.toString())
-                .setReleasePolicy(createDefaultPolicy(MvnVersionType.RELEASE,
-                    types.contains(MvnVersionType.RELEASE)))
-                .setSnapshotPolicy(createDefaultPolicy(MvnVersionType.SNAPSHOT,
-                    types.contains(MvnVersionType.SNAPSHOT)));
-        addedRepos.add(builder.build());
+        addedRepos.add(MavenContext.createRepository(id, uri, supported));
         return this;
     }
 

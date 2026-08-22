@@ -19,7 +19,10 @@
 package org.jdrupes.builder.mvnrepo;
 
 import java.io.File;
+import java.net.URI;
 import java.nio.file.Path;
+import java.util.Arrays;
+import java.util.EnumSet;
 import java.util.Map;
 import java.util.Objects;
 import java.util.function.BiConsumer;
@@ -51,6 +54,7 @@ public final class MavenContext {
 
     @SuppressWarnings("PMD.AvoidUsingVolatile")
     private static volatile SessionData theSession;
+    @SuppressWarnings("PMD.AvoidDuplicateLiterals")
     private static final RemoteRepository MAVEN_CENTRAL_REPO
         = new RemoteRepository.Builder("central", "default",
             "https://repo.maven.apache.org/maven2")
@@ -225,7 +229,31 @@ public final class MavenContext {
         });
     }
 
+    /// Creates a [RemoteRepository] from the specified id and [URI]
+    /// that supports lookup for the specified version types.
+    ///
+    /// The repository uses default policies as returned by
+    /// [createDefaultPolicy(MvnVersionType, boolean)].
+    /// 
+    /// @param id the id
+    /// @param uri the uri
+    /// @param supported the supported
+    /// @return the remote repository
+    ///
+    public static RemoteRepository createRepository(
+            String id, URI uri, MvnVersionType... supported) {
+        var types = EnumSet.copyOf(Arrays.asList(supported));
+        var builder = new RemoteRepository.Builder(
+            id, "default", uri.toString())
+                .setReleasePolicy(createDefaultPolicy(MvnVersionType.RELEASE,
+                    types.contains(MvnVersionType.RELEASE)))
+                .setSnapshotPolicy(createDefaultPolicy(MvnVersionType.SNAPSHOT,
+                    types.contains(MvnVersionType.SNAPSHOT)));
+        return builder.build();
+    }
+
     /// Creates a policy for the specified type with reasonable defaults.
+    /// See [createPolicy(MvnVersionType, boolean, String, String)].
     ///
     /// @param type the type
     /// @param enabled the enabled
@@ -257,8 +285,9 @@ public final class MavenContext {
     ///
     /// @param type the type
     /// @param enabled the enabled
-    /// @param updatePolicy the update policy
-    /// @param checksumPolicy the checksum policy
+    /// @param updatePolicy the update policy. Defaults to
+    ///     "daily" for snapshots and "always" for releases
+    /// @param checksumPolicy the checksum policy. Defaults to "warn"
     /// @return the repository policy
     ///
     public static RepositoryPolicy createPolicy(MvnVersionType type,
