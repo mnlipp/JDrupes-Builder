@@ -266,7 +266,7 @@ public final class MavenContext {
         if (updatePolicy == null) {
             updatePolicy = type == MvnVersionType.SNAPSHOT
                 ? RepositoryPolicy.UPDATE_POLICY_ALWAYS
-                : RepositoryPolicy.UPDATE_POLICY_NEVER;
+                : RepositoryPolicy.UPDATE_POLICY_DAILY;
         }
         if (checksumPolicy == null) {
             checksumPolicy = RepositoryPolicy.CHECKSUM_POLICY_WARN;
