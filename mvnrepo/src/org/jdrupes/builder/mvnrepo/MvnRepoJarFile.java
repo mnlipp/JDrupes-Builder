@@ -19,9 +19,11 @@
 package org.jdrupes.builder.mvnrepo;
 
 import java.nio.file.Path;
+import java.util.List;
+import org.eclipse.aether.repository.RemoteRepository;
 import org.jdrupes.builder.api.ResourceFactory;
-import org.jdrupes.builder.api.ResourceType;
 import org.jdrupes.builder.java.JarFile;
+import static org.jdrupes.builder.mvnrepo.MvnRepoTypes.MvnRepoJarFileType;
 
 /// A [JarFile] that has been downloaded from a Maven repository.
 /// Unlike a [MvnRepoResource], a resource of this type represents a
@@ -36,17 +38,23 @@ public interface MvnRepoJarFile extends JarFile {
     ///
     MvnRepoResource reference();
 
+    /// Returns the repositories used to resolve this JAR file.
+    ///
+    /// @return the repositories
+    ///
+    List<RemoteRepository> repositories();
+
     /// Creates a new Maven repository JAR file resource from the given values.
     ///
-    /// @param <T> the resource type
-    /// @param fileType the requested type
+    /// @param repositories the repositories
     /// @param coordinates the coordinates
     /// @param path the path
     /// @return the maven repository jar file
     ///
     @SuppressWarnings("PMD.ShortMethodName")
-    static <T extends JarFile> T of(ResourceType<T> fileType,
+    static MvnRepoJarFile of(List<RemoteRepository> repositories,
             String coordinates, Path path) {
-        return ResourceFactory.create(fileType, coordinates, path);
+        return ResourceFactory.create(
+            MvnRepoJarFileType, repositories, coordinates, path);
     }
 }

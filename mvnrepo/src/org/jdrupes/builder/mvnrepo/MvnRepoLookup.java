@@ -50,7 +50,6 @@ import org.eclipse.aether.util.artifact.SubArtifact;
 import org.eclipse.aether.util.graph.visitor.PreorderDependencyNodeConsumerVisitor;
 import org.jdrupes.builder.api.BuildException;
 import org.jdrupes.builder.api.Resource;
-import org.jdrupes.builder.api.ResourceFactory;
 import org.jdrupes.builder.api.ResourceRequest;
 import org.jdrupes.builder.core.AbstractProvider;
 import static org.jdrupes.builder.mvnrepo.MavenContext.createDefaultPolicy;
@@ -295,11 +294,12 @@ public class MvnRepoLookup extends AbstractProvider {
         @SuppressWarnings("unchecked")
         var result = (Collection<T>) dependencyNodes.stream()
             .filter(d -> d.getArtifact() != null)
-            .map(DependencyNode::getArtifact).map(a -> extraDownloads(
-                repoSystem, repoSession, repos, a))
-            .map(a -> ResourceFactory.create(MvnRepoLibraryJarFileType,
-                a.toString(), a.getPath()))
-            .toList();
+            .map(d -> {
+                var artifact = extraDownloads(
+                    repoSystem, repoSession, repos, d.getArtifact());
+                return MvnRepoLibraryJarFile.of(d.getRepositories(),
+                    artifact.toString(), artifact.getPath());
+            }).toList();
         return result;
     }
 

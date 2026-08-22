@@ -22,11 +22,14 @@ import com.google.common.flogger.FluentLogger;
 import java.nio.file.Path;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
+import java.util.Set;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
 import java.util.stream.Stream;
+import org.eclipse.aether.repository.RemoteRepository;
 import org.jdrupes.builder.api.Cleanliness;
 import org.jdrupes.builder.api.ConfigurationException;
 import static org.jdrupes.builder.api.CoreProperties.*;
@@ -286,17 +289,20 @@ public class ApplicationBuilder extends AbstractGenerator
             providersProcessed = true;
         }
         var cpes = Resources.with(ClasspathElementType);
+        Set<RemoteRepository> repos = new HashSet<>();
         var repoRefs = Resources.with(MvnRepoResourceType);
         resourceStreams.stream().forEach(r -> {
             if (r instanceof MvnRepoJarFile repoJar) {
                 repoRefs.add(repoJar.reference());
+                repos.addAll(repoJar.repositories());
             } else {
                 cpes.add(r);
             }
         });
         // Jar files from maven repositories must be resolved before
         // they can be added to the application to avoid duplicates.
-        var lookup = new MvnRepoLookup();
+        var lookup = new MvnRepoLookup()
+            .addRepositories(repos.toArray(RemoteRepository[]::new));
         lookup.resolve(repoRefs.stream());
         project().context().resources(lookup, of(ClasspathElementType)
             .using(Consume, Reveal, Supply, Expose))

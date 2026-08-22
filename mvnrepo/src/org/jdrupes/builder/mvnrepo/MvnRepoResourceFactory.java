@@ -19,7 +19,9 @@
 package org.jdrupes.builder.mvnrepo;
 
 import java.nio.file.Path;
+import java.util.List;
 import java.util.Optional;
+import org.eclipse.aether.repository.RemoteRepository;
 import org.jdrupes.builder.api.Project;
 import org.jdrupes.builder.api.Resource;
 import org.jdrupes.builder.api.ResourceFactory;
@@ -53,7 +55,8 @@ public class MvnRepoResourceFactory implements ResourceFactory {
         candidate = createNarrowed(type, MvnRepoLibraryJarFile.class,
             () -> new DefaultMvnRepoLibraryJarFile(
                 (ResourceType<? extends MvnRepoLibraryJarFile>) type,
-                (String) args[0], (Path) args[1]));
+                (List<RemoteRepository>) args[0], (String) args[1],
+                (Path) args[2]));
         if (candidate.isPresent()) {
             return candidate;
         }
@@ -62,7 +65,8 @@ public class MvnRepoResourceFactory implements ResourceFactory {
         candidate = createNarrowed(type, MvnRepoJarFile.class,
             () -> new DefaultMvnRepoJarFile(
                 (ResourceType<? extends MvnRepoJarFile>) type,
-                (String) args[0], (Path) args[1]));
+                (List<RemoteRepository>) args[0], (String) args[1],
+                (Path) args[2]));
         return candidate;
     }
 

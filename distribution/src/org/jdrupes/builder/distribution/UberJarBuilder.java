@@ -26,12 +26,15 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Predicate;
 import java.util.jar.JarEntry;
+import org.eclipse.aether.repository.RemoteRepository;
 import org.jdrupes.builder.api.BuildException;
 import org.jdrupes.builder.api.ConfigurationException;
 import org.jdrupes.builder.api.FileTree;
@@ -160,6 +163,7 @@ public class UberJarBuilder extends LibraryBuilder {
     @Override
     protected void collectFromProviders(
             Map<Path, Resources<InputResource>> contents) {
+        Set<RemoteRepository> repos = new HashSet<>();
         Resources<MvnRepoResource> repoRefs
             = Resources.of(new ResourceType<>() {});
         openJars = new ConcurrentHashMap<>();
@@ -176,6 +180,7 @@ public class UberJarBuilder extends LibraryBuilder {
                 }
                 if (cpe instanceof MvnRepoJarFile repoFile) {
                     // Resolve JAR files from Maven repositories, see below
+                    repos.addAll(repoFile.repositories());
                     repoRefs.add(repoFile.reference());
                     return;
                 }
@@ -187,7 +192,8 @@ public class UberJarBuilder extends LibraryBuilder {
 
         // Jar files from Maven repositories must be resolved before
         // they can be added to the uber jar to avoid duplicates.
-        var lookup = new MvnRepoLookup();
+        var lookup = new MvnRepoLookup()
+            .addRepositories(repos.toArray(new RemoteRepository[0]));
         lookup.resolve(repoRefs.stream());
         project().context().resources(lookup, of(ClasspathElementType)
             .using(Consume, Reveal, Supply, Expose, Forward))

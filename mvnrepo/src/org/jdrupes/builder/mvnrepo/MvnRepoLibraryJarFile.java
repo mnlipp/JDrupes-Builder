@@ -18,9 +18,30 @@
 
 package org.jdrupes.builder.mvnrepo;
 
+import java.nio.file.Path;
+import java.util.List;
+import org.eclipse.aether.repository.RemoteRepository;
+import org.jdrupes.builder.api.ResourceFactory;
 import org.jdrupes.builder.java.LibraryJarFile;
+import static org.jdrupes.builder.mvnrepo.MvnRepoTypes.MvnRepoLibraryJarFileType;
 
 /// A [LibraryJarFile] that is obtained from a maven repository.
 ///
 public interface MvnRepoLibraryJarFile extends MvnRepoJarFile, LibraryJarFile {
+
+    /// Creates a new Maven repository library JAR file resource
+    /// from the given values.
+    ///
+    /// @param repositories the repositories
+    /// @param coordinates the coordinates
+    /// @param path the path
+    /// @return the maven repository jar file
+    ///
+    @SuppressWarnings("PMD.ShortMethodName")
+    static MvnRepoLibraryJarFile of(List<RemoteRepository> repositories,
+            String coordinates, Path path) {
+        return ResourceFactory.create(MvnRepoLibraryJarFileType,
+            repositories, coordinates, path);
+    }
+
 }

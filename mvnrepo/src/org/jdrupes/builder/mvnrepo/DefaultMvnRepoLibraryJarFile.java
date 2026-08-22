@@ -19,6 +19,8 @@
 package org.jdrupes.builder.mvnrepo;
 
 import java.nio.file.Path;
+import java.util.List;
+import org.eclipse.aether.repository.RemoteRepository;
 import org.jdrupes.builder.api.ResourceType;
 import org.jdrupes.builder.java.DefaultJarFile;
 import org.jdrupes.builder.java.LibraryJarFile;
@@ -29,19 +31,28 @@ import static org.jdrupes.builder.mvnrepo.MvnRepoTypes.MvnRepoResourceType;
 public class DefaultMvnRepoLibraryJarFile extends DefaultJarFile
         implements MvnRepoLibraryJarFile {
 
+    private final List<RemoteRepository> repositories;
     private final MvnRepoResource resource;
 
     /// Initializes a new instance with the given values.
     ///
     /// @param type the type
+    /// @param repositories the repositories
     /// @param coordinates the coordinates
     /// @param path the path
     ///
     public DefaultMvnRepoLibraryJarFile(
             ResourceType<? extends LibraryJarFile> type,
-            String coordinates, Path path) {
+            List<RemoteRepository> repositories, String coordinates,
+            Path path) {
         super(type, path);
+        this.repositories = repositories;
         resource = new DefaultMvnRepoResource(MvnRepoResourceType, coordinates);
+    }
+
+    @Override
+    public List<RemoteRepository> repositories() {
+        return repositories;
     }
 
     @Override
