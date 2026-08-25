@@ -24,7 +24,7 @@ import org.jdrupes.builder.api.ResourceType;
 
 /// Marker interface for a jar file that is a library.
 ///
-public interface LibraryJarFile extends JarFile, ClasspathElement {
+public interface LibraryJarFile extends JarFile, CodeContribution {
 
     @Override
     default Path toPath() {

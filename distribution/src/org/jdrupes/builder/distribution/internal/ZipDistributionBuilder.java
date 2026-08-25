@@ -32,7 +32,7 @@ import org.jdrupes.builder.api.FileTree;
 import static org.jdrupes.builder.api.ResourceType.BaseFileTreeType;
 import org.jdrupes.builder.api.Resources;
 import org.jdrupes.builder.distribution.ApplicationZipFile;
-import org.jdrupes.builder.java.ClasspathElement;
+import org.jdrupes.builder.java.CodeContribution;
 import static org.jdrupes.builder.java.JavaTypes.JarFileType;
 
 /// A distribution builder that builds a ZIP file.
@@ -56,7 +56,7 @@ public class ZipDistributionBuilder extends DistributionBuilder {
         "PMD.AvoidUsingOctalValues" })
     public void build(ApplicationZipFile file,
             ApplicationConfigurationData config,
-            Resources<ClasspathElement> cpElements) {
+            Resources<CodeContribution> cpElements) {
         try (var zos = new ZipArchiveOutputStream(
             Files.newOutputStream(file.path()))) {
             List<String> distClassPath = new ArrayList<>();

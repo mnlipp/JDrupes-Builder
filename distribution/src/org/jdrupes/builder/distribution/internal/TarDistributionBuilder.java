@@ -33,7 +33,7 @@ import org.jdrupes.builder.api.FileTree;
 import static org.jdrupes.builder.api.ResourceType.BaseFileTreeType;
 import org.jdrupes.builder.api.Resources;
 import org.jdrupes.builder.distribution.ApplicationTarFile;
-import org.jdrupes.builder.java.ClasspathElement;
+import org.jdrupes.builder.java.CodeContribution;
 import static org.jdrupes.builder.java.JavaTypes.JarFileType;
 
 /// A distribution builder that builds a TAR file.
@@ -57,7 +57,7 @@ public class TarDistributionBuilder extends DistributionBuilder {
         "PMD.AvoidUsingOctalValues" })
     public void build(ApplicationTarFile file,
             ApplicationConfigurationData config,
-            Resources<ClasspathElement> cpElements) {
+            Resources<CodeContribution> cpElements) {
         try (var tos = new TarArchiveOutputStream(
             Files.newOutputStream(file.path()))) {
             List<String> distClassPath = new ArrayList<>();

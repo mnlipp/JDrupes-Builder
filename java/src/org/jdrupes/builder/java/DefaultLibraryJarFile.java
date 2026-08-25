@@ -27,6 +27,8 @@ import org.jdrupes.builder.api.ResourceType;
 public class DefaultLibraryJarFile extends DefaultJarFile
         implements LibraryJarFile {
 
+    private Boolean isModular;
+
     /// Instantiates a new library jar file.
     ///
     /// @param type the resource type
@@ -35,5 +37,13 @@ public class DefaultLibraryJarFile extends DefaultJarFile
     protected DefaultLibraryJarFile(ResourceType<? extends JarFile> type,
             Path path) {
         super(type, path);
+    }
+
+    @Override
+    public boolean isModular() {
+        if (isModular == null) {
+            isModular = CodeContribution.isModular(this);
+        }
+        return isModular;
     }
 }

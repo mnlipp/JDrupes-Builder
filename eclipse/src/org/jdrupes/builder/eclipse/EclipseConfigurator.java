@@ -50,7 +50,8 @@ import org.jdrupes.builder.api.Resource;
 import org.jdrupes.builder.api.ResourceRequest;
 import org.jdrupes.builder.api.ResourceType;
 import org.jdrupes.builder.core.AbstractGenerator;
-import org.jdrupes.builder.java.ClasspathElement;
+import org.jdrupes.builder.java.ClassTree;
+import org.jdrupes.builder.java.CodeContribution;
 import org.jdrupes.builder.java.JavaCompiler;
 import org.jdrupes.builder.java.JavaProject;
 import static org.jdrupes.builder.java.JavaTypes.*;
@@ -88,7 +89,20 @@ import org.w3c.dom.Node;
 /// on will be added as "test only" class path resources and the folder
 /// with the sources for the java compiler will be added as "test sources".
 /// 
-@SuppressWarnings("PMD.TooManyMethods")
+/// ## JPMS support
+/// 
+/// Referenced projects are added to the module-path if they provide
+/// a `module-info.class`. Referenced libraries are added to the module-path
+/// if [CodeContribution#isModular()] returns `true`.
+/// 
+/// Resources from [MergedTestProject]s are always added to the classpath.
+/// This ensures maximum visibility of the classes under test. Making the
+/// test project modular, i.e. adding a `module-info.java` is not supported
+/// by Eclipse. It effectively merges the sources from `src/` and `test/`
+/// and complains about a duplicate `module-info.java` if such a file
+/// exists in the `test` folder.
+/// 
+@SuppressWarnings({ "PMD.TooManyMethods", "PMD.GodClass" })
 public class EclipseConfigurator extends AbstractGenerator {
 
     /// The Constant GENERATED_BY.
@@ -295,60 +309,37 @@ public class EclipseConfigurator extends AbstractGenerator {
     ///
     /// @param doc the doc
     ///
-    @SuppressWarnings({ "PMD.AvoidDuplicateLiterals" })
     protected void generateClasspathConfiguration(Document doc) {
+        var isModular = project()
+            .resources(of(CodeContributionType).using(Supply))
+            .filter(cc -> cc instanceof ClassTree).map(cc -> (ClassTree) cc)
+            .filter(cc -> cc.isModular()).findAny().isPresent();
         var classpath = doc.appendChild(doc.createElement("classpath"));
-        addCompilationResources(doc, classpath, project());
+        addCompilationResources(doc, classpath, isModular, project());
         addJavaResources(doc, classpath, project());
 
         // Add projects
-        final Set<ClasspathElement> providedByProject = new HashSet<>();
+        final Set<CodeContribution> providedByProjects = new HashSet<>();
         final Set<Project> exposed = project().providers().select(Expose)
             .filter(p -> p instanceof Project).map(Project.class::cast)
             .collect(Collectors.toSet());
         project().providers().filter(p -> p instanceof Project)
             .select(Consume, Reveal, Expose, Forward)
             .toList().stream().map(Project.class::cast).forEach(p -> {
-                if (p instanceof MergedTestProject) {
-                    if (p.parentProject().get().equals(project())) {
-                        // Test projects contribute their resources to the
-                        // parent
-                        addCompilationResources(doc, classpath, p);
-                        addJavaResources(doc, classpath, p);
-                    }
-                    return;
-                }
-                var entry = (Element) classpath
-                    .appendChild(doc.createElement("classpathentry"));
-                entry.setAttribute("kind", "src");
-                var referenced = p.resources(
-                    of(new ResourceType<EclipseConfiguration>() {})
-                        .using(Supply, Expose))
-                    .filter(c -> c.projectName().equals(p.name())).findFirst()
-                    .map(EclipseConfiguration::eclipseAlias).orElse(p.name());
-                entry.setAttribute("path", "/" + referenced);
-                if (exposed.contains(p)) {
-                    entry.setAttribute("exported", "true");
-                }
-                var attributes
-                    = entry.appendChild(doc.createElement("attributes"));
-                var attribute = (Element) attributes
-                    .appendChild(doc.createElement("attribute"));
-                attribute.setAttribute("without_test_code", "true");
-                providedByProject.addAll(
-                    p.resources(of(ClasspathElementType)).toList());
+                addProject(
+                    doc, classpath, providedByProjects, exposed, isModular, p);
             });
 
         // Add jars
-        final Set<ClasspathElement> exposedByProject = new HashSet<>();
+        final Set<CodeContribution> exposedByProject = new HashSet<>();
         exposedByProject.addAll(project()
-            .resources(of(ClasspathElementType).using(Expose))
+            .resources(of(CodeContributionType).using(Expose))
             .toList());
         project().resources(of(LibraryJarFileType)
             .using(Consume, Reveal, Expose))
-            .filter(jf -> !providedByProject.contains(jf))
+            .filter(jf -> !providedByProjects.contains(jf))
             .collect(Collectors.toSet()).stream().forEach(jf -> {
-                addJarFileEntry(doc, classpath, jf,
+                addJarFileEntry(doc, classpath, isModular, jf,
                     exposedByProject.contains(jf), false);
             });
 
@@ -357,8 +348,57 @@ public class EclipseConfigurator extends AbstractGenerator {
     }
 
     @SuppressWarnings("PMD.AvoidDuplicateLiterals")
+    private void addProject(Document doc, Node classpath,
+            final Set<CodeContribution> providedByProject,
+            final Set<Project> exposed, boolean useModules, Project project) {
+        if (project instanceof MergedTestProject) {
+            if (project.parentProject().get().equals(project())) {
+                // Test projects contribute their resources to the
+                // parent. They are always put on the classpath for
+                // maximum visibility.
+                addCompilationResources(doc, classpath, false, project);
+                addJavaResources(doc, classpath, project);
+            }
+            return;
+        }
+        var entry = (Element) classpath
+            .appendChild(doc.createElement("classpathentry"));
+        entry.setAttribute("kind", "src");
+        var referenced = project.resources(
+            of(new ResourceType<EclipseConfiguration>() {})
+                .using(Supply, Expose))
+            .filter(c -> c.projectName().equals(project.name())).findFirst()
+            .map(EclipseConfiguration::eclipseAlias).orElse(project.name());
+        entry.setAttribute("path", "/" + referenced);
+        if (exposed.contains(project)) {
+            entry.setAttribute("exported", "true");
+        }
+        var attributes
+            = entry.appendChild(doc.createElement("attributes"));
+        var attribute = (Element) attributes
+            .appendChild(doc.createElement("attribute"));
+        attribute.setAttribute("without_test_code", "true");
+
+        // Check if the project is a modular project
+        if (useModules
+            && project.resources(of(CodeContributionType).using(Supply))
+                .filter(cc -> cc instanceof ClassTree).map(cc -> (ClassTree) cc)
+                .filter(cc -> cc.isModular()).findAny().isPresent()) {
+            attribute = (Element) attributes
+                .appendChild(doc.createElement("attribute"));
+            attribute.setAttribute("name", "module");
+            attribute.setAttribute("value", "true");
+        }
+
+        // Remember what we already have due to the dependency on the
+        // project to avoid duplicate entries for libraries
+        providedByProject.addAll(project.resources(of(CodeContributionType)
+            .using(Supply, Expose)).toList());
+    }
+
     private void addJarFileEntry(Document doc, Node classpath,
-            LibraryJarFile jarFile, boolean exported, boolean test) {
+            boolean useModules, LibraryJarFile jarFile, boolean exported,
+            boolean test) {
         var entry = (Element) classpath
             .appendChild(doc.createElement("classpathentry"));
         entry.setAttribute("kind", "lib");
@@ -367,9 +407,18 @@ public class EclipseConfigurator extends AbstractGenerator {
         if (exported) {
             entry.setAttribute("exported", "true");
         }
+
+        // Add attributes
+        var attributes
+            = (Element) entry.appendChild(doc.createElement("attributes"));
+        if (useModules && jarFile.isModular()) {
+            var attr = (Element) attributes
+                .appendChild(doc.createElement("attribute"));
+            attr.setAttribute("name", "module");
+            attr.setAttribute("value", "true");
+        }
         if (test) {
-            var attr = (Element) entry
-                .appendChild(doc.createElement("attributes"))
+            var attr = (Element) attributes
                 .appendChild(doc.createElement("attribute"));
             attr.setAttribute("name", "test");
             attr.setAttribute("value", "true");
@@ -384,8 +433,7 @@ public class EclipseConfigurator extends AbstractGenerator {
         var javadocJar = new File(
             jarPathName.replaceFirst("\\.jar$", "-javadoc.jar"));
         if (javadocJar.canRead()) {
-            var attr = (Element) entry
-                .appendChild(doc.createElement("attributes"))
+            var attr = (Element) attributes
                 .appendChild(doc.createElement("attribute"));
             attr.setAttribute("name", "javadoc_location");
             attr.setAttribute("value",
@@ -431,7 +479,7 @@ public class EclipseConfigurator extends AbstractGenerator {
     }
 
     private void addCompilationResources(Document doc, Node classpath,
-            Project project) {
+            boolean useModules, Project project) {
         // TODO Generalize. Currently we assume a Java compiler exists
         // and use it to obtain the output directory for all generators
         var javaCompiler = project.providers().select(Consume, Reveal, Supply)
@@ -472,7 +520,8 @@ public class EclipseConfigurator extends AbstractGenerator {
                 .resources(
                     of(LibraryJarFileType).using(Consume, Reveal, Expose))
                 .forEach(jf -> {
-                    addJarFileEntry(doc, classpath, jf, false, true);
+                    addJarFileEntry(doc, classpath, useModules, jf, false,
+                        true);
                 });
             return;
         }

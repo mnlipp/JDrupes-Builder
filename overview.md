@@ -49,9 +49,9 @@ user -> project : provide(AppJarFile)
 activate project
 project -> appJarGenerator : provide(AppJarFile)
 activate appJarGenerator
-appJarGenerator -> project : provide(ClasspathElement)
+appJarGenerator -> project : provide(CodeContribution)
 activate project
-project -> compiler : provide(ClasspathElement)
+project -> compiler : provide(CodeContribution)
 activate compiler
 compiler --> project: ClassTree
 deactivate compiler
@@ -66,8 +66,8 @@ deactivate project
 @startuml java-base-types.svg
 class ClassTree
 class JarFile
-interface ClasspathElement
+interface CodeContribution
 
-ClasspathElement <|.down. JarFile
-ClasspathElement <|.down. ClassTree
+CodeContribution <|.down. JarFile
+CodeContribution <|.down. ClassTree
 @enduml

@@ -29,7 +29,12 @@ import static org.jdrupes.builder.java.JavaTypes.JavaResourceTreeType;
 /// a Java classpath.
 ///
 public interface JavaResourceTree
-        extends FileTree<ResourceFile>, ClasspathElement {
+        extends FileTree<ResourceFile>, CodeContribution {
+
+    @Override
+    default boolean isModular() {
+        return false;
+    }
 
     /// Creates a new Java resource tree from the given values.
     ///

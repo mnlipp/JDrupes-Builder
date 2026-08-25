@@ -138,7 +138,7 @@ public class BootstrapProjectLauncher extends AbstractLauncher {
         rootProject.project(BootstrapBuild.class).dependency(Expose,
             mvnLookup);
         return rootProject.resources(rootProject
-            .of(ClasspathElementType).using(Supply, Expose)).map(cpe -> {
+            .of(CodeContributionType).using(Supply, Expose)).map(cpe -> {
                 try {
                     if (cpe instanceof FileTree tree) {
                         return tree.root().toFile().toURI().toURL();

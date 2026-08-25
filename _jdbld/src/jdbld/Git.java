@@ -23,7 +23,9 @@ public class Git extends AbstractProject
     public Git() {
         super(name("git"));
         set(ArtifactId, "jdbld-ext-git");
+        // Redundant consume dependencies required for Eclipse configuration
         dependency(Reveal, project(Root.class));
+        dependency(Consume, project(Core.class));
         generator(PomFileGenerator::new).adaptPom(Root.addCommonPomInfo());
         generator(LibraryBuilder::new).addFrom(this)
             .addEntries(resources(of(PomFileType).using(Supply))

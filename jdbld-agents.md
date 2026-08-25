@@ -177,7 +177,7 @@ A resource is the fundamental build unit. Key types:
 - `FileTree<T>` — files matching a glob pattern
 - `JavaSourceFile` / `JavaSourceTree` — Java source files/trees
 - `ClassFile` / `ClassTree` — compiled class files/trees
-- `ClasspathElement` / `Classpath` — classpath entries
+- `CodeContribution` — classpath or module-path entries
 - `JarFile` / `LibraryJarFile` / `AppJarFile` — JAR artifacts
 - `TestResult` — test execution result
 - `ProjectVersion` — version information

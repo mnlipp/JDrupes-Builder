@@ -26,7 +26,7 @@ import static org.jdrupes.builder.java.JavaTypes.ClassTreeType;
 
 /// A [FileTree] that consists of [ClassFile]s.
 ///
-public interface ClassTree extends FileTree<ClassFile>, ClasspathElement {
+public interface ClassTree extends FileTree<ClassFile>, CodeContribution {
 
     /// Creates a new class tree from the given values.
     ///

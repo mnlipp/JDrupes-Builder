@@ -23,20 +23,19 @@ import java.nio.file.Path;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.stream.Stream;
-import org.jdrupes.builder.api.FileTree;
 import org.jdrupes.builder.api.Project;
 import org.jdrupes.builder.api.Resource;
 import org.jdrupes.builder.api.ResourceRequest;
 import org.jdrupes.builder.core.AbstractGenerator;
 import static org.jdrupes.builder.java.JavaTypes.*;
 
-/// Provides [FileTree]s with classes from a given classpath.
+/// Provides [ClassTree]s or [LibraryJarFile]s from a given classpath.
 ///
 public class ClasspathScanner extends AbstractGenerator {
 
     private String path;
 
-    /// Instantiates a new classpath provider. The path needs to be
+    /// Instantiates a new classpath generator. The path needs to be
     /// set with [#path].
     ///
     /// @param project the project
@@ -58,19 +57,10 @@ public class ClasspathScanner extends AbstractGenerator {
         return this;
     }
 
-    /// Provide [FileTree]s with classes from a given classpath if the
-    /// requested resource is of type 
-    /// [ClasspathElement](javadoc/org/jdrupes/builder/java/ClasspathElement.html).
-    ///
-    /// @param <T> the requested type
-    /// @param requested the requested resources
-    /// @return the provided resources
-    ///
     @Override
     protected <T extends Resource> Collection<T>
             doProvide(ResourceRequest<T> requested) {
-        // This supports requests for classpath elements only.
-        if (!requested.accepts(ClasspathElementType)) {
+        if (!requested.accepts(CodeContributionType)) {
             return Collections.emptyList();
         }
 

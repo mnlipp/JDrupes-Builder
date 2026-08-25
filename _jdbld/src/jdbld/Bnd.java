@@ -25,7 +25,11 @@ public class Bnd extends AbstractProject
     public Bnd() {
         super(name("bnd"));
         set(ArtifactId, "jdbld-ext-bnd");
+        // Redundant consume dependencies required for Eclipse configuration
         dependency(Reveal, project(Root.class));
+        dependency(Consume, project(Core.class));
+        dependency(Consume, project(Java.class));
+        dependency(Consume, project(MvnRepo.class));
         generator(PomFileGenerator::new).adaptPom(Root.addCommonPomInfo());
         generator(LibraryBuilder::new).addFrom(this)
             .addEntries(resources(of(PomFileType).using(Supply))

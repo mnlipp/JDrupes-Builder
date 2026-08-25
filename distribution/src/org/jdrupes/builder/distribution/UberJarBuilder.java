@@ -49,7 +49,7 @@ import static org.jdrupes.builder.api.ResourceType.*;
 import org.jdrupes.builder.api.Resources;
 import org.jdrupes.builder.java.AppJarFile;
 import org.jdrupes.builder.java.ClassTree;
-import org.jdrupes.builder.java.ClasspathElement;
+import org.jdrupes.builder.java.CodeContribution;
 import org.jdrupes.builder.java.JarFile;
 import org.jdrupes.builder.java.JarFileEntry;
 import org.jdrupes.builder.java.JavaResourceTree;
@@ -67,14 +67,14 @@ import org.jdrupes.builder.mvnrepo.MvnRepoResource;
 /// types.
 /// 
 /// 1. A [JarFile]. This type of resource is also returned if a more
-///    general [ResourceType] such as [ClasspathElement] is requested.
+///    general [ResourceType] such as [CodeContribution] is requested.
 ///
 /// 2. An [AppJarFile]. When this special [JarFile] type is requested, the
 ///    generator requires a main class to be configured.
 ///
 /// The generator takes the following approach:
 /// 
-///   * Request resources of type [ClasspathElement] with all intents from
+///   * Request resources of type [CodeContribution] with all intents from
 ///     the added providers. Add the class and resource trees to the sources
 ///     to be processed. JAR files are handled differently depending on their
 ///     origin. The content of JAR files that are not retrieved from a Maven
@@ -93,7 +93,7 @@ import org.jdrupes.builder.mvnrepo.MvnRepoResource;
 ///
 /// The resource type of the uber jar builder's output is one
 /// of the resource types of its inputs, because uber jars can also be used
-/// as [ClasspathElement]. Therefore, you cannot add a uber jar builder
+/// as [CodeContribution]. Therefore, you cannot add a uber jar builder
 /// to the project like this:
 /// ```java
 ///     generator(UberJarBuilder::new).addFrom(this); // Circular dependency
@@ -168,7 +168,7 @@ public class UberJarBuilder extends LibraryBuilder {
             = Resources.of(new ResourceType<>() {});
         openJars = new ConcurrentHashMap<>();
         contentProviders().stream().filter(p -> !p.equals(this))
-            .map(p -> p.resources(of(ClasspathElementType).usingAll()))
+            .map(p -> p.resources(of(CodeContributionType).usingAll()))
             // Terminate to trigger all future stream evaluations before
             // starting to process the results. Then collect in parallel
             .toList().stream().flatMap(s -> s).toList().parallelStream()
@@ -195,7 +195,7 @@ public class UberJarBuilder extends LibraryBuilder {
         var lookup = new MvnRepoLookup()
             .addRepositories(repos.toArray(new RemoteRepository[0]));
         lookup.resolve(repoRefs.stream());
-        project().context().resources(lookup, of(ClasspathElementType)
+        project().context().resources(lookup, of(CodeContributionType)
             .using(Consume, Reveal, Supply, Expose, Forward))
             .parallel().filter(resourceFilter::test).forEach(cpe -> {
                 if (cpe instanceof MvnRepoJarFile jarFile) {
@@ -207,7 +207,7 @@ public class UberJarBuilder extends LibraryBuilder {
     }
 
     /// Apply the given filter to the resources obtained from the provider.
-    /// The resources can be [ClasspathElement]s or [MvnRepoResource]s.
+    /// The resources can be [CodeContribution]s or [MvnRepoResource]s.
     /// This may be required to avoid warnings about duplicates if e.g.
     /// a sub-project provides generated resources both as
     /// [ClassTree]/[JavaResourceTree] and as [LibraryJarFile].

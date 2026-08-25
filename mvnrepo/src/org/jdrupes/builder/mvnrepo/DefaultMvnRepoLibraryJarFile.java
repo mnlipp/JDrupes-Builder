@@ -22,6 +22,7 @@ import java.nio.file.Path;
 import java.util.List;
 import org.eclipse.aether.repository.RemoteRepository;
 import org.jdrupes.builder.api.ResourceType;
+import org.jdrupes.builder.java.CodeContribution;
 import org.jdrupes.builder.java.DefaultJarFile;
 import org.jdrupes.builder.java.LibraryJarFile;
 import static org.jdrupes.builder.mvnrepo.MvnRepoTypes.MvnRepoResourceType;
@@ -33,6 +34,7 @@ public class DefaultMvnRepoLibraryJarFile extends DefaultJarFile
 
     private final List<RemoteRepository> repositories;
     private final MvnRepoResource resource;
+    private Boolean isModular;
 
     /// Initializes a new instance with the given values.
     ///
@@ -48,6 +50,14 @@ public class DefaultMvnRepoLibraryJarFile extends DefaultJarFile
         super(type, path);
         this.repositories = repositories;
         resource = new DefaultMvnRepoResource(MvnRepoResourceType, coordinates);
+    }
+
+    @Override
+    public boolean isModular() {
+        if (isModular == null) {
+            isModular = CodeContribution.isModular(this);
+        }
+        return isModular;
     }
 
     @Override

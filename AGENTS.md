@@ -67,7 +67,8 @@ built tool.
 
 ## Conventions
 
-- **Java 25**, no JPMS (no `module-info.java` files)
+- **Java 25**, JPMS not used in project (no `module-info.java` files) but
+  building modules is supported
 - **Line length:** max 80 (configured in Eclipse; checkstyle.xml is more
   permissive because sometimes lines cannot be split)
 - **Javadoc:** Markdown format (JEP 467)

@@ -24,7 +24,9 @@ public class NodeJs extends AbstractProject
     public NodeJs() {
         super(name("nodejs"));
         set(ArtifactId, "jdbld-ext-nodejs");
+        // Redundant consume dependencies required for Eclipse configuration
         dependency(Reveal, project(Root.class));
+        dependency(Consume, project(Core.class));
         generator(PomFileGenerator::new).adaptPom(Root.addCommonPomInfo());
         generator(LibraryBuilder::new).addFrom(this)
             .addEntries(resources(of(PomFileType).using(Supply))

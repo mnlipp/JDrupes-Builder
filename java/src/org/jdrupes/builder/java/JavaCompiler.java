@@ -21,16 +21,22 @@ package org.jdrupes.builder.java;
 import com.google.common.flogger.FluentLogger;
 import static com.google.common.flogger.LazyArgs.*;
 import java.io.File;
+import java.io.IOException;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.function.Function;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import javax.tools.DiagnosticCollector;
 import javax.tools.JavaFileObject;
+import javax.tools.StandardJavaFileManager;
+import javax.tools.StandardLocation;
 import javax.tools.ToolProvider;
 import org.jdrupes.builder.api.BuildException;
 import static org.jdrupes.builder.api.CoreProperties.*;
@@ -48,8 +54,8 @@ import org.jdrupes.builder.api.UnavailableException;
 import static org.jdrupes.builder.java.JavaTypes.*;
 
 /// The [JavaCompiler] generator provides two types of resources.
-/// 
-/// 1. The [JavaSourceFile]s of the project as configured with 
+///
+/// 1. The [JavaSourceFile]s of the project as configured with
 ///    [addSources(FileTree<JavaSourceFile>)][addSources]
 ///    in response to a [ResourceRequest] with [ResourceType]
 ///    [JavaTypes#JavaSourceTreeType] (or a more general type).
@@ -57,7 +63,7 @@ import static org.jdrupes.builder.java.JavaTypes.*;
 /// 2. The [ClassFile]s that result from compiling the sources in response
 ///    to a [ResourceRequest] with [ResourceType]
 ///    [JavaTypes#ClassTreeType] (or a more general type such as
-///    [JavaTypes#ClasspathElementType]).
+///    [JavaTypes#CodeContributionType]).
 ///
 /// No attempt has been made to define types for the options of
 /// the java compiler. Rather, the options are passed as strings
@@ -70,9 +76,19 @@ import static org.jdrupes.builder.java.JavaTypes.*;
 /// default behavior of the java compiler, you have to specify
 /// "`-g:[lines, source]`" explicitly.
 ///
+/// ## JPMS support
+///
+/// When the sources contain a `module-info.java`, or when the module mode
+/// is set to `ModuleMode.MODULE`, compilation uses the module-path
+/// (`--module-path`) for code contributions that contain a module descriptor.
+/// Non-modular code contributions remain on the classpath (`-cp`). In
+/// `ModuleMode.AUTO` mode (the default), module compilation is activated
+/// automatically when a `module-info.java` is found among the sources.
+///
 public class JavaCompiler extends JavaTool {
 
     private static final FluentLogger logger = FluentLogger.forEnclosingClass();
+
     private final Resources<FileTree<JavaSourceFile>> sources
         = Resources.of(new ResourceType<>() {});
     private Path destination;
@@ -165,6 +181,39 @@ public class JavaCompiler extends JavaTool {
     }
 
     @Override
+    protected boolean hasModuleInfo() {
+        return sources.stream().flatMap(Resources::stream)
+            .anyMatch(f -> f.path().endsWith("module-info.java"));
+    }
+
+    /// Extracts the module name from `module-info.java` by parsing the
+    /// first `module <name>` declaration. Returns `null` if no module
+    /// descriptor source is found.
+    ///
+    /// @return the module name, or null
+    ///
+    private String extractModuleName() {
+        var pattern = Pattern.compile("^\\s*module\\s+(\\S+)");
+        for (var sourceTree : sources.get()) {
+            for (var file : sourceTree.get()) {
+                if (file.path().endsWith("module-info.java")) {
+                    try {
+                        var content = Files.readString(file.path());
+                        Matcher matcher = pattern.matcher(content);
+                        if (matcher.find()) {
+                            return matcher.group(1);
+                        }
+                    } catch (IOException e) {
+                        logger.atWarning().withCause(e)
+                            .log("Cannot read %s", file.path());
+                    }
+                }
+            }
+        }
+        return null;
+    }
+
+    @Override
     protected <T extends Resource> Collection<T>
             doProvide(ResourceRequest<T> requested) {
         if (requested.accepts(JavaSourceTreeType)) {
@@ -197,22 +246,21 @@ public class JavaCompiler extends JavaTool {
 
         // Get classpath for compilation. Filter myself, in case the
         // compilation result is consumed by the project.
-        var cpResources = Resources.of(ClasspathType).addAll(
+        var cpResources = Resources.of(CodeContributionsType).addAll(
             project().providers(Consume, Reveal, Expose).without(this)
-                .resources(of(ClasspathElementType)));
-        logger.atFiner().log("%s compiling with classpath %s", this,
-            lazy(() -> cpResources.stream().map(e -> e.toPath().toString())
-                .collect(Collectors.joining(File.pathSeparator))));
+                .resources(of(CodeContributionType)));
 
         // (Re-)compile only if necessary
+        var useModulePath = effectiveModuleMode() == ModuleMode.MODULE;
+        var expectedClassCount = sources.stream()
+            .flatMap(Resources::stream).map(FileResource::path)
+            .filter(p -> p.toString().endsWith(".java")
+                && !p.endsWith("package-info.java")
+                && (useModulePath || !p.endsWith("module-info.java")))
+            .count();
         if (sources.isNewerThan(classSet)
             || cpResources.isNewerThan(classSet)
-            || classSet.stream().count() < sources.stream()
-                .flatMap(Resources::stream).map(FileResource::path)
-                .filter(p -> p.toString().endsWith(".java")
-                    && !p.endsWith("package-info.java")
-                    && !p.endsWith("module-info.java"))
-                .count()) {
+            || classSet.stream().count() < expectedClassCount) {
             classSet.cleanup();
             compile(cpResources, destDir);
         } else {
@@ -226,17 +274,18 @@ public class JavaCompiler extends JavaTool {
 
     @SuppressWarnings({ "PMD.AvoidCatchingGenericException",
         "PMD.ExceptionAsFlowControl" })
-    private void compile(Resources<ClasspathElement> cpResources,
+    private void compile(Resources<CodeContribution> ccResources,
             Path destDir) {
         logger.atInfo().log("Compiling Java in %s", project().name());
-        var classpath = cpResources.stream().map(e -> e.toPath().toString())
-            .collect(Collectors.joining(File.pathSeparator));
         var javac = ToolProvider.getSystemJavaCompiler();
         var diagnostics = new DiagnosticCollector<JavaFileObject>();
+        var useModulePath = effectiveModuleMode() == JavaTool.ModuleMode.MODULE;
+        if (useModulePath) {
+            logger.atFine().log("Using module-path compilation");
+        }
+
         try (var fileManager
             = javac.getStandardFileManager(diagnostics, null, null)) {
-            var compilationUnits
-                = fileManager.getJavaFileObjectsFromPaths(sourcePaths());
             List<String> allOptions = new ArrayList<>(options());
 
             // If no -g... option is given, add -g (full debug info)
@@ -245,11 +294,19 @@ public class JavaCompiler extends JavaTool {
                 allOptions.add("-g");
             }
 
-            // Add options from specific properties
+            // Add common options
             allOptions.addAll(List.of(
                 "-d", destDir.toString(),
-                "-cp", classpath,
                 "-encoding", project().get(Encoding)));
+
+            if (useModulePath) {
+                compileWithModulePath(fileManager, ccResources, allOptions);
+            } else {
+                compileWithClasspath(fileManager, ccResources);
+            }
+
+            var compilationUnits
+                = fileManager.getJavaFileObjectsFromPaths(sourcePaths());
             if (!javac.getTask(null, fileManager, diagnostics, allOptions,
                 null, compilationUnits).call()) {
                 throw new UnavailableException().from(this);
@@ -262,6 +319,75 @@ public class JavaCompiler extends JavaTool {
         } finally {
             logDiagnostics(diagnostics);
             logger.atFine().log("%s finished compilation", this);
+        }
+    }
+
+    /// Configures the options for plain classpath compilation.
+    ///
+    /// @param fileManager the file manager
+    /// @param ccResources the classpath resources
+    /// @param allOptions the option list to modify
+    /// @throws IOException 
+    ///
+    private void compileWithClasspath(StandardJavaFileManager fileManager,
+            Resources<CodeContribution> ccResources)
+            throws IOException {
+        var classpathElements = ccResources.stream().toList();
+        if (!classpathElements.isEmpty()) {
+            var cpPaths = classpathElements.stream()
+                .map(e -> e.toPath().toFile()).toList();
+            fileManager.setLocation(StandardLocation.CLASS_PATH, cpPaths);
+        }
+        logger.atFiner().log("%s uses classpath %s", this,
+            lazy(() -> classpathElements.stream()
+                .map(e -> e.toPath().toString())
+                .collect(Collectors.joining(File.pathSeparator))));
+    }
+
+    /// Configures the file manager and options for module-path compilation.
+    /// Modular dependencies go to --module-path, non-modular stay on -cp.
+    ///
+    /// @param fileManager the file manager
+    /// @param ccResources the classpath resources
+    /// @param allOptions the option list to modify
+    /// @throws IOException 
+    ///
+    @SuppressWarnings("PMD.ConfusingTernary")
+    private void compileWithModulePath(StandardJavaFileManager fileManager,
+            Resources<CodeContribution> ccResources, List<String> allOptions)
+            throws IOException {
+        var moduleElements = ccResources.stream()
+            .filter(cc -> cc.isModular()).toList();
+        var classpathElements = ccResources.stream()
+            .filter(cc -> !cc.isModular()).toList();
+
+        if (!moduleElements.isEmpty()) {
+            var modulePaths = moduleElements.stream()
+                .map(e -> e.toPath().toFile()).toList();
+            fileManager.setLocation(StandardLocation.MODULE_PATH, modulePaths);
+            logger.atFiner().log("%s uses module-path %s", this,
+                lazy(() -> moduleElements.stream()
+                    .map(e -> e.toPath().toString())
+                    .collect(Collectors.joining(File.pathSeparator))));
+        }
+
+        if (!classpathElements.isEmpty()) {
+            var cpPaths = classpathElements.stream()
+                .map(e -> e.toPath().toFile()).toList();
+            fileManager.setLocation(StandardLocation.CLASS_PATH, cpPaths);
+
+            // Allow the named module to read from the unnamed module
+            var moduleName = extractModuleName();
+            if (moduleName != null) {
+                allOptions.add("--add-reads");
+                allOptions.add(moduleName + "=ALL-UNNAMED");
+            }
+            logger.atFiner().log("%s uses classpath %s", this,
+                lazy(() -> classpathElements.stream()
+                    .map(e -> e.toPath().toString())
+                    .collect(Collectors.joining(File.pathSeparator))));
+        } else {
+            logger.atFiner().log("%s compiling as pure module", this);
         }
     }
 }

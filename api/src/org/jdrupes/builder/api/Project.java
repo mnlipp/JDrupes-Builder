@@ -89,8 +89,8 @@ import static org.jdrupes.builder.api.CoreProperties.*;
 /// set returned by [ResourceRequest#uses].
 ///
 /// Concepts from other build tools, such as Gradle’s dependency
-/// configurations, can be mapped to resource requests for classpath
-/// elements using sets of [Intent]s as follows:
+/// configurations, can be mapped to resource requests for code
+/// contributions using sets of [Intent]s as follows:
 ///
 /// <table class="simple-table">
 ///   <thead>

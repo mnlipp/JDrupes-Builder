@@ -28,6 +28,8 @@ import org.jdrupes.builder.core.DefaultFileTree;
 public class DefaultClassTree extends DefaultFileTree<ClassFile>
         implements ClassTree {
 
+    private Boolean isModular;
+
     /// Initializes a new class tree.
     ///
     /// @param type the type
@@ -44,4 +46,11 @@ public class DefaultClassTree extends DefaultFileTree<ClassFile>
         return root();
     }
 
+    @Override
+    public boolean isModular() {
+        if (isModular == null) {
+            isModular = CodeContribution.isModular(this);
+        }
+        return isModular;
+    }
 }

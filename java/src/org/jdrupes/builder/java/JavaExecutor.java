@@ -58,8 +58,15 @@ import org.jdrupes.builder.core.StreamCollector;
 import static org.jdrupes.builder.java.JavaTypes.*;
 
 /// A provider for [execution results][ExecResult]s from invoking a JVM.
-/// 
+///
 /// The working directory is the project directory.
+///
+/// ## JPMS support
+///
+/// When [module] is set, execution uses `--module` instead of `-cp`.
+/// Modular classpath elements are placed on the `--module-path` and
+/// the main class is specified as `module/class`. Non-modular elements
+/// remain on the classpath (`-cp`).
 ///
 public class JavaExecutor extends AbstractProvider
         implements ResourceRetriever, Renamable, RequiredResourceSupport {
@@ -71,6 +78,7 @@ public class JavaExecutor extends AbstractProvider
     private final StreamCollector<ResourceProvider> providers
         = StreamCollector.cached();
     private String mainClass;
+    private String module;
     private final List<String> arguments = new ArrayList<>();
 
     /// Initializes a new java executor.
@@ -108,7 +116,7 @@ public class JavaExecutor extends AbstractProvider
         return this;
     }
 
-    /// Additionally uses the given providers for building the classpath.
+    /// Additionally uses the given providers for obtaining required resources.
     ///
     /// @param providers the providers
     /// @return the java executor
@@ -119,7 +127,7 @@ public class JavaExecutor extends AbstractProvider
         return this;
     }
 
-    /// Additionally uses the given providers for building the classpath.
+    /// Additionally uses the given providers for obtaining required resources.
     ///
     /// @param providers the providers
     /// @return the java executor
@@ -148,6 +156,26 @@ public class JavaExecutor extends AbstractProvider
         return this;
     }
 
+    /// Returns the module name for module-path execution.
+    ///
+    /// @return the module name
+    ///
+    public String module() {
+        return module;
+    }
+
+    /// Sets the module name for module-path execution. When set, the
+    /// executor uses `--module module/class` instead of `-cp ... class`.
+    /// Modular code contributions are placed on `--module-path`.
+    ///
+    /// @param module the module name
+    /// @return this executor
+    ///
+    public JavaExecutor module(String module) {
+        this.module = Objects.requireNonNull(module);
+        return this;
+    }
+
     /// Add the given arguments.
     ///
     /// @param args the arguments
@@ -171,15 +199,13 @@ public class JavaExecutor extends AbstractProvider
         required.addAll(requiredResources.stream());
 
         // Collect the classpath and check mainClass.
-        var cpResources = Resources.of(ClasspathType)
+        var cpResources = Resources.of(CodeContributionsType)
             .addAll(providers.stream()
-                .map(p -> p.resources(of(ClasspathElementType).usingAll()))
+                .map(p -> p.resources(of(CodeContributionType).usingAll()))
                 // Terminate to trigger all future stream evaluations before
                 // starting to process the results.
                 .toList().stream().flatMap(s -> s));
-        logger.atFiner().log("Executing with classpath %s",
-            lazy(() -> cpResources.stream().map(e -> e.toPath().toString())
-                .collect(Collectors.joining(File.pathSeparator))));
+
         if (mainClass == null) {
             findMainClass(cpResources);
         }
@@ -189,12 +215,12 @@ public class JavaExecutor extends AbstractProvider
         }
 
         // Build command
-        List<String> command = new ArrayList<>(List.of(
-            System.getProperty("java.home") + "/bin/java",
-            "-cp", cpResources.stream().map(e -> e.toPath().toString())
-                .collect(Collectors.joining(File.pathSeparator)),
-            mainClass));
-        command.addAll(arguments);
+        List<String> command;
+        if (module != null) {
+            command = buildModuleCommand(cpResources);
+        } else {
+            command = buildClasspathCommand(cpResources);
+        }
         logger.atInfo().log("Executing %s",
             command.stream().collect(Collectors.joining(" ")));
 
@@ -218,7 +244,70 @@ public class JavaExecutor extends AbstractProvider
         }
     }
 
-    private void findMainClass(Resources<ClasspathElement> cpResources) {
+    /// Builds a classpath-based java command.
+    ///
+    /// @param cpResources the classpath resources
+    /// @return the command list
+    ///
+    private List<String> buildClasspathCommand(
+            Resources<CodeContribution> cpResources) {
+        var classpath = cpResources.stream().map(e -> e.toPath().toString())
+            .collect(Collectors.joining(File.pathSeparator));
+        logger.atFiner().log("Executing with classpath %s",
+            lazy(() -> classpath));
+        List<String> command = new ArrayList<>(List.of(
+            System.getProperty("java.home") + "/bin/java",
+            "-cp", classpath,
+            mainClass));
+        command.addAll(arguments);
+        return command;
+    }
+
+    /// Builds a module-path java command with `--module module/class`.
+    ///
+    /// @param codeContributions the code contributions
+    /// @return the command list
+    ///
+    private List<String> buildModuleCommand(
+            Resources<CodeContribution> codeContributions) {
+        var moduleElements = codeContributions.stream()
+            .filter(cc -> cc.isModular()).toList();
+        var classpathElements = codeContributions.stream()
+            .filter(cc -> !cc.isModular()).toList();
+
+        List<String> command = new ArrayList<>(List.of(
+            System.getProperty("java.home") + "/bin/java"));
+
+        // Module-path
+        if (!moduleElements.isEmpty()) {
+            var modulePath = moduleElements.stream()
+                .map(e -> e.toPath().toString())
+                .collect(Collectors.joining(File.pathSeparator));
+            command.add("--module-path");
+            command.add(modulePath);
+            logger.atFiner().log("Executing with module-path %s",
+                lazy(() -> modulePath));
+        }
+
+        // Classpath for non-modular elements
+        if (!classpathElements.isEmpty()) {
+            var classpath = classpathElements.stream()
+                .map(e -> e.toPath().toString())
+                .collect(Collectors.joining(File.pathSeparator));
+            command.add("-cp");
+            command.add(classpath);
+            logger.atFiner().log("Executing with classpath %s",
+                lazy(() -> classpath));
+        }
+
+        // --module module/class
+        command.add("--module");
+        command.add(module + "/" + mainClass);
+        command.addAll(arguments);
+        return command;
+    }
+
+    private void findMainClass(Resources<CodeContribution> cpResources) {
         vavrStream(cpResources).filter(cpe -> cpe instanceof JarFile)
             .map(JarFile.class::cast).map(cpe -> Try.withResources(
                 () -> new java.util.jar.JarFile(cpe.path().toFile()))

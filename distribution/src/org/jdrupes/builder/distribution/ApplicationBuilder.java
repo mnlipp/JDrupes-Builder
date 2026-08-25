@@ -52,7 +52,7 @@ import static org.jdrupes.builder.distribution.DistributionTypes.*;
 import org.jdrupes.builder.distribution.internal.ApplicationConfigurationData;
 import org.jdrupes.builder.distribution.internal.TarDistributionBuilder;
 import org.jdrupes.builder.distribution.internal.ZipDistributionBuilder;
-import org.jdrupes.builder.java.ClasspathElement;
+import org.jdrupes.builder.java.CodeContribution;
 import static org.jdrupes.builder.java.JavaTypes.*;
 import org.jdrupes.builder.java.LibraryJarFile;
 import org.jdrupes.builder.mvnrepo.MvnRepoJarFile;
@@ -65,7 +65,7 @@ import static org.jdrupes.builder.mvnrepo.MvnRepoTypes.*;
 /// resources of type [ApplicationZipFile] or [ApplicationTarFile].
 ///
 /// Both resource types represent runnable application distributions 
-/// consisting of classpath resources and a generated start script
+/// consisting of code contributions and a generated start script
 /// that launches the application.
 ///
 /// The application can be configured using methods that control:
@@ -79,12 +79,12 @@ import static org.jdrupes.builder.mvnrepo.MvnRepoTypes.*;
 ///   * and the [JVM options][#applicationJvmOpts(Consumer)] required
 ///     by the application and included in the generated start script.
 ///
-/// Method [#add(Stream)] is used to specify the classpath resources to
+/// Method [#add(Stream)] is used to specify the code contributions to
 /// be included in the generated distribution and added to the
-/// classpath when running the application. In addition, the application
-/// builder adds the resources obtained from the providers specified
-/// with [#addFrom], using a request for resources of type [LibraryJarFile]
-/// with all [intents][Intent].
+/// classpath or module-path when running the application. In addition,
+/// the application builder adds the resources obtained from the providers
+/// specified with [#addFrom], using a request for resources of type
+/// [LibraryJarFile] with all [intents][Intent].
 /// 
 /// Special handling is provided for resources of type [MvnRepoJarFile].
 /// For these resources the associated [MvnRepoResource] information is
@@ -104,7 +104,7 @@ public class ApplicationBuilder extends AbstractGenerator
         = () -> project().buildDirectory().resolve("distributions");
     private Supplier<String> distributionBaseName
         = () -> project().name() + "-" + project().get(Version);
-    private final StreamCollector<ClasspathElement> resourceStreams
+    private final StreamCollector<CodeContribution> resourceStreams
         = StreamCollector.cached();
     private final StreamCollector<ResourceProvider> providers
         = StreamCollector.uncached();
@@ -233,13 +233,13 @@ public class ApplicationBuilder extends AbstractGenerator
         return this;
     }
 
-    /// Adds the given classpath resources to the application.
+    /// Adds the given code contributions to the application.
     ///
     /// @param resources the resources
     /// @return the application builder
     ///
     public ApplicationBuilder
-            add(Stream<? extends ClasspathElement> resources) {
+            add(Stream<? extends CodeContribution> resources) {
         resourceStreams.add(resources);
         return this;
     }
@@ -288,7 +288,7 @@ public class ApplicationBuilder extends AbstractGenerator
                 .flatMap(s -> s));
             providersProcessed = true;
         }
-        var cpes = Resources.with(ClasspathElementType);
+        var cpes = Resources.with(CodeContributionType);
         Set<RemoteRepository> repos = new HashSet<>();
         var repoRefs = Resources.with(MvnRepoResourceType);
         resourceStreams.stream().forEach(r -> {
@@ -304,7 +304,7 @@ public class ApplicationBuilder extends AbstractGenerator
         var lookup = new MvnRepoLookup()
             .addRepositories(repos.toArray(RemoteRepository[]::new));
         lookup.resolve(repoRefs.stream());
-        project().context().resources(lookup, of(ClasspathElementType)
+        project().context().resources(lookup, of(CodeContributionType)
             .using(Consume, Reveal, Supply, Expose))
             .forEach(cpe -> {
                 if (cpe instanceof MvnRepoLibraryJarFile jarFile) {
@@ -324,7 +324,7 @@ public class ApplicationBuilder extends AbstractGenerator
         return List.of(result);
     }
 
-    private FileResource buildZip(Resources<ClasspathElement> cpes) {
+    private FileResource buildZip(Resources<CodeContribution> cpes) {
         var zipFile = ZipFile.of(ApplicationZipFileType,
             destination().resolve(distributionBaseName() + ".zip"));
         if (cpes.isNewerThan(zipFile)) {
@@ -336,7 +336,7 @@ public class ApplicationBuilder extends AbstractGenerator
         return zipFile;
     }
 
-    private FileResource buildTar(Resources<ClasspathElement> cpes) {
+    private FileResource buildTar(Resources<CodeContribution> cpes) {
         var tarFile = TarFile.of(ApplicationTarFileType,
             destination().resolve(distributionBaseName() + ".tar"));
         if (cpes.isNewerThan(tarFile)) {

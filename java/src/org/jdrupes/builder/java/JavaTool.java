@@ -36,7 +36,20 @@ import org.jdrupes.builder.core.AbstractGenerator;
 ///
 public abstract class JavaTool extends AbstractGenerator {
 
+    /// Controls how Java compilation handles JPMS modules.
+    ///
+    public enum ModuleMode {
+        /// Always use classpath compilation.
+        CLASSPATH,
+        /// Always use module-path compilation for modular dependencies.
+        MODULE,
+        /// Use module-path compilation when sources contain
+        /// `module-info.java`, otherwise fall back to classpath.
+        AUTO
+    }
+
     private static final FluentLogger logger = FluentLogger.forEnclosingClass();
+    private JavaTool.ModuleMode moduleMode = JavaTool.ModuleMode.AUTO;
     private final List<String> options = new ArrayList<>();
 
     /// Instantiates a new java tool.
@@ -46,6 +59,47 @@ public abstract class JavaTool extends AbstractGenerator {
     public JavaTool(Project project) {
         super(project);
     }
+
+    /// Returns the current module compilation mode. Defaults to
+    /// `ModuleMode.AUTO`, which activates module-path compilation when
+    /// a `module-info.java` is found among the sources.
+    ///
+    /// @return the module mode
+    ///
+    public JavaTool.ModuleMode moduleMode() {
+        return moduleMode;
+    }
+
+    /// Sets the module compilation mode.
+    ///
+    /// @param moduleMode the new mode
+    /// @return the java compiler
+    ///
+    public JavaTool moduleMode(JavaTool.ModuleMode moduleMode) {
+        this.moduleMode = moduleMode;
+        return this;
+    }
+
+    /// Determines the effective module mode, resolving `ModuleMode.AUTO`
+    /// to either `ModuleMode.MODULE` or `ModuleMode.CLASSPATH` based on
+    /// whether a `module-info.java` exists among the sources.
+    ///
+    /// @return the effective mode
+    ///
+    protected ModuleMode effectiveModuleMode() {
+        if (moduleMode == JavaTool.ModuleMode.AUTO) {
+            return hasModuleInfo() ? JavaTool.ModuleMode.MODULE
+                : JavaTool.ModuleMode.CLASSPATH;
+        }
+        return moduleMode;
+    }
+
+    /// Checks whether a `module-info.java` exists among the configured
+    /// sources.
+    ///
+    /// @return true, if module-info.java is present
+    ///
+    protected abstract boolean hasModuleInfo();
 
     /// Adds the given options.
     ///

@@ -1,6 +1,6 @@
 /*
  * JDrupes Builder
- * Copyright (C) 2025 Michael N. Lipp
+ * Copyright (C) 2026 Michael N. Lipp
  * 
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as
@@ -18,18 +18,14 @@
 
 package org.jdrupes.builder.java;
 
-import java.nio.file.Path;
-import org.jdrupes.builder.api.Resource;
-
-/// Common base interface for resources that can be used in a classpath.
+/// Marker interface for code contributions that are not Java modules and
+/// must be placed on the classpath (-cp) during compilation or run-time.
 ///
-public interface ClasspathElement extends Resource {
+public interface ClasspathElement extends CodeContribution {
 
-    /// Return the representation of the element as it must appear
-    /// on the classpath.
-    ///
-    /// @return the path
-    ///
-    Path toPath();
+    @Override
+    default boolean isModular() {
+        return false;
+    }
 
 }

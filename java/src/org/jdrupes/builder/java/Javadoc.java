@@ -63,10 +63,10 @@ import static org.jdrupes.builder.java.JavaTypes.*;
 /// these cases, the project(s) for which Javadoc is generated can be
 /// configured via [#projects(Stream)].
 ///
-/// The classpath for the Javadoc tool invocation is assembled by requesting
-/// the [ClasspathElement]s with intents [Consume][Intent#Consume],
-/// [Reveal][Intent#Reveal] and [Expose][Intent#Expose] from the configured
-/// project(s).
+/// The classpath and module-path for the Javadoc tool invocation are
+/// assembled by requesting the [CodeContribution]s with intents
+/// [Consume][Intent#Consume], [Reveal][Intent#Reveal] and
+/// [Expose][Intent#Expose] from the configured project(s).
 /// 
 /// The [JavaSourceFile]s to be processed are obtained by requesting
 /// resources of [JavaTypes#JavaSourceTreeType] with intents
@@ -75,6 +75,15 @@ import static org.jdrupes.builder.java.JavaTypes.*;
 /// sources explicitly using one or more invocations of the `addSources`
 /// methods.
 ///
+/// ## JPMS support
+///
+/// When the sources contain a `module-info.java`, or when the module mode
+/// is set to `ModuleMode.MODULE`, generation uses the module-path
+/// (`--module-path`) for code contributions that contain a module descriptor.
+/// Non-modular code contributions remain on the classpath (`-cp`). In
+/// `ModuleMode.AUTO` mode (the default), module compilation is activated
+/// automatically when a `module-info.java` is found among the sources.
+///
 public class Javadoc extends JavaTool {
 
     private static final FluentLogger logger = FluentLogger.forEnclosingClass();
@@ -82,7 +91,7 @@ public class Javadoc extends JavaTool {
         = StreamCollector.cached();
     private StreamCollector<Project> projects = StreamCollector.cached();
     private Path destination = Path.of("doc");
-    private final StreamCollector<ClasspathElement> tagletpath
+    private final StreamCollector<CodeContribution> tagletpath
         = StreamCollector.cached();
     private final List<String> taglets = new ArrayList<>();
 
@@ -171,12 +180,20 @@ public class Javadoc extends JavaTool {
             .collect(Collectors.toSet());
     }
 
-    /// Adds the given elements to the taglepath.
+    @Override
+    protected boolean hasModuleInfo() {
+        return sources.stream().flatMap(Resources::stream)
+            .anyMatch(f -> f.path().endsWith("module-info.java"));
+    }
+
+    /// Adds the given classpath elements to the tagletpath. The classpath
+    /// elements can be classpath elements or modules.
     ///
     /// @param classpathElements the classpath elements
     /// @return the javadoc
     ///
-    public Javadoc tagletpath(Stream<ClasspathElement> classpathElements) {
+    public Javadoc
+            tagletpath(Stream<? extends CodeContribution> classpathElements) {
         tagletpath.add(classpathElements);
         return this;
     }
@@ -260,16 +277,28 @@ public class Javadoc extends JavaTool {
         List<String> allOptions = new ArrayList<>(options());
         allOptions.addAll(List.of("-d", destDir.toString()));
 
-        // Handle classpath
-        var cpResources = Resources.of(ClasspathType).addAll(projects.stream()
-            .flatMap(p -> p.resources(of(ClasspathElementType)
-                .using(Consume, Reveal, Expose))));
-        logger.atFinest().log("Generating in %s with classpath %s", project(),
-            lazy(() -> cpResources.stream().map(Resource::toString).toList()));
-        if (!cpResources.isEmpty()) {
-            var classpath = cpResources.stream().map(e -> e.toPath().toString())
+        // Handle classpath and module-path
+        var ccResources = Resources.of(CodeContributionsType).addAll(
+            projects.stream().flatMap(p -> p.resources(
+                of(CodeContributionType).using(Consume, Reveal, Expose))));
+        var useModulePath = effectiveModuleMode() == ModuleMode.MODULE;
+        var cpe = ccResources.stream()
+            .filter(cc -> !useModulePath || !cc.isModular()).toList();
+        var mpe = ccResources.stream()
+            .filter(cc -> useModulePath && cc.isModular()).toList();
+        logger.atFinest().log(
+            "Generating in %s with classpath %s and module-path %s", project(),
+            lazy(() -> cpe.stream().map(Resource::toString).toList()),
+            lazy(() -> mpe.stream().map(Resource::toString).toList()));
+        if (!cpe.isEmpty()) {
+            var classpath = cpe.stream().map(e -> e.toPath().toString())
                 .collect(Collectors.joining(File.pathSeparator));
             allOptions.addAll(List.of("-cp", classpath));
+        }
+        if (!mpe.isEmpty()) {
+            var modulePath = mpe.stream().map(e -> e.toPath().toString())
+                .collect(Collectors.joining(File.pathSeparator));
+            allOptions.addAll(List.of("--module-path", modulePath));
         }
 
         // Handle taglets

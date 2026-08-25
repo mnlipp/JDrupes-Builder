@@ -46,7 +46,7 @@ import org.jdrupes.builder.api.Resources;
 import org.jdrupes.builder.api.TestResult;
 import org.jdrupes.builder.core.AbstractGenerator;
 import org.jdrupes.builder.java.ClassTree;
-import org.jdrupes.builder.java.ClasspathElement;
+import org.jdrupes.builder.java.CodeContribution;
 import static org.jdrupes.builder.java.JavaTypes.*;
 import org.junit.platform.engine.TestDescriptor.Type;
 import org.junit.platform.engine.TestExecutionResult;
@@ -153,12 +153,12 @@ public class JUnitTestRunner extends AbstractGenerator {
         }
 
         // Collect the classpath.
-        var cpResources = Resources.of(ClasspathType)
-            .addAll(project().resources(of(ClasspathElementType)
+        var cpResources = Resources.of(CodeContributionsType)
+            .addAll(project().resources(of(CodeContributionType)
                 .using(Consume, Reveal, Expose, Supply)));
         if (project() instanceof MergedTestProject) {
             cpResources.addAll(project().parentProject().get()
-                .resources(of(ClasspathElementType).using(Consume,
+                .resources(of(CodeContributionType).using(Consume,
                     Reveal, Expose, Supply)));
         }
         logger.atFiner().log("Testing in %s with classpath %s", project(),
@@ -169,8 +169,8 @@ public class JUnitTestRunner extends AbstractGenerator {
         ClassLoader oldLoader = Thread.currentThread().getContextClassLoader();
         try (URLClassLoader testLoader = new URLClassLoader(
             Stream.concat(project()
-                .resources(of(ClasspathElementType).using(Consume, Reveal)),
-                cpResources.stream()).map(ClasspathElement::toPath)
+                .resources(of(CodeContributionType).using(Consume, Reveal)),
+                cpResources.stream()).map(CodeContribution::toPath)
                 .map(Path::toUri).map(uri -> {
                     try {
                         return uri.toURL();

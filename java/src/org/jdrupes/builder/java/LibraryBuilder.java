@@ -1,6 +1,6 @@
 /*
  * JDrupes Builder
- * Copyright (C) 2025 Michael N. Lipp
+ * Copyright (C) 2025, 2026 Michael N. Lipp
  * 
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as
@@ -49,9 +49,9 @@ import static org.jdrupes.builder.java.JavaTypes.*;
 /// with additional information in `META-INF/`.
 ///
 /// The generator provides two types of resources.
-/// 
+///
 /// 1. A [LibraryJarFile]. This type of resource is also returned if a more
-///    general [ResourceType] such as [ClasspathElement] is requested.
+///    general [ResourceType] such as [CodeContribution] is requested.
 ///
 /// 2. An [AppJarFile]. When requesting this special jar type, the
 ///    generator checks if a main class is specified.
@@ -61,11 +61,19 @@ import static org.jdrupes.builder.java.JavaTypes.*;
 /// and [JavaResourceTree] that the providers added with
 /// [ResourceRetriever#addFrom(ResourceProvider...)] [supply][Intent#Supply]
 /// are included in the library in addition to the explicitly added resources.
-/// 
+///
 /// The enables the simple standard pattern for creating a library:
 /// ```java
 /// generator(LibraryBuilder::new).addFrom(this);
 /// ```
+///
+/// ## JPMS support
+///
+/// When the compiled classes contain a `module-info.class`, the JAR is
+/// a named module. If no `module-info.class` is present but [moduleName]
+/// is set (or auto-detected from the project name), an `Automatic-Module-Name`
+/// manifest attribute is added so the JAR is treated as an automatic module
+/// on the module-path.
 ///
 public class LibraryBuilder extends JarBuilder implements ResourceRetriever {
 
@@ -74,6 +82,7 @@ public class LibraryBuilder extends JarBuilder implements ResourceRetriever {
     private final StreamCollector<ResourceProvider> providers
         = StreamCollector.cached();
     private String mainClass;
+    private String moduleName;
 
     /// Instantiates a new library generator.
     ///
@@ -107,6 +116,28 @@ public class LibraryBuilder extends JarBuilder implements ResourceRetriever {
         return this;
     }
 
+    /// Returns the module name for the `Automatic-Module-Name` manifest
+    /// attribute. If not set, the project name is sanitized for JPMS
+    /// requirements.
+    ///
+    /// @return the module name
+    ///
+    public String moduleName() {
+        return moduleName;
+    }
+
+    /// Sets the module name used for the `Automatic-Module-Name`
+    /// manifest attribute. This allows the JAR to be used as an
+    /// automatic module on the module-path.
+    ///
+    /// @param moduleName the module name
+    /// @return this builder
+    ///
+    public LibraryBuilder moduleName(String moduleName) {
+        this.moduleName = moduleName;
+        return this;
+    }
+
     @Override
     public LibraryBuilder addFrom(ResourceProvider... providers) {
         addFrom(Stream.of(providers));
@@ -134,6 +165,13 @@ public class LibraryBuilder extends JarBuilder implements ResourceRetriever {
         // Add main class if defined
         if (mainClass() != null) {
             attributes(Map.entry(Attributes.Name.MAIN_CLASS, mainClass()));
+        }
+
+        // Add Automatic-Module-Name if specified and not a named module
+        if (!contents.containsKey(Path.of("module-info.class"))
+            && moduleName() != null) {
+            attributes(Map.entry(
+                new Attributes.Name("Automatic-Module-Name"), moduleName()));
         }
         collectFromProviders(contents);
     }

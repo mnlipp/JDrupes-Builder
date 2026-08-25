@@ -125,7 +125,7 @@ public class Root extends AbstractRootProject {
             .tagletpath(new MvnRepoLookup()
                 .resolve("org.jdrupes.taglets:plantuml-taglet:3.1.0",
                     "net.sourceforge.plantuml:plantuml:1.2023.11")
-                .resources(of(ClasspathElementType).using(Supply, Expose)))
+                .resources(of(CodeContributionType).using(Supply, Expose)))
             .taglets(Stream.of("org.jdrupes.taglets.plantUml.PlantUml",
                 "org.jdrupes.taglets.plantUml.StartUml",
                 "org.jdrupes.taglets.plantUml.EndUml"))

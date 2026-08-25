@@ -1,6 +1,8 @@
 # Ignore build output directory
 **/build
 **/doc
+**/jdbld.log
+**/jdbld.log.lck
 
 # Eclipse
 **/bin
@@ -18,5 +20,3 @@
 
 # VSCode
 **/.vscode
-/jdbld.log
-/jdbld.log.lck
