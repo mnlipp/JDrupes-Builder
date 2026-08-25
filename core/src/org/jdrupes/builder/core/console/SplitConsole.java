@@ -34,7 +34,6 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
-import java.util.stream.IntStream;
 import org.jdrupes.builder.api.BuildException;
 import org.jdrupes.builder.api.StatusLine;
 import org.jline.terminal.Terminal;
@@ -82,13 +81,50 @@ public final class SplitConsole implements AutoCloseable {
     private byte[] incompleteLine = new byte[0];
     private final Redrawer redrawer;
 
+    /// The class LineData
+    ///
+    private static final class LineData {
+        private Thread thread;
+        private String text;
+
+        private LineData(Thread thread, String text) {
+            this.thread = thread;
+            this.text = text;
+        }
+
+        @SuppressWarnings("PMD.ShortMethodName")
+        private static LineData of(Thread thread, String text) {
+            return new LineData(thread, text);
+        }
+
+        private LineData set(LineData lineData) {
+            thread = lineData.thread;
+            text = lineData.text;
+            return this;
+        }
+
+        private static LineData from(ManagedLine managedLine) {
+            return new LineData(managedLine.thread, managedLine.text);
+        }
+    }
+
     /// The Class ManagedLine.
     ///
-    @SuppressWarnings({ "PMD.ClassWithOnlyPrivateConstructorsShouldBeFinal" })
-    private class ManagedLine {
+    private static final class ManagedLine {
         private Thread thread;
         private String text = "";
         private String lastRendered;
+
+        private ManagedLine set(LineData lineData) {
+            thread = lineData.thread;
+            text = lineData.text;
+            return this;
+        }
+
+        private void clear() {
+            thread = null;
+            text = "";
+        }
     }
 
     /// Open the split console.
@@ -185,14 +221,8 @@ public final class SplitConsole implements AutoCloseable {
                 return;
             }
 
-            // Find free and allocate or use overflow
-            IntStream.range(0, managedLines.size())
-                .filter(i -> managedLines.get(i).thread == null).findFirst()
-                .ifPresentOrElse(i -> {
-                    initManaged(i, thread, "");
-                }, () -> {
-                    offScreenLines.put(thread, "");
-                });
+            // Allocate in off-screen lines. Will be moved on update.
+            offScreenLines.put(thread, "");
         }
     }
 
@@ -209,8 +239,7 @@ public final class SplitConsole implements AutoCloseable {
         Thread thread = Thread.currentThread();
         synchronized (managedLines) {
             managedLine(thread).ifPresentOrElse(line -> {
-                line.thread = null;
-                line.text = "";
+                line.clear();
                 promoteOffScreenLines();
                 redrawStatus();
             }, () -> offScreenLines.remove(thread));
@@ -268,20 +297,34 @@ public final class SplitConsole implements AutoCloseable {
     /// @param text the text
     ///
     private void updateStatus(String text, Object... args) {
-        Thread thread = Thread.currentThread();
+        var pending = LineData.of(Thread.currentThread(),
+            args.length > 0 ? String.format(text, args) : text);
         synchronized (managedLines) {
-            managedLine(thread).ifPresentOrElse(line -> {
-                if (args.length > 0) {
-                    line.text = String.format(text, args);
-                } else {
-                    line.text = text;
+            if (managedLine(pending.thread).map(l -> {
+                l.set(pending);
+                return true;
+            }).orElse(false)) {
+                return;
+            }
+            offScreenLines.remove(pending.thread);
+
+            // Insert in managed lines
+            var updIter = managedLines.iterator();
+            while (updIter.hasNext()) {
+                var updating = updIter.next();
+                var tmp = LineData.from(updating);
+                updating.set(pending);
+                pending.set(tmp);
+                if (pending.thread == null) {
+                    // Found empty slot
+                    break;
                 }
-                logger.atFinest().log(
-                    "Updated status for %s: %s", line.thread, line.text);
-                redrawStatus();
-            }, () -> {
-                offScreenLines.put(thread, text);
-            });
+                if (!updIter.hasNext()) {
+                    // Nothing left to try
+                    offScreenLines.put(pending.thread, pending.text);
+                }
+            }
+            redrawStatus();
         }
     }
 
@@ -629,6 +672,10 @@ public final class SplitConsole implements AutoCloseable {
             SplitConsole.this.write(ch, off, len, style);
         }
 
+        /// Close.
+        ///
+        /// @throws IOException Signals that an I/O exception has occurred.
+        ///
         @Override
         public void close() throws IOException {
             // Don't forward close
