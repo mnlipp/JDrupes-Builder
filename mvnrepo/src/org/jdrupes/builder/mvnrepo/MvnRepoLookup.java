@@ -26,6 +26,7 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
+import java.util.Objects;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import org.apache.maven.model.DependencyManagement;
@@ -101,6 +102,9 @@ public class MvnRepoLookup extends AbstractProvider {
     /// @return the mvn repo lookup
     ///
     public MvnRepoLookup addRepositories(RemoteRepository... repositories) {
+        for (var repo : Objects.requireNonNull(repositories)) {
+            Objects.requireNonNull(repo);
+        }
         addedRepos.addAll(Arrays.asList(repositories));
         return this;
 
@@ -227,6 +231,7 @@ public class MvnRepoLookup extends AbstractProvider {
             if (probeMode) {
                 return Collections.emptyList();
             }
+            logger.atSevere().withCause(e).log("%s failed to resolve", this);
             Throwable cause = e;
             while (cause.getCause() != null) {
                 cause = cause.getCause();
