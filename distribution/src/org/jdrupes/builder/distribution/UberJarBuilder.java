@@ -26,7 +26,6 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -163,7 +162,8 @@ public class UberJarBuilder extends LibraryBuilder {
     @Override
     protected void collectFromProviders(
             Map<Path, Resources<InputResource>> contents) {
-        Set<RemoteRepository> repos = new HashSet<>();
+        Set<RemoteRepository> repos
+            = Collections.newSetFromMap(new ConcurrentHashMap<>());
         Resources<MvnRepoResource> repoRefs
             = Resources.of(new ResourceType<>() {});
         openJars = new ConcurrentHashMap<>();
