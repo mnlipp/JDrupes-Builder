@@ -74,6 +74,7 @@ public final class SplitConsole implements AutoCloseable {
     // Guarded by managedLines
     private final Map<Thread, String> offScreenLines = new LinkedHashMap<>();
     private final PrintStream realOut;
+    private final PrintStream realErr;
     // Used to synchronize output to terminal
     private final PrintStream terminalOut;
     private final PrintStream splitOut;
@@ -156,6 +157,7 @@ public final class SplitConsole implements AutoCloseable {
     private SplitConsole() {
         logger.atFine().log("Initializing split console");
         realOut = System.out;
+        realErr = System.err;
         try {
             terminal = TerminalBuilder.builder().system(true).build();
         } catch (IOException e) {
@@ -538,6 +540,8 @@ public final class SplitConsole implements AutoCloseable {
             }
 
             // Don't use this anymore
+            System.setOut(realOut);
+            System.setErr(realErr);
             instance = null;
 
             // Cleanup
@@ -554,7 +558,6 @@ public final class SplitConsole implements AutoCloseable {
                 }
                 doRedraw(true);
             }
-            System.setOut(realOut);
             logger.atFine().log("Split console closed");
         }
     }
