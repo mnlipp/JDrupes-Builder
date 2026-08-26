@@ -18,7 +18,9 @@
 
 package org.jdrupes.builder.startup;
 
+import com.google.common.flogger.FluentLogger;
 import java.nio.file.Path;
+import java.util.Properties;
 import java.util.stream.Stream;
 import org.jdrupes.builder.api.Launcher;
 import org.jdrupes.builder.api.Project;
@@ -31,10 +33,13 @@ import org.jdrupes.builder.core.ScopedValueContext;
 /// It expects that the JDrupes Builder project has already been compiled
 /// and its classes are available on the classpath. It can be used to
 /// launch a build configuration from a unit test where the context is
-/// already is bound.
+/// already is bound. This is only needed when jdbld runs unit tests
+/// for jdbld.
 ///
 @SuppressWarnings("PMD.TestClassWithoutTestCases")
 public class TestLauncher extends BuildProjectLauncher {
+
+    private static final FluentLogger logger = FluentLogger.forEnclosingClass();
 
     /// Initializes a new test launcher.
     ///
@@ -46,6 +51,12 @@ public class TestLauncher extends BuildProjectLauncher {
     public TestLauncher(ClassLoader classloader, Path buildRoot,
             String[] args) {
         super(classloader, buildRoot, args);
+    }
+
+    @Override
+    protected void doConfigureLogging(Path buildRoot, Properties jdbldProps) {
+        logger.atConfig()
+            .log("Re-configuration of logging is skipped for jdbld tests.");
     }
 
     @Override

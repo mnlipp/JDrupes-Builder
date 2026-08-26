@@ -82,13 +82,25 @@ public class BuildProjectLauncher extends AbstractLauncher {
         try {
             commandLine = new DefaultParser().parse(baseOptions(), args);
         } catch (ParseException e) {
-            configureLogging(buildRoot, jdbldProps);
+            doConfigureLogging(buildRoot, jdbldProps);
             throw new ConfigurationException().cause(e);
         }
         addCliProperties(jdbldProps, commandLine);
-        configureLogging(buildRoot, jdbldProps);
+        doConfigureLogging(buildRoot, jdbldProps);
         extClsLdr = addRuntimeExts(classloader);
         regenerateRootProject();
+    }
+
+    /// Calls [configureLogging] with [buildRoot] and [jdbldProps].
+    /// Can be overridden by a derived class (usually with a noop)
+    /// to avoid the reconfiguration when launching a build from
+    /// jdbld.
+    ///
+    /// @param buildRoot the build root
+    /// @param jdbldProps the jdbld props
+    ///
+    protected void doConfigureLogging(Path buildRoot, Properties jdbldProps) {
+        configureLogging(buildRoot, jdbldProps);
     }
 
     @Override
