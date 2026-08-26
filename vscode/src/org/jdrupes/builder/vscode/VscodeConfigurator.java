@@ -97,8 +97,17 @@ public class VscodeConfigurator extends AbstractGenerator {
     @Override
     protected <T extends Resource> Collection<T>
             doProvide(ResourceRequest<T> requested) {
-        if (!requested.accepts(resourceType(VscodeConfiguration.class))) {
+        // Check if provided and evaluate for most special type
+        var vscodeConfigType = resourceType(VscodeConfiguration.class);
+        if (!requested.accepts(vscodeConfigType)) {
             return Collections.emptyList();
+        }
+        // Evaluate for most special type
+        if (!requested.isFor(vscodeConfigType)) {
+            @SuppressWarnings("unchecked")
+            var result = (Collection<T>) resources(of(vscodeConfigType))
+                .toList();
+            return result;
         }
 
         Path vscodeDir = project().directory().resolve(".vscode");

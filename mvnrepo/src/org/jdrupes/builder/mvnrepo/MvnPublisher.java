@@ -225,12 +225,28 @@ public class MvnPublisher extends AbstractGenerator {
     }
 
     @Override
+    @SuppressWarnings({ "PMD.CognitiveComplexity" })
     protected <T extends Resource> Collection<T>
             doProvide(ResourceRequest<T> requested) {
-        if (!requested.accepts(MvnPublicationType)
-            && !requested.accepts(MvnInstallationType)) {
+        // Check if provided and evaluate for most special type
+        if (!requested.accepts(MvnPublicationType, MvnInstallationType)) {
             return Collections.emptyList();
         }
+        if (requested.accepts(MvnPublicationType)
+            && !requested.isFor(MvnPublicationType)) {
+            @SuppressWarnings("unchecked")
+            var result = (Collection<T>) context().resources(this, project()
+                .of(MvnPublicationType)).toList();
+            return result;
+        }
+        if (requested.accepts(MvnInstallationType)
+            && !requested.isFor(MvnInstallationType)) {
+            @SuppressWarnings("unchecked")
+            var result = (Collection<T>) context().resources(this, project()
+                .of(MvnInstallationType)).toList();
+            return result;
+        }
+
         if (requested.accepts(MvnPublicationType) && destinations.isEmpty()) {
             destinations(new PortalPublisherDestination(),
                 new MvnDeployDestination(

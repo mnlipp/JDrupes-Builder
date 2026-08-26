@@ -202,27 +202,35 @@ public class MvnRepoLookup extends AbstractProvider {
         return this;
     }
 
-    /// Provide.
-    ///
-    /// @param <T> the generic type
-    /// @param request the requested resources
-    /// @return the stream
-    ///
     @Override
     protected <T extends Resource> Collection<T>
             doProvide(ResourceRequest<T> request) {
-        if (request.accepts(MvnRepoDependencyType)) {
-            return provideMvnDeps();
-        }
-        if (!request.accepts(MvnRepoLibraryJarFileType)) {
+        // Check if provided and evaluate for most special type
+        if (!request.accepts(MvnRepoLibraryJarFileType,
+            MvnRepoDependencyType)) {
             return Collections.emptyList();
         }
-        if (!request.isFor(MvnRepoLibraryJarFileType)) {
+        if (request.accepts(MvnRepoDependencyType)
+            && !request.isFor(MvnRepoDependencyType)) {
             @SuppressWarnings({ "unchecked", "PMD.AvoidDuplicateLiterals" })
+            var result = (Collection<T>) context()
+                .resources(this, of(MvnRepoDependencyType)).toList();
+            return result;
+        }
+        if (request.accepts(MvnRepoLibraryJarFileType)
+            && !request.isFor(MvnRepoLibraryJarFileType)) {
+            @SuppressWarnings({ "unchecked" })
             var result = (Collection<T>) context()
                 .resources(this, of(MvnRepoLibraryJarFileType)).toList();
             return result;
         }
+        
+        // Handle request for maven dependencies
+        if (request.accepts(MvnRepoDependencyType)) {
+            return provideMvnDeps();
+        }
+
+        // Handle request for libraries
         try {
             return provideJars();
         } catch (ModelBuildingException e) {

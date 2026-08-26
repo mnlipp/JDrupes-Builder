@@ -138,8 +138,15 @@ public class BndAnalyzer extends AbstractBndGenerator {
     @SuppressWarnings("PMD.AvoidCatchingGenericException")
     protected <T extends Resource> Collection<T>
             doProvide(ResourceRequest<T> requested) {
+        // Check if provided and evaluate for most special type
         if (!requested.accepts(ManifestAttributesType)) {
             return Collections.emptyList();
+        }
+        if (!requested.isFor(ManifestAttributesType)) {
+            @SuppressWarnings("unchecked")
+            var result = (Collection<T>) resources(of(ManifestAttributesType))
+                .toList();
+            return result;
         }
         try (var analyzer = new Analyzer();
                 var jar = new aQute.bnd.osgi.Jar("dot")) {

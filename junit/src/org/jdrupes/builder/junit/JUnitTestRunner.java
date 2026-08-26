@@ -41,7 +41,7 @@ import org.jdrupes.builder.api.MergedTestProject;
 import org.jdrupes.builder.api.Project;
 import org.jdrupes.builder.api.Resource;
 import org.jdrupes.builder.api.ResourceRequest;
-import org.jdrupes.builder.api.ResourceType;
+import static org.jdrupes.builder.api.ResourceType.*;
 import org.jdrupes.builder.api.Resources;
 import org.jdrupes.builder.api.TestResult;
 import org.jdrupes.builder.core.AbstractGenerator;
@@ -148,8 +148,14 @@ public class JUnitTestRunner extends AbstractGenerator {
     @SuppressWarnings({ "PMD.AvoidSynchronizedStatement", "PMD.NcssCount" })
     protected <T extends Resource> Collection<T>
             doProvide(ResourceRequest<T> requested) {
-        if (!requested.accepts(new ResourceType<TestResult>() {})) {
+        // Check if provided and evaluate for most special type
+        if (!requested.accepts(TestResultType)) {
             return Collections.emptyList();
+        }
+        if (!requested.isFor(TestResultType)) {
+            @SuppressWarnings("unchecked")
+            var result = (Collection<T>) resources(of(TestResultType)).toList();
+            return result;
         }
 
         // Collect the classpath.

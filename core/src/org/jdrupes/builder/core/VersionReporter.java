@@ -62,8 +62,12 @@ public class VersionReporter extends AbstractGenerator {
     @SuppressWarnings("unchecked")
     protected <R extends Resource> Collection<R>
             doProvide(ResourceRequest<R> requested) {
+        // Check if provided and evaluate for most special type
         if (!requested.accepts(ProjectVersionType)) {
             return List.of();
+        }
+        if (!requested.isFor(ProjectVersionType)) {
+            return (Collection<R>) resources(of(ProjectVersionType)).toList();
         }
         var version = ProjectVersion.of(project(),
             project().get(CoreProperties.Version));

@@ -251,14 +251,9 @@ public class ApplicationBuilder extends AbstractGenerator
     }
 
     @Override
+    @SuppressWarnings({ "PMD.CognitiveComplexity", "PMD.NcssCount" })
     protected <T extends Resource> Collection<T>
             doProvide(ResourceRequest<T> request) {
-        if (!request.accepts(ApplicationZipFileType)
-            && !request.accepts(ApplicationTarFileType)
-            && !request.accepts(CleanlinessType)) {
-            return Collections.emptyList();
-        }
-
         // Maybe only delete
         if (request.accepts(CleanlinessType)) {
             destination()
@@ -266,6 +261,25 @@ public class ApplicationBuilder extends AbstractGenerator
             destination()
                 .resolve(distributionBaseName() + ".tar").toFile().delete();
             return Collections.emptyList();
+        }
+
+        // Check if provided and evaluate for most special type
+        if (!request.accepts(ApplicationZipFileType, ApplicationTarFileType)) {
+            return Collections.emptyList();
+        }
+        if (request.accepts(ApplicationZipFileType)
+                && !request.isFor(ApplicationZipFileType)) {
+            @SuppressWarnings("unchecked")
+            var result = (Collection<T>) context().resources(this, project()
+                .of(ApplicationZipFileType)).toList();
+            return result;
+        }
+        if (request.accepts(ApplicationTarFileType)
+                && !request.isFor(ApplicationTarFileType)) {
+            @SuppressWarnings("unchecked")
+            var result = (Collection<T>) context().resources(this, project()
+                .of(ApplicationTarFileType)).toList();
+            return result;
         }
 
         // Make sure mainClass is set

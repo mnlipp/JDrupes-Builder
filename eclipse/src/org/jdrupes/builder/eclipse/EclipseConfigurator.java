@@ -196,8 +196,16 @@ public class EclipseConfigurator extends AbstractGenerator {
     @Override
     protected <T extends Resource> Collection<T>
             doProvide(ResourceRequest<T> requested) {
-        if (!requested.accepts(new ResourceType<EclipseConfiguration>() {})) {
+        // Check if provided and evaluate for most special type
+        var eclipseConfigType = new ResourceType<EclipseConfiguration>() {};
+        if (!requested.accepts(eclipseConfigType)) {
             return Collections.emptyList();
+        }
+        if (!requested.isFor(eclipseConfigType)) {
+            @SuppressWarnings("unchecked")
+            var result = (Collection<T>) resources(of(eclipseConfigType))
+                .toList();
+            return result;
         }
 
         // Generate nothing for test projects.

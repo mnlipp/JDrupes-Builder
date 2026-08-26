@@ -137,8 +137,15 @@ public class BndBaseliner extends AbstractBndGenerator {
     @SuppressWarnings("PMD.AvoidLiteralsInIfCondition")
     protected <T extends Resource> Collection<T>
             doProvide(ResourceRequest<T> requested) {
+        // Check if provided and evaluate for most special type
         if (!requested.accepts(BndBaselineEvaluationType)) {
             return Collections.emptyList();
+        }
+        if (!requested.isFor(BndBaselineEvaluationType)) {
+            @SuppressWarnings("unchecked")
+            var result = (Collection<T>)
+                resources(of(BndBaselineEvaluationType)).toList();
+            return result;
         }
 
         // Get libraries

@@ -189,9 +189,16 @@ public class JavaExecutor extends AbstractProvider
     @Override
     protected <T extends Resource> Collection<T>
             doProvide(ResourceRequest<T> requested) {
+        // Check if provided and evaluate for most special type
         if (!requested.accepts(ExecResultType)
             || requested.name().map(n -> !n.equals(name())).orElse(false)) {
             return Collections.emptyList();
+        }
+        if (!requested.isFor(ExecResultType)) {
+            @SuppressWarnings({ "unchecked" })
+            var result = (Collection<T>) resources(of(ExecResultType)
+                .withName(name())).toList();
+            return result;
         }
 
         // Make sure that the required resources are retrieved and exist

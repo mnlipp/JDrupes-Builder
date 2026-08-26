@@ -193,9 +193,15 @@ public class ModuleDescriptorGenerator
     @Override
     protected <T extends Resource> Collection<T>
             doProvide(ResourceRequest<T> requested) {
-        if (!requested.accepts(JavaSourceTreeType)
-            && !requested.accepts(CleanlinessType)) {
+        // Check if provided and evaluate for most special type
+        if (!requested.accepts(JavaSourceTreeType, CleanlinessType)) {
             return Collections.emptyList();
+        }
+        if (!requested.isFor(JavaSourceTreeType)) {
+            @SuppressWarnings("unchecked")
+            var result
+                = (Collection<T>) resources(of(JavaSourceTreeType)).toList();
+            return result;
         }
 
         var destDir = project().buildDirectory().resolve(destination);
@@ -207,16 +213,10 @@ public class ModuleDescriptorGenerator
             return Collections.emptyList();
         }
 
-        // Upgrade to most specific type
-        if (!requested.type().equals(JavaSourceTreeType)) {
-            @SuppressWarnings("unchecked")
-            var result
-                = (Collection<T>) resources(of(JavaSourceTreeType)).toList();
-            return result;
-        }
-
         if (needsRegeneration(generatedTree)) {
             generateDescriptor(destDir);
+        } else {
+            logger.atFine().log("Output from %s is up to date", this);
         }
 
         @SuppressWarnings("unchecked")

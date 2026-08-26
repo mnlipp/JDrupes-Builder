@@ -89,16 +89,18 @@ public interface ResourceRequest<T extends Resource> extends Cloneable {
     ///
     Set<Intent> uses();
 
-    /// Returns true if resources of the given type satisfy this request.
-    /// This method is typically used by providers to decide whether to
-    /// provide their resources of that type in response to the request.
+    /// Returns true if resources of either of the given types satisfy
+    /// this request. This method is typically used by providers to decide
+    /// whether to provide their resources of that type in response to
+    /// the request.
     /// 
-    /// Technically, this is the same as `type().isAssignableFrom(type)`. 
+    /// Technically, this is the same as a logical OR of
+    /// `type().isAssignableFrom(type)` for each type. 
     ///
-    /// @param type the type to check
-    /// @return true if resources of the type would satisfy this request
+    /// @param types the types to check
+    /// @return true if resources of one of the types would satisfy this request
     ///
-    boolean accepts(ResourceType<?> type);
+    boolean accepts(ResourceType<?>... types);
 
     /// Returns true if this request explicitly targets the type
     /// argument. This method is typically used by providers that can

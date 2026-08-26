@@ -227,11 +227,18 @@ public class VersionTagger extends AbstractGenerator {
 
     @Override
     @SuppressWarnings({ "PMD.AvoidInstantiatingObjectsInLoops",
-        "PMD.AvoidInstanceofChecksInCatchClause" })
+        "PMD.AvoidInstanceofChecksInCatchClause", "PMD.CognitiveComplexity" })
     protected <R extends Resource> Collection<R>
             doProvide(ResourceRequest<R> requested) {
+        // Check if provided and evaluate for most special type
         if (!requested.accepts(GitVersionTagType)) {
             return List.of();
+        }
+        if (!requested.isFor(GitVersionTagType)) {
+            @SuppressWarnings({ "unchecked", "PMD.AvoidDuplicateLiterals" })
+            var result = (Collection<R>) resources(of(GitVersionTagType))
+                .toList();
+            return result;
         }
 
         var currentVersion = ProjectVersion.of(project(),
