@@ -31,8 +31,9 @@ import org.eclipse.aether.artifact.Artifact;
 import org.eclipse.aether.deployment.DeployRequest;
 import org.eclipse.aether.deployment.DeploymentException;
 import org.eclipse.aether.repository.RemoteRepository;
-import org.eclipse.aether.resolution.ArtifactRequest;
-import org.eclipse.aether.resolution.ArtifactResolutionException;
+import org.eclipse.aether.spi.connector.ArtifactDownload;
+import org.eclipse.aether.transfer.ArtifactNotFoundException;
+import org.eclipse.aether.transfer.NoRepositoryConnectorException;
 import org.eclipse.aether.util.repository.AuthenticationBuilder;
 import org.jdrupes.builder.api.BuildContext;
 import org.jdrupes.builder.api.BuildException;
@@ -123,19 +124,29 @@ public class MvnDeployDestination extends MvnPublishingDestination {
                 .setAuthentication(new AuthenticationBuilder()
                     .addUsername(user).addPassword(password).build())
                 .build();
-        var artifactRequest = new ArtifactRequest();
-        artifactRequest.setArtifact(mainArtifact);
-        artifactRequest.setRepositories(Collections.singletonList(repo));
-        try {
-            var resolved = MavenContext.repositorySystem().resolveArtifact(
-                MavenContext.repositorySession(), artifactRequest).isResolved();
-            logger.atFinest().log("Artifact %s exists in %s", mainArtifact,
-                repositoryUri);
-            return resolved;
-        } catch (ArtifactResolutionException e) {
-            logger.atFinest().log("Artifact %s not found in %s: %s",
-                mainArtifact, repositoryUri, e.getMessage());
-            return false;
+        try (var connector = MavenContext.repositoryConnectorProvider()
+            .newRepositoryConnector(MavenContext.repositorySession(), repo)) {
+            ArtifactDownload download = new ArtifactDownload();
+            download.setArtifact(mainArtifact);
+            download.setExistenceCheck(true);
+            connector.get(
+                Collections.singletonList(download),
+                Collections.emptyList());
+            if (download.getException() == null) {
+                logger.atFinest().log("Artifact %s exists in %s", mainArtifact,
+                    repositoryUri);
+                return true;
+            }
+            if (download.getException() instanceof ArtifactNotFoundException) {
+                return false;
+            }
+            throw new BuildException().cause(download.getException()).message(
+                "Cannot check existance of %s on %s: %s", mainArtifact,
+                repositoryUri, download.getException().getMessage());
+        } catch (NoRepositoryConnectorException e) {
+            throw new BuildException().cause(e).message(
+                "Cannot create connector for %s: %s", repositoryUri,
+                e.getMessage());
         }
     }
 

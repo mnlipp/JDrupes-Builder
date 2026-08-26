@@ -331,7 +331,6 @@ public class MvnPublisher extends AbstractGenerator {
         var context = context();
         var effectiveDests = destinations;
         if (!mainArtifact.isSnapshot()) {
-            checkReleaseDeps(mainArtifact, model);
             effectiveDests = destinations.stream()
                 .filter(d -> d.accepts(MvnVersionType.RELEASE)
                     && !d.alreadyPublished(context, mainArtifact))
@@ -342,6 +341,8 @@ public class MvnPublisher extends AbstractGenerator {
                     coords);
                 return List.of(MvnPublication.of(coords));
             }
+            // Check if it is okay to publish as release
+            checkReleaseDeps(mainArtifact, model);
         }
 
         // Assemble all files to deploy

@@ -37,6 +37,7 @@ import org.apache.maven.settings.building.SettingsBuildingRequest;
 import org.apache.maven.settings.building.SettingsBuildingResult;
 import org.eclipse.aether.RepositorySystem;
 import org.eclipse.aether.RepositorySystemSession;
+import org.eclipse.aether.impl.RepositoryConnectorProvider;
 import org.eclipse.aether.internal.impl.Maven2RepositoryLayoutFactory;
 import org.eclipse.aether.repository.RemoteRepository;
 import org.eclipse.aether.repository.RepositoryPolicy;
@@ -77,6 +78,7 @@ public final class MavenContext {
 
     private record SessionData(Settings settings,
             RepositorySystem repositorySystem,
+            RepositoryConnectorProvider connectorProvider,
             RepositorySystemSession repositorySession) {
     }
 
@@ -112,9 +114,8 @@ public final class MavenContext {
         }
         var settings = settingsResult.getEffectiveSettings();
 
-        // Repository system
-        @SuppressWarnings("PMD.CloseResource")
-        var repoSystem = new RepositorySystemSupplier() {
+        // Repository system supplier
+        var supplier = new RepositorySystemSupplier() {
             @Override
             protected Map<String, RepositoryLayoutFactory>
                     createRepositoryLayoutFactories() {
@@ -124,7 +125,12 @@ public final class MavenContext {
                     new NoMetadataChecksumLayoutFactory(maven2));
                 return factories;
             }
-        }.get();
+        };
+        // Connector provider
+        var connectorProvider = supplier.getRepositoryConnectorProvider();
+        // Repository system
+        @SuppressWarnings("PMD.CloseResource")
+        var repoSystem = supplier.get();
         // Repository system session
         String localRepoPath = settings.getLocalRepository() != null
             ? settings.getLocalRepository()
@@ -138,7 +144,8 @@ public final class MavenContext {
             .build();
 
         // Combine
-        theSession = new SessionData(settings, repoSystem, session);
+        theSession = new SessionData(settings, repoSystem, connectorProvider,
+            session);
         return theSession;
     }
 
@@ -148,6 +155,14 @@ public final class MavenContext {
     ///
     public static RepositorySystem repositorySystem() {
         return session().repositorySystem();
+    }
+
+    /// Connector provider.
+    ///
+    /// @return the repository connector provider
+    ///
+    public static RepositoryConnectorProvider repositoryConnectorProvider() {
+        return session().connectorProvider();
     }
 
     /// Repository session.
