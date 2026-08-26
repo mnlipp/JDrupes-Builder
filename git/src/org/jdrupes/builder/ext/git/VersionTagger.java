@@ -18,6 +18,7 @@
 
 package org.jdrupes.builder.ext.git;
 
+import com.google.common.flogger.FluentLogger;
 import com.vdurmont.semver4j.Semver;
 import java.io.IOException;
 import java.nio.file.Path;
@@ -94,6 +95,8 @@ import org.jdrupes.gitversioning.api.VersionEvaluator;
 /// 
 @SuppressWarnings("PMD.GodClass")
 public class VersionTagger extends AbstractGenerator {
+
+    private static final FluentLogger logger = FluentLogger.forEnclosingClass();
 
     /// If defined and not equal to `false` prevents the actual creation
     /// of the tag.
@@ -241,6 +244,8 @@ public class VersionTagger extends AbstractGenerator {
         try {
             var existing = findTag(gitApi, tag);
             if (existing.isPresent()) {
+                logger.atFine().log(
+                    "%s found tag %s to be up to date", this, tag);
                 @SuppressWarnings("unchecked")
                 var result = List.of((R) existing.get());
                 return result;
