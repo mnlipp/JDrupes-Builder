@@ -28,3 +28,5 @@ agent: build
    a ResourceProvider really provides. The type cannot be derived from the
    generic return type of doProvide.
    
+ - **Provider index:** Every ResourceProvider should be referenced in
+   provider-index.md
