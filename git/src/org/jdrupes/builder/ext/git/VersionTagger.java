@@ -135,7 +135,7 @@ public class VersionTagger extends AbstractGenerator {
     /// no snapshot qualifier.
     /// 
     /// Use
-    /// `jdbld -Pjdbld.versionTagger.mode=incrementMajor` to set the algorithm.
+    /// `jdbld -Pjdbld.versionTagger.mode=incrementMinor` to set the algorithm.
     ///
     public static final String INCREMENT_MINOR = "incrementMinor";
 
