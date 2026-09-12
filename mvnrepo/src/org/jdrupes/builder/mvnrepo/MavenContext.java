@@ -45,6 +45,7 @@ import org.eclipse.aether.spi.connector.layout.RepositoryLayoutFactory;
 import org.eclipse.aether.supplier.RepositorySystemSupplier;
 import org.eclipse.aether.supplier.SessionBuilderSupplier;
 import org.eclipse.aether.util.graph.transformer.ConfigurableVersionSelector;
+import org.eclipse.aether.util.graph.version.ContextualSnapshotVersionFilter;
 import org.jdrupes.builder.api.BuildException;
 
 /// Manages a global instance of [RepositorySystem] and 
@@ -138,6 +139,7 @@ public final class MavenContext {
         @SuppressWarnings("PMD.CloseResource")
         var session = new SessionBuilderSupplier(repoSystem).get()
             .withLocalRepositoryBaseDirectories(Path.of(localRepoPath))
+            .setVersionFilter(new ContextualSnapshotVersionFilter())
             .setConfigProperty(
                 ConfigurableVersionSelector.CONFIG_PROP_SELECTION_STRATEGY,
                 ConfigurableVersionSelector.HIGHEST_SELECTION_STRATEGY)
