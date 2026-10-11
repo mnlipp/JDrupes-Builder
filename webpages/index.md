@@ -76,10 +76,10 @@ provides resources of type
 ```
 
 The second generator is an
-[UberJarGenerator](javadoc/org/jdrupes/builder/uberjar/UberJarGenerator.html).
+[UberJarBuilder](javadoc/org/jdrupes/builder/uberjar/UberJarBuilder.html).
 
 ```java
-        generator(UberJarGenerator::new).addFrom(providers().select(Supply))
+        generator(UberJarBuilder::new).addFrom(providers().select(Supply))
             .mainClass("jdbld.demo.simpleapp.App");
 ```
 
