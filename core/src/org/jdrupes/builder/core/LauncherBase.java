@@ -28,7 +28,7 @@ import org.jdrupes.builder.api.RootProject;
 
 /// A base class for launchers.
 ///
-@SuppressWarnings("PMD.UseUtilityClass")
+@SuppressWarnings("PMD.InstantiableUtilityClass")
 public class LauncherBase {
 
     /// The ScopedValue for the build context.

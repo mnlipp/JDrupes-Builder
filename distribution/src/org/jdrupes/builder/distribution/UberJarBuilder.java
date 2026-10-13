@@ -251,8 +251,8 @@ public class UberJarBuilder extends LibraryBuilder {
             });
     }
 
-    @SuppressWarnings({ "PMD.UselessPureMethodCall",
-        "PMD.AvoidLiteralsInIfCondition" })
+    @SuppressWarnings({ "PMD.AvoidLiteralsInIfCondition",
+        "PMD.UnusedReturnValue" })
     @Override
     protected void
             resolveDuplicates(Map<Path, Resources<InputResource>> entries) {

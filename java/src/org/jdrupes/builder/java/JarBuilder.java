@@ -397,7 +397,7 @@ public class JarBuilder extends AbstractGenerator {
     /// @param entries the entries
     ///
     @SuppressWarnings({ "PMD.AvoidLiteralsInIfCondition",
-        "PMD.UselessPureMethodCall" })
+        "PMD.UnusedReturnValue" })
     protected void resolveDuplicates(
             Map<Path, Resources<InputResource>> entries) {
         entries.entrySet().parallelStream().forEach(item -> {

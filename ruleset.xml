@@ -19,6 +19,7 @@ JGrapes rules
     <rule ref="category/java/bestpractices.xml">
         <exclude name="AccessorMethodGeneration"/>
         <exclude name="AvoidReassigningParameters"/>
+        <exclude name="OnDemandImport"/>
     </rule>
     
     <rule ref="category/java/codestyle.xml">
