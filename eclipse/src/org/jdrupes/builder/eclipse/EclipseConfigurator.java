@@ -1,6 +1,6 @@
 /*
  * JDrupes Builder
- * Copyright (C) 2025 Michael N. Lipp
+ * Copyright (C) 2025, 2026 Michael N. Lipp
  * 
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as
@@ -42,6 +42,7 @@ import javax.xml.transform.TransformerFactoryConfigurationError;
 import javax.xml.transform.dom.DOMSource;
 import javax.xml.transform.stream.StreamResult;
 import org.jdrupes.builder.api.BuildException;
+import org.jdrupes.builder.api.ConfigurationException;
 import org.jdrupes.builder.api.FileTree;
 import static org.jdrupes.builder.api.Intent.*;
 import org.jdrupes.builder.api.MergedTestProject;
@@ -50,6 +51,7 @@ import org.jdrupes.builder.api.Resource;
 import org.jdrupes.builder.api.ResourceRequest;
 import org.jdrupes.builder.api.ResourceType;
 import org.jdrupes.builder.core.AbstractGenerator;
+import static org.jdrupes.builder.eclipse.EclipseTypes.*;
 import org.jdrupes.builder.java.ClassTree;
 import org.jdrupes.builder.java.CodeContribution;
 import org.jdrupes.builder.java.JavaCompiler;
@@ -60,7 +62,11 @@ import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.Node;
 
-/// The [EclipseConfigurator] provides the resource [EclipseConfiguration].
+/// The [EclipseConfigurator] provides the resource [EclipseConfiguration]
+/// and [EclipseLauncher].
+/// 
+/// ## Eclipse configuration
+/// 
 /// "The configuration" consists of the Eclipse configuration files
 /// for a given project. The configurator generates the following
 /// files as W3C DOM documents (for XML files) or as [Properties]
@@ -89,7 +95,7 @@ import org.w3c.dom.Node;
 /// on will be added as "test only" class path resources and the folder
 /// with the sources for the java compiler will be added as "test sources".
 /// 
-/// ## JPMS support
+/// ### JPMS support
 /// 
 /// Referenced projects are added to the module-path if they provide
 /// a `module-info.class`. Referenced libraries are added to the module-path
@@ -101,6 +107,27 @@ import org.w3c.dom.Node;
 /// by Eclipse. It effectively merges the sources from `src/` and `test/`
 /// and complains about a duplicate `module-info.java` if such a file
 /// exists in the `test` folder.
+/// 
+/// ## Eclipse launcher
+/// 
+/// The [EclipseConfigurator] also generates Eclipse launch configuration
+/// files (`.launch`) as [EclipseLauncher] resources. A launch configuration
+/// is an XML document of type
+/// `org.eclipse.jdt.launching.localJavaApplication` that contains
+/// everything needed to run a Java application from within Eclipse.
+///
+/// A request is made via [EclipseLauncherRequest] and must specify a name
+/// (the base name of the file name) and a fully qualified main class.
+/// Program arguments and VM arguments are optional.
+///
+/// The launch configuration includes a fully resolved classpath with the
+/// JRE container, the project itself, all dependent projects, and library
+/// JARs (including those resolved from Maven repositories). For modular
+/// projects, the module path is populated with modular project dependencies
+/// and the module name is set accordingly.
+///
+/// The working directory is set to the Eclipse workspace location of the
+/// project. Launch configurations are not generated for [MergedTestProject]s.
 /// 
 @SuppressWarnings({ "PMD.TooManyMethods", "PMD.GodClass" })
 public class EclipseConfigurator extends AbstractGenerator {
@@ -187,7 +214,7 @@ public class EclipseConfigurator extends AbstractGenerator {
         return this;
     }
 
-    /// Provides an [EclipseConfiguration].
+    /// Provides an [EclipseConfiguration] or [EclipseLauncher].
     ///
     /// @param <T> the generic type
     /// @param requested the requested
@@ -197,13 +224,19 @@ public class EclipseConfigurator extends AbstractGenerator {
     protected <T extends Resource> Collection<T>
             doProvide(ResourceRequest<T> requested) {
         // Check if provided and evaluate for most special type
-        var eclipseConfigType = new ResourceType<EclipseConfiguration>() {};
-        if (!requested.accepts(eclipseConfigType)) {
+        if (!requested.accepts(EclipseConfigurationType)
+            && !requested.accepts(EclipseLauncherType)) {
             return Collections.emptyList();
         }
-        if (!requested.isFor(eclipseConfigType)) {
+
+        // Handle EclipseLauncher requests
+        if (requested.accepts(EclipseLauncherType)) {
+            return provideLauncher(requested);
+        }
+
+        if (!requested.isFor(EclipseConfigurationType)) {
             @SuppressWarnings("unchecked")
-            var result = (Collection<T>) resources(of(eclipseConfigType))
+            var result = (Collection<T>) resources(of(EclipseConfigurationType))
                 .toList();
             return result;
         }
@@ -239,6 +272,30 @@ public class EclipseConfigurator extends AbstractGenerator {
         var result = (Collection<T>) List.of(
             EclipseConfiguration.of(project(), eclipseAlias()));
         return result;
+    }
+
+    @SuppressWarnings("unchecked")
+    private <T extends Resource> Collection<T> provideLauncher(
+            ResourceRequest<T> requested) {
+        // Generate nothing for test projects.
+        if (project() instanceof MergedTestProject
+            || !(requested instanceof EclipseLauncherRequest)) {
+            return Collections.emptyList();
+        }
+
+        var launcherName = requested.name().orElseThrow(
+            () -> new ConfigurationException().message(
+                "EclipseLauncherRequest must have a name"));
+
+        // Generate the launch configuration file
+        generateXmlFile(doc -> new LaunchGenerator(this)
+            .generateLaunchConfiguration(doc,
+                (EclipseLauncherRequest) requested),
+            launcherName + ".launch");
+
+        // Create result
+        return (Collection<T>) List.of(EclipseLauncher.of(
+            project().directory().resolve(launcherName + ".launch")));
     }
 
     private void generateXmlFile(Consumer<Document> generator, String name) {
@@ -372,12 +429,7 @@ public class EclipseConfigurator extends AbstractGenerator {
         var entry = (Element) classpath
             .appendChild(doc.createElement("classpathentry"));
         entry.setAttribute("kind", "src");
-        var referenced = project.resources(
-            of(new ResourceType<EclipseConfiguration>() {})
-                .using(Supply, Expose))
-            .filter(c -> c.projectName().equals(project.name())).findFirst()
-            .map(EclipseConfiguration::eclipseAlias).orElse(project.name());
-        entry.setAttribute("path", "/" + referenced);
+        entry.setAttribute("path", "/" + refName(project));
         if (exposed.contains(project)) {
             entry.setAttribute("exported", "true");
         }
@@ -402,6 +454,20 @@ public class EclipseConfigurator extends AbstractGenerator {
         // project to avoid duplicate entries for libraries
         providedByProject.addAll(project.resources(of(CodeContributionType)
             .using(Supply, Expose)).toList());
+    }
+
+    /// Returns another project's Eclipse name for referencing it
+    /// in the configuration.
+    ///
+    /// @param project the project
+    /// @return the string
+    ///
+    protected String refName(Project project) {
+        return project.resources(
+            of(new ResourceType<EclipseConfiguration>() {})
+                .using(Supply, Expose))
+            .filter(c -> c.projectName().equals(project.name())).findFirst()
+            .map(EclipseConfiguration::eclipseAlias).orElse(project.name());
     }
 
     private void addJarFileEntry(Document doc, Node classpath,

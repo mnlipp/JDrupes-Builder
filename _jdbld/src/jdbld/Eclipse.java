@@ -10,5 +10,6 @@ public class Eclipse extends AbstractProject implements JavaProject {
         super(name("eclipse"));
         dependency(Reveal, project(Core.class));
         dependency(Reveal, project(Java.class));
+        dependency(Reveal, project(MvnRepo.class));
     }
 }

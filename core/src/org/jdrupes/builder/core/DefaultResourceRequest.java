@@ -43,7 +43,7 @@ public class DefaultResourceRequest<T extends Resource>
     ///
     /// @param type the requested type
     ///
-    /* default */ DefaultResourceRequest(ResourceType<? extends T> type) {
+    protected DefaultResourceRequest(ResourceType<? extends T> type) {
         this.type = Objects.requireNonNull(type);
         uses = EnumSet.noneOf(Intent.class);
     }
