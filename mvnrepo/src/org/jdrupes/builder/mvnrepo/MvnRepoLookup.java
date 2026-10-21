@@ -25,7 +25,9 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -48,7 +50,11 @@ import org.eclipse.aether.resolution.DependencyRequest;
 import org.eclipse.aether.resolution.DependencyResolutionException;
 import org.eclipse.aether.util.artifact.SubArtifact;
 import org.eclipse.aether.util.graph.visitor.PreorderDependencyNodeConsumerVisitor;
+import org.eclipse.aether.util.version.GenericVersionScheme;
+import org.eclipse.aether.version.InvalidVersionSpecificationException;
+import org.eclipse.aether.version.Version;
 import org.jdrupes.builder.api.BuildException;
+import org.jdrupes.builder.api.Renamable;
 import org.jdrupes.builder.api.Resource;
 import org.jdrupes.builder.api.ResourceRequest;
 import org.jdrupes.builder.core.AbstractProvider;
@@ -79,8 +85,8 @@ import static org.jdrupes.builder.mvnrepo.MvnRepoTypes.*;
 /// Results of the dependency resolution are written to the log with
 /// log level FINE.
 /// 
-@SuppressWarnings("PMD.CouplingBetweenObjects")
-public class MvnRepoLookup extends AbstractProvider {
+@SuppressWarnings({ "PMD.CouplingBetweenObjects", "PMD.GodClass" })
+public class MvnRepoLookup extends AbstractProvider implements Renamable {
 
     private static final FluentLogger logger = FluentLogger.forEnclosingClass();
     private final List<RemoteRepository> addedRepos = new ArrayList<>();
@@ -94,6 +100,12 @@ public class MvnRepoLookup extends AbstractProvider {
     ///
     public MvnRepoLookup() {
         // Make javadoc happy.
+    }
+
+    @Override
+    public MvnRepoLookup name(String name) {
+        rename(name);
+        return this;
     }
 
     /// Add repositories to be used for the lookup.
@@ -224,7 +236,7 @@ public class MvnRepoLookup extends AbstractProvider {
                 .resources(this, of(MvnRepoLibraryJarFileType)).toList();
             return result;
         }
-        
+
         // Handle request for maven dependencies
         if (request.accepts(MvnRepoDependencyType)) {
             return provideMvnDeps();
@@ -266,32 +278,43 @@ public class MvnRepoLookup extends AbstractProvider {
         var repoSystem = MavenContext.repositorySystem();
         var repoSession = MavenContext.repositorySession();
 
-        // Create one synthetic CollectRequest
+        // Create one CollectRequest
         var repos = new ArrayList<>(addedRepos);
         if (repos.isEmpty()) {
             repos.add(MavenContext.mavenCentral());
         }
-        CollectRequest collectRequest
-            = new CollectRequest().setRepositories(repos);
 
-        // Add dependencies via their effective model
+        // Collect all dependencies via their effective models
+        List<Dependency> allDeps = new ArrayList<>();
         coordinates.stream().parallel().map(c -> depsFromEffectiveModel(
             c, repoSystem, repoSession, repos)).forEach(deps -> {
-                // collectRequest::addDependency is not thread safe
-                synchronized (collectRequest) {
-                    deps.forEach(collectRequest::addDependency);
+                // allDeps is not thread safe
+                synchronized (allDeps) {
+                    deps.forEach(allDeps::add);
                 }
             });
 
+        // Deduplicate: keep highest version for each
+        // groupId:artifactId:classifier:type:scope.
+        // The resolver does not apply the highest wins strategy to the
+        // list of dependencies passed to it, only to those pulled in by
+        // those dependencies.
+        List<Dependency> resolvedDeps = deduplicateByHighestVersion(allDeps);
+
+        // Populate collect request
+        CollectRequest collectRequest
+            = new CollectRequest().setRepositories(repos);
+        resolvedDeps.forEach(collectRequest::addDependency);
+
         // Resolve dependencies - Resolver performs mediation
-        logger.atFine().log("Resolving dependencies: %s",
+        logger.atFine().log("%s resolving dependencies: %s", name(),
             lazy(() -> collectRequest.getDependencies().stream()
                 .map(Dependency::toString).collect(Collectors.joining(", "))));
         DependencyRequest dependencyRequest
             = new DependencyRequest(collectRequest, null);
         DependencyNode rootNode = repoSystem.resolveDependencies(repoSession,
             dependencyRequest).getRoot();
-        logger.atFine().log("Dependency tree for %s:\n%s", name(),
+        logger.atFine().log("Dependency tree from %s:\n%s", name(),
             lazy(() -> buildTreeString(rootNode, 0, "", true)));
         List<DependencyNode> dependencyNodes = new ArrayList<>();
         rootNode.accept(new PreorderDependencyNodeConsumerVisitor(
@@ -306,6 +329,52 @@ public class MvnRepoLookup extends AbstractProvider {
                     artifact.toString(), artifact.getPath());
             }).toList();
         return result;
+    }
+
+    @SuppressWarnings("PMD.CognitiveComplexity")
+    private List<Dependency> deduplicateByHighestVersion(
+            List<Dependency> dependencies) {
+        var versionScheme = new GenericVersionScheme();
+
+        // Group by all properties except version
+        @SuppressWarnings("PMD.UseConcurrentHashMap")
+        Map<String, Dependency> bestByGroup = new HashMap<>();
+        for (Dependency dep : dependencies) {
+            var artifact = dep.getArtifact();
+            String key = artifact.getGroupId() + ':' + artifact.getArtifactId()
+                + ':' + (artifact.getClassifier() != null
+                    ? artifact.getClassifier()
+                    : "")
+                + ':' + (artifact.getExtension() != null
+                    ? artifact.getExtension()
+                    : "jar")
+                + ':' + dep.getScope();
+
+            Dependency existing = bestByGroup.get(key);
+            if (existing == null) {
+                bestByGroup.put(key, dep);
+            } else {
+                // Compare versions, keep highest
+                try {
+                    Version existingVersion = versionScheme.parseVersion(
+                        existing.getArtifact().getVersion());
+                    Version candidateVersion = versionScheme.parseVersion(
+                        artifact.getVersion());
+                    if (candidateVersion.compareTo(existingVersion) > 0) {
+                        bestByGroup.put(key, dep);
+                    }
+                } catch (InvalidVersionSpecificationException e) {
+                    // Fall back to string comparison
+                    String existingVersion
+                        = existing.getArtifact().getVersion();
+                    String candidateVersion = artifact.getVersion();
+                    if (candidateVersion.compareTo(existingVersion) > 0) {
+                        bestByGroup.put(key, dep);
+                    }
+                }
+            }
+        }
+        return new ArrayList<>(bestByGroup.values());
     }
 
     private Stream<Dependency> depsFromEffectiveModel(
