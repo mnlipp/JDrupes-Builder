@@ -18,15 +18,24 @@
 
 package org.jdrupes.builder.eclipse;
 
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.util.Collection;
+import java.util.Collections;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
+import javax.xml.parsers.ParserConfigurationException;
 import org.eclipse.aether.repository.RemoteRepository;
+import org.jdrupes.builder.api.BuildException;
 import org.jdrupes.builder.api.ConfigurationException;
 import static org.jdrupes.builder.api.Intent.Consume;
 import static org.jdrupes.builder.api.Intent.Expose;
 import static org.jdrupes.builder.api.Intent.Forward;
 import static org.jdrupes.builder.api.Intent.Reveal;
 import static org.jdrupes.builder.api.Intent.Supply;
+import org.jdrupes.builder.api.MergedTestProject;
 import org.jdrupes.builder.api.Project;
 import org.jdrupes.builder.api.Resource;
 import org.jdrupes.builder.api.ResourceRequest;
@@ -43,6 +52,7 @@ import static org.jdrupes.builder.mvnrepo.MvnRepoTypes.MvnRepoResourceType;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.Node;
+import org.xml.sax.SAXException;
 
 /// The Class LaunchGenerator.
 ///
@@ -68,13 +78,65 @@ public class LaunchGenerator {
         return configurator.project();
     }
 
+    /// Provide the launch configuration.
+    ///
+    /// @param <T> the generic type
+    /// @param requested the requested
+    /// @return the collection
+    ///
+    @SuppressWarnings({ "unchecked", "PMD.ConfusingTernary" })
+    public <T extends Resource> Collection<T> provideLauncher(
+            ResourceRequest<T> requested) {
+        // Generate nothing for test projects.
+        if (project() instanceof MergedTestProject
+            || !(requested instanceof EclipseLauncherRequest)) {
+            return Collections.emptyList();
+        }
+
+        var launcherName = requested.name().orElseThrow(
+            () -> new ConfigurationException().message(
+                "EclipseLauncherRequest must have a name"));
+
+        @SuppressWarnings("PMD.AvoidDuplicateLiterals")
+        var launchFile
+            = project().directory().resolve(launcherName + ".launch");
+        var request = (EclipseLauncherRequest) requested;
+
+        if (!Files.exists(launchFile)) {
+            configurator.generateXmlFile(
+                doc -> generateLaunchConfiguration(doc, request),
+                launcherName + ".launch");
+        } else {
+            configurator.generateXmlFile(doc -> {
+                var existing = parseExisting(launchFile);
+                generateLaunchConfiguration(doc, request);
+                mergeSettings(existing, doc);
+                return existing;
+            }, launcherName + ".launch");
+        }
+
+        // Create result
+        return (Collection<T>) List.of(EclipseLauncher.of(
+            project().directory().resolve(launcherName + ".launch")));
+    }
+
+    private Document parseExisting(Path path) {
+        try {
+            return configurator.documentBuilderFactory().newDocumentBuilder()
+                .parse(path.toFile());
+        } catch (ParserConfigurationException | SAXException | IOException e) {
+            throw new BuildException().from(configurator).cause(e);
+        }
+    }
+
     /// Generates the launch configuration XML into the given document.
     ///
-    /// @param doc the document
+    /// @param doc an empty document as starting point
     /// @param request the request
+    /// @return the generated document
     ///
     @SuppressWarnings("PMD.AvoidDuplicateLiterals")
-    protected void generateLaunchConfiguration(Document doc,
+    protected Document generateLaunchConfiguration(Document doc,
             EclipseLauncherRequest request) {
         var mainClass = request.mainClass();
         if (mainClass == null) {
@@ -146,6 +208,9 @@ public class LaunchGenerator {
         addStringAttribute(doc, launchConfig,
             "org.eclipse.jdt.launching.WORKING_DIRECTORY",
             "${workspace_loc:" + configurator.eclipseAlias() + "}");
+
+        // Return updated document
+        return doc;
     }
 
     @SuppressWarnings("PMD.AvoidDuplicateLiterals")
@@ -286,6 +351,7 @@ public class LaunchGenerator {
         }
     }
 
+    @SuppressWarnings("PMD.AvoidDuplicateLiterals")
     private void addStringAttribute(Document doc, Node parent,
             String key, String value) {
         var attr = (Element) parent
@@ -314,6 +380,83 @@ public class LaunchGenerator {
             .replace(">", "&gt;")
             .replace("\"", "&quot;")
             .replace("'", "&apos;");
+    }
+
+    /// Updates the classpath and modulepath in the target document
+    /// from a freshly generated source document.
+    ///
+    /// @param target the existing document to update
+    /// @param source the freshly generated document
+    ///
+    protected void mergeSettings(Document target, Document source) {
+        replaceListAttribute(target, source,
+            "org.eclipse.jdt.launching.CLASSPATH");
+        replaceListAttribute(target, source,
+            "org.eclipse.jdt.launching.MODULEPATH");
+        replaceStringAttribute(target, source,
+            "org.eclipse.jdt.launching.PROGRAM_ARGUMENTS");
+        replaceStringAttribute(target, source,
+            "org.eclipse.jdt.launching.VM_ARGUMENTS");
+    }
+
+    private void replaceListAttribute(Document target, Document source,
+            String key) {
+        var targetNode = findListAttribute(target, key);
+        var sourceNode = findListAttribute(source, key);
+        if (sourceNode == null) {
+            return;
+        }
+        if (targetNode != null) {
+            var imported = target.importNode(sourceNode, true);
+            targetNode.getParentNode().replaceChild(imported, targetNode);
+        } else {
+            target.getDocumentElement().appendChild(
+                target.importNode(sourceNode, true));
+        }
+    }
+
+    private void replaceStringAttribute(Document target, Document source,
+            String key) {
+        var targetNode = findStringAttribute(target, key);
+        var sourceNode = findStringAttribute(source, key);
+        if (sourceNode == null) {
+            return;
+        }
+        if (targetNode != null) {
+            ((Element) targetNode).setAttribute("value",
+                ((Element) sourceNode).getAttribute("value"));
+        } else {
+            target.getDocumentElement().appendChild(
+                target.importNode(sourceNode, true));
+        }
+    }
+
+    private Node findListAttribute(Document doc, String key) {
+        var root = doc.getDocumentElement();
+        var children = root.getChildNodes();
+        for (int i = 0; i < children.getLength(); i++) {
+            var child = children.item(i);
+            if (child instanceof Element
+                && "listAttribute".equals(child.getNodeName())
+                && key.equals(((Element) child).getAttribute("key"))) {
+                return child;
+            }
+        }
+        return null;
+    }
+
+    private Node findStringAttribute(Document doc, String key) {
+        var root = doc.getDocumentElement();
+        var children = root.getChildNodes();
+        for (int i = 0; i < children.getLength(); i++) {
+            var child = children.item(i);
+            if (child instanceof Element
+                && "stringAttribute".equals(child.getNodeName())
+                && key.equals(((Element) child).getAttribute("key"))) {
+                return child;
+            }
+        }
+        return null;
     }
 
 }

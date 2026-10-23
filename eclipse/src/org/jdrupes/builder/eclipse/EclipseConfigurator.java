@@ -31,6 +31,7 @@ import java.util.Properties;
 import java.util.Set;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
+import java.util.function.Function;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
 import javax.xml.parsers.DocumentBuilderFactory;
@@ -42,7 +43,6 @@ import javax.xml.transform.TransformerFactoryConfigurationError;
 import javax.xml.transform.dom.DOMSource;
 import javax.xml.transform.stream.StreamResult;
 import org.jdrupes.builder.api.BuildException;
-import org.jdrupes.builder.api.ConfigurationException;
 import org.jdrupes.builder.api.FileTree;
 import static org.jdrupes.builder.api.Intent.*;
 import org.jdrupes.builder.api.MergedTestProject;
@@ -129,6 +129,10 @@ import org.w3c.dom.Node;
 /// The working directory is set to the Eclipse workspace location of the
 /// project. Launch configurations are not generated for [MergedTestProject]s.
 /// 
+/// If the launch configuration already exists, the classpath, the module path
+/// the arguments and the VM arguments are updated, everything else is left
+/// unchanged.
+/// 
 @SuppressWarnings({ "PMD.TooManyMethods", "PMD.GodClass" })
 public class EclipseConfigurator extends AbstractGenerator {
 
@@ -158,6 +162,14 @@ public class EclipseConfigurator extends AbstractGenerator {
     ///
     public EclipseConfigurator(Project project) {
         super(project);
+    }
+
+    /// return the document builder factory.
+    ///
+    /// @return the document builder factory
+    ///
+    protected DocumentBuilderFactory documentBuilderFactory() {
+        return dbf;
     }
 
     /// Define the eclipse (alias) project name. 
@@ -231,7 +243,7 @@ public class EclipseConfigurator extends AbstractGenerator {
 
         // Handle EclipseLauncher requests
         if (requested.accepts(EclipseLauncherType)) {
-            return provideLauncher(requested);
+            return new LaunchGenerator(this).provideLauncher(requested);
         }
 
         if (!requested.isFor(EclipseConfigurationType)) {
@@ -274,34 +286,16 @@ public class EclipseConfigurator extends AbstractGenerator {
         return result;
     }
 
-    @SuppressWarnings("unchecked")
-    private <T extends Resource> Collection<T> provideLauncher(
-            ResourceRequest<T> requested) {
-        // Generate nothing for test projects.
-        if (project() instanceof MergedTestProject
-            || !(requested instanceof EclipseLauncherRequest)) {
-            return Collections.emptyList();
-        }
-
-        var launcherName = requested.name().orElseThrow(
-            () -> new ConfigurationException().message(
-                "EclipseLauncherRequest must have a name"));
-
-        // Generate the launch configuration file
-        generateXmlFile(doc -> new LaunchGenerator(this)
-            .generateLaunchConfiguration(doc,
-                (EclipseLauncherRequest) requested),
-            launcherName + ".launch");
-
-        // Create result
-        return (Collection<T>) List.of(EclipseLauncher.of(
-            project().directory().resolve(launcherName + ".launch")));
-    }
-
-    private void generateXmlFile(Consumer<Document> generator, String name) {
+    /// Generate an XML file from the supplied document.
+    ///
+    /// @param generator the generator
+    /// @param name the name
+    ///
+    protected void generateXmlFile(Function<Document, Document> generator,
+            String name) {
         try {
             var doc = dbf.newDocumentBuilder().newDocument();
-            generator.accept(doc);
+            doc = generator.apply(doc);
             var transformer = TransformerFactory.newInstance().newTransformer();
             transformer.setOutputProperty(OutputKeys.INDENT, "yes");
             transformer.setOutputProperty(
@@ -319,10 +313,11 @@ public class EclipseConfigurator extends AbstractGenerator {
 
     /// Generates the content of the `.project` file into the given document.
     ///
-    /// @param doc the document
+    /// @param doc an empty document as starting point
+    /// @return the generated document
     ///
     @SuppressWarnings("PMD.AvoidDuplicateLiterals")
-    protected void generateProjectConfiguration(Document doc) {
+    protected Document generateProjectConfiguration(Document doc) {
         var prjDescr = doc.appendChild(doc.createElement("projectDescription"));
         prjDescr.appendChild(doc.createElement("name"))
             .appendChild(doc.createTextNode(eclipseAlias()));
@@ -342,6 +337,9 @@ public class EclipseConfigurator extends AbstractGenerator {
 
         // Allow derived class to adapt the project configuration
         prjConfigAdaptor.accept(doc, buildSpec, natures);
+
+        // Return updated document
+        return doc;
     }
 
     /// Allow derived classes to post process the project configuration.
@@ -372,9 +370,10 @@ public class EclipseConfigurator extends AbstractGenerator {
     /// Generates the content of the `.classpath` file into the given
     /// document.
     ///
-    /// @param doc the doc
+    /// @param doc an empty document as starting point
+    /// @return the generated document
     ///
-    protected void generateClasspathConfiguration(Document doc) {
+    protected Document generateClasspathConfiguration(Document doc) {
         var isModular = project()
             .resources(of(CodeContributionType).using(Supply))
             .filter(cc -> cc instanceof ClassTree).map(cc -> (ClassTree) cc)
@@ -410,6 +409,9 @@ public class EclipseConfigurator extends AbstractGenerator {
 
         // Allow derived class to override
         classpathAdaptor.accept(doc, classpath);
+
+        // Return updated document
+        return doc;
     }
 
     @SuppressWarnings("PMD.AvoidDuplicateLiterals")
