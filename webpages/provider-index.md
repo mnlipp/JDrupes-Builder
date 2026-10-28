@@ -1,7 +1,7 @@
 ---
-title: "Generator Index"
+title: "Provider Index"
 description: >-
-  An index of all generators defined in the core JDrupes Builder.
+  An index of all providers defined in the core JDrupes Builder.
 layout: jdbld
 ---
 
