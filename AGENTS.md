@@ -78,6 +78,8 @@ built tool.
 - **Command aliases:** `commandAlias(name).description(desc)` on
   `AbstractRootProject`
 - **Virtual threads:** Used in executors (e.g. `NpmExecutor`)
+- **Changelog:** The project has a `CHANGELOG.md` following the "Keep a Changelog"
+  conventions from https://keepachangelog.com/en/1.1.0/
 
 ## Testing
 
