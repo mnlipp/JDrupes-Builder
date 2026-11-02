@@ -75,11 +75,12 @@ public final class SplitConsole implements AutoCloseable {
     private final Map<Thread, String> offScreenLines = new LinkedHashMap<>();
     private final PrintStream realOut;
     private final PrintStream realErr;
-    // Used to synchronize output to terminal
+    // Terminal does not provide a PrintStream. Also used to synchronize
+    // access to the terminal
     private final PrintStream terminalOut;
-    private final PrintStream splitOut;
-    private final PrintStream splitErr;
-    private byte[] incompleteLine = new byte[0];
+    private final PrintStream fallbackOut;
+    private final PrintStream fallbackErr;
+    private byte[] scrollAreaLast = new byte[0];
     private final Redrawer redrawer;
 
     /// The class LineData
@@ -173,8 +174,8 @@ public final class SplitConsole implements AutoCloseable {
                 "Insufficient terminal control support, using plain output");
             redrawer = null;
             terminalOut = System.out;
-            splitOut = System.out;
-            splitErr = System.err;
+            fallbackOut = System.out;
+            fallbackErr = System.err;
             return;
         }
 
@@ -195,13 +196,13 @@ public final class SplitConsole implements AutoCloseable {
         }
         redrawer = new Redrawer();
         redrawStatus();
-        splitOut = new PrintStream(new StreamWrapper(null), true,
-            Charset.defaultCharset());
-        splitErr = new PrintStream(new StreamWrapper(
+        fallbackOut = null;
+        fallbackErr = null;
+        System.setOut(new PrintStream(new StreamWrapper(null), true,
+            Charset.defaultCharset()));
+        System.setErr(new PrintStream(new StreamWrapper(
             AttributedStyle.DEFAULT.foreground(AttributedStyle.RED)),
-            true, Charset.defaultCharset());
-        System.setOut(splitOut);
-        System.setErr(splitErr);
+            true, Charset.defaultCharset()));
     }
 
     private Optional<ManagedLine> managedLine(Thread thread) {
@@ -331,25 +332,23 @@ public final class SplitConsole implements AutoCloseable {
     }
 
     /// Writes the bytes to the scrollable part of the console.
+    /// This method writes the bytes to the last line of the scroll area,
+    /// always starting at the beginning. If a newline is encountered,
+    /// the scrollable part is shifted up and the last line is cleared.
+    /// 
+    /// If several threads write incomplete lines to the scrollable part
+    /// concurrently, the last line shows the text of the last write.
     ///
     /// @param text the text
+    /// @param offset the offset
+    /// @param length the length
+    /// @param style the style
+    /// @throws IOException Signals that an I/O exception has occurred.
     ///
     @SuppressWarnings({ "PMD.AvoidLiteralsInIfCondition" })
-    private void write(byte[] text, int offset, int length,
+    private void writeLine(byte[] text, int offset, int length,
             AttributedStyle style) throws IOException {
         synchronized (terminalOut) {
-            if (incompleteLine.length > 0) {
-                // Prepend left over text and try again
-                byte[] prepended = new byte[incompleteLine.length + length];
-                System.arraycopy(
-                    incompleteLine, 0, prepended, 0, incompleteLine.length);
-                System.arraycopy(
-                    text, offset, prepended, incompleteLine.length, length);
-                incompleteLine = new byte[0];
-                write(prepended, style);
-                return;
-            }
-
             // Write line(s)
             int end = offset + length;
             for (int i = offset; i < end; i++) {
@@ -375,19 +374,24 @@ public final class SplitConsole implements AutoCloseable {
                 writeStyled(terminalOut, text, offset, i - offset + 1, style);
                 offset = i + 1;
             }
-            incompleteLine = new byte[end - offset];
-            System.arraycopy(text, offset, incompleteLine, 0, end - offset);
-            if (incompleteLine.length > 0) {
-                // Show incomplete line, will be overwritten by next write
-                terminalOut.write(incompleteLine, 0, incompleteLine.length);
-            }
-            terminalOut.flush();
+            scrollAreaLast = new byte[end - offset];
+            System.arraycopy(text, offset, scrollAreaLast, 0, end - offset);
+            updateScrollAreaLast();
         }
         redrawStatus(true);
     }
 
-    private void write(byte[] text, AttributedStyle style) throws IOException {
-        write(text, 0, text.length, style);
+    private void updateScrollAreaLast() {
+        if (scrollAreaLast.length > 0) {
+            // Show incomplete line, will be overwritten by next write
+            terminal.puts(Capability.carriage_return);
+            terminal.flush();
+            // An incomplete line may never trigger a scroll
+            terminalOut.write(scrollAreaLast, 0,
+                Math.min(terminal.getWidth() - 2, scrollAreaLast.length));
+            terminal.puts(Capability.clr_eol);
+            terminal.flush();
+        }
     }
 
     private void writeStyled(PrintStream out, byte[] chars, int off, int len,
@@ -503,10 +507,7 @@ public final class SplitConsole implements AutoCloseable {
                 terminal.puts(Capability.carriage_return);
                 terminal.puts(Capability.cursor_visible);
                 terminal.flush();
-                if (incompleteLine.length > 0) {
-                    terminalOut.write(incompleteLine, 0, incompleteLine.length);
-                    terminalOut.flush();
-                }
+                updateScrollAreaLast();
             }
         }
     }
@@ -516,7 +517,11 @@ public final class SplitConsole implements AutoCloseable {
     /// @return the prints the stream
     ///
     public PrintStream out() {
-        return splitOut;
+        if (fallbackOut != null) {
+            return fallbackOut;
+        }
+        return new PrintStream(new StreamWrapper(null), true,
+            Charset.defaultCharset());
     }
 
     /// Writes the bytes to the scrollable part of the console.
@@ -524,7 +529,12 @@ public final class SplitConsole implements AutoCloseable {
     /// @return the prints the stream
     ///
     public PrintStream err() {
-        return splitErr;
+        if (fallbackErr != null) {
+            return fallbackErr;
+        }
+        return new PrintStream(new StreamWrapper(
+            AttributedStyle.DEFAULT.foreground(AttributedStyle.RED)),
+            true, Charset.defaultCharset());
     }
 
     /// Close.
@@ -646,6 +656,8 @@ public final class SplitConsole implements AutoCloseable {
     public final class StreamWrapper extends OutputStream {
 
         private final AttributedStyle style;
+        @SuppressWarnings("PMD.AvoidStringBufferField")
+        private final StringBuilder buffer = new StringBuilder();
 
         private StreamWrapper(AttributedStyle style) {
             this.style = style;
@@ -657,9 +669,16 @@ public final class SplitConsole implements AutoCloseable {
         /// @throws IOException Signals that an I/O exception has occurred.
         ///
         @Override
-        @SuppressWarnings("PMD.ShortVariable")
+        @SuppressWarnings({ "PMD.ShortVariable",
+            "PMD.AvoidLiteralsInIfCondition" })
         public void write(int ch) throws IOException {
-            SplitConsole.this.write(new byte[] { (byte) ch }, 0, 1, style);
+            buffer.append((char) ch);
+            if (ch != '\n') {
+                return;
+            }
+            var text = buffer.toString().getBytes(StandardCharsets.UTF_8);
+            writeLine(text, 0, text.length, style);
+            buffer.setLength(0);
         }
 
         /// Write.
@@ -672,7 +691,15 @@ public final class SplitConsole implements AutoCloseable {
         @Override
         @SuppressWarnings("PMD.ShortVariable")
         public void write(byte[] ch, int off, int len) throws IOException {
-            SplitConsole.this.write(ch, off, len, style);
+            for (int i = off; i < off + len; i++) {
+                write((int) ch[i]);
+            }
+        }
+
+        @Override
+        public void flush() throws IOException {
+            var text = buffer.toString().getBytes(StandardCharsets.UTF_8);
+            writeLine(text, 0, text.length, style);
         }
 
         /// Close.
@@ -681,6 +708,7 @@ public final class SplitConsole implements AutoCloseable {
         ///
         @Override
         public void close() throws IOException {
+            flush();
             // Don't forward close
         }
     }
