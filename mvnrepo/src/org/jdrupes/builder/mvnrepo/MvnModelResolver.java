@@ -24,7 +24,7 @@ import org.apache.maven.model.Dependency;
 import org.apache.maven.model.Parent;
 import org.apache.maven.model.Repository;
 import org.apache.maven.model.building.FileModelSource;
-import org.apache.maven.model.building.ModelSource;
+import org.apache.maven.model.building.ModelSource2;
 import org.apache.maven.model.resolution.ModelResolver;
 import org.apache.maven.model.resolution.UnresolvableModelException;
 import org.eclipse.aether.RepositorySystem;
@@ -57,33 +57,35 @@ public class MvnModelResolver implements ModelResolver {
         this.repositories = repositories;
     }
 
-    @SuppressWarnings({ "deprecation", "PMD.AvoidDuplicateLiterals" })
     @Override
-    public ModelSource resolveModel(String groupId, String artifactId,
+    public ModelSource2 resolveModel(String groupId, String artifactId,
             String version) throws UnresolvableModelException {
         return resolve(groupId, artifactId, version);
     }
 
-    @SuppressWarnings("deprecation")
     @Override
-    public ModelSource resolveModel(Parent parent)
+    public ModelSource2 resolveModel(Parent parent)
             throws UnresolvableModelException {
         // parent has groupId, artifactId, version
         return resolve(parent.getGroupId(), parent.getArtifactId(),
             parent.getVersion());
     }
 
-    @SuppressWarnings("deprecation")
     @Override
-    public ModelSource resolveModel(Dependency dependency)
+    public ModelSource2 resolveModel(Dependency dependency)
             throws UnresolvableModelException {
         return resolve(dependency.getGroupId(), dependency.getArtifactId(),
             dependency.getVersion());
     }
 
     @SuppressWarnings("deprecation")
-    private ModelSource resolve(String groupId, String artifactId,
+    private ModelSource2 resolve(String groupId, String artifactId,
             String version) throws UnresolvableModelException {
+        // Resolve version range to a concrete version
+        if (MvnUtils.isVersionRange(version)) {
+            version = MvnUtils.resolveVersionRange(repositories, groupId,
+                artifactId, version);
+        }
         try {
             ArtifactRequest request = new ArtifactRequest();
             request.setArtifact(
@@ -95,10 +97,9 @@ public class MvnModelResolver implements ModelResolver {
             File pomFile = result.getArtifact().getFile();
             return new FileModelSource(pomFile);
         } catch (ArtifactResolutionException e) {
-            throw new UnresolvableModelException(
-                "Could not resolve POM for " + groupId + ":" + artifactId + ":"
-                    + version,
-                groupId, artifactId, version, e);
+            throw new UnresolvableModelException("Could not resolve POM for "
+                + groupId + ":" + artifactId + ":" + version, groupId,
+                artifactId, version, e);
         }
     }
 

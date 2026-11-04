@@ -21,6 +21,7 @@ package org.jdrupes.builder.mvnrepo;
 import com.google.common.flogger.FluentLogger;
 import static com.google.common.flogger.LazyArgs.lazy;
 import java.net.URI;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -35,17 +36,20 @@ import org.apache.maven.model.DependencyManagement;
 import org.apache.maven.model.Model;
 import org.apache.maven.model.building.DefaultModelBuilderFactory;
 import org.apache.maven.model.building.DefaultModelBuildingRequest;
+import org.apache.maven.model.building.FileModelSource;
 import org.apache.maven.model.building.ModelBuildingException;
 import org.apache.maven.model.building.ModelBuildingRequest;
 import org.eclipse.aether.RepositorySystem;
 import org.eclipse.aether.RepositorySystemSession;
 import org.eclipse.aether.artifact.Artifact;
+import org.eclipse.aether.artifact.DefaultArtifact;
 import org.eclipse.aether.collection.CollectRequest;
 import org.eclipse.aether.graph.Dependency;
 import org.eclipse.aether.graph.DependencyNode;
 import org.eclipse.aether.repository.RemoteRepository;
 import org.eclipse.aether.resolution.ArtifactRequest;
 import org.eclipse.aether.resolution.ArtifactResolutionException;
+import org.eclipse.aether.resolution.ArtifactResult;
 import org.eclipse.aether.resolution.DependencyRequest;
 import org.eclipse.aether.resolution.DependencyResolutionException;
 import org.eclipse.aether.util.artifact.SubArtifact;
@@ -77,10 +81,12 @@ import static org.jdrupes.builder.mvnrepo.MvnRepoTypes.*;
 /// Resolving is performed using Maven Resolver (formerly Eclipse Aether)
 /// version 2.x. Dependencies are collected from the specified artifacts after
 /// evaluating their effective Maven models, including any imported
-/// BOMs. Version conflicts are resolved using a "highest wins"
-/// strategy, i.e. the highest version of a dependency encountered in the
-/// dependency graph is selected. Note that this differs from Maven's
-/// default behavior which is "nearest wins".
+/// BOMs and parent POMs.
+/// 
+/// Version conflicts are resolved using a "highest wins" strategy, i.e.
+/// the highest version of a dependency encountered in the dependency
+/// graph is selected. Note that this differs from Maven's default
+/// behavior which is "nearest wins".
 /// 
 /// Results of the dependency resolution are written to the log with
 /// log level FINE.
@@ -321,8 +327,7 @@ public class MvnRepoLookup extends AbstractProvider implements Renamable {
             dependencyNodes::add));
         @SuppressWarnings("unchecked")
         var result = (Collection<T>) dependencyNodes.stream()
-            .filter(d -> d.getArtifact() != null)
-            .map(d -> {
+            .filter(d -> d.getArtifact() != null).map(d -> {
                 var artifact = extraDownloads(
                     repoSystem, repoSession, repos, d.getArtifact());
                 return MvnRepoLibraryJarFile.of(d.getRepositories(),
@@ -377,9 +382,115 @@ public class MvnRepoLookup extends AbstractProvider implements Renamable {
         return new ArrayList<>(bestByGroup.values());
     }
 
+    @SuppressWarnings("PMD.LiteralsFirstInComparisons")
     private Stream<Dependency> depsFromEffectiveModel(
             String coordinates, RepositorySystem repoSystem,
             RepositorySystemSession repoSession,
+            List<RemoteRepository> repos) {
+        // Get the POM for the artifact. This includes augmenting dependencies
+        // without versions using BOMs and resolving version ranges
+        Path pomFile = resolvePom(coordinates, repoSystem, repoSession, repos);
+
+        // Parse the POM into a raw model
+        ModelBuildingRequest buildingRequest = new DefaultModelBuildingRequest()
+            .setModelSource(new FileModelSource(pomFile.toFile()))
+            .setProcessPlugins(false)
+            .setValidationLevel(ModelBuildingRequest.VALIDATION_LEVEL_MINIMAL)
+            .setSystemProperties(System.getProperties())
+            .setModelResolver(
+                new MvnModelResolver(repoSystem, repoSession, repos));
+        Model rawModel;
+        try {
+            rawModel = new DefaultModelBuilderFactory()
+                .newInstance().build(buildingRequest).getRawModel();
+        } catch (ModelBuildingException e) {
+            throw new BuildException().from(this).cause(e);
+        }
+
+        // This is the project's (maven build) model, so it most likely
+        // contains dependencies for running tests. But we are only
+        // interested in its transitive compile and runtime dependencies.
+        rawModel.setDependencies(rawModel.getDependencies().stream()
+            .filter(d -> d.getScope() == null
+                || d.getScope().equals("compile")
+                || d.getScope().equals("runtime"))
+            .toList());
+
+        // Inject BOM imports into the model's dependencyManagement
+        var depMgmt = rawModel.getDependencyManagement();
+        if (depMgmt == null) {
+            depMgmt = new DependencyManagement();
+            rawModel.setDependencyManagement(depMgmt);
+        }
+        for (String bom : boms) {
+            var dep = DependencyConverter
+                .convert(MvnRepoDependency.of(bom), "import");
+            dep.setType("pom");
+            depMgmt.addDependency(dep);
+        }
+
+        // Build effective model of the actual artifact's POM
+        buildingRequest = new DefaultModelBuildingRequest()
+            .setRawModel(rawModel)
+            .setProcessPlugins(false)
+            .setValidationLevel(ModelBuildingRequest.VALIDATION_LEVEL_MINIMAL)
+            .setSystemProperties(System.getProperties())
+            .setModelResolver(
+                new MvnModelResolver(repoSystem, repoSession, repos));
+        try {
+            var effectiveModel = new DefaultModelBuilderFactory()
+                .newInstance().build(buildingRequest).getEffectiveModel();
+            var selfDep = DependencyConverter.convert(
+                MvnRepoDependency.of(effectiveModel.getGroupId() + ":"
+                    + effectiveModel.getArtifactId() + ":"
+                    + effectiveModel.getVersion()),
+                "compile");
+            return Stream.concat(Stream.of(selfDep),
+                effectiveModel.getDependencies().stream())
+                .map(DependencyConverter::convert);
+        } catch (ModelBuildingException e) {
+            throw new BuildException().from(this).cause(e);
+        }
+    }
+
+    private Path resolvePom(String coordinates, RepositorySystem repoSystem,
+            RepositorySystemSession repoSession,
+            List<RemoteRepository> repos) {
+        var asDep = MvnRepoDependency.of(coordinates);
+        String version = asDep.version();
+        if (version == null || version.isBlank()) {
+            // Resolve version from BOM dependencyManagement
+            version = resolveVersionUsingBom(
+                asDep, repoSystem, repoSession, repos);
+            if (version == null) {
+                throw new BuildException().from(this)
+                    .message("Could not resolve version for " + coordinates);
+            }
+        }
+
+        // Resolve version range to a concrete version
+        if (MvnUtils.isVersionRange(version)) {
+            version = MvnUtils.resolveVersionRange(repos, asDep.groupId(),
+                asDep.artifactId(), version);
+        }
+        ArtifactRequest request = new ArtifactRequest();
+        request.setArtifact(new DefaultArtifact(asDep.groupId(),
+            asDep.artifactId(), "pom", version));
+        request.setRepositories(repos);
+
+        try {
+            ArtifactResult result
+                = repoSystem.resolveArtifact(repoSession, request);
+            return result.getArtifact().getPath();
+        } catch (ArtifactResolutionException e) {
+            throw new BuildException().from(this)
+                .message("Could not resolve POM for " + coordinates)
+                .cause(e);
+        }
+    }
+
+    private String resolveVersionUsingBom(MvnRepoDependency dependency,
+            RepositorySystem repoSystem, RepositorySystemSession repoSession,
             List<RemoteRepository> repos) {
         // First build raw model
         Model model = new Model();
@@ -398,20 +509,23 @@ public class MvnRepoLookup extends AbstractProvider implements Renamable {
             dep.setType("pom");
             depMgmt.addDependency(dep);
         }
-        model.addDependency(DependencyConverter.convert(
-            MvnRepoDependency.of(coordinates), "compile"));
+        model.addDependency(DependencyConverter.convert(dependency, "compile"));
 
         // Now build (derive) effective model and add its dependencies
         var buildingRequest = new DefaultModelBuildingRequest()
             .setRawModel(model).setProcessPlugins(false)
             .setValidationLevel(ModelBuildingRequest.VALIDATION_LEVEL_MINIMAL)
+            .setSystemProperties(System.getProperties())
             .setModelResolver(
                 new MvnModelResolver(repoSystem, repoSession, repos));
         try {
             var effectiveModel = new DefaultModelBuilderFactory()
                 .newInstance().build(buildingRequest).getEffectiveModel();
             return effectiveModel.getDependencies().stream()
-                .map(DependencyConverter::convert);
+                .filter(d -> d.getGroupId().equals(dependency.groupId())
+                    && d.getArtifactId().equals(dependency.artifactId()))
+                .findFirst().map(org.apache.maven.model.Dependency::getVersion)
+                .orElse(null);
         } catch (ModelBuildingException e) {
             throw new BuildException().from(this).cause(e);
         }
