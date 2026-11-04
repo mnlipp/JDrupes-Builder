@@ -79,9 +79,8 @@ import static org.jdrupes.builder.mvnrepo.MvnRepoTypes.*;
 /// is added automatically.
 /// 
 /// Resolving is performed using Maven Resolver (formerly Eclipse Aether)
-/// version 2.x. Dependencies are collected from the specified artifacts after
-/// evaluating their effective Maven models, including any imported
-/// BOMs and parent POMs.
+/// version 2.x. Dependencies without versions are augmented using the
+/// BOMs.
 /// 
 /// Version conflicts are resolved using a "highest wins" strategy, i.e.
 /// the highest version of a dependency encountered in the dependency
@@ -108,6 +107,11 @@ public class MvnRepoLookup extends AbstractProvider implements Renamable {
         // Make javadoc happy.
     }
 
+    /// Name.
+    ///
+    /// @param name the name
+    /// @return the mvn repo lookup
+    ///
     @Override
     public MvnRepoLookup name(String name) {
         rename(name);
@@ -294,6 +298,7 @@ public class MvnRepoLookup extends AbstractProvider implements Renamable {
     /// 
     private <T extends Resource> Collection<T> provideJars()
             throws DependencyResolutionException, ModelBuildingException {
+        @SuppressWarnings("PMD.CloseResource")
         var repoSystem = MavenContext.repositorySystem();
         var repoSession = MavenContext.repositorySession();
 
@@ -304,25 +309,26 @@ public class MvnRepoLookup extends AbstractProvider implements Renamable {
         }
 
         // Collect all dependencies
-        @SuppressWarnings("PMD.AvoidDuplicateLiterals")
         List<Dependency> allDeps = coordinates.stream().parallel().map(c -> {
             var mvnResource = MvnRepoDependency.of(c);
             var version = mvnResource.version();
-            if (version != null && !version.isEmpty()) {
-                // Resolve ranges
-                if (MvnUtils.isVersionRange(version)) {
-                    version = MvnUtils.resolveVersionRange(repos,
-                        mvnResource.groupId(), mvnResource.artifactId(),
-                        version);
-                    mvnResource = MvnRepoDependency.of(mvnResource.groupId(),
-                        mvnResource.artifactId(), version);
-                }
-                return Stream.of(DependencyConverter.convert(
-                    DependencyConverter.convert(mvnResource, "compile")));
+            if (version == null || version.isEmpty()) {
+                // Handle missing version
+                mvnResource = resolveVersion(
+                    mvnResource, repoSystem, repoSession, repos);
+                version = mvnResource.version();
             }
-            return addDepsFromEffectiveModel(
-                c, repoSystem, repoSession, repos);
-        }).flatMap(s -> s).toList();
+            if (MvnUtils.isVersionRange(version)) {
+                // Handle version range
+                version = MvnUtils.resolveVersionRange(repos,
+                    mvnResource.groupId(), mvnResource.artifactId(),
+                    version);
+                mvnResource = MvnRepoDependency.of(mvnResource.groupId(),
+                    mvnResource.artifactId(), version);
+            }
+            return DependencyConverter.convert(
+                DependencyConverter.convert(mvnResource, "compile"));
+        }).toList();
 
         // De-duplicate: keep highest version for each
         // groupId:artifactId:classifier:type:scope.
@@ -403,28 +409,26 @@ public class MvnRepoLookup extends AbstractProvider implements Renamable {
         return new ArrayList<>(bestByGroup.values());
     }
 
-    /// Find all dependencies from the effective model of the artifact and
-    /// return the artifact as dependency together with the dependencies
-    /// found.
-    /// 
-    /// The intuitive approach is to create a synthetic model with the
-    /// artifact as dependency, get the effective model and return the
-    /// model's dependencies. But while building the effective model does
-    /// "merge" the information from the BOMs, it does not merge the
-    /// information from the parent POMs. So we have to build the 
-    /// effective model from the coordinates' POM. This model's dependencies
-    /// are evaluated from the POM, the BOMs and the parent POM.
-    /// 
-    @SuppressWarnings("PMD.LiteralsFirstInComparisons")
-    private Stream<Dependency> addDepsFromEffectiveModel(
-            String coordinates, RepositorySystem repoSystem,
+    /// Resolve the version of a dependency. This includes augmenting
+    /// dependencies without versions using BOMs and resolving version
+    /// ranges.
+    ///
+    /// @param dependency the dependency
+    /// @param repoSystem the repo system
+    /// @param repoSession the repo session
+    /// @param repos the repos
+    /// @return the mvn repo dependency
+    ///
+    private MvnRepoDependency resolveVersion(
+            MvnRepoDependency dependency, RepositorySystem repoSystem,
             RepositorySystemSession repoSession,
             List<RemoteRepository> repos) {
         // Get the POM for the artifact. This includes augmenting dependencies
         // without versions using BOMs and resolving version ranges
-        Path pomFile = resolvePom(coordinates, repoSystem, repoSession, repos);
+        Path pomFile = resolvePom(dependency.coordinates(), repoSystem,
+            repoSession, repos);
 
-        // Parse the POM into a raw model
+        // Parse the POM into a model
         ModelBuildingRequest buildingRequest = new DefaultModelBuildingRequest()
             .setModelSource(new FileModelSource(pomFile.toFile()))
             .setProcessPlugins(false)
@@ -432,63 +436,19 @@ public class MvnRepoLookup extends AbstractProvider implements Renamable {
             .setSystemProperties(System.getProperties())
             .setModelResolver(
                 new MvnModelResolver(repoSystem, repoSession, repos));
-        Model rawModel;
+        Model model;
         try {
-            rawModel = new DefaultModelBuilderFactory()
+            model = new DefaultModelBuilderFactory()
                 .newInstance().build(buildingRequest).getRawModel();
         } catch (ModelBuildingException e) {
             throw new BuildException().from(this).cause(e);
         }
-
-        // This is the project's (maven build) model, so it most likely
-        // contains dependencies for running tests. But we are only
-        // interested in its transitive compile and runtime dependencies.
-        rawModel.setDependencies(rawModel.getDependencies().stream()
-            .filter(d -> d.getScope() == null
-                || d.getScope().equals("compile")
-                || d.getScope().equals("runtime"))
-            .toList());
-
-        // Inject BOM imports into the model's dependencyManagement
-        var depMgmt = rawModel.getDependencyManagement();
-        if (depMgmt == null) {
-            depMgmt = new DependencyManagement();
-            rawModel.setDependencyManagement(depMgmt);
-        }
-        for (String bom : boms) {
-            var dep = DependencyConverter
-                .convert(MvnRepoDependency.of(bom), "import");
-            dep.setType("pom");
-            depMgmt.addDependency(dep);
-        }
-
-        // Build effective model of the actual artifact's POM
-        buildingRequest = new DefaultModelBuildingRequest()
-            .setRawModel(rawModel)
-            .setProcessPlugins(false)
-            .setValidationLevel(ModelBuildingRequest.VALIDATION_LEVEL_MINIMAL)
-            .setSystemProperties(System.getProperties())
-            .setModelResolver(
-                new MvnModelResolver(repoSystem, repoSession, repos));
-        try {
-            var effectiveModel = new DefaultModelBuilderFactory()
-                .newInstance().build(buildingRequest).getEffectiveModel();
-            var selfDep = DependencyConverter.convert(
-                MvnRepoDependency.of(effectiveModel.getGroupId() + ":"
-                    + effectiveModel.getArtifactId() + ":"
-                    + effectiveModel.getVersion()),
-                "compile");
-            return Stream.concat(Stream.of(selfDep),
-                effectiveModel.getDependencies().stream())
-                .map(DependencyConverter::convert);
-        } catch (ModelBuildingException e) {
-            throw new BuildException().from(this).cause(e);
-        }
+        return MvnRepoDependency.of(model.getGroupId(),
+            model.getArtifactId(), model.getVersion());
     }
 
     private Path resolvePom(String coordinates, RepositorySystem repoSystem,
-            RepositorySystemSession repoSession,
-            List<RemoteRepository> repos) {
+            RepositorySystemSession repoSession, List<RemoteRepository> repos) {
         var asDep = MvnRepoDependency.of(coordinates);
         String version = asDep.version();
         if (version == null || version.isBlank()) {
@@ -501,7 +461,7 @@ public class MvnRepoLookup extends AbstractProvider implements Renamable {
             }
         }
 
-        // Resolve version range to a concrete version
+        // Resolve version range to a specific version
         if (MvnUtils.isVersionRange(version)) {
             version = MvnUtils.resolveVersionRange(repos, asDep.groupId(),
                 asDep.artifactId(), version);
@@ -510,7 +470,6 @@ public class MvnRepoLookup extends AbstractProvider implements Renamable {
         request.setArtifact(new DefaultArtifact(asDep.groupId(),
             asDep.artifactId(), "pom", version));
         request.setRepositories(repos);
-
         try {
             ArtifactResult result
                 = repoSystem.resolveArtifact(repoSession, request);
