@@ -35,4 +35,18 @@ public interface MvnRepoDependency extends MvnRepoResource {
     static MvnRepoDependency of(String coordinate) {
         return ResourceFactory.create(MvnRepoDependencyType, coordinate);
     }
+
+    /// Creates a dependency from a group id, artifact id and version.
+    ///
+    /// @param groupId the group id
+    /// @param artifactId the artifact id
+    /// @param version the version
+    /// @return the mvn repo dependency
+    ///
+    @SuppressWarnings("PMD.ShortMethodName")
+    static MvnRepoDependency of(String groupId, String artifactId,
+            String version) {
+        return ResourceFactory.create(MvnRepoDependencyType, groupId,
+            artifactId, version);
+    }
 }

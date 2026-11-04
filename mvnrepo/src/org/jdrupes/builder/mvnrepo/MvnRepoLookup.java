@@ -277,10 +277,23 @@ public class MvnRepoLookup extends AbstractProvider implements Renamable {
         return Stream.concat(boms, deps).toList();
     }
 
-    @SuppressWarnings("PMD.AvoidSynchronizedStatement")
+    /// The intuitive approach is to build a synthetic model with all
+    /// dependencies and then collect all artifacts from that model.
+    /// This does not work because the resolver does not apply the
+    /// highest wins strategy to the list of dependencies passed to
+    /// it, only to those pulled in by those dependencies.
+    /// 
+    /// Therefore, the dependencies are filtered, keeping only the
+    /// highest version for each `groupId:artifactId:classifier:type:scope`.
+    /// Then the result is passed to the resolver.
+    /// 
+    /// Some dependencies may have an empty version part that has to
+    /// be filled with information from the BOM. In this case the
+    /// dependencies are retrieved from the effective model, see
+    /// [addDepsFromEffectiveModel].
+    /// 
     private <T extends Resource> Collection<T> provideJars()
             throws DependencyResolutionException, ModelBuildingException {
-        @SuppressWarnings("PMD.CloseResource")
         var repoSystem = MavenContext.repositorySystem();
         var repoSession = MavenContext.repositorySession();
 
@@ -290,21 +303,29 @@ public class MvnRepoLookup extends AbstractProvider implements Renamable {
             repos.add(MavenContext.mavenCentral());
         }
 
-        // Collect all dependencies via their effective models
-        List<Dependency> allDeps = new ArrayList<>();
-        coordinates.stream().parallel().map(c -> depsFromEffectiveModel(
-            c, repoSystem, repoSession, repos)).forEach(deps -> {
-                // allDeps is not thread safe
-                synchronized (allDeps) {
-                    deps.forEach(allDeps::add);
+        // Collect all dependencies
+        @SuppressWarnings("PMD.AvoidDuplicateLiterals")
+        List<Dependency> allDeps = coordinates.stream().parallel().map(c -> {
+            var mvnResource = MvnRepoDependency.of(c);
+            var version = mvnResource.version();
+            if (version != null && !version.isEmpty()) {
+                // Resolve ranges
+                if (MvnUtils.isVersionRange(version)) {
+                    version = MvnUtils.resolveVersionRange(repos,
+                        mvnResource.groupId(), mvnResource.artifactId(),
+                        version);
+                    mvnResource = MvnRepoDependency.of(mvnResource.groupId(),
+                        mvnResource.artifactId(), version);
                 }
-            });
+                return Stream.of(DependencyConverter.convert(
+                    DependencyConverter.convert(mvnResource, "compile")));
+            }
+            return addDepsFromEffectiveModel(
+                c, repoSystem, repoSession, repos);
+        }).flatMap(s -> s).toList();
 
-        // Deduplicate: keep highest version for each
+        // De-duplicate: keep highest version for each
         // groupId:artifactId:classifier:type:scope.
-        // The resolver does not apply the highest wins strategy to the
-        // list of dependencies passed to it, only to those pulled in by
-        // those dependencies.
         List<Dependency> resolvedDeps = deduplicateByHighestVersion(allDeps);
 
         // Populate collect request
@@ -382,8 +403,20 @@ public class MvnRepoLookup extends AbstractProvider implements Renamable {
         return new ArrayList<>(bestByGroup.values());
     }
 
+    /// Find all dependencies from the effective model of the artifact and
+    /// return the artifact as dependency together with the dependencies
+    /// found.
+    /// 
+    /// The intuitive approach is to create a synthetic model with the
+    /// artifact as dependency, get the effective model and return the
+    /// model's dependencies. But while building the effective model does
+    /// "merge" the information from the BOMs, it does not merge the
+    /// information from the parent POMs. So we have to build the 
+    /// effective model from the coordinates' POM. This model's dependencies
+    /// are evaluated from the POM, the BOMs and the parent POM.
+    /// 
     @SuppressWarnings("PMD.LiteralsFirstInComparisons")
-    private Stream<Dependency> depsFromEffectiveModel(
+    private Stream<Dependency> addDepsFromEffectiveModel(
             String coordinates, RepositorySystem repoSystem,
             RepositorySystemSession repoSession,
             List<RemoteRepository> repos) {

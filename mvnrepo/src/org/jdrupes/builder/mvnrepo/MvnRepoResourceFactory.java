@@ -44,9 +44,12 @@ public class MvnRepoResourceFactory implements ResourceFactory {
             Project project, Object... args) {
         // ? extends MvnRepoResource
         var candidate = createNarrowed(type, MvnRepoResource.class,
-            () -> new DefaultMvnRepoResource(
+            () -> args.length == 1 ? new DefaultMvnRepoResource(
                 (ResourceType<? extends MvnRepoResource>) type,
-                (String) args[0]));
+                (String) args[0])
+                : new DefaultMvnRepoResource(
+                    (ResourceType<? extends MvnRepoResource>) type,
+                    (String) args[0], (String) args[1], (String) args[2]));
         if (candidate.isPresent()) {
             return candidate;
         }

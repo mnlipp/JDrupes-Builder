@@ -66,6 +66,24 @@ public class DefaultMvnRepoResource extends ResourceObject
         name(coordinates());
     }
 
+    /// Instantiates a new default Maven repository dependency from the
+    /// given values. classifier and mvnType are set to "".
+    ///
+    /// @param type the type
+    /// @param groupId the group id
+    /// @param artifactId the artifact id
+    /// @param version the version
+    ///
+    @SuppressWarnings("PMD.ConstructorCallsOverridableMethod")
+    public DefaultMvnRepoResource(ResourceType<? extends MvnRepoResource> type,
+            String groupId, String artifactId, String version) {
+        super(type);
+        this.groupId = Objects.requireNonNull(groupId);
+        this.artifactId = Objects.requireNonNull(artifactId);
+        this.version = version;
+        name(coordinates());
+    }
+
     @Override
     public String groupId() {
         return groupId;

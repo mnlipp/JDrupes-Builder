@@ -41,7 +41,9 @@ public final class MvnUtils {
         return version.startsWith("[") || version.startsWith("(");
     }
 
-    /// Resolve version range.
+    /// Resolve a version range with the highest available
+    /// included version.
+    /// 
     /// @param repositories the repositories
     /// @param groupId the group id
     /// @param artifactId the artifact id
