@@ -28,7 +28,11 @@ import org.jdrupes.builder.core.VersionReporter;
 import org.jdrupes.builder.distribution.UberJarBuilder;
 import org.jdrupes.builder.eclipse.EclipseConfiguration;
 import org.jdrupes.builder.eclipse.EclipseConfigurator;
+import static org.jdrupes.builder.ext.checkstyle.CheckstyleTypes.*;
+import org.jdrupes.builder.ext.checkstyle.CheckstyleChecker;
 import org.jdrupes.builder.ext.git.VersionTagger;
+import org.jdrupes.builder.ext.pmd.PmdChecker;
+import static org.jdrupes.builder.ext.pmd.PmdTypes.*;
 import static org.jdrupes.builder.ext.git.GitProperties.*;
 import static org.jdrupes.builder.ext.git.GitTypes.*;
 import org.jdrupes.builder.java.JavaCompiler;
@@ -93,6 +97,7 @@ public class Root extends AbstractRootProject {
         dependency(Expose, project(Vscode.class));
         dependency(Expose, project(JUnit.class));
         dependency(Forward, project(Bnd.class));
+        dependency(Forward, project(Checkstyle.class));
         dependency(Forward, project(NodeJs.class));
         dependency(Forward, project(jdbld.Git.class));
 
@@ -120,7 +125,8 @@ public class Root extends AbstractRootProject {
 
         // Supply javadoc
         generator(Javadoc::new).projects(Stream.of(this, project(NodeJs.class),
-            project(Bnd.class), project(jdbld.Git.class)))
+            project(Bnd.class), project(jdbld.Git.class),
+            project(Checkstyle.class), project(Pmd.class)))
             .destination(rootProject().directory().resolve("webpages/javadoc"))
             .tagletpath(new MvnRepoLookup()
                 .resolve("org.jdrupes.taglets:plantuml-taglet:3.1.0",
@@ -180,6 +186,10 @@ public class Root extends AbstractRootProject {
             .resources(of(new ResourceType<VscodeConfiguration>() {}));
         commandAlias("pomFile").description("Generate pom file")
             .resources(of(PomFileType));
+        commandAlias("checkstyle").description("Run checkstyle")
+            .projects("**").resources(of(CheckstyleResultType));
+        commandAlias("pmd").description("Run PMD")
+            .projects("**").resources(of(PmdResultType));
         commandAlias("mavenPublication")
             .description("Publish artifacts on codeberg").projects("**")
             .resources(of(MvnPublicationType).using(Supply));
@@ -228,6 +238,13 @@ public class Root extends AbstractRootProject {
             if (project instanceof RootProject) {
                 evaluator.subDirectory(Path.of("api"));
                 evaluator.subDirectory(Path.of("core"));
+                evaluator.subDirectory(Path.of("distribution"));
+                evaluator.subDirectory(Path.of("eclipse"));
+                evaluator.subDirectory(Path.of("java"));
+                evaluator.subDirectory(Path.of("junit"));
+                evaluator.subDirectory(Path.of("mvnrepo"));
+                evaluator.subDirectory(Path.of("startup"));
+                evaluator.subDirectory(Path.of("vscode"));
             } else {
                 evaluator.subDirectory(project.directory());
 
@@ -240,17 +257,14 @@ public class Root extends AbstractRootProject {
 
     private static void setupCommonGenerators(Project project) {
         if (project instanceof JavaProject) {
+            Path srcDir;
+            Path resourceDir;
             if (!(project instanceof MergedTestProject)) {
-                project.generator(JavaCompiler::new)
-                    .addSources(Path.of("src"), "**/*.java")
-                    .options("--release", "25");
-                project.generator(JavaResourceCollector::new)
-                    .add(Path.of("resources"), "**/*");
+                srcDir = Path.of("src");
+                resourceDir = Path.of("resources");
             } else {
-                project.generator(JavaCompiler::new).addSources(Path.of("test"),
-                    "**/*.java").options("--release", "25");
-                project.generator(JavaResourceCollector::new).add(Path.of(
-                    "test-resources"), "**/*");
+                srcDir = Path.of("test");
+                resourceDir = Path.of("test-resources");
                 project.dependency(Consume, new MvnRepoLookup()
                     .resolve("junit:junit:4.13.2")
                     .bom("org.junit:junit-bom:5.14.2")
@@ -261,6 +275,15 @@ public class Root extends AbstractRootProject {
                         "net.jodah:concurrentunit:0.4.2"));
                 project.dependency(Supply, JUnitTestRunner::new);
             }
+            project.generator(JavaCompiler::new).addSources(srcDir, "**/*.java")
+                .options("--release", "25");
+            project.generator(JavaResourceCollector::new)
+                .add(resourceDir, "**/*");
+            project.dependency(Consume, new CheckstyleChecker(project)
+                .addSources(srcDir, "**/*.java"));
+            project.dependency(Consume, new PmdChecker(project).config(
+                project.rootProject().directory().resolve("ruleset.xml"))
+                .addSources(srcDir, "**/*.java"));
         }
     }
 

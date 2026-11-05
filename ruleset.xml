@@ -31,6 +31,7 @@ JGrapes rules
         <exclude name="CallSuperInConstructor"/>
         <exclude name="AbstractNaming"/>
         <exclude name="UseExplicitTypes"/>
+        <exclude name="LocalVariableDeclarationShouldBeAtStartOfBlock"/>
     </rule>
     <rule ref="category/java/codestyle.xml/TooManyStaticImports">
         <properties>

@@ -8,6 +8,7 @@
 		</attributes>
 	</classpathentry>
 	<classpathentry kind="lib" path="/JDrupes-Builder/build/app/jdrupes-builder-current.jar"/>
+	<classpathentry combineaccessrules="false" kind="src" path="/org.jdrupes.builder.ext.checkstyle"/>
 	<classpathentry combineaccessrules="false" kind="src" path="/org.jdrupes.builder.distribution">
 		<attributes>
 			<attribute name="without_test_code" value="true"/>
@@ -63,5 +64,6 @@
 			<attribute name="without_test_code" value="true"/>
 		</attributes>
 	</classpathentry>
+	<classpathentry combineaccessrules="false" kind="src" path="/org.jdrupes.builder.ext.pmd"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>
