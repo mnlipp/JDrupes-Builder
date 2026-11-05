@@ -294,7 +294,7 @@ public class MvnRepoLookup extends AbstractProvider implements Renamable {
     /// Some dependencies may have an empty version part that has to
     /// be filled with information from the BOM. In this case the
     /// dependencies are retrieved from the effective model, see
-    /// [addDepsFromEffectiveModel].
+    /// [resolveVersion].
     /// 
     private <T extends Resource> Collection<T> provideJars()
             throws DependencyResolutionException, ModelBuildingException {
