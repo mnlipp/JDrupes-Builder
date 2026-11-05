@@ -18,7 +18,7 @@ latest release.
   3. Use `https://github.com/mnlipp/JDrupes-Builder` as the repo URL for
      linking purposes.
   4. For each commit, add one concise changelog line:
-     - Format: `- [<short-hash>](<url>) <one-line summary>`
+     - Format: `- <one-line summary> ([<short-hash>](<url>), ...)`
      - If the commit clearly relates to a PR, include a link to the PR.
      - Detect PRs from subjects like `(#123)`, merge commits, or
        `gh pr list --search <hash> --state all --json number,url`.
@@ -31,7 +31,6 @@ latest release.
 
 ### Rules
 
-  - Keep one line per commit.
   - Preserve the existing changelog style when obvious.
   - Always add entries to the top `Unreleased` list.
   - Skip noisy commits only when clearly non-user-facing and explain what was
