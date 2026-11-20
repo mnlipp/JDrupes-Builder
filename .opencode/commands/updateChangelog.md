@@ -19,9 +19,10 @@ latest release.
      linking purposes.
   4. For each commit, add one concise changelog line:
      - Format: `- <one-line summary> ([<short-hash>](<url>), ...)`
+     - Don't simply use the commit message as one line summary. Analyse the changes and check
+       if there is a better summary.
      - If the commit clearly relates to a PR, include a link to the PR.
-     - Detect PRs from subjects like `(#123)`, merge commits, or
-       `gh pr list --search <hash> --state all --json number,url`.
+     - Detect PRs from subjects like `(#123)`, merge commits.
   5. Insert the new lines under the appropriate subsection (`### Added`,
      `### Changed`, `### Fixed`) in the top `Unreleased` section in
      `CHANGELOG.md`.
