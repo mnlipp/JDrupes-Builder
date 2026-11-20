@@ -5,6 +5,14 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
+## jdbld [1.1.3] - 2026-11-20
+
+### Fixed
+
+  * Exclude forwarded projects from launch configurations; they are structural
+    dependencies only
+    ([c203732](https://github.com/mnlipp/JDrupes-Builder/commit/c203732))
+
 ## pmd [0.1.0] - 2026-11-05
 
 ### Added
