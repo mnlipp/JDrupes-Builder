@@ -243,9 +243,9 @@ public class LaunchGenerator {
             + "<runtimeClasspathEntry projectName=\""
             + configurator.refName(project()) + "\" "
             + "path=\"5\" type=\"1\"/>");
-        project().providers().filter(p -> p instanceof Project)
-            .select(Consume, Reveal, Expose, Forward)
-            .toList().stream().map(Project.class::cast).forEach(p -> {
+        project().providers().select(Consume, Reveal, Expose)
+            .filter(p -> p instanceof Project).toList().stream()
+            .map(Project.class::cast).forEach(p -> {
                 addListEntry(doc, classpathAttr, "<?xml version=\"1.0\""
                     + " encoding=\"UTF-8\" standalone=\"no\"?>\n"
                     + "<runtimeClasspathEntry "
