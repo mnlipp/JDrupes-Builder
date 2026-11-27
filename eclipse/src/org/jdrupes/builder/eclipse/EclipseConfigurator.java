@@ -124,7 +124,11 @@ import org.w3c.dom.Node;
 /// JRE container, the project itself, all dependent projects, and library
 /// JARs (including those resolved from Maven repositories). For modular
 /// projects, the module path is populated with modular project dependencies
-/// and the module name is set accordingly.
+/// and the module name is set accordingly. Use
+/// [DefaultEclipseLauncherRequest#add(Project...)]
+/// and [DefaultEclipseLauncherRequest#add(java.util.stream.Stream)]
+/// to include additional projects or library JARs that are required at
+/// runtime.
 ///
 /// The working directory is set to the Eclipse workspace location of the
 /// project. Launch configurations are not generated for [MergedTestProject]s.
@@ -132,7 +136,7 @@ import org.w3c.dom.Node;
 /// If the launch configuration already exists, the classpath, the module path
 /// the arguments and the VM arguments are updated, everything else is left
 /// unchanged.
-/// 
+///
 @SuppressWarnings({ "PMD.TooManyMethods", "PMD.GodClass" })
 public class EclipseConfigurator extends AbstractGenerator {
 

@@ -170,7 +170,7 @@ public class LaunchGenerator {
             "org.eclipse.jdt.launching.ATTR_USE_CLASSPATH_ONLY_JAR", "false");
 
         // Classpath
-        generateLaunchClasspath(doc, launchConfig);
+        generateLaunchClasspath(doc, launchConfig, request);
         addBooleanAttribute(doc, launchConfig,
             "org.eclipse.jdt.launching.DEFAULT_CLASSPATH", "false");
 
@@ -214,7 +214,8 @@ public class LaunchGenerator {
     }
 
     @SuppressWarnings("PMD.AvoidDuplicateLiterals")
-    private void generateLaunchClasspath(Document doc, Node parent) {
+    private void generateLaunchClasspath(Document doc, Node parent,
+            EclipseLauncherRequest request) {
         var classpathAttr = (Element) parent
             .appendChild(doc.createElement("listAttribute"));
         classpathAttr.setAttribute("key",
@@ -252,6 +253,13 @@ public class LaunchGenerator {
                     + "projectName=\"" + configurator.refName(p) + "\" "
                     + "path=\"5\" type=\"1\"/>");
             });
+        request.extraProjects().forEach(p -> {
+            addListEntry(doc, classpathAttr, "<?xml version=\"1.0\""
+                + " encoding=\"UTF-8\" standalone=\"no\"?>\n"
+                + "<runtimeClasspathEntry "
+                + "projectName=\"" + configurator.refName(p) + "\" "
+                + "path=\"5\" type=\"1\"/>");
+        });
 
         // Add library jars
         var cpes = Resources.with(LibraryJarFileType);
@@ -266,6 +274,7 @@ public class LaunchGenerator {
                     cpes.add(r);
                 }
             });
+        request.extraLibraries().forEach(cpes::add);
         // Jar files from maven repositories must be resolved before
         // they can be added to the application to avoid duplicates.
         var lookup = new MvnRepoLookup().name(configurator.name())

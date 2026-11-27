@@ -18,9 +18,16 @@
 
 package org.jdrupes.builder.eclipse;
 
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 import java.util.Objects;
+import java.util.stream.Stream;
 import org.jdrupes.builder.api.Intent;
+import org.jdrupes.builder.api.Project;
 import org.jdrupes.builder.core.DefaultResourceRequest;
+import org.jdrupes.builder.core.StreamCollector;
+import org.jdrupes.builder.java.LibraryJarFile;
 
 /// An implementation of [EclipseLauncherRequest].
 ///
@@ -31,6 +38,9 @@ public class DefaultEclipseLauncherRequest
     private String mainClass;
     private String arguments;
     private String vmArguments;
+    private final List<Project> extraProjects = new ArrayList<>();
+    private final StreamCollector<LibraryJarFile> extraLibraries
+        = StreamCollector.cached();
 
     /// Initializes a new default eclipse resource request.
     ///
@@ -52,7 +62,6 @@ public class DefaultEclipseLauncherRequest
 
     @Override
     public DefaultEclipseLauncherRequest clone() {
-        // No special handling of attributes required
         return (DefaultEclipseLauncherRequest) super.clone();
     }
 
@@ -89,6 +98,40 @@ public class DefaultEclipseLauncherRequest
         return result;
     }
 
+    /// Add one or more projects to the launch classpath in addition to the
+    /// auto-detected dependencies.
+    ///
+    /// @param projects the projects
+    /// @return the launcher for method chaining
+    ///
+    public DefaultEclipseLauncherRequest add(Project... projects) {
+        var result = clone();
+        result.extraProjects.addAll(Arrays.asList(projects));
+        return result;
+    }
+
+    /// Add library JARs to the launch classpath in addition to the
+    /// auto-detected dependencies.
+    ///
+    /// @param libraries the library JAR files
+    /// @return the launcher for method chaining
+    ///
+    public DefaultEclipseLauncherRequest add(Stream<LibraryJarFile> libraries) {
+        var result = clone();
+        libraries.forEach(result.extraLibraries::add);
+        return result;
+    }
+
+    @Override
+    public List<Project> extraProjects() {
+        return extraProjects;
+    }
+
+    @Override
+    public Stream<LibraryJarFile> extraLibraries() {
+        return extraLibraries.stream();
+    }
+
     @Override
     public String mainClass() {
         return mainClass;
@@ -108,8 +151,8 @@ public class DefaultEclipseLauncherRequest
     public int hashCode() {
         final int prime = 31;
         int result = super.hashCode();
-        result
-            = prime * result + Objects.hash(arguments, mainClass, vmArguments);
+        result = prime * result + Objects.hash(arguments, mainClass,
+            vmArguments, extraProjects, extraLibraries);
         return result;
     }
 
@@ -128,7 +171,9 @@ public class DefaultEclipseLauncherRequest
             = (DefaultEclipseLauncherRequest) obj;
         return Objects.equals(arguments, other.arguments)
             && Objects.equals(mainClass, other.mainClass)
-            && Objects.equals(vmArguments, other.vmArguments);
+            && Objects.equals(vmArguments, other.vmArguments)
+            && Objects.equals(extraProjects, other.extraProjects)
+            && Objects.equals(extraLibraries, other.extraLibraries);
     }
 
 }

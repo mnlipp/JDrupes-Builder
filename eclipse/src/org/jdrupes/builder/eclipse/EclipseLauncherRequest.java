@@ -18,7 +18,11 @@
 
 package org.jdrupes.builder.eclipse;
 
+import java.util.List;
+import java.util.stream.Stream;
+import org.jdrupes.builder.api.Project;
 import org.jdrupes.builder.api.ResourceRequest;
+import org.jdrupes.builder.java.LibraryJarFile;
 
 /// A resource request for an Eclipse launch configuration file.
 ///
@@ -42,4 +46,16 @@ public interface EclipseLauncherRequest
     /// @return the string
     ///
     String vmArguments();
+
+    /// Returns the projects explicitly added to the launch classpath.
+    ///
+    /// @return the list of projects
+    ///    
+    List<Project> extraProjects();
+
+    /// Returns the library JAR files explicitly added to the launch classpath.
+    ///
+    /// @return the list of library JAR files
+    ///
+    Stream<LibraryJarFile> extraLibraries();
 }
